@@ -1,0 +1,73 @@
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes page-loader-progress {
+  from {
+    transform: scaleX(0.08);
+  }
+
+  65% {
+    transform: scaleX(0.72);
+  }
+
+  to {
+    transform: scaleX(0.94);
+  }
+}
+
+@keyframes pointer-heart-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%) scale(0.72) rotate(var(--pointer-rotate));
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--pointer-dx)), calc(-50% + var(--pointer-dy)))
+      scale(1.32)
+      rotate(calc(var(--pointer-rotate) + 18deg));
+  }
+}
+
+@keyframes pointer-trail-fade {
+  0% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(1) rotate(var(--pointer-rotate));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18) rotate(calc(var(--pointer-rotate) + 16deg));
+  }
+}
+
+@keyframes app-topbar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tape-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -4px;
+  }
+}

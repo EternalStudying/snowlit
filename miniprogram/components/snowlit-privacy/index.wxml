@@ -1,0 +1,19 @@
+<view wx:if="{{visible}}" class="privacy-layer" catchtouchmove="noop">
+  <view class="privacy-mask" catchtap="handleReject"></view>
+  <view class="privacy-panel">
+    <view class="privacy-title">{{title}}</view>
+    <view class="privacy-message">{{message}}</view>
+    <view class="privacy-link" catchtap="openContract">查看《{{contractName}}》</view>
+    <view class="privacy-actions">
+      <button class="privacy-button privacy-button--ghost" catchtap="handleReject">暂不同意</button>
+      <button
+        id="snowlit-privacy-agree"
+        class="privacy-button privacy-button--primary"
+        open-type="agreePrivacyAuthorization"
+        bindagreeprivacyauthorization="handleAgree"
+      >
+        同意并继续
+      </button>
+    </view>
+  </view>
+</view>

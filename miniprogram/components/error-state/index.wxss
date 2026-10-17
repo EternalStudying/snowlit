@@ -1,0 +1,27 @@
+.error-state {
+  padding: 56rpx 0;
+  border-top: 1rpx solid #dedede;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.error-state__title {
+  color: #111111;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.error-state__message {
+  margin-top: 14rpx;
+  color: #8a8a8a;
+  font-size: 26rpx;
+  line-height: 1.65;
+}
+
+.error-state__action {
+  display: inline-block;
+  margin-top: 28rpx;
+  color: #111111;
+  font-size: 26rpx;
+  line-height: 1;
+  text-decoration: underline;
+}

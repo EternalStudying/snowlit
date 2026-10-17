@@ -1,0 +1,21 @@
+node_modules/
+dist/
+target/
+.npm-cache/
+.playwright-cli/
+codex-work/
+.codegraph/
+.DS_Store
+miniprogram/project.private.config.json
+.idea/
+.superpowers/
+.worktrees/
+
+*.log
+*.tsbuildinfo
+
+.env
+.env.*
+
+# Backend credentials kept on this computer; the example remains tracked.
+/backend/config/local.properties

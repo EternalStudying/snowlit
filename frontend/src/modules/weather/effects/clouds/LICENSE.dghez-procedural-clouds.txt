@@ -1,0 +1,29 @@
+dghez/THREEJS_Procedural-clouds source notice
+
+Source repository:
+https://github.com/dghez/THREEJS_Procedural-clouds
+
+Original Codrops article:
+https://tympanus.net/codrops/?p=46546
+
+Migrated source files:
+- src/js/components/Canvas/Environment/Cloud/index.js
+- src/shaders/cloud.frag
+- src/shaders/cloud.vert
+- src/assets/images/clouds/1.jpg
+- src/assets/images/clouds/2.jpg
+
+Project integration:
+The original React / React Three Fiber shell was not copied. The cloud texture + shader
+visual logic was ported into Snowlit's existing WeatherController -> CloudSkySystem ->
+CloudSkyLayer architecture as an internal weather atmosphere effect. Demo-only controls
+and the original demo background gradient are not part of the production integration.
+
+Codrops / source license summary:
+The resource can be integrated into or built upon for personal or commercial websites,
+web apps, and web templates. It must not be sold, redistributed, republished, or
+repackaged as an as-is or pluginized standalone resource. This project uses the resource
+only as an integrated internal cloud visual layer, not as a standalone product.
+
+Original credit:
+Procedural Clouds Extending Three.js' Sprite, by Robert Borghesi / Codrops, 2019.

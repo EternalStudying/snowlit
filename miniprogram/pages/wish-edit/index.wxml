@@ -1,0 +1,108 @@
+<view class="wish-edit-page">
+  <view class="wish-edit-top">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="wish-edit-section wish-edit-basic">
+    <view class="section-label">BASIC</view>
+    <view class="basic-card">
+      <view class="basic-row">
+        <image class="basic-icon" src="../../assets/icons/home/clipboard-list.svg" mode="aspectFit" />
+        <view class="basic-label">标题</view>
+        <view class="required-star">*</view>
+        <input
+          class="basic-input"
+          value="{{form.title}}"
+          placeholder="想写下一个小愿望"
+          maxlength="160"
+          data-field="title"
+          bindinput="handleInput"
+        />
+      </view>
+
+      <view class="basic-row" bindtap="openCategorySheet">
+        <image class="basic-icon" src="../../assets/icons/wish/tag.svg" mode="aspectFit" />
+        <view class="basic-label">类型</view>
+        <view class="category-pill">{{form.categoryText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="basic-row" bindtap="openDateSheet">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/calendar-days.svg" mode="aspectFit" />
+        <view class="basic-label">预计时间</view>
+        <view class="basic-value">{{form.expectedDateText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="basic-row basic-row--last">
+        <image class="basic-icon" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+        <view class="basic-label">预计地点</view>
+        <input
+          class="basic-input"
+          value="{{form.locationName}}"
+          placeholder="想写下预计去哪里"
+          maxlength="120"
+          data-field="locationName"
+          bindinput="handleInput"
+        />
+      </view>
+    </view>
+  </view>
+
+  <view class="wish-edit-section wish-edit-details">
+    <view class="section-label">DETAILS</view>
+    <view class="details-panel">
+      <textarea
+        class="details-textarea"
+        value="{{form.description}}"
+        placeholder="把想法轻轻写下"
+        maxlength="500"
+        data-field="description"
+        bindinput="handleInput"
+      />
+    </view>
+  </view>
+
+  <view class="wish-edit-section wish-edit-note">
+    <view class="section-label">NOTE</view>
+    <view class="note-panel">
+      <textarea
+        class="note-textarea"
+        value="{{form.note}}"
+        placeholder="写一点只有你们懂的小备注"
+        maxlength="300"
+        data-field="note"
+        bindinput="handleInput"
+      />
+    </view>
+  </view>
+
+  <view class="edit-message" wx:if="{{message}}">{{message}}</view>
+  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
+  <view class="footer-spacer"></view>
+
+  <view class="wish-edit-footer">
+    <view class="cancel-button" bindtap="goBack">取消</view>
+    <button class="save-button" loading="{{submitting}}" disabled="{{submitting || loading}}" bindtap="saveWish">{{editing ? '保存修改' : '保存清单'}}</button>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-option-sheet
+  visible="{{categorySheetVisible}}"
+  title="选择类型"
+  options="{{categories}}"
+  value="{{form.category}}"
+  bindselect="selectCategoryFromSheet"
+  bindcancel="closeCategorySheet"
+/>
+<snowlit-date-sheet
+  visible="{{dateSheetVisible}}"
+  title="预计时间"
+  value="{{form.expectedDate}}"
+  bindconfirm="confirmDateFromSheet"
+  bindcancel="closeDateSheet"
+/>

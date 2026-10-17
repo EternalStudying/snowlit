@@ -1,0 +1,122 @@
+.snowlit-toast-host {
+  position: fixed;
+  left: 44rpx;
+  right: 44rpx;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 520ms ease;
+}
+
+.snowlit-toast-host--top {
+  top: 34rpx;
+}
+
+.snowlit-toast-host--middle {
+  top: 45%;
+}
+
+.snowlit-toast-host--bottom {
+  bottom: 132rpx;
+}
+
+.snowlit-toast-host--visible {
+  opacity: 1;
+}
+
+.snowlit-toast-card {
+  display: flex;
+  align-items: flex-start;
+  min-height: 78rpx;
+  padding: 20rpx 24rpx;
+  color: #050505;
+  background: rgba(251, 251, 251, 0.96);
+  border: 1rpx solid rgba(5, 5, 5, 0.12);
+  border-radius: 16rpx;
+  box-shadow: 0 18rpx 42rpx rgba(5, 5, 5, 0.12);
+}
+
+.snowlit-toast-card--error {
+  border-color: rgba(194, 61, 61, 0.28);
+}
+
+.snowlit-toast-card--warning {
+  border-color: rgba(160, 119, 44, 0.28);
+}
+
+.snowlit-toast-mark {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34rpx;
+  height: 34rpx;
+  margin-top: 3rpx;
+  margin-right: 18rpx;
+  border-radius: 50%;
+  background: #111111;
+}
+
+.snowlit-toast-mark--success {
+  background: #111111;
+}
+
+.snowlit-toast-mark--error {
+  background: #d64545;
+}
+
+.snowlit-toast-mark--warning {
+  background: #b28a3b;
+}
+
+.snowlit-toast-mark--loading {
+  background: transparent;
+}
+
+.snowlit-toast-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.snowlit-toast-spinner {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid rgba(5, 5, 5, 0.18);
+  border-top-color: #050505;
+  border-radius: 50%;
+  animation: snowlit-toast-spin 860ms linear infinite;
+}
+
+.snowlit-toast-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.snowlit-toast-title {
+  color: #050505;
+  font-size: 27rpx;
+  font-weight: 500;
+  line-height: 37rpx;
+  word-break: break-word;
+}
+
+.snowlit-toast-message {
+  margin-top: 5rpx;
+  color: #777777;
+  font-size: 23rpx;
+  font-weight: 400;
+  line-height: 31rpx;
+  word-break: break-word;
+}
+
+@keyframes snowlit-toast-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

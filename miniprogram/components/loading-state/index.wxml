@@ -1,0 +1,4 @@
+<view wx:if="{{visible}}" class="loading-state">
+  <view class="loading-state__ring"></view>
+  <view class="loading-state__text">{{text}}</view>
+</view>

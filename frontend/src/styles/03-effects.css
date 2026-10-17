@@ -1,0 +1,54 @@
+.pointer-effects-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pointer-heart,
+.pointer-trail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: var(--pointer-size);
+  height: var(--pointer-size);
+  color: var(--pointer-color);
+  pointer-events: none;
+  user-select: none;
+  transform: translate(-50%, -50%) rotate(var(--pointer-rotate));
+  will-change: transform, opacity;
+}
+
+.pointer-heart {
+  -webkit-text-stroke: 1px var(--ink-green);
+  filter: drop-shadow(0 2px 0 rgba(255, 253, 249, 0.9));
+  font-size: var(--pointer-size);
+  line-height: 1;
+  animation: pointer-heart-pop 860ms ease-out forwards;
+}
+
+.pointer-trail {
+  font-size: var(--pointer-size);
+  line-height: 1;
+  opacity: 0.76;
+  animation: pointer-trail-fade 620ms ease-out forwards;
+}
+
+.pointer-trail--dot {
+  border: 1px solid rgba(33, 79, 63, 0.42);
+  border-radius: 50%;
+  background: var(--pointer-color);
+  box-shadow: 0 0 0 2px rgba(255, 253, 249, 0.72);
+}
+
+.pointer-trail--heart {
+  -webkit-text-stroke: 0.7px rgba(33, 79, 63, 0.72);
+}
+
+.pointer-trail--spark {
+  color: var(--gold);
+  text-shadow: 0 1px 0 rgba(33, 79, 63, 0.32);
+}

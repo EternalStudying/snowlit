@@ -1,0 +1,81 @@
+<view class="profile-edit-page">
+  <view class="profile-edit-top">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="profile-preview">
+    <view class="profile-avatar">{{user.initial}}</view>
+    <view class="profile-main">
+      <view class="profile-name">{{form.displayName}}</view>
+      <view class="profile-username">@{{user.username}}</view>
+      <view class="role-badge">{{user.coupleRoleLabel}}</view>
+    </view>
+  </view>
+
+  <view class="profile-divider"></view>
+
+  <view class="profile-edit-section">
+    <view class="section-label">PROFILE</view>
+    <view class="profile-form-card">
+      <view class="form-row">
+        <view class="form-label">昵称</view>
+        <input
+          class="form-input"
+          value="{{form.displayName}}"
+          maxlength="20"
+          placeholder="输入昵称"
+          bindinput="handleDisplayNameInput"
+        />
+        <view class="form-count">{{form.displayName.length}}/20</view>
+      </view>
+
+      <view class="form-row">
+        <view class="form-label">心情</view>
+        <input
+          class="form-input"
+          value="{{form.mood}}"
+          maxlength="20"
+          placeholder="写下今天的心情"
+          bindinput="handleMoodInput"
+        />
+        <view class="form-count">{{form.mood.length}}/20</view>
+      </view>
+
+      <view class="form-row form-row--bio">
+        <view class="form-label form-label--top">简介</view>
+        <textarea
+          class="form-textarea"
+          value="{{form.bio}}"
+          maxlength="80"
+          placeholder="写一点关于你们的简介"
+          show-confirm-bar="{{false}}"
+          bindinput="handleBioInput"
+        />
+        <view class="form-count form-count--bio">{{form.bio.length}}/80</view>
+      </view>
+
+      <view class="form-row form-row--last">
+        <view class="form-label">账号</view>
+        <input
+          class="form-input form-input--readonly"
+          value="{{user.username}}"
+          disabled
+        />
+        <view class="form-count"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
+  <view class="footer-spacer"></view>
+
+  <view class="profile-edit-footer">
+    <button class="save-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveProfile">保存资料</button>
+    <view class="cancel-button" bindtap="goBack">取消</view>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

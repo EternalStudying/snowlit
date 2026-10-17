@@ -1,0 +1,348 @@
+.album-edit-page {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 34rpx;
+  overflow-x: hidden;
+  color: #050505;
+  background: #fbfbfb;
+  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+}
+
+.album-edit-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 120rpx;
+  height: 146rpx;
+}
+
+.back-button {
+  position: absolute;
+  top: 94rpx;
+  left: 38rpx;
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.back-icon {
+  position: absolute;
+  top: 7rpx;
+  left: 4rpx;
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.album-edit-section {
+  padding-top: 50rpx;
+}
+
+.album-edit-basic {
+  padding-top: 183rpx;
+}
+
+.section-label {
+  color: #777777;
+  font-size: 20rpx;
+  font-weight: 400;
+  letter-spacing: 14rpx;
+  line-height: 28rpx;
+}
+
+.basic-card {
+  margin-top: 22rpx;
+  overflow: hidden;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.basic-row {
+  display: flex;
+  align-items: center;
+  min-height: 84rpx;
+  padding: 0 20rpx 0 28rpx;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.basic-row--last {
+  border-bottom: 0;
+}
+
+.basic-icon {
+  flex: 0 0 auto;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.basic-label {
+  flex: 0 0 auto;
+  margin-left: 36rpx;
+  color: #222222;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+}
+
+.required-star {
+  flex: 0 0 auto;
+  margin-left: 12rpx;
+  color: #ff2b20;
+  font-size: 31rpx;
+  font-weight: 500;
+  line-height: 40rpx;
+}
+
+.basic-input {
+  flex: 1;
+  min-width: 0;
+  margin-left: 28rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.basic-value {
+  flex: 1;
+  min-width: 0;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  letter-spacing: 2rpx;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.chevron-icon {
+  flex: 0 0 auto;
+  width: 28rpx;
+  height: 28rpx;
+  margin-left: 26rpx;
+  opacity: 0.48;
+}
+
+.visibility-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 136rpx;
+  height: 56rpx;
+  margin-left: auto;
+  padding: 0 34rpx;
+  color: #222222;
+  border: 1rpx solid #dedede;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.pin-switch {
+  position: relative;
+  width: 94rpx;
+  height: 52rpx;
+  margin-left: auto;
+  border-radius: 999rpx;
+  background: #dddddd;
+}
+
+.pin-switch--active {
+  background: #050505;
+}
+
+.pin-knob {
+  position: absolute;
+  top: 5rpx;
+  left: 5rpx;
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 3rpx 8rpx rgba(0, 0, 0, 0.12);
+  transition: transform 180ms ease;
+}
+
+.pin-switch--active .pin-knob {
+  transform: translateX(42rpx);
+}
+
+.album-edit-details {
+  padding-top: 56rpx;
+}
+
+.details-panel {
+  min-height: 210rpx;
+  margin-top: 22rpx;
+  box-sizing: border-box;
+  padding: 34rpx 32rpx;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.details-textarea {
+  width: 100%;
+  min-height: 150rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 52rpx;
+}
+
+.album-edit-photos {
+  padding-top: 54rpx;
+}
+
+.photos-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.photos-limit {
+  color: #777777;
+  font-size: 24rpx;
+  font-weight: 400;
+  line-height: 32rpx;
+}
+
+.photo-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18rpx;
+  margin-top: 26rpx;
+}
+
+.photo-add,
+.photo-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 8rpx;
+}
+
+.photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  border: 2rpx dashed #d2d2d2;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.photo-wrap {
+  aspect-ratio: 1 / 1;
+}
+
+.photo-add-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.photo-add-text {
+  margin-top: 20rpx;
+  color: #222222;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 38rpx;
+}
+
+.photo-item {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #eeeeee;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  z-index: 3;
+  width: 40rpx;
+  height: 40rpx;
+  color: #ffffff;
+  background: #050505;
+  border-radius: 50%;
+  font-size: 30rpx;
+  font-weight: 300;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.photo-status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  padding: 8rpx 10rpx;
+  color: #ffffff;
+  background: rgba(5, 5, 5, 0.58);
+  font-size: 20rpx;
+  line-height: 26rpx;
+  text-align: center;
+}
+
+.edit-message {
+  margin-top: 28rpx;
+  color: #8a3f14;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.footer-spacer {
+  height: 184rpx;
+}
+
+.album-edit-footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 220rpx 1fr;
+  column-gap: 24rpx;
+  align-items: center;
+  padding: 38rpx 58rpx calc(38rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1rpx solid #eeeeee;
+}
+
+.cancel-button {
+  color: #777777;
+  font-size: 29rpx;
+  font-weight: 600;
+  line-height: 84rpx;
+  text-align: center;
+}
+
+.save-button {
+  height: 84rpx;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  background: #050505;
+  border-radius: 999rpx;
+  font-size: 29rpx;
+  font-weight: 500;
+  line-height: 84rpx;
+}
+
+.save-button::after {
+  border: 0;
+}
+
+.save-button[disabled] {
+  opacity: 0.55;
+}

@@ -1,0 +1,104 @@
+<view class="wish-detail-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="detail-state" wx:if="{{loading}}">清单详情加载中...</view>
+  <view class="detail-state" wx:elif="{{message}}">{{message}}</view>
+  <block wx:else>
+    <view class="wish-head snowlit-subpage-heading">
+      <view class="snowlit-subpage-brand">WISH</view>
+      <view class="snowlit-subpage-title">{{wish.title}}</view>
+      <view class="snowlit-subpage-subtitle">{{wish.description}}</view>
+      <view class="wish-badges">
+        <view class="wish-badge wish-badge--category">{{wish.categoryLabel}}</view>
+        <view class="wish-badge">{{wish.completedLabel}}</view>
+      </view>
+    </view>
+
+    <image
+      wx:if="{{wish.image}}"
+      class="wish-photo"
+      src="{{wish.image}}"
+      mode="aspectFill"
+      bindtap="previewImage"
+    />
+
+    <view class="section-line"></view>
+
+    <view class="meta-row">
+      <view class="meta-cell">
+        <view class="meta-label">创建日期</view>
+        <view class="meta-value">{{wish.createdDate}}</view>
+      </view>
+      <view class="meta-cell">
+        <view class="meta-label">{{wish.completedDateLabel}}</view>
+        <view class="meta-value">{{wish.completedDate}}</view>
+      </view>
+      <view class="meta-cell">
+        <view class="meta-label">{{wish.locationLabel}}</view>
+        <view class="meta-value">{{wish.locationName}}</view>
+      </view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="coordinate-row">
+      <view class="section-label">COORDINATE</view>
+      <view class="coordinate-value">{{wish.coordinate}}</view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="note-section">
+      <view class="section-label">NOTE</view>
+      <view class="note-content">{{wish.note}}</view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="timeline-section">
+      <view class="section-label">TIMELINE</view>
+      <view class="timeline-list">
+        <view class="timeline-item">
+          <view class="timeline-axis">
+            <view class="timeline-dot"></view>
+            <view class="timeline-stem"></view>
+          </view>
+          <view class="timeline-content">
+            <view class="timeline-name">创建</view>
+            <view class="timeline-time">{{wish.createdTime}}</view>
+          </view>
+        </view>
+        <view class="timeline-item">
+          <view class="timeline-axis">
+            <view class="timeline-dot"></view>
+          </view>
+          <view class="timeline-content">
+            <view class="timeline-name">完成</view>
+            <view class="timeline-time">{{wish.completedTime}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="detail-actions" wx:if="{{wish.canEdit}}">
+      <view class="detail-action detail-action--edit" bindtap="editWish">编辑</view>
+      <view class="detail-action detail-action--delete" bindtap="deleteWish">{{deleting ? '删除中...' : '删除'}}</view>
+      <view class="detail-action detail-action--primary" bindtap="toggleWishStatus">{{statusSubmitting ? '处理中...' : wish.statusActionText}}</view>
+    </view>
+    <view class="snowlit-end-tip">没有更多了哦~</view>
+  </block>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-privacy id="snowlit-privacy" />
+<wish-completion-sheet
+  visible="{{completionSheetVisible}}"
+  submitting="{{completionSubmitting}}"
+  bindconfirm="confirmCompleteWish"
+  bindmissing="handleCompletionImageMissing"
+  bindcancel="closeCompletionSheet"
+/>

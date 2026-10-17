@@ -1,0 +1,222 @@
+<view class="diary-edit-page">
+  <view class="diary-edit-top">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="diary-edit-section diary-edit-basic">
+    <view class="section-label">BASIC</view>
+    <view class="basic-card">
+      <view class="basic-row">
+        <view class="basic-icon basic-icon--text">H₁</view>
+        <view class="basic-label">标题</view>
+        <input
+          class="basic-input"
+          value="{{form.title}}"
+          placeholder="输入标题"
+          maxlength="36"
+          bindinput="handleTitleInput"
+        />
+      </view>
+
+      <view class="basic-row" wx:if="{{isEditing}}">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/calendar-days.svg" mode="aspectFit" />
+        <view class="basic-label">日期</view>
+        <view class="basic-value">{{form.dateText}}</view>
+      </view>
+
+      <view class="basic-row" wx:else bindtap="openDiaryDateSheet">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/calendar-days.svg" mode="aspectFit" />
+        <view class="basic-label">日期</view>
+        <view class="basic-value">{{form.dateText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="basic-row" bindtap="toggleMoodPanel">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/smile.svg" mode="aspectFit" />
+        <view class="basic-label">心情</view>
+        <view class="mood-pill">{{form.moodText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="mood-panel" wx:if="{{moodPanelOpen}}">
+        <view
+          wx:for="{{moods}}"
+          wx:key="value"
+          class="mood-option {{item.active ? 'mood-option--active' : ''}}"
+          data-value="{{item.value}}"
+          catchtap="selectMood"
+        >
+          {{item.label}}
+        </view>
+      </view>
+
+      <view class="basic-row basic-row--last">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/lock-keyhole.svg" mode="aspectFit" />
+        <view class="basic-label">可见范围</view>
+        <view class="visibility-switch">
+          <view
+            class="visibility-option {{form.visibility === 'shared' ? 'visibility-option--active' : ''}}"
+            data-value="shared"
+            bindtap="toggleVisibility"
+          >
+            共享
+          </view>
+          <view
+            class="visibility-option {{form.visibility === 'private' ? 'visibility-option--active' : ''}}"
+            data-value="private"
+            bindtap="toggleVisibility"
+          >
+            私密
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="diary-edit-section diary-edit-words">
+    <view class="section-label">WORDS</view>
+    <view class="words-panel">
+      <view class="toolbar" wx:if="{{mode === 'edit'}}">
+        <view class="toolbar-button toolbar-button--text" data-action="heading" bindtap="handleToolTap">H₂</view>
+        <view class="toolbar-button toolbar-button--text" data-action="bold" bindtap="handleToolTap">B</view>
+        <view class="toolbar-button toolbar-button--text" data-action="quote" bindtap="handleToolTap">“</view>
+        <view class="toolbar-button" data-action="list" bindtap="handleToolTap">
+          <image class="toolbar-icon" src="../../assets/icons/story/list.svg" mode="aspectFit" />
+        </view>
+        <view class="toolbar-button" data-action="image" bindtap="handleToolTap">
+          <image class="toolbar-icon toolbar-icon--image" src="../../assets/icons/diary-edit/image-plus.svg" mode="aspectFit" />
+        </view>
+      </view>
+
+      <view class="editor-body" wx:if="{{mode === 'edit'}}">
+        <textarea
+          class="words-textarea"
+          value="{{form.content}}"
+          placeholder="写下这一天的细节"
+          auto-height
+          maxlength="5000"
+          cursor="{{cursor}}"
+          show-confirm-bar="{{false}}"
+          bindinput="handleInput"
+          bindblur="handleTextareaBlur"
+        />
+      </view>
+
+      <view class="preview-body {{previewEmpty ? 'preview-body--empty' : ''}}" wx:else>
+        <view class="preview-empty" wx:if="{{previewEmpty}}">写一点文字后，这里会轻轻预览出来</view>
+        <block wx:else>
+          <block wx:for="{{previewBlocks}}" wx:key="key">
+            <view
+              wx:if="{{item.type === 'paragraph'}}"
+              class="preview-paragraph preview-block--{{item.spacing}}"
+            >
+              <rich-text nodes="{{item.nodes}}" />
+            </view>
+            <view
+              wx:elif="{{item.type === 'heading'}}"
+              class="preview-heading preview-block--{{item.spacing}}"
+            >
+              <rich-text nodes="{{item.nodes}}" />
+            </view>
+            <view
+              wx:elif="{{item.type === 'quote'}}"
+              class="preview-quote preview-block--{{item.spacing}}"
+            >
+              <rich-text nodes="{{item.nodes}}" />
+            </view>
+            <view
+              wx:elif="{{item.type === 'list'}}"
+              class="preview-list preview-block--{{item.spacing}}"
+            >
+              <view
+                wx:for="{{item.items}}"
+                wx:for-item="listItem"
+                wx:key="key"
+                class="preview-list-item"
+              >
+                <view class="preview-list-marker">{{listItem.marker}}</view>
+                <rich-text class="preview-list-text" nodes="{{listItem.nodes}}" />
+              </view>
+            </view>
+            <view
+              wx:elif="{{item.type === 'code'}}"
+              class="preview-code preview-block--{{item.spacing}}"
+            >
+              {{item.text}}
+            </view>
+            <view
+              wx:elif="{{item.type === 'hr'}}"
+              class="preview-hr preview-block--{{item.spacing}}"
+            ></view>
+            <view
+              wx:elif="{{item.type === 'table'}}"
+              class="preview-table preview-block--{{item.spacing}}"
+            >
+              <view
+                wx:for="{{item.rows}}"
+                wx:for-item="row"
+                wx:key="key"
+                class="preview-table-row {{row.header ? 'preview-table-row--header' : ''}}"
+              >
+                <view
+                  wx:for="{{row.cells}}"
+                  wx:for-item="cell"
+                  wx:key="key"
+                  class="preview-table-cell"
+                >
+                  <rich-text nodes="{{cell.nodes}}" />
+                </view>
+              </view>
+            </view>
+            <image
+              wx:elif="{{item.type === 'image'}}"
+              class="preview-image preview-block--{{item.spacing}}"
+              src="{{item.url}}"
+              mode="widthFix"
+              data-url="{{item.url}}"
+              bindtap="previewContentImage"
+            />
+          </block>
+        </block>
+      </view>
+    </view>
+
+    <view class="mode-tabs">
+      <view
+        class="mode-tab {{mode === 'edit' ? 'mode-tab--active' : ''}}"
+        data-mode="edit"
+        bindtap="switchMode"
+      >
+        编辑
+      </view>
+      <view
+        class="mode-tab {{mode === 'preview' ? 'mode-tab--active' : ''}}"
+        data-mode="preview"
+        bindtap="switchMode"
+      >
+        预览
+      </view>
+    </view>
+  </view>
+
+  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
+  <view class="footer-spacer"></view>
+  <view class="edit-message" wx:if="{{message}}">{{message}}</view>
+  <view class="diary-edit-footer">
+    <view class="cancel-button" bindtap="goBack">取消</view>
+    <button class="save-button" loading="{{submitting}}" disabled="{{submitting || loadingDiary}}" bindtap="saveDiary">{{isEditing ? '保存修改' : '保存日记'}}</button>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-privacy id="snowlit-privacy" />
+<snowlit-date-sheet
+  visible="{{diaryDateSheetVisible}}"
+  title="选择日期"
+  value="{{form.date}}"
+  bindconfirm="confirmDiaryDateFromSheet"
+  bindcancel="closeDiaryDateSheet"
+/>

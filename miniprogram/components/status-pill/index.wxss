@@ -1,0 +1,26 @@
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid #c9c9c9;
+  border-radius: 999rpx;
+  color: #6f6f6f;
+  font-size: 22rpx;
+  line-height: 44rpx;
+}
+
+.status-pill--strong {
+  border-color: #111111;
+  color: #111111;
+}
+
+.status-pill--success {
+  border-color: #246b45;
+  color: #246b45;
+}
+
+.status-pill--danger {
+  border-color: #9b1c1c;
+  color: #9b1c1c;
+}

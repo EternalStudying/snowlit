@@ -1,0 +1,42 @@
+.minimal-section {
+  padding: 44rpx 0;
+  border-top: 1rpx solid #dedede;
+}
+
+.minimal-section__head {
+  display: flex;
+  gap: 32rpx;
+  align-items: flex-start;
+}
+
+.minimal-section__label {
+  width: 148rpx;
+  flex: none;
+  color: #8a8a8a;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 8rpx;
+}
+
+.minimal-section__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.minimal-section__title {
+  color: #111111;
+  font-size: 32rpx;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.minimal-section__caption {
+  margin-top: 8rpx;
+  color: #8a8a8a;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.minimal-section__body {
+  margin-top: 28rpx;
+}

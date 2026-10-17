@@ -1,0 +1,10 @@
+# Copy to local.properties and fill in this mini program's credentials.
+# Loaded automatically in the dev profile; environment variables take precedence.
+WECHAT_MINIPROGRAM_APP_ID=
+WECHAT_MINIPROGRAM_APP_SECRET=
+
+# Geoapify reverse geocoding key; blank keeps the location unknown.
+GEOAPIFY_KEY=
+
+# Optional: only for the Open-Meteo commercial customer API. Personal non-commercial use needs no key.
+OPEN_METEO_API_KEY=

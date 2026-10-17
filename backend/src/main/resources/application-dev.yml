@@ -1,0 +1,38 @@
+spring:
+  config:
+    import:
+      - optional:file:./config/local.properties
+      - optional:file:./backend/config/local.properties
+  datasource:
+    url: ${LOCAL_DB_URL:jdbc:mysql://127.0.0.1:3306/snowlit_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${LOCAL_DB_USERNAME:root}
+    password: ${LOCAL_DB_PASSWORD:}
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      encoding: UTF-8
+  data:
+    redis:
+      host: ${LOCAL_REDIS_HOST:127.0.0.1}
+      port: ${LOCAL_REDIS_PORT:6379}
+      password: ${LOCAL_REDIS_PASSWORD:}
+      database: ${LOCAL_REDIS_DATABASE:0}
+
+minio:
+  endpoint: ${LOCAL_MINIO_ENDPOINT:http://127.0.0.1:9000}
+  access-key: ${LOCAL_MINIO_ACCESS_KEY:snowlitminio}
+  secret-key: ${LOCAL_MINIO_SECRET_KEY:}
+  bucket: ${LOCAL_MINIO_BUCKET:snowlit-dev}
+  public-base-url: ${LOCAL_MINIO_PUBLIC_BASE_URL:http://127.0.0.1:9000/snowlit-dev}
+  diary-temp-prefix: diary/tmp
+  diary-final-prefix: diary/final
+  feedback-prefix: feedback
+  story-prefix: story
+  album-prefix: album
+  wish-prefix: wish
+  messages-prefix: messages
+
+snowlit:
+  wechat:
+    miniprogram:
+      dev-bind-user-id: ${WECHAT_MINIPROGRAM_DEV_BIND_USER_ID:}

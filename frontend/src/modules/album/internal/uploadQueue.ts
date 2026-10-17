@@ -1,0 +1,182 @@
+import { computed, ref } from 'vue';
+import type { AlbumPhotoData, AlbumPhotoUploadMetadata } from '../model';
+import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
+import type { AlbumPreviewGenerator } from './ports';
+
+export type AlbumUploadStatus = 'waiting' | 'generating' | 'uploading' | 'success' | 'failed';
+
+export interface AlbumUploadItem {
+  id: string;
+  file: File;
+  status: AlbumUploadStatus;
+  message: string;
+  progress: number;
+  uploadedPhoto: AlbumPhotoData | null;
+  previewFile: File | null;
+  metadata: AlbumPhotoUploadMetadata | null;
+}
+
+export type AlbumPhotoUploader = (
+  original: File,
+  preview: File,
+  metadata: AlbumPhotoUploadMetadata
+) => Promise<AlbumPhotoData>;
+
+type AlbumUploadQueueOptions = {
+  generatePreview?: AlbumPreviewGenerator;
+  isMobileUpload?: () => boolean;
+  now?: () => Date;
+};
+
+const MAX_FILES = 300;
+const MAX_ORIGINAL_BYTES = 10 * 1024 * 1024;
+export function createAlbumUploadQueue({
+  generatePreview = encodeCanvasWebpPreview,
+  isMobileUpload = detectMobileUpload,
+  now = () => new Date()
+}: AlbumUploadQueueOptions) {
+  const items = ref<AlbumUploadItem[]>([]);
+  const error = ref('');
+  const uploading = ref(false);
+
+  const successCount = computed(() => items.value.filter((item) => item.status === 'success').length);
+  const blockingCount = computed(() => items.value.filter((item) => item.status !== 'success').length);
+
+  function addFiles(files: File[] | FileList) {
+    const selected = Array.from(files);
+    error.value = '';
+
+    if (selected.length + items.value.length > MAX_FILES) {
+      error.value = '最多选择 300 张照片';
+      return false;
+    }
+
+    const invalid = selected.find((file) => file.size > MAX_ORIGINAL_BYTES || !file.type.startsWith('image/'));
+    if (invalid) {
+      error.value = '单张原图不能超过 10MB，且必须是图片';
+      return false;
+    }
+
+    items.value.push(
+      ...selected.map((file, index) => ({
+        id: `${now().getTime()}-${index}-${file.name}`,
+        file,
+        status: 'waiting' as const,
+        message: '等待上传',
+        progress: 0,
+        uploadedPhoto: null,
+        previewFile: null,
+        metadata: null
+      }))
+    );
+    return true;
+  }
+
+  async function start(uploadPhoto: AlbumPhotoUploader) {
+    if (uploading.value) {
+      return;
+    }
+    uploading.value = true;
+    error.value = '';
+    const concurrency = isMobileUpload() ? 2 : 4;
+    const workers = Array.from({ length: concurrency }, () => runNext(uploadPhoto));
+    await Promise.all(workers);
+    uploading.value = false;
+  }
+
+  async function retry(itemId: string, uploadPhoto: AlbumPhotoUploader) {
+    const item = items.value.find((candidate) => candidate.id === itemId);
+    if (!item || item.status !== 'failed') {
+      return;
+    }
+    await processItem(item, uploadPhoto);
+  }
+
+  function remove(itemId: string) {
+    items.value = items.value.filter(
+      (item) => item.id !== itemId || item.status === 'uploading' || item.status === 'generating'
+    );
+  }
+
+  function clear() {
+    items.value = [];
+    error.value = '';
+    uploading.value = false;
+  }
+
+  async function runNext(uploadPhoto: AlbumPhotoUploader) {
+    while (true) {
+      const item = items.value.find((candidate) => candidate.status === 'waiting');
+      if (!item) {
+        return;
+      }
+      await processItem(item, uploadPhoto);
+    }
+  }
+
+  async function processItem(item: AlbumUploadItem, uploadPhoto: AlbumPhotoUploader) {
+    try {
+      updateItem(item.id, {
+        status: 'generating',
+        message: '生成 WebP 预览中'
+      });
+      const generated = await generatePreview(item.file);
+      const metadata: AlbumPhotoUploadMetadata = {
+        caption: stripExtension(item.file.name) || '未命名照片',
+        takenAt: now().toISOString().slice(0, 10),
+        location: '地球',
+        width: generated.width,
+        height: generated.height,
+        sortOrder: items.value.findIndex((candidate) => candidate.id === item.id) + 1
+      };
+      updateItem(item.id, {
+        previewFile: generated.file,
+        metadata,
+        status: 'uploading',
+        message: '上传中',
+        progress: 50
+      });
+      const uploadedPhoto = await uploadPhoto(item.file, generated.file, metadata);
+      updateItem(item.id, {
+        uploadedPhoto,
+        status: 'success',
+        message: '已上传',
+        progress: 100
+      });
+    } catch (error) {
+      updateItem(item.id, {
+        status: 'failed',
+        message: error instanceof Error ? error.message : '上传失败',
+        progress: 0
+      });
+    }
+  }
+
+  function updateItem(itemId: string, patch: Partial<AlbumUploadItem>) {
+    items.value = items.value.map((item) =>
+      item.id === itemId ? { ...item, ...patch } : item
+    );
+  }
+
+  return {
+    items,
+    error,
+    uploading,
+    successCount,
+    blockingCount,
+    addFiles,
+    start,
+    retry,
+    remove,
+    clear
+  };
+}
+
+function stripExtension(name: string) {
+  const index = name.lastIndexOf('.');
+  return index > 0 ? name.slice(0, index) : name;
+}
+
+function detectMobileUpload() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+}

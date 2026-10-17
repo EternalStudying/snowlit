@@ -1,0 +1,24 @@
+.photo-grid {
+  display: grid;
+  gap: 8rpx;
+}
+
+.photo-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.photo-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.photo-grid__item {
+  aspect-ratio: 1;
+  background: #eeeeee;
+  overflow: hidden;
+}
+
+.photo-grid__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

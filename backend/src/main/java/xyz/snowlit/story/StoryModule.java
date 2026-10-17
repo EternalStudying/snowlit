@@ -1,0 +1,251 @@
+package xyz.snowlit.story;
+
+import xyz.snowlit.auth.AuthenticatedActor;
+import xyz.snowlit.auth.SiteManagerPolicy;
+import xyz.snowlit.failure.ApplicationFailure;
+import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.story.StoryDtos.StoryMomentUpsertDto;
+import xyz.snowlit.story.StoryVos.StoryImageUploadVo;
+import xyz.snowlit.story.StoryVos.StoryMomentListVo;
+import xyz.snowlit.story.StoryVos.StoryMomentVo;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+public final class StoryModule {
+
+    private static final Set<String> CATEGORIES = Set.of("daily", "date", "travel", "anniversary", "surprise");
+    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
+    private static final long MAX_IMAGE_SIZE = 10L * 1024L * 1024L;
+    private static final int MAX_IMAGES = 3;
+
+    private final StoryMapper storyMapper;
+    private final StoryImages imageStorage;
+    private final Clock clock;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    public StoryModule(StoryMapper storyMapper, StoryImages imageStorage) {
+        this(storyMapper, imageStorage, Clock.systemDefaultZone());
+    }
+
+    StoryModule(StoryMapper storyMapper, StoryImages imageStorage, Clock clock) {
+        this.storyMapper = storyMapper;
+        this.imageStorage = imageStorage;
+        this.clock = clock;
+    }
+
+    public StoryMomentListVo listMoments(AuthenticatedActor actor, String category, Integer year) {
+        String resolvedCategory = cleanNullable(category);
+        if (resolvedCategory != null && !CATEGORIES.contains(resolvedCategory)) {
+            throw ApplicationFailure.invalidInput("STORY_CATEGORY_INVALID", "点滴类型不正确");
+        }
+        Integer resolvedYear = validateOptionalYear(year);
+        List<StoryMomentVo> items = storyMapper.findMoments(resolvedCategory, resolvedYear)
+                .stream()
+                .filter(moment -> moment.getDeletedAt() == null)
+                .map(this::toVo)
+                .toList();
+        return new StoryMomentListVo(items, storyMapper.findAvailableYears(), canManage(actor));
+    }
+
+    public StoryMomentVo getMoment(Long id) {
+        StoryMoment moment = requireActiveMoment(id);
+        return toVo(moment);
+    }
+
+    public StoryMomentVo create(AuthenticatedActor actor, StoryMomentUpsertDto request) {
+        requireManager(actor);
+        List<String> images = validateRequest(request);
+        LocalDateTime now = now();
+        StoryMoment moment = new StoryMoment();
+        applyRequest(moment, request, images);
+        moment.setCreatedByUserId(actor.userId());
+        moment.setCreatedAt(now);
+        moment.setUpdatedAt(now);
+        storyMapper.insertMoment(moment);
+        if (moment.getId() == null) {
+            moment.setId(0L);
+        }
+        return toVo(moment);
+    }
+
+    public StoryMomentVo update(AuthenticatedActor actor, Long id, StoryMomentUpsertDto request) {
+        requireManager(actor);
+        StoryMoment moment = requireActiveMoment(id);
+        List<String> images = validateRequest(request);
+        applyRequest(moment, request, images);
+        moment.setUpdatedAt(now());
+        storyMapper.updateMoment(moment);
+        return toVo(moment);
+    }
+
+    public void delete(AuthenticatedActor actor, Long id) {
+        requireManager(actor);
+        requireActiveMoment(id);
+        storyMapper.softDeleteMoment(id, now());
+    }
+
+    public StoryImageUploadVo uploadImage(AuthenticatedActor actor, MultipartFile file) {
+        requireManager(actor);
+        validateImage(file);
+        ObjectStore.StoredObject stored = imageStorage.upload(file, actor.userId());
+        return new StoryImageUploadVo(stored.url());
+    }
+
+    private void applyRequest(StoryMoment moment, StoryMomentUpsertDto request, List<String> images) {
+        moment.setTitle(clean(request.title()));
+        moment.setContent(clean(request.content()));
+        moment.setEventTime(request.eventTime());
+        moment.setEndTime(request.endTime());
+        moment.setLocationName(clean(request.locationName()));
+        moment.setAddress(cleanNullable(request.address()));
+        moment.setLongitude(request.longitude());
+        moment.setLatitude(request.latitude());
+        moment.setCategory(clean(request.category()));
+        moment.setImagesJson(toJson(images));
+    }
+
+    private List<String> validateRequest(StoryMomentUpsertDto request) {
+        if (request == null) {
+            throw ApplicationFailure.invalidInput("STORY_REQUEST_INVALID", "点滴内容不正确");
+        }
+        if (clean(request.title()).isBlank()) {
+            throw ApplicationFailure.invalidInput("STORY_TITLE_REQUIRED", "点滴标题不能为空");
+        }
+        if (request.eventTime() == null) {
+            throw ApplicationFailure.invalidInput("STORY_EVENT_TIME_REQUIRED", "点滴时间不能为空");
+        }
+        if (clean(request.locationName()).isBlank()) {
+            throw ApplicationFailure.invalidInput("STORY_LOCATION_REQUIRED", "点滴地点不能为空");
+        }
+        if (request.longitude() == null || request.latitude() == null) {
+            throw ApplicationFailure.invalidInput("STORY_COORDINATE_REQUIRED", "点滴坐标不能为空");
+        }
+        if (!CATEGORIES.contains(clean(request.category()))) {
+            throw ApplicationFailure.invalidInput("STORY_CATEGORY_INVALID", "点滴类型不正确");
+        }
+        return sanitizeImages(request.images());
+    }
+
+    private List<String> sanitizeImages(List<String> images) {
+        if (images == null) {
+            return List.of();
+        }
+        LinkedHashSet<String> sanitized = new LinkedHashSet<>();
+        for (String image : images) {
+            String cleaned = clean(image);
+            if (!cleaned.isBlank()) {
+                sanitized.add(cleaned);
+            }
+        }
+        if (sanitized.size() > MAX_IMAGES) {
+            throw ApplicationFailure.invalidInput("STORY_IMAGE_LIMIT_EXCEEDED", "每条点滴最多 3 张图片");
+        }
+        return List.copyOf(sanitized);
+    }
+
+    private StoryMoment requireActiveMoment(Long id) {
+        StoryMoment moment = storyMapper.findMomentById(id);
+        if (moment == null || moment.getDeletedAt() != null) {
+            throw ApplicationFailure.notFound("STORY_MOMENT_NOT_FOUND", "点滴不存在");
+        }
+        return moment;
+    }
+
+    private void requireManager(AuthenticatedActor actor) {
+        if (actor == null || !SiteManagerPolicy.canManage(actor.userId())) {
+            throw ApplicationFailure.forbidden("STORY_FORBIDDEN", "只有站点主人可以管理点滴");
+        }
+    }
+
+    private boolean canManage(AuthenticatedActor actor) {
+        return actor != null && SiteManagerPolicy.canManage(actor.userId());
+    }
+
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw ApplicationFailure.invalidInput("STORY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
+        }
+        String contentType = clean(file.getContentType()).toLowerCase();
+        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
+                || filename.endsWith(".png") || filename.endsWith(".webp") || filename.endsWith(".gif");
+        if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
+            throw ApplicationFailure.invalidInput("STORY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            throw ApplicationFailure.payloadTooLarge("STORY_IMAGE_TOO_LARGE", "单张图片不能超过 10MB");
+        }
+    }
+
+    private StoryMomentVo toVo(StoryMoment moment) {
+        return new StoryMomentVo(
+                moment.getId(),
+                moment.getTitle(),
+                moment.getContent(),
+                moment.getEventTime(),
+                moment.getEndTime(),
+                moment.getLocationName(),
+                moment.getAddress(),
+                moment.getLongitude(),
+                moment.getLatitude(),
+                moment.getCategory(),
+                parseImages(moment.getImagesJson()),
+                moment.getCreatedByUserId(),
+                moment.getCreatedAt(),
+                moment.getUpdatedAt()
+        );
+    }
+
+    private List<String> parseImages(String imagesJson) {
+        try {
+            List<String> images = objectMapper.readValue(clean(imagesJson), new TypeReference<>() {
+            });
+            return sanitizeImages(images);
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    private String toJson(List<String> images) {
+        try {
+            return objectMapper.writeValueAsString(images);
+        } catch (Exception ex) {
+            return "[]";
+        }
+    }
+
+    private Integer validateOptionalYear(Integer year) {
+        if (year == null) {
+            return null;
+        }
+        if (year < 1970 || year > 2100) {
+            throw ApplicationFailure.invalidInput("STORY_YEAR_INVALID", "点滴年份不正确");
+        }
+        return year;
+    }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
+    }
+
+    private String cleanNullable(String value) {
+        String cleaned = clean(value);
+        return cleaned.isBlank() ? null : cleaned;
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+}

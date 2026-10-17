@@ -1,0 +1,29 @@
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-height: 96rpx;
+  color: #8a8a8a;
+}
+
+.loading-state__ring {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #d6d6d6;
+  border-top-color: #111111;
+  border-radius: 50%;
+  animation: loadingRotate 900ms linear infinite;
+}
+
+.loading-state__text {
+  font-size: 26rpx;
+}
+
+@keyframes loadingRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

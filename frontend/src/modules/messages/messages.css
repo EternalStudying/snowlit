@@ -1,0 +1,73 @@
+.messages-page {
+  --page-bg-base: var(--snow-ground);
+  --page-bg-accent-rgb: 82, 109, 125;
+  --page-bg-warm-rgb: 116, 145, 136;
+  --page-bg-dot-rgb: 91, 74, 52;
+  --message-bg: var(--page-bg-base);
+  --message-ink: #332c27;
+  --message-muted: #86796e;
+  --message-line: rgba(84, 72, 62, 0.18);
+  --message-red: #b66663;
+  --messages-fusion-top-offset: 64px;
+  position: relative;
+  isolation: isolate;
+  height: calc(100vh - var(--messages-fusion-top-offset));
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--message-ink);
+  font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  background: var(--page-bg-root);
+  background-size: var(--page-bg-root-size);
+}
+
+.home-route-content > .messages-page {
+  overflow: hidden;
+}
+
+.messages-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--page-bg-paper-texture);
+  opacity: var(--page-bg-paper-opacity);
+}
+
+.messages-stage {
+  position: relative;
+  z-index: 1;
+  width: min(1280px, calc(100% - 40px));
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+.messages-page .message-state {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  place-items: center;
+  min-height: 320px;
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px dashed rgba(98, 82, 65, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.messages-page .message-form-error {
+  position: absolute;
+  left: 20px;
+  bottom: 148px;
+  z-index: 25;
+  max-width: min(420px, calc(100% - 40px));
+}
+
+@media (max-width: 860px) {
+  .messages-stage {
+    width: min(100% - 24px, 1280px);
+    height: 100%;
+    min-height: 0;
+  }
+}

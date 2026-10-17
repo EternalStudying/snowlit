@@ -1,0 +1,186 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12px 12px, rgba(199, 138, 25, 0.12) 0 1px, transparent 1.5px),
+    linear-gradient(90deg, rgba(223, 81, 69, 0.12), transparent 42%),
+    linear-gradient(180deg, #fff3e5 0%, #fffdf9 48%, #f8e5d1 100%);
+  background-size: 22px 22px, auto, auto;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+main {
+  overflow: hidden;
+}
+
+.hero,
+.section {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.hero {
+  min-height: 92vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  align-items: center;
+  gap: 36px;
+  padding: 64px 0 44px;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(3rem, 8vw, 7.5rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+  color: #8f342d;
+}
+
+.section {
+  padding: 48px 0;
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #8f342d;
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+  letter-spacing: 0;
+}
+
+.page-head {
+  padding-top: 42px;
+  padding-bottom: 10px;
+}
+
+.page-head h1 {
+  font-size: clamp(2.5rem, 7vw, 5.6rem);
+}
+
+figure {
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  color: var(--ink-green);
+}
+
+.memory-ledger-shell {
+  width: min(1180px, 100%);
+  min-height: clamp(218px, 20vw, 290px);
+  margin: 0 auto;
+}
+
+.memory-ledger-shell__flower {
+  position: absolute;
+  z-index: 2;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 7px 10px rgba(111, 58, 35, 0.12));
+}
+
+.memory-ledger-shell__flower {
+  width: clamp(54px, 5.4vw, 78px);
+  opacity: 0.8;
+}
+
+.memory-ledger-shell__flower--left {
+  left: clamp(20px, 2.4vw, 34px);
+  bottom: clamp(30px, 3vw, 46px);
+  transform: rotate(-9deg);
+}
+
+.memory-ledger-shell__flower--right {
+  right: clamp(20px, 2.6vw, 38px);
+  bottom: clamp(26px, 3vw, 44px);
+  transform: scaleX(-1) rotate(-10deg);
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-green);
+  font-weight: 700;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #dfc3ad;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #37231f;
+  background: #fffaf5;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 16px;
+  color: #fff;
+  background: var(--coral);
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}

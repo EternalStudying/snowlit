@@ -1,0 +1,82 @@
+<view class="albums-page snowlit-tab-page">
+  <view class="snowlit-page-heading">
+    <view class="snowlit-page-brand">SNOWLIT</view>
+    <view class="snowlit-page-title">相册</view>
+    <view class="snowlit-page-subtitle">把照片慢慢收好</view>
+  </view>
+
+  <view class="hairline hero-line"></view>
+
+  <view class="album-add" wx:if="{{canManage}}" bindtap="goCreate">
+    <image class="album-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
+  </view>
+
+  <view class="album-section">
+    <view class="section-heading">
+      <view class="section-label">ALBUMS</view>
+      <view class="section-state">{{totalText}}</view>
+    </view>
+
+    <view class="album-state" wx:if="{{loading}}">相册加载中...</view>
+    <view class="album-state" wx:elif="{{message}}">{{message}}</view>
+    <view class="album-state" wx:elif="{{!albums.length}}">还没有已发布相册</view>
+
+    <view class="album-list" wx:else>
+      <view
+        class="album-row"
+        wx:for="{{albums}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="openAlbum"
+      >
+        <view class="album-media album-media--{{item.layout}}">
+          <block wx:if="{{item.locked}}">
+            <view class="locked-media">
+              <image class="lock-icon" src="../../assets/icons/home/lock.svg" mode="aspectFit" />
+            </view>
+          </block>
+          <image
+            wx:else
+            class="cover-photo"
+            src="{{item.cover}}"
+            mode="aspectFill"
+          />
+        </view>
+
+        <view class="album-content">
+          <view class="album-title-row">
+            <view class="album-title">{{item.title}}</view>
+            <view class="album-title-badges" wx:if="{{item.pinned || item.locked}}">
+              <view wx:if="{{item.pinned}}" class="album-title-badge">置顶</view>
+              <view wx:if="{{item.locked}}" class="album-title-badge">私密</view>
+            </view>
+          </view>
+          <view class="album-description">{{item.description}}</view>
+          <view class="album-meta">{{item.meta}}</view>
+          <view class="album-stats">
+            <view
+              class="album-stat {{stat.active ? 'album-stat--active' : ''}}"
+              wx:for="{{item.stats}}"
+              wx:for-item="stat"
+              wx:key="type"
+            >
+              <image class="album-stat-icon" src="{{stat.icon}}" mode="aspectFit" />
+              <text class="album-stat-value">{{stat.value}}</text>
+            </view>
+          </view>
+        </view>
+
+        <image class="album-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="album-load-more" wx:if="{{hasMore}}" bindtap="loadMoreAlbums">
+        {{loadingMore ? '加载中...' : '加载更多'}}
+      </view>
+    </view>
+  </view>
+
+  <view class="snowlit-end-tip" wx:if="{{!loading && !message && !hasMore && !loadingMore}}">没有更多了哦~</view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

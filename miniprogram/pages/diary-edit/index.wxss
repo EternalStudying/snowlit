@@ -1,0 +1,478 @@
+.diary-edit-page {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 34rpx;
+  overflow-x: hidden;
+  color: #050505;
+  background: #fbfbfb;
+  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+}
+
+.diary-edit-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 120rpx;
+  height: 146rpx;
+}
+
+.back-button {
+  position: absolute;
+  top: 94rpx;
+  left: 38rpx;
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.back-icon {
+  position: absolute;
+  top: 7rpx;
+  left: 4rpx;
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.diary-edit-section {
+  padding-top: 47rpx;
+}
+
+.diary-edit-basic {
+  padding-top: 183rpx;
+}
+
+.section-label {
+  color: #777777;
+  font-size: 20rpx;
+  font-weight: 400;
+  letter-spacing: 14rpx;
+  line-height: 28rpx;
+}
+
+.basic-card {
+  margin-top: 22rpx;
+  overflow: hidden;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.basic-row {
+  display: flex;
+  align-items: center;
+  min-height: 84rpx;
+  padding: 0 20rpx 0 28rpx;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.basic-row--last {
+  border-bottom: 0;
+}
+
+.basic-icon {
+  flex: 0 0 auto;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.basic-icon--text {
+  color: #050505;
+  font-size: 28rpx;
+  font-weight: 500;
+  line-height: 40rpx;
+  text-align: center;
+}
+
+.basic-label {
+  flex: 0 0 auto;
+  margin-left: 36rpx;
+  color: #222222;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+}
+
+.basic-value {
+  flex: 1;
+  min-width: 0;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  letter-spacing: 2rpx;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.basic-input {
+  flex: 1;
+  min-width: 0;
+  margin-left: 28rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.chevron-icon {
+  flex: 0 0 auto;
+  width: 28rpx;
+  height: 28rpx;
+  margin-left: 26rpx;
+  opacity: 0.48;
+}
+
+.mood-pill {
+  flex: 0 0 auto;
+  height: 48rpx;
+  margin-left: auto;
+  padding: 0 34rpx;
+  color: #d98925;
+  background: #fde8cf;
+  border-radius: 999rpx;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 48rpx;
+}
+
+.mood-panel {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14rpx;
+  padding: 22rpx 24rpx;
+  border-bottom: 1rpx solid #dedede;
+  background: rgba(250, 250, 250, 0.8);
+}
+
+.mood-option {
+  height: 48rpx;
+  color: #666666;
+  border: 1rpx solid #dddddd;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  font-weight: 400;
+  line-height: 48rpx;
+  text-align: center;
+}
+
+.mood-option--active {
+  color: #ffffff;
+  border-color: #050505;
+  background: #050505;
+}
+
+.visibility-switch {
+  display: grid;
+  flex: 1;
+  max-width: 266rpx;
+  height: 56rpx;
+  grid-template-columns: 1fr 1fr;
+  margin-left: auto;
+  overflow: hidden;
+  border: 1rpx solid #d4d4d4;
+  border-radius: 999rpx;
+  background: #fbfbfb;
+}
+
+.visibility-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555555;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
+}
+
+.visibility-option--active {
+  color: #ffffff;
+  background: #050505;
+}
+
+.diary-edit-words {
+  padding-top: 50rpx;
+}
+
+.words-panel {
+  min-height: 670rpx;
+  margin-top: 22rpx;
+  overflow: hidden;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.toolbar {
+  display: grid;
+  height: 84rpx;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 84rpx;
+}
+
+.toolbar-button--text {
+  color: #050505;
+  font-size: 32rpx;
+  font-weight: 500;
+  line-height: 84rpx;
+  text-align: center;
+}
+
+.toolbar-icon {
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.toolbar-icon--image {
+  width: 42rpx;
+  height: 42rpx;
+}
+
+.editor-body {
+  padding: 38rpx 32rpx 48rpx;
+}
+
+.words-textarea {
+  width: 100%;
+  min-height: 172rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 52rpx;
+}
+
+.preview-body {
+  min-height: 520rpx;
+  padding: 42rpx 38rpx 52rpx;
+}
+
+.preview-body--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-empty {
+  max-width: 100%;
+  color: #9a9a9a;
+  font-size: 27rpx;
+  line-height: 42rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.preview-paragraph {
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 52rpx;
+  white-space: pre-line;
+}
+
+.preview-heading {
+  color: #111111;
+  font-size: 31rpx;
+  font-weight: 500;
+  line-height: 46rpx;
+}
+
+.preview-quote {
+  padding: 14rpx 18rpx;
+  color: #5f493f;
+  border-left: 5rpx solid rgba(196, 125, 103, 0.42);
+  background: rgba(255, 236, 205, 0.46);
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 50rpx;
+}
+
+.preview-list {
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 50rpx;
+}
+
+.preview-list-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.preview-list-marker {
+  flex: 0 0 48rpx;
+  color: #666666;
+  line-height: 50rpx;
+}
+
+.preview-list-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 50rpx;
+  word-break: break-word;
+}
+
+.preview-code {
+  box-sizing: border-box;
+  padding: 18rpx 20rpx;
+  color: #6f4e3f;
+  border: 1rpx solid rgba(174, 124, 86, 0.2);
+  border-radius: 8rpx;
+  background: rgba(255, 239, 210, 0.72);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 25rpx;
+  line-height: 38rpx;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-hr {
+  height: 1rpx;
+  border-top: 1rpx dashed rgba(121, 86, 65, 0.28);
+}
+
+.preview-table {
+  overflow: hidden;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  color: #333333;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.preview-table-row {
+  display: flex;
+  border-top: 1rpx solid #eeeeee;
+}
+
+.preview-table-row--header {
+  border-top: 0;
+  background: rgba(255, 239, 210, 0.62);
+  font-weight: 600;
+}
+
+.preview-table-cell {
+  flex: 1;
+  min-width: 0;
+  padding: 12rpx 14rpx;
+  border-left: 1rpx solid #eeeeee;
+  word-break: break-word;
+}
+
+.preview-table-cell:first-child {
+  border-left: 0;
+}
+
+.preview-image {
+  display: block;
+  width: 50%;
+  margin-right: auto;
+  margin-left: auto;
+  border-radius: 6rpx;
+  background: #eeeeee;
+}
+
+.preview-block--first {
+  margin-top: 0;
+}
+
+.preview-block--tight {
+  margin-top: 12rpx;
+}
+
+.preview-block--spaced {
+  margin-top: 30rpx;
+}
+
+.mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 42rpx 118rpx 0;
+}
+
+.mode-tab {
+  position: relative;
+  height: 78rpx;
+  color: #777777;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 78rpx;
+  text-align: center;
+}
+
+.mode-tab--active {
+  color: #050505;
+  font-weight: 600;
+}
+
+.mode-tab--active::after {
+  position: absolute;
+  right: 34rpx;
+  bottom: 0;
+  left: 34rpx;
+  height: 5rpx;
+  background: #050505;
+  content: "";
+}
+
+.footer-spacer {
+  height: 184rpx;
+}
+
+.edit-message {
+  margin: -132rpx 20rpx 34rpx;
+  color: #8a3f14;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.diary-edit-footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 220rpx 1fr;
+  column-gap: 24rpx;
+  align-items: center;
+  padding: 38rpx 58rpx calc(38rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1rpx solid #eeeeee;
+}
+
+.cancel-button {
+  color: #777777;
+  font-size: 29rpx;
+  font-weight: 600;
+  line-height: 84rpx;
+  text-align: center;
+}
+
+.save-button {
+  height: 84rpx;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  background: #050505;
+  border-radius: 999rpx;
+  font-size: 29rpx;
+  font-weight: 500;
+  line-height: 84rpx;
+}
+
+.save-button::after {
+  border: 0;
+}

@@ -1,0 +1,125 @@
+<view class="story-map-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="map-stage" style="margin-top: {{mapTopOffsetRpx}}rpx; height: {{mapHeightRpx}}rpx;">
+    <map
+      wx:if="{{mapHeightRpx > 0}}"
+      id="storyMap"
+      class="native-map"
+      style="height: {{mapHeightRpx}}rpx;"
+      latitude="{{mapCenter.latitude}}"
+      longitude="{{mapCenter.longitude}}"
+      scale="{{mapScale}}"
+      markers="{{markers}}"
+      bindmarkertap="handleMarkerTap"
+      bindregionchange="handleMapRegionChange"
+      bindtouchstart="handleMapTouchStart"
+      bindtouchmove="handleMapTouchMove"
+      bindtouchend="handleMapTouchEnd"
+      bindtouchcancel="handleMapTouchEnd"
+      show-location="{{false}}"
+      enable-scroll="{{true}}"
+      enable-zoom="{{true}}"
+      enable-rotate="{{false}}"
+      enable-overlooking="{{false}}"
+    />
+  </view>
+
+  <view
+    class="filter-area"
+    bindtouchstart="handleMomentSheetTouchStart"
+    bindtouchmove="handleMomentSheetTouchMove"
+    bindtouchend="handleMomentSheetTouchEnd"
+    bindtouchcancel="handleMomentSheetTouchEnd"
+  >
+    <view class="category-row">
+      <view
+        class="category-item {{item.active ? 'category-item--active' : ''}}"
+        wx:for="{{filters}}"
+        wx:key="value"
+        data-value="{{item.value}}"
+        bindtap="handleFilterTap"
+      >
+        <text>{{item.label}}</text>
+        <view wx:if="{{item.active}}" class="category-line"></view>
+      </view>
+    </view>
+
+    <view class="year-dropdown" wx:if="{{yearDropdownOpen}}">
+      <view class="year-dropdown__inner">
+        <view
+          class="year-chip {{item.active ? 'year-chip--active' : ''}}"
+          wx:for="{{years}}"
+          wx:key="value"
+          data-value="{{item.value}}"
+          bindtap="handleYearTap"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="story-add" wx:if="{{canManage}}" bindtap="goCreate">
+    <image class="story-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
+  </view>
+
+  <view
+    class="moment-sheet-frame"
+    style="height: {{sheetHeightRpx}}rpx;"
+    bindtouchstart="handleMomentSheetTouchStart"
+    bindtouchmove="handleMomentSheetTouchMove"
+    bindtouchend="handleMomentSheetTouchEnd"
+    bindtouchcancel="handleMomentSheetTouchEnd"
+  >
+    <scroll-view
+      class="moment-sheet"
+      scroll-y="{{sheetScrollEnabled}}"
+      scroll-top="{{sheetScrollTop}}"
+      style="height: 100%;"
+      bindscroll="handleMomentSheetScroll"
+      enhanced="{{true}}"
+      show-scrollbar="{{false}}"
+    >
+      <view class="story-state" wx:if="{{loading}}">正在加载点滴</view>
+      <view class="story-state story-state--error" wx:elif="{{message}}">
+        <view>{{message}}</view>
+        <view class="state-action" bindtap="retryLoad">重试</view>
+      </view>
+      <view class="story-state" wx:elif="{{!hasMoments}}">还没有点滴</view>
+      <block wx:else>
+        <view
+          class="moment-row {{item.selected ? 'moment-row--selected' : ''}}"
+          wx:for="{{moments}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="goDetail"
+        >
+          <view class="moment-date">{{item.date}}</view>
+          <view class="moment-main">
+            <view class="moment-title">{{item.title}}</view>
+            <view class="moment-meta">
+              <image class="meta-pin" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+              <text>{{item.locationName}}</text>
+              <text class="meta-dot">·</text>
+              <view class="category-tag">{{item.categoryLabel}}</view>
+              <text class="meta-dot">·</text>
+              <text>{{item.time}}</text>
+            </view>
+            <view wx:if="{{item.summary}}" class="moment-summary">{{item.summary}}</view>
+          </view>
+          <image class="moment-thumb" src="{{item.image}}" mode="aspectFill" />
+        </view>
+      </block>
+
+      <view class="snowlit-end-tip" wx:if="{{!loading && !message}}">没有更多了哦~</view>
+    </scroll-view>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

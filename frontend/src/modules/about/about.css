@@ -1,0 +1,365 @@
+.about-starmap-page {
+  min-height: 540vh;
+  margin: 0;
+  color: #fff7df;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 205, 129, 0.18), transparent 24%),
+    radial-gradient(circle at 78% 34%, rgba(255, 160, 186, 0.14), transparent 24%),
+    radial-gradient(circle at 52% 78%, rgba(120, 204, 255, 0.12), transparent 26%),
+    linear-gradient(180deg, #12152a 0%, #201f3e 48%, #47334c 100%);
+  overflow: clip;
+}
+
+.about-starmap__viewport {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.about-starmap__sky,
+.about-starmap__route,
+.about-starmap__stations {
+  position: absolute;
+  inset: 0;
+}
+
+.about-starmap__sky {
+  z-index: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 88px 88px;
+  opacity: 0.38;
+}
+
+.about-starmap__star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 236, 186, 0.86);
+  box-shadow: 0 0 12px rgba(255, 220, 150, 0.62);
+  animation: about-star-drift 8s ease-in-out infinite alternate;
+}
+
+.about-starmap__star:nth-child(4n + 1) {
+  width: 2px;
+  height: 2px;
+}
+
+.about-starmap__star:nth-child(4n + 2) {
+  width: 3px;
+  height: 3px;
+}
+
+.about-starmap__star:nth-child(4n + 3) {
+  width: 4px;
+  height: 4px;
+}
+
+.about-starmap__star:nth-child(4n) {
+  width: 5px;
+  height: 5px;
+}
+
+.about-starmap__star:nth-child(1) { left: 7%; top: 14%; }
+.about-starmap__star:nth-child(2) { left: 18%; top: 8%; }
+.about-starmap__star:nth-child(3) { left: 31%; top: 19%; }
+.about-starmap__star:nth-child(4) { left: 46%; top: 10%; }
+.about-starmap__star:nth-child(5) { left: 61%; top: 16%; }
+.about-starmap__star:nth-child(6) { left: 77%; top: 7%; }
+.about-starmap__star:nth-child(7) { left: 91%; top: 18%; }
+.about-starmap__star:nth-child(8) { left: 11%; top: 31%; }
+.about-starmap__star:nth-child(9) { left: 24%; top: 37%; }
+.about-starmap__star:nth-child(10) { left: 38%; top: 29%; }
+.about-starmap__star:nth-child(11) { left: 54%; top: 40%; }
+.about-starmap__star:nth-child(12) { left: 69%; top: 31%; }
+.about-starmap__star:nth-child(13) { left: 84%; top: 42%; }
+.about-starmap__star:nth-child(14) { left: 96%; top: 34%; }
+.about-starmap__star:nth-child(15) { left: 5%; top: 53%; }
+.about-starmap__star:nth-child(16) { left: 19%; top: 62%; }
+.about-starmap__star:nth-child(17) { left: 32%; top: 51%; }
+.about-starmap__star:nth-child(18) { left: 48%; top: 58%; }
+.about-starmap__star:nth-child(19) { left: 63%; top: 50%; }
+.about-starmap__star:nth-child(20) { left: 79%; top: 61%; }
+.about-starmap__star:nth-child(21) { left: 93%; top: 55%; }
+.about-starmap__star:nth-child(22) { left: 13%; top: 76%; }
+.about-starmap__star:nth-child(23) { left: 27%; top: 84%; }
+.about-starmap__star:nth-child(24) { left: 41%; top: 72%; }
+.about-starmap__star:nth-child(25) { left: 56%; top: 82%; }
+.about-starmap__star:nth-child(26) { left: 71%; top: 74%; }
+.about-starmap__star:nth-child(27) { left: 88%; top: 86%; }
+.about-starmap__star:nth-child(28) { left: 8%; top: 91%; }
+.about-starmap__star:nth-child(29) { left: 22%; top: 23%; }
+.about-starmap__star:nth-child(30) { left: 43%; top: 47%; }
+.about-starmap__star:nth-child(31) { left: 66%; top: 24%; }
+.about-starmap__star:nth-child(32) { left: 82%; top: 12%; }
+.about-starmap__star:nth-child(33) { left: 35%; top: 91%; }
+.about-starmap__star:nth-child(34) { left: 74%; top: 93%; }
+
+.about-starmap__intro {
+  position: absolute;
+  z-index: 4;
+  top: 11vh;
+  left: max(36px, 7vw);
+  width: min(420px, calc(100% - 56px));
+}
+
+.about-starmap__intro p,
+.about-starmap__card p {
+  margin: 0;
+  color: #ffd98b;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+}
+
+.about-starmap__intro h1 {
+  margin: 12px 0 16px;
+  color: #fff3d0;
+  font-family: var(--font-display);
+  font-size: 3.45rem;
+  line-height: 1.04;
+  letter-spacing: 0;
+  text-shadow: 0 0 24px rgba(255, 210, 130, 0.22);
+}
+
+.about-starmap__intro span,
+.about-starmap__card span {
+  display: block;
+  color: #e8dcc4;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.about-starmap__route {
+  z-index: 1;
+  width: min(980px, 84vw);
+  height: min(640px, 70vh);
+  margin: 18vh auto 0;
+  filter: drop-shadow(0 0 16px rgba(255, 217, 139, 0.42));
+}
+
+.about-starmap__route-base,
+.about-starmap__route-progress {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.about-starmap__route-base {
+  stroke: rgba(255, 235, 180, 0.2);
+  stroke-width: 1.2;
+  stroke-dasharray: 2.4 3.2;
+}
+
+.about-starmap__route-progress {
+  stroke: #ffd98b;
+  stroke-width: 1.5;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 180ms ease-out;
+}
+
+.about-starmap__stations {
+  z-index: 3;
+  width: min(980px, 84vw);
+  height: min(640px, 70vh);
+  margin: 18vh auto 0;
+  pointer-events: none;
+}
+
+.about-starmap__station {
+  position: absolute;
+  left: var(--station-x);
+  top: var(--station-y);
+  display: grid;
+  place-items: center;
+  width: 72px;
+  min-height: 72px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  color: #fff4cf;
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.about-starmap__station-core {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffe3a3;
+  border: 2px solid rgba(255, 249, 221, 0.92);
+  box-shadow:
+    0 0 16px rgba(255, 220, 150, 0.72),
+    0 0 36px rgba(255, 169, 184, 0.28);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.about-starmap__station-label {
+  margin-top: 7px;
+  padding: 4px 8px;
+  color: #f8e6ba;
+  font-size: 0.78rem;
+  line-height: 1;
+  border: 1px solid rgba(255, 226, 168, 0.28);
+  border-radius: 999px;
+  background: rgba(18, 18, 38, 0.62);
+}
+
+.about-starmap__station:hover .about-starmap__station-core,
+.about-starmap__station:focus-visible .about-starmap__station-core,
+.about-starmap__station.is-active .about-starmap__station-core {
+  transform: scale(1.32);
+  background: #fff2c4;
+  box-shadow:
+    0 0 20px rgba(255, 232, 172, 0.9),
+    0 0 58px rgba(255, 177, 202, 0.42);
+}
+
+.about-starmap__station:focus-visible,
+.about-starmap__return:focus-visible {
+  outline: 2px solid #ffe3a3;
+  outline-offset: 6px;
+}
+
+.about-starmap__station--pending .about-starmap__station-core {
+  background: #cabdca;
+  box-shadow: 0 0 16px rgba(208, 192, 220, 0.45);
+}
+
+.about-starmap__card {
+  position: absolute;
+  z-index: 4;
+  right: max(32px, 8vw);
+  top: 28vh;
+  width: min(340px, calc(100% - 48px));
+  padding: 22px;
+  border: 1px solid rgba(255, 226, 168, 0.32);
+  border-radius: 18px;
+  background: rgba(16, 18, 38, 0.72);
+  box-shadow:
+    0 20px 58px rgba(0, 0, 0, 0.28),
+    0 0 28px rgba(255, 217, 139, 0.14);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.about-starmap__card h2 {
+  margin: 8px 0 12px;
+  color: #fff2cd;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.about-starmap__card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #ffe4a8;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.about-starmap__return {
+  position: fixed;
+  z-index: 10;
+  left: max(24px, env(safe-area-inset-left));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  color: #fff4d2;
+  text-decoration: none;
+  border: 1px solid rgba(255, 226, 168, 0.38);
+  border-radius: 999px;
+  background: rgba(15, 17, 34, 0.72);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 0 20px rgba(255, 217, 139, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.about-starmap__toast {
+  position: fixed;
+  z-index: 12;
+  left: 50%;
+  bottom: max(32px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 16px;
+  color: #fff2cd;
+  border: 1px solid rgba(255, 226, 168, 0.34);
+  border-radius: 999px;
+  background: rgba(21, 20, 40, 0.82);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+}
+
+@keyframes about-star-drift {
+  from {
+    opacity: 0.42;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0.92;
+    transform: translate3d(4px, -6px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-starmap-page *,
+  .about-starmap-page *::before,
+  .about-starmap-page *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .about-starmap-page[data-reduced-motion="true"] .about-starmap__route-progress {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .about-starmap-page {
+    min-height: 580vh;
+  }
+
+  .about-starmap__intro {
+    top: 8vh;
+    left: 24px;
+  }
+
+  .about-starmap__intro h1 {
+    font-size: 2.28rem;
+  }
+
+  .about-starmap__route,
+  .about-starmap__stations {
+    width: 116vw;
+    height: 52vh;
+    margin-top: 30vh;
+    margin-left: -8vw;
+  }
+
+  .about-starmap__card {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 98px;
+    width: auto;
+  }
+
+  .about-starmap__return {
+    left: max(16px, env(safe-area-inset-left));
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}

@@ -1,0 +1,12 @@
+<view class="minimal-section">
+  <view class="minimal-section__head">
+    <view wx:if="{{label}}" class="minimal-section__label">{{label}}</view>
+    <view class="minimal-section__content">
+      <view wx:if="{{title}}" class="minimal-section__title">{{title}}</view>
+      <view wx:if="{{caption}}" class="minimal-section__caption">{{caption}}</view>
+    </view>
+  </view>
+  <view class="minimal-section__body">
+    <slot></slot>
+  </view>
+</view>

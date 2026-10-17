@@ -1,0 +1,116 @@
+<view class="top-scroll-mask" wx:if="{{showTopMask}}"></view>
+
+<view class="diary-page snowlit-tab-page">
+  <view class="snowlit-page-heading">
+    <view class="snowlit-page-brand">SNOWLIT</view>
+    <view class="snowlit-page-title">日记</view>
+    <view class="snowlit-page-subtitle">把心事慢慢写下来</view>
+  </view>
+
+  <view class="hairline hero-line"></view>
+
+  <view class="month-section">
+    <view class="section-label">MONTH</view>
+
+    <view class="month-overview">
+      <view>
+        <view class="month-title">{{monthTitle}}</view>
+        <view class="month-caption">{{monthCaption}}</view>
+      </view>
+    </view>
+
+    <scroll-view
+      class="month-scroll"
+      scroll-x
+      enable-flex
+      scroll-with-animation
+      scroll-into-view="{{activeMonthAnchor}}"
+    >
+      <view
+        id="month-{{item.value}}"
+        class="month-tab {{item.active ? 'month-tab--active' : ''}}"
+        wx:for="{{monthTabs}}"
+        wx:key="value"
+        data-value="{{item.value}}"
+        bindtap="handleMonthTap"
+      >
+        <text>{{item.label}}</text>
+        <view wx:if="{{item.active}}" class="month-tab-line"></view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="stat-row">
+    <view
+      class="stat-item"
+      wx:for="{{stats}}"
+      wx:key="label"
+    >
+      <view class="stat-label">{{item.label}}</view>
+      <view class="stat-value">{{item.value}}</view>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="filter-row">
+    <view
+      class="filter-item {{activeFilter === item.value ? 'filter-item--active' : ''}}"
+      wx:for="{{filters}}"
+      wx:key="value"
+      data-value="{{item.value}}"
+      bindtap="handleFilterTap"
+    >
+      <text>{{item.label}}</text>
+      <view wx:if="{{activeFilter === item.value}}" class="filter-line"></view>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="entries-section">
+    <view class="section-label">ENTRIES</view>
+
+    <view class="entry-state" wx:if="{{loading}}">日记加载中...</view>
+    <view class="entry-state" wx:elif="{{message}}">{{message}}</view>
+    <view class="entry-state" wx:elif="{{!entries.length}}">这个月份还没有日记</view>
+
+    <view class="entry-list" wx:else>
+      <view
+        class="entry-row"
+        wx:for="{{entries}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="handleEntryTap"
+      >
+        <view class="entry-date-cell">
+          <view class="entry-date">{{item.date}}</view>
+          <view class="entry-visibility">{{item.visibility}}</view>
+        </view>
+        <view class="entry-main">
+          <view class="entry-title">{{item.title}}</view>
+          <view class="entry-summary">{{item.summary}}</view>
+          <view class="entry-meta">{{item.meta}}</view>
+        </view>
+        <view class="entry-aside" wx:if="{{item.image}}">
+          <image
+            class="entry-thumb"
+            src="{{item.image}}"
+            mode="aspectFill"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="snowlit-end-tip" wx:if="{{!loading && !message}}">没有更多了哦~</view>
+</view>
+
+<view class="diary-add" bindtap="handleCreateDiary">
+  <image class="diary-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

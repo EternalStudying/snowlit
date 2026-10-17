@@ -1,0 +1,53 @@
+<view class="login-page">
+  <view class="login-title">Snowlit</view>
+  <view class="login-subtitle">把回忆轻轻收好</view>
+  <view class="login-short-line"></view>
+
+  <view wx:if="{{!showBindForm}}" class="login-button" hover-class="login-button--hover" bindtap="handleWechatLogin">
+    <image class="wechat-icon" src="../../assets/icons/wechat.svg" mode="aspectFit"></image>
+    <text class="login-button__text">微信登录</text>
+  </view>
+
+  <view wx:if="{{showBindForm}}" class="bind-panel">
+    <view class="bind-message">{{bindMessage}}</view>
+    <input
+      class="bind-input"
+      value="{{bindUsername}}"
+      placeholder="Snowlit 账号"
+      placeholder-class="bind-input__placeholder"
+      bindinput="handleBindUsernameInput"
+    />
+    <input
+      class="bind-input"
+      value="{{bindPassword}}"
+      password="{{true}}"
+      placeholder="账号密码"
+      placeholder-class="bind-input__placeholder"
+      bindinput="handleBindPasswordInput"
+    />
+    <view class="bind-button {{binding ? 'bind-button--disabled' : ''}}" hover-class="bind-button--hover" bindtap="handleBindSubmit">
+      {{binding ? '绑定中' : '绑定并登录'}}
+    </view>
+    <view class="bind-secondary" hover-class="bind-secondary--hover" bindtap="handleWechatLogin">重新微信登录</view>
+  </view>
+
+  <view class="public-link {{showBindForm ? 'public-link--bind' : ''}}" hover-class="public-link--hover" bindtap="handlePublicHome">先进入首页</view>
+
+  <view class="login-bottom-line"></view>
+  <view class="agreement-section">
+    <view class="agreement-row">
+      <checkbox-group bindchange="handleAgreementChange">
+        <label class="agreement-check">
+          <checkbox class="agreement-checkbox" value="agree" checked="{{privacyAgreed}}" color="#050505" />
+          <text class="agreement-text">我已阅读并同意</text>
+        </label>
+      </checkbox-group>
+      <text class="agreement-link" hover-class="agreement-link--hover" catchtap="handleServiceAgreement">《用户服务协议》</text>
+      <text class="agreement-text">和</text>
+      <text class="agreement-link" hover-class="agreement-link--hover" catchtap="handlePrivacy">《隐私政策》</text>
+    </view>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

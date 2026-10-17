@@ -1,0 +1,35 @@
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-sheet-mask {{visible ? 'snowlit-sheet-mask--visible' : ''}}"
+  catchtouchmove="noop"
+  bindtap="handleCancel"
+>
+  <view class="snowlit-sheet-panel completion-panel" catchtap="noop">
+    <view class="snowlit-sheet-head">
+      <view class="snowlit-sheet-title">完成照片</view>
+      <view class="snowlit-sheet-cancel" bindtap="handleCancel">取消</view>
+    </view>
+
+    <view class="completion-copy">上传一张照片，才能把这条清单收进 DONE。</view>
+
+    <view class="completion-photo-box" bindtap="chooseImage">
+      <block wx:if="{{imagePath}}">
+        <image class="completion-photo" src="{{imagePath}}" mode="aspectFill" />
+        <view class="completion-photo-remove" catchtap="removeImage">×</view>
+      </block>
+      <block wx:else>
+        <image class="completion-photo-icon" src="../../assets/icons/diary-edit/image-plus.svg" mode="aspectFit" />
+        <view class="completion-photo-text">添加图片</view>
+      </block>
+    </view>
+
+    <button
+      class="completion-confirm {{submitting || !imagePath ? 'completion-confirm--disabled' : ''}}"
+      loading="{{submitting}}"
+      disabled="{{submitting || !imagePath}}"
+      bindtap="handleConfirm"
+    >
+      确认完成
+    </button>
+  </view>
+</view>

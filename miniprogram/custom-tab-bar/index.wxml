@@ -1,0 +1,22 @@
+<view class="snowlit-tabbar">
+  <view class="snowlit-tabbar__line"></view>
+  <view class="snowlit-tabbar__items">
+    <view
+      class="snowlit-tabbar__item"
+      wx:for="{{tabs}}"
+      wx:key="pagePath"
+      data-index="{{index}}"
+      bindtap="switchTab"
+    >
+      <image
+        class="snowlit-tabbar__icon"
+        src="{{selected === index ? item.selectedIconPath : item.iconPath}}"
+        mode="aspectFit"
+      />
+      <view class="snowlit-tabbar__text {{selected === index ? 'snowlit-tabbar__text--active' : ''}}">
+        {{item.text}}
+      </view>
+      <view wx:if="{{selected === index}}" class="snowlit-tabbar__indicator"></view>
+    </view>
+  </view>
+</view>

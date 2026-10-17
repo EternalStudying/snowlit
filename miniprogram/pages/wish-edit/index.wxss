@@ -1,0 +1,244 @@
+.wish-edit-page {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 34rpx;
+  overflow-x: hidden;
+  color: #050505;
+  background: #fbfbfb;
+  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+}
+
+.wish-edit-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 120rpx;
+  height: 146rpx;
+}
+
+.back-button {
+  position: absolute;
+  top: 94rpx;
+  left: 38rpx;
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.back-icon {
+  position: absolute;
+  top: 7rpx;
+  left: 4rpx;
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.wish-edit-section {
+  padding-top: 50rpx;
+}
+
+.wish-edit-basic {
+  padding-top: 183rpx;
+}
+
+.section-label {
+  color: #777777;
+  font-size: 20rpx;
+  font-weight: 400;
+  letter-spacing: 14rpx;
+  line-height: 28rpx;
+}
+
+.basic-card {
+  margin-top: 22rpx;
+  overflow: hidden;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.basic-row {
+  display: flex;
+  align-items: center;
+  min-height: 84rpx;
+  padding: 0 20rpx 0 28rpx;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.basic-row--last {
+  border-bottom: 0;
+}
+
+.basic-icon {
+  flex: 0 0 auto;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.basic-label {
+  flex: 0 0 auto;
+  margin-left: 36rpx;
+  color: #222222;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+}
+
+.required-star {
+  flex: 0 0 auto;
+  margin-left: 12rpx;
+  color: #ff2b20;
+  font-size: 31rpx;
+  font-weight: 500;
+  line-height: 40rpx;
+}
+
+.basic-input {
+  flex: 1;
+  min-width: 0;
+  margin-left: 28rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.basic-value {
+  flex: 1;
+  min-width: 0;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  letter-spacing: 2rpx;
+  line-height: 40rpx;
+  text-align: right;
+}
+
+.category-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 136rpx;
+  height: 56rpx;
+  margin-left: auto;
+  padding: 0 34rpx;
+  color: #222222;
+  border: 1rpx solid #dedede;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.chevron-icon {
+  flex: 0 0 auto;
+  width: 28rpx;
+  height: 28rpx;
+  margin-left: 26rpx;
+  opacity: 0.48;
+}
+
+.wish-edit-details {
+  padding-top: 64rpx;
+}
+
+.wish-edit-note {
+  padding-top: 54rpx;
+}
+
+.details-panel {
+  min-height: 336rpx;
+  margin-top: 22rpx;
+  box-sizing: border-box;
+  padding: 38rpx 32rpx;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.details-textarea {
+  width: 100%;
+  min-height: 260rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 52rpx;
+}
+
+.note-panel {
+  min-height: 180rpx;
+  margin-top: 22rpx;
+  box-sizing: border-box;
+  padding: 34rpx 32rpx;
+  border: 1rpx solid #dedede;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.note-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  color: #333333;
+  font-size: 29rpx;
+  font-weight: 400;
+  line-height: 52rpx;
+}
+
+.edit-message {
+  margin-top: 28rpx;
+  color: #8a3f14;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.footer-spacer {
+  height: 184rpx;
+}
+
+.wish-edit-footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 220rpx 1fr;
+  column-gap: 24rpx;
+  align-items: center;
+  padding: 38rpx 58rpx calc(38rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1rpx solid #eeeeee;
+}
+
+.cancel-button {
+  color: #777777;
+  font-size: 29rpx;
+  font-weight: 600;
+  line-height: 84rpx;
+  text-align: center;
+}
+
+.save-button {
+  height: 84rpx;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  background: #050505;
+  border-radius: 999rpx;
+  font-size: 29rpx;
+  font-weight: 500;
+  line-height: 84rpx;
+}
+
+.save-button::after {
+  border: 0;
+}
+
+.save-button[disabled] {
+  opacity: 0.55;
+}

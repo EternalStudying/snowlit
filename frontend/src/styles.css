@@ -1,0 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Lobster&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap");
+@import "lenis/dist/lenis.css";
+@import "./styles/00-tokens.css";
+@import "./styles/05-page-background.css";
+@import "./styles/01-base.css";
+@import "./styles/02-app-shell.css";
+@import "./styles/03-effects.css";
+@import "./styles/components/site-record-footer.css";
+@import "./styles/90-keyframes.css";
+@import "./styles/99-responsive.css";

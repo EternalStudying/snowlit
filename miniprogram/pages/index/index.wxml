@@ -1,0 +1,169 @@
+<view class="home-page snowlit-tab-page">
+  <view class="top-scroll-mask" wx:if="{{showTopMask}}"></view>
+
+  <view class="snowlit-page-heading">
+    <view class="snowlit-page-brand">SNOWLIT</view>
+    <view class="snowlit-page-title">{{greetingTitle}}</view>
+    <view class="snowlit-page-subtitle">{{greetingSubtitle}}</view>
+  </view>
+
+  <view class="hairline hero-line"></view>
+
+  <view class="couple-row">
+    <view class="days">
+      <text class="days__label">在一起</text>
+      <text class="days__value">{{couple.togetherDays}}</text>
+      <text class="days__label">天</text>
+    </view>
+    <view class="names">
+      <text class="name">{{couple.boyfriendName}}</text>
+      <view class="name-divider"></view>
+      <text class="name">{{couple.girlfriendName}}</text>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="weather-section">
+    <view class="weather-row">
+      <image class="weather-icon" src="../../assets/icons/home/cloud.svg" mode="aspectFit" />
+      <view class="temperature">{{weather.temperatureText}}</view>
+      <view class="weather-copy">
+        <view class="weather-name">{{weather.name}}</view>
+        <view class="weather-place">{{weather.place}}</view>
+      </view>
+      <view class="location-action" bindtap="handleLocationTap">
+        <text wx:if="{{locationUpdating}}">更新中</text>
+        <text wx:else>更新位置</text>
+        <image class="chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="quick-grid">
+    <view class="quick-item" bindtap="goStory">
+      <image class="quick-icon" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+      <text>点滴</text>
+    </view>
+    <view class="quick-separator"></view>
+    <view class="quick-item" bindtap="goAlbums">
+      <image class="quick-icon" src="../../assets/icons/home/image.svg" mode="aspectFit" />
+      <text>相册</text>
+    </view>
+    <view class="quick-separator"></view>
+    <view class="quick-item" bindtap="goWishes">
+      <image class="quick-icon" src="../../assets/icons/home/clipboard-list.svg" mode="aspectFit" />
+      <text>清单</text>
+    </view>
+    <view class="quick-separator"></view>
+    <view class="quick-item" bindtap="goFeedback">
+      <image class="quick-icon" src="../../assets/icons/home/message-circle.svg" mode="aspectFit" />
+      <text>反馈</text>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="section-head">
+    <view>
+      <view class="section-label">MOMENTS</view>
+    </view>
+    <view class="view-all" bindtap="goStory">
+      <text>查看全部</text>
+      <image class="chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="moment-list">
+    <view class="moment-empty" wx:if="{{momentsLoading}}">点滴加载中...</view>
+    <view class="moment-empty" wx:if="{{!momentsLoading && momentsError}}">{{momentsError}}</view>
+    <view class="moment-empty" wx:if="{{!momentsLoading && !momentsError && !moments.length}}">最近还没有点滴</view>
+    <block wx:if="{{!momentsLoading && !momentsError && moments.length}}">
+      <view class="moment-row" wx:for="{{moments}}" wx:key="id" bindtap="goStory">
+        <view class="moment-date">{{item.date}}</view>
+        <view class="moment-main">
+          <view class="moment-title">{{item.title}}</view>
+          <view class="moment-meta">
+            <image class="meta-pin" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+            <text>{{item.meta}}</text>
+          </view>
+        </view>
+        <image class="moment-thumb" src="{{item.image}}" mode="aspectFill" />
+      </view>
+    </block>
+  </view>
+
+  <view class="hairline section-line"></view>
+
+  <view class="section-head albums-head">
+    <view>
+      <view class="section-label">ALBUMS</view>
+    </view>
+    <view class="view-all" bindtap="goAlbums">
+      <text>查看全部</text>
+      <image class="chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="album-list">
+    <view class="album-empty" wx:if="{{albumsLoading}}">相册加载中...</view>
+    <view class="album-empty" wx:if="{{!albumsLoading && albumsMessage}}">{{albumsMessage}}</view>
+    <block wx:if="{{!albumsLoading && !albumsMessage && albums.length}}">
+      <view class="album-row" wx:for="{{albums}}" wx:key="id" bindtap="goAlbums">
+        <view class="album-cover album-cover--lock" wx:if="{{item.locked}}">
+          <image class="lock-icon" src="../../assets/icons/home/lock.svg" mode="aspectFit" />
+        </view>
+        <image wx:else class="album-cover" src="{{item.cover}}" mode="aspectFill" />
+        <view class="album-main">
+          <view class="album-title">{{item.title}}</view>
+          <view class="album-count">{{item.countText}}</view>
+        </view>
+        <view class="album-status" wx:if="{{item.statusText}}">{{item.statusText}}</view>
+        <image class="row-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+    </block>
+  </view>
+
+  <view class="hairline section-line"></view>
+
+  <view class="wishes">
+    <view class="section-label wishes-label">WISHES</view>
+    <view class="wish-empty" wx:if="{{wishesLoading}}">清单统计加载中...</view>
+    <view class="wish-empty" wx:if="{{!wishesLoading && wishesMessage}}">{{wishesMessage}}</view>
+    <block wx:if="{{!wishesLoading && !wishesMessage}}">
+      <view class="wish-row" wx:for="{{wishes}}" wx:key="label" bindtap="goWishes">
+        <image class="wish-icon" src="{{item.icon}}" mode="aspectFit" />
+        <view class="wish-name">{{item.label}}</view>
+        <view class="wish-progress">
+          <view class="wish-progress__bar" style="width: {{item.progress}}%;"></view>
+        </view>
+        <view class="wish-count">{{item.count}} 项</view>
+        <image class="wish-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+    </block>
+  </view>
+
+  <block wx:if="{{updateNotice}}">
+    <view class="hairline update-line"></view>
+
+    <view class="update-section" bindtap="goProfile">
+      <view class="section-label">UPDATE</view>
+      <view class="update-row">
+        <view class="update-main">
+          <view class="update-title">{{updateNotice.title}}</view>
+          <view class="update-item" wx:if="{{updateNotice.version}}">· v{{updateNotice.version}}</view>
+          <view class="update-item" wx:for="{{updateNotice.items}}" wx:key="*this">· {{item}}</view>
+        </view>
+        <image class="update-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+    </view>
+  </block>
+
+  <view class="snowlit-end-tip">没有更多了哦~</view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-privacy id="snowlit-privacy" />

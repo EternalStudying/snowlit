@@ -1,0 +1,108 @@
+<view class="story-detail-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="page-head story-head snowlit-subpage-heading">
+    <view class="snowlit-subpage-brand">STORY</view>
+    <view class="snowlit-subpage-title">{{moment.title}}</view>
+    <view class="snowlit-subpage-subtitle">把这一天轻轻收好</view>
+  </view>
+
+  <view class="section-line"></view>
+
+  <view class="detail-state" wx:if="{{loading}}">正在加载点滴</view>
+  <view class="detail-state detail-state--error" wx:elif="{{message}}">
+    <view>{{message}}</view>
+    <view class="detail-retry" bindtap="retryLoad">重试</view>
+  </view>
+  <block wx:else>
+    <view class="meta-grid">
+      <view class="meta-cell meta-cell--time">
+        <view class="meta-label">TIME</view>
+        <view class="meta-value">{{moment.date}}  {{moment.timeRange}}</view>
+      </view>
+      <view class="meta-cell meta-cell--category">
+        <view class="meta-label">CATEGORY</view>
+        <view class="category-pill">{{moment.categoryLabel}}</view>
+      </view>
+      <view class="meta-cell meta-cell--location">
+        <view class="meta-label">LOCATION</view>
+        <view class="meta-value meta-value--location">{{moment.locationName}}</view>
+      </view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="story-content">
+      <view wx:for="{{moment.contentLines}}" wx:key="*this" class="content-line">{{item}}</view>
+    </view>
+
+    <view class="section-label">PHOTOS</view>
+    <view class="photo-section" wx:if="{{moment.hasImages}}">
+      <image
+        class="photo-main"
+        src="{{moment.photoMain}}"
+        mode="aspectFill"
+        data-index="0"
+        bindtap="previewImage"
+      />
+      <view class="photo-row" wx:if="{{moment.photoThumbs.length}}">
+        <image
+          class="photo-thumb"
+          wx:for="{{moment.photoThumbs}}"
+          wx:key="index"
+          src="{{item.url}}"
+          mode="aspectFill"
+          data-index="{{item.index}}"
+          bindtap="previewImage"
+        />
+      </view>
+    </view>
+    <view class="photo-empty" wx:else>暂无照片</view>
+
+    <view class="section-label section-label--map">MAP</view>
+    <view class="map-card">
+      <view class="map-texture">
+        <view class="map-lake"></view>
+        <view class="map-street map-street--1"></view>
+        <view class="map-street map-street--2"></view>
+        <view class="map-street map-street--3"></view>
+        <view class="map-street map-street--4"></view>
+        <view class="map-street map-street--5"></view>
+      </view>
+      <image class="map-pin" src="../../assets/icons/story/map-pin-filled.svg" mode="aspectFit" />
+      <view class="map-name">{{moment.locationName}}</view>
+    </view>
+
+    <view class="location-info">
+      <view class="location-row">
+        <image class="location-icon" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+        <text>{{moment.address}}</text>
+      </view>
+      <view class="location-row">
+        <image class="location-icon" src="../../assets/icons/story/current-location.svg" mode="aspectFit" />
+        <text>{{moment.coordinate}}</text>
+      </view>
+    </view>
+
+    <view class="section-line section-line--footer"></view>
+
+    <view class="updated-row">
+      <text class="updated-label">UPDATED</text>
+      <text>{{moment.updatedAt}}</text>
+    </view>
+
+    <view class="detail-actions" wx:if="{{moment.canManage}}">
+      <view class="detail-action detail-action--edit" bindtap="editMoment">编辑点滴</view>
+      <view class="detail-action detail-action--delete" bindtap="deleteMoment">{{deleting ? '删除中...' : '删除'}}</view>
+    </view>
+
+    <view class="snowlit-end-tip">没有更多了哦~</view>
+  </block>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

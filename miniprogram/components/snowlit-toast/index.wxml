@@ -1,0 +1,16 @@
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-toast-host snowlit-toast-host--{{placement}} {{visible ? 'snowlit-toast-host--visible' : ''}}"
+  catchtouchmove="noop"
+>
+  <view class="snowlit-toast-card snowlit-toast-card--{{type}}">
+    <view class="snowlit-toast-mark snowlit-toast-mark--{{type}}">
+      <view wx:if="{{type === 'loading'}}" class="snowlit-toast-spinner"></view>
+      <view wx:else class="snowlit-toast-dot"></view>
+    </view>
+    <view class="snowlit-toast-copy">
+      <view class="snowlit-toast-title">{{title}}</view>
+      <view wx:if="{{message}}" class="snowlit-toast-message">{{message}}</view>
+    </view>
+  </view>
+</view>

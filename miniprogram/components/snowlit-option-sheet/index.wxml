@@ -1,0 +1,25 @@
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-sheet-mask {{visible ? 'snowlit-sheet-mask--visible' : ''}}"
+  catchtouchmove="noop"
+  bindtap="handleCancel"
+>
+  <view class="snowlit-sheet-panel" catchtap="noop">
+    <view class="snowlit-sheet-head">
+      <view class="snowlit-sheet-title">{{title}}</view>
+      <view class="snowlit-sheet-cancel" bindtap="handleCancel">{{cancelText}}</view>
+    </view>
+    <view class="snowlit-option-list">
+      <view
+        wx:for="{{options}}"
+        wx:key="value"
+        class="snowlit-option-row {{item.value === value ? 'snowlit-option-row--active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="handleOptionTap"
+      >
+        <view class="snowlit-option-label">{{item.label}}</view>
+        <view class="snowlit-option-mark" wx:if="{{item.value === value}}"></view>
+      </view>
+    </view>
+  </view>
+</view>

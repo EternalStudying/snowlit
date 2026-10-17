@@ -1,0 +1,5 @@
+<view class="error-state">
+  <view class="error-state__title">{{title}}</view>
+  <view class="error-state__message">{{message}}</view>
+  <button wx:if="{{actionText}}" class="error-state__action" bindtap="handleRetry">{{actionText}}</button>
+</view>

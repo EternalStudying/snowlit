@@ -1,0 +1,87 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/index",
+    "pages/diary/index",
+    "pages/diary-detail/index",
+    "pages/diary-edit/index",
+    "pages/story/index",
+    "pages/story-detail/index",
+    "pages/story-edit/index",
+    "pages/albums/index",
+    "pages/album-detail/index",
+    "pages/album-edit/index",
+    "pages/wishes/index",
+    "pages/wish-detail/index",
+    "pages/wish-edit/index",
+    "pages/profile/index",
+    "pages/profile-edit/index",
+    "pages/feedback/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "Snowlit",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F7F7F7",
+    "backgroundTextStyle": "dark"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于首页前台自动更新天气、城市和距离状态"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "snowlit-dialog": "components/snowlit-dialog/index",
+    "snowlit-date-sheet": "components/snowlit-date-sheet/index",
+    "snowlit-option-sheet": "components/snowlit-option-sheet/index",
+    "snowlit-privacy": "components/snowlit-privacy/index",
+    "snowlit-time-sheet": "components/snowlit-time-sheet/index",
+    "snowlit-toast": "components/snowlit-toast/index",
+    "wish-completion-sheet": "components/wish-completion-sheet/index"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#777777",
+    "selectedColor": "#111111",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/icons/tabbar/home.png",
+        "selectedIconPath": "assets/icons/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/diary/index",
+        "text": "日记",
+        "iconPath": "assets/icons/tabbar/notebook-text.png",
+        "selectedIconPath": "assets/icons/tabbar/notebook-text-active.png"
+      },
+      {
+        "pagePath": "pages/albums/index",
+        "text": "相册",
+        "iconPath": "assets/icons/tabbar/image.png",
+        "selectedIconPath": "assets/icons/tabbar/image-active.png"
+      },
+      {
+        "pagePath": "pages/wishes/index",
+        "text": "清单",
+        "iconPath": "assets/icons/tabbar/clipboard-list.png",
+        "selectedIconPath": "assets/icons/tabbar/clipboard-list-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/icons/tabbar/user-round.png",
+        "selectedIconPath": "assets/icons/tabbar/user-round-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

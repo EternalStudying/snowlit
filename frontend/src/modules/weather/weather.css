@@ -1,0 +1,40 @@
+body .snowlit-sunny-layer.snowlit-sunny-layer {
+  z-index: 70;
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+
+.snowlit-sunny-layer::before,
+.snowlit-sunny-layer::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.snowlit-sunny-layer::before {
+  top: clamp(54px, 7vh, 92px);
+  right: clamp(72px, 8vw, 148px);
+  z-index: 3;
+  width: clamp(104px, 11vw, 172px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.95) 0 12%, rgba(255, 237, 171, 0.94) 22%, rgba(255, 198, 93, 0.62) 48%, rgba(255, 198, 93, 0) 72%);
+  box-shadow:
+    0 0 28px rgba(255, 229, 154, 0.48),
+    0 0 84px rgba(255, 196, 94, 0.42),
+    0 0 160px rgba(255, 236, 190, 0.32);
+  opacity: 0.86;
+}
+
+.snowlit-sunny-layer::after {
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(116deg, transparent 0 49%, rgba(255, 229, 166, 0.22) 52%, transparent 63%),
+    linear-gradient(126deg, transparent 0 54%, rgba(255, 246, 215, 0.2) 57%, transparent 68%),
+    linear-gradient(139deg, transparent 0 58%, rgba(255, 207, 128, 0.15) 61%, transparent 72%),
+    radial-gradient(ellipse at 84% 16%, rgba(255, 224, 154, 0.26), transparent 42%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.68) 48%, transparent 86%);
+  opacity: 0.82;
+}

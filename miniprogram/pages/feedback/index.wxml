@@ -1,0 +1,136 @@
+<view class="feedback-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="feedback-head snowlit-subpage-heading">
+    <view class="snowlit-subpage-brand">FEEDBACK</view>
+    <view class="snowlit-subpage-title">反馈</view>
+    <view class="snowlit-subpage-subtitle">把不好用的地方告诉我</view>
+  </view>
+
+  <view class="section-line hero-line"></view>
+
+  <view class="form-section">
+    <view class="section-label">TYPE</view>
+    <view class="type-grid">
+      <view
+        class="type-chip {{item.active ? 'type-chip--active' : ''}}"
+        wx:for="{{feedbackTypes}}"
+        wx:key="value"
+        data-type="{{item.value}}"
+        bindtap="selectType"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <view class="form-section form-section--field">
+    <view class="section-label">TITLE<text class="required-star">*</text></view>
+    <input
+      class="field-input"
+      value="{{form.title}}"
+      maxlength="80"
+      bindinput="handleTitleInput"
+    />
+  </view>
+
+  <view class="form-section form-section--field">
+    <view class="section-label">CONTENT</view>
+    <view class="textarea-wrap">
+      <textarea
+        class="field-textarea"
+        value="{{form.content}}"
+        maxlength="1000"
+        bindinput="handleContentInput"
+      />
+      <view class="content-count">{{contentLength}}/1000</view>
+    </view>
+  </view>
+
+  <view class="form-section form-section--field">
+    <view class="section-label">CONTACT</view>
+    <input
+      class="field-input field-input--muted"
+      placeholder="微信或邮箱，可不填"
+      value="{{form.contact}}"
+      maxlength="120"
+      bindinput="handleContactInput"
+    />
+  </view>
+
+  <view class="screenshots-head">
+    <view class="section-label screenshots-label">SCREENSHOTS</view>
+    <view class="screenshots-count">{{screenshots.length}}/3</view>
+  </view>
+
+  <view class="screenshot-grid">
+    <block
+      wx:for="{{screenshotSlots}}"
+      wx:key="index"
+    >
+      <view
+        wx:if="{{item.empty}}"
+        class="screenshot-slot"
+        data-index="{{item.index}}"
+        bindtap="chooseScreenshot"
+      >
+        <view class="plus-icon"></view>
+        <view class="slot-label">添加截图</view>
+      </view>
+      <view
+        wx:else
+        class="screenshot-slot screenshot-slot--filled"
+        data-index="{{item.index}}"
+        bindtap="previewScreenshot"
+      >
+        <image
+          class="screenshot-preview"
+          src="{{item.displayUrl}}"
+          mode="aspectFill"
+        />
+        <view class="screenshot-mask" wx:if="{{item.message}}">{{item.message}}</view>
+        <view
+          class="remove-screenshot"
+          data-index="{{item.index}}"
+          catchtap="removeScreenshot"
+        >
+          ×
+        </view>
+      </view>
+    </block>
+  </view>
+  <view class="screenshot-helper">支持 jpg / png / webp，单张不超过 10MB</view>
+
+  <view class="system-section">
+    <view class="section-label">SYSTEM</view>
+    <view class="system-card">
+      <view
+        class="system-row"
+        wx:for="{{systemRows}}"
+        wx:key="label"
+      >
+        <view class="system-label">{{item.label}}</view>
+        <view class="system-value">{{item.value}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="feedback-message" wx:if="{{message}}">{{message}}</view>
+  <button
+    class="submit-button {{submitting ? 'submit-button--loading' : ''}}"
+    disabled="{{submitting}}"
+    bindtap="submitFeedback"
+  >
+    {{submitting ? '提交中...' : '提交反馈'}}
+  </button>
+  <view class="submit-note">提交后状态为 pending，内容会保留到发送成功</view>
+  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-privacy id="snowlit-privacy" />

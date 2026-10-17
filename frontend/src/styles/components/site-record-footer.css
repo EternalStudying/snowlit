@@ -1,0 +1,102 @@
+.site-record-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: clamp(24px, 4vw, 38px) 16px max(18px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(126, 85, 52, 0.1);
+  background: rgba(255, 248, 238, 0.72);
+}
+
+.site-record-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 100%;
+  padding: 6px 12px 6px 7px;
+  border: 1px solid rgba(126, 85, 52, 0.18);
+  border-radius: 999px;
+  color: #6f5142;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.88), transparent 36%),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 242, 229, 0.92));
+  box-shadow:
+    0 10px 24px rgba(111, 58, 35, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  font-size: clamp(0.78rem, 1.3vw, 0.88rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.site-record-link__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fffaf2;
+  background: linear-gradient(145deg, #ed8175, #cf5148);
+  box-shadow: 0 5px 12px rgba(207, 81, 72, 0.24);
+}
+
+.site-record-link__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.site-record-link__external {
+  flex: 0 0 auto;
+  color: rgba(111, 81, 66, 0.62);
+}
+
+.site-record-link:hover {
+  border-color: rgba(223, 81, 69, 0.34);
+  color: var(--deep-coral);
+  box-shadow:
+    0 13px 28px rgba(111, 58, 35, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  transform: translateY(-2px);
+}
+
+.site-record-link:focus-visible {
+  outline: 3px solid rgba(223, 81, 69, 0.28);
+  outline-offset: 3px;
+}
+
+.site-record-link--night {
+  border-color: rgba(255, 245, 230, 0.28);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.92), transparent 36%),
+    linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(255, 235, 218, 0.9));
+  box-shadow:
+    0 12px 30px rgba(7, 14, 29, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 520px) {
+  .site-record-link {
+    width: min(100%, 280px);
+    min-height: 44px;
+    padding-right: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-record-link {
+    transition: none;
+  }
+
+  .site-record-link:hover {
+    transform: none;
+  }
+}

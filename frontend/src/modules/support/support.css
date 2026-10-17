@@ -1,0 +1,265 @@
+.update-notice-dialog,
+.feedback-dialog {
+  width: min(520px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: visible;
+}
+
+body:has(.update-notice-dialog) .n-modal-mask,
+body:has(.feedback-dialog) .n-modal-mask {
+  background-color: rgba(65, 42, 34, 0.28);
+}
+
+.update-notice-dialog__panel,
+.feedback-dialog__panel {
+  width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid rgba(148, 102, 74, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 251, 244, 0.96), rgba(255, 244, 236, 0.96)),
+    var(--paper);
+  box-shadow: 0 22px 70px rgba(73, 43, 30, 0.2);
+  color: #35241d;
+}
+
+.update-notice-dialog__panel {
+  padding: 28px;
+}
+
+.update-notice-dialog__eyebrow,
+.feedback-dialog__panel header p {
+  margin: 0 0 6px;
+  color: rgba(169, 80, 66, 0.76);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.update-notice-dialog__panel h2,
+.feedback-dialog__panel h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.update-notice-dialog__panel ul {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.update-notice-dialog__panel li {
+  position: relative;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+
+.update-notice-dialog__panel li::before {
+  position: absolute;
+  left: 0;
+  content: "♡";
+  color: var(--coral);
+}
+
+.update-notice-dialog__panel footer,
+.feedback-dialog__panel footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.update-notice-dialog__panel button,
+.feedback-dialog__panel button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+.update-notice-dialog__panel button,
+.feedback-dialog__panel button {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #53382d;
+  box-shadow: inset 0 0 0 1px rgba(134, 90, 63, 0.18);
+}
+
+.update-notice-dialog__panel button:last-child,
+.feedback-dialog__panel footer button:last-child {
+  background: #d96d5f;
+  color: #fffaf6;
+  box-shadow: 0 8px 18px rgba(217, 109, 95, 0.22);
+}
+
+.feedback-dialog__panel {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.feedback-dialog__panel header {
+  position: relative;
+  padding-right: 42px;
+}
+
+.feedback-dialog__panel header button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.feedback-dialog__panel label,
+.feedback-dialog__upload {
+  display: grid;
+  gap: 6px;
+  color: rgba(64, 43, 36, 0.78);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.feedback-dialog__screenshot-picker,
+.feedback-dialog__screenshot-picker .n-upload-trigger {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.feedback-dialog__panel input:not(.n-input__input-el):not(.n-base-selection-input),
+.feedback-dialog__panel textarea:not(.n-input__textarea-el),
+.feedback-dialog__panel select,
+.feedback-dialog__panel .n-input,
+.feedback-dialog__panel .n-base-selection {
+  width: 100%;
+  border: 1px solid rgba(140, 92, 66, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #34251f;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+.feedback-dialog__panel input:not(.n-input__input-el):not(.n-base-selection-input),
+.feedback-dialog__panel select,
+.feedback-dialog__panel .n-input:not(.n-input--textarea),
+.feedback-dialog__panel .n-base-selection {
+  min-height: 40px;
+}
+
+.feedback-dialog__panel input:not(.n-input__input-el):not(.n-base-selection-input),
+.feedback-dialog__panel select {
+  padding: 0 12px;
+}
+
+.feedback-dialog__panel textarea:not(.n-input__textarea-el),
+.feedback-dialog__panel .n-input--textarea {
+  min-height: 112px;
+}
+
+.feedback-dialog__panel textarea:not(.n-input__textarea-el) {
+  resize: vertical;
+  padding: 10px 12px;
+}
+
+.feedback-dialog__panel .n-input .n-input__input-el,
+.feedback-dialog__panel .n-input .n-input__textarea-el {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+}
+
+.feedback-dialog__panel .n-input .n-input__input,
+.feedback-dialog__panel .n-input .n-input__input-el,
+.feedback-dialog__panel .n-input .n-input-wrapper {
+  height: 100%;
+}
+
+.feedback-dialog__panel .n-input .n-input-wrapper {
+  box-sizing: border-box;
+  padding: 0 12px;
+}
+
+.feedback-dialog__panel .n-input .n-input__textarea {
+  box-sizing: border-box;
+  padding: 10px 12px;
+}
+
+.feedback-dialog__panel .n-input .n-input__border,
+.feedback-dialog__panel .n-input .n-input__state-border,
+.feedback-dialog__panel .n-base-selection .n-base-selection__border,
+.feedback-dialog__panel .n-base-selection .n-base-selection__state-border {
+  display: none;
+}
+
+.feedback-dialog__panel .n-base-selection .n-base-selection-label {
+  min-height: 40px;
+  padding: 0 12px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.feedback-dialog__panel .n-base-selection .n-base-selection-input,
+.feedback-dialog__panel .n-base-selection .n-base-selection-input__content {
+  color: inherit;
+  font: inherit;
+}
+
+.feedback-dialog__screenshots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedback-dialog__screenshots span {
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(217, 109, 95, 0.12);
+  color: #7a453c;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.app-floating-error,
+.app-floating-toast {
+  margin: 0;
+  color: #a93c35;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.app-floating-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  z-index: 90;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 251, 245, 0.96);
+  box-shadow: 0 12px 28px rgba(92, 56, 40, 0.16);
+}
+
+@media (max-width: 640px) {
+  .update-notice-dialog,
+  .feedback-dialog {
+    width: min(520px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+  }
+
+  .update-notice-dialog__panel,
+  .feedback-dialog__panel {
+    max-height: calc(100vh - 32px);
+  }
+}

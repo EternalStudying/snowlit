@@ -1,0 +1,262 @@
+.hairline {
+  width: 100%;
+  height: 1rpx;
+  background: #d8d8d8;
+}
+
+.hero-line {
+  margin-top: 42rpx;
+}
+
+.album-add {
+  position: fixed;
+  right: 44rpx;
+  bottom: calc(142rpx + env(safe-area-inset-bottom));
+  z-index: 60;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  background: #050505;
+  box-shadow: 0 12rpx 26rpx rgba(0, 0, 0, 0.24);
+}
+
+.album-add__icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36rpx;
+  height: 36rpx;
+  transform: translate(-50%, -50%);
+}
+
+.album-section {
+  padding-top: 54rpx;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-label {
+  color: #050505;
+  font-size: 24rpx;
+  font-weight: 400;
+  letter-spacing: 6rpx;
+  line-height: 30rpx;
+}
+
+.section-state {
+  color: #777777;
+  font-size: 23rpx;
+  font-weight: 400;
+  line-height: 30rpx;
+}
+
+.album-list {
+  margin-top: 24rpx;
+}
+
+.album-state {
+  padding: 40rpx 0;
+  color: #777777;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.album-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 214rpx;
+  padding: 26rpx 0;
+  border-bottom: 1rpx solid #dedede;
+}
+
+.album-media {
+  flex: 0 0 230rpx;
+  margin-right: 36rpx;
+  overflow: hidden;
+}
+
+.album-media--grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 4rpx;
+  width: 230rpx;
+  height: 216rpx;
+  border-radius: 7rpx;
+}
+
+.album-media--cover {
+  width: 230rpx;
+  height: 181rpx;
+  border-radius: 8rpx;
+}
+
+.album-media--strip {
+  display: flex;
+  width: 230rpx;
+  height: 112rpx;
+  gap: 6rpx;
+}
+
+.album-media--locked {
+  width: 230rpx;
+  height: 181rpx;
+  border-radius: 8rpx;
+}
+
+.grid-photo,
+.strip-photo,
+.cover-photo {
+  width: 100%;
+  height: 100%;
+  background: #eeeeee;
+}
+
+.cover-photo {
+  display: block;
+  border-radius: 8rpx;
+}
+
+.strip-photo {
+  flex: 1;
+  min-width: 0;
+  border-radius: 6rpx;
+}
+
+.locked-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 230rpx;
+  height: 181rpx;
+  background: #f0f0f0;
+}
+
+.lock-icon {
+  width: 65rpx;
+  height: 65rpx;
+  opacity: 0.62;
+}
+
+.album-content {
+  flex: 1;
+  min-width: 0;
+  padding-right: 42rpx;
+}
+
+.album-title-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.album-title {
+  min-width: 0;
+  color: #050505;
+  flex: 0 1 auto;
+  font-size: 31rpx;
+  font-weight: 500;
+  line-height: 39rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-title-badges {
+  flex: 0 0 auto;
+  display: flex;
+  column-gap: 10rpx;
+  margin-left: 14rpx;
+}
+
+.album-title-badge {
+  flex: 0 0 auto;
+  height: 34rpx;
+  padding: 0 14rpx;
+  color: #333333;
+  border: 1rpx solid #d2d2d2;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 400;
+  line-height: 32rpx;
+  text-align: center;
+}
+
+.album-description {
+  margin-top: 22rpx;
+  color: #777777;
+  font-size: 22rpx;
+  font-weight: 400;
+  line-height: 30rpx;
+}
+
+.album-meta {
+  color: #777777;
+  font-size: 22rpx;
+  font-weight: 400;
+  letter-spacing: 2rpx;
+  line-height: 30rpx;
+}
+
+.album-meta {
+  margin-top: 20rpx;
+}
+
+.album-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 76rpx);
+  column-gap: 32rpx;
+  align-items: center;
+  margin-top: 16rpx;
+}
+
+.album-stat {
+  display: flex;
+  align-items: center;
+  color: #777777;
+  font-size: 22rpx;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.album-stat-icon {
+  width: 24rpx;
+  height: 24rpx;
+  margin-right: 9rpx;
+  opacity: 0.58;
+}
+
+.album-stat--active {
+  color: #050505;
+}
+
+.album-stat--active .album-stat-icon {
+  opacity: 0.94;
+}
+
+.album-stat-value {
+  min-width: 12rpx;
+}
+
+.album-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 30rpx;
+  height: 30rpx;
+  opacity: 0.78;
+  transform: translateY(-50%);
+}
+
+.album-load-more {
+  padding: 30rpx 0 10rpx;
+  color: #777777;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}

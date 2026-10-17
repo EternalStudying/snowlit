@@ -1,0 +1,9 @@
+<view class="story-card" bindtap="handleTap">
+  <view class="story-card__meta">
+    <text>{{dateText}}</text>
+    <text wx:if="{{moment.locationName}}"> / {{moment.locationName}}</text>
+  </view>
+  <view class="story-card__title">{{moment.title || '未命名点滴'}}</view>
+  <view wx:if="{{moment.content}}" class="story-card__content">{{moment.content}}</view>
+  <status-pill wx:if="{{moment.category}}" text="{{moment.category}}" tone="muted"></status-pill>
+</view>

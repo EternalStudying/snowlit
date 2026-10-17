@@ -1,0 +1,107 @@
+<view class="diary-detail-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="detail-state" wx:if="{{loading}}">日记详情加载中...</view>
+  <view class="detail-state" wx:elif="{{message}}">{{message}}</view>
+
+  <block wx:else>
+    <view class="diary-head snowlit-subpage-heading">
+      <view class="snowlit-subpage-brand">{{diary.brand}}</view>
+      <view class="snowlit-subpage-title">{{diary.title}}</view>
+      <view class="snowlit-subpage-subtitle">{{diary.subtitle}}</view>
+      <view class="diary-mood">{{diary.moodText}}</view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="content-section">
+      <block wx:for="{{diary.contentBlocks}}" wx:key="key">
+        <view wx:if="{{item.type === 'paragraph'}}" class="content-block content-block--{{item.spacing}} content-text">
+          <rich-text nodes="{{item.nodes}}" />
+        </view>
+        <view wx:elif="{{item.type === 'heading'}}" class="content-block content-block--{{item.spacing}} content-heading content-heading--{{item.level}}">
+          <rich-text nodes="{{item.nodes}}" />
+        </view>
+        <view wx:elif="{{item.type === 'quote'}}" class="content-block content-block--{{item.spacing}} content-quote">
+          <rich-text nodes="{{item.nodes}}" />
+        </view>
+        <view wx:elif="{{item.type === 'list'}}" class="content-block content-block--{{item.spacing}} content-list">
+          <view
+            wx:for="{{item.items}}"
+            wx:for-item="listItem"
+            wx:key="key"
+            class="content-list-item"
+          >
+            <view class="content-list-marker">{{listItem.marker}}</view>
+            <rich-text class="content-list-text" nodes="{{listItem.nodes}}" />
+          </view>
+        </view>
+        <view wx:elif="{{item.type === 'code'}}" class="content-block content-block--{{item.spacing}} content-code">
+          {{item.text}}
+        </view>
+        <view wx:elif="{{item.type === 'hr'}}" class="content-block content-block--{{item.spacing}} content-hr"></view>
+        <view wx:elif="{{item.type === 'table'}}" class="content-block content-block--{{item.spacing}} content-table">
+          <view
+            wx:for="{{item.rows}}"
+            wx:for-item="row"
+            wx:key="key"
+            class="content-table-row {{row.header ? 'content-table-row--header' : ''}}"
+          >
+            <view
+              wx:for="{{row.cells}}"
+              wx:for-item="cell"
+              wx:key="key"
+              class="content-table-cell"
+            >
+              <rich-text nodes="{{cell.nodes}}" />
+            </view>
+          </view>
+        </view>
+        <view wx:elif="{{item.type === 'image'}}" class="content-block content-block--{{item.spacing}} content-image-wrap">
+          <image
+            class="content-image"
+            src="{{item.url}}"
+            mode="widthFix"
+            data-url="{{item.url}}"
+            bindtap="previewPhoto"
+          />
+        </view>
+      </block>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="meta-section">
+      <view class="meta-row">
+        <view class="meta-label">WEATHER</view>
+        <view class="meta-value">{{diary.weatherText}}</view>
+      </view>
+      <view class="meta-row">
+        <view class="meta-label">PLACE</view>
+        <view class="meta-value">{{diary.placeText}}</view>
+      </view>
+      <view class="meta-row">
+        <view class="meta-label">COORD</view>
+        <view class="meta-value">{{diary.coordinate}}</view>
+      </view>
+      <view class="meta-row">
+        <view class="meta-label">UPDATED</view>
+        <view class="meta-value">{{diary.updatedText}}</view>
+      </view>
+    </view>
+
+    <view class="detail-actions" wx:if="{{diary.canEdit}}">
+      <view class="detail-action detail-action--edit" bindtap="editDiary">编辑日记</view>
+      <view class="detail-action detail-action--delete" bindtap="deleteDiary">{{deleting ? '删除中...' : '删除'}}</view>
+    </view>
+
+    <view class="snowlit-end-tip">没有更多了哦~</view>
+  </block>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

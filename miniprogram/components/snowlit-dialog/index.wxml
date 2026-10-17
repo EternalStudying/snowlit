@@ -1,0 +1,20 @@
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-dialog-mask {{visible ? 'snowlit-dialog-mask--visible' : ''}}"
+  catchtouchmove="noop"
+  bindtap="handleMaskTap"
+>
+  <view class="snowlit-dialog-card" catchtap="noop">
+    <view class="snowlit-dialog-brand">SNOWLIT</view>
+    <view class="snowlit-dialog-title">{{title}}</view>
+    <view class="snowlit-dialog-content">{{content}}</view>
+    <view class="snowlit-dialog-actions {{showCancel ? 'snowlit-dialog-actions--split' : ''}}">
+      <view wx:if="{{showCancel}}" class="snowlit-dialog-button snowlit-dialog-button--cancel" bindtap="handleCancel">
+        {{cancelText}}
+      </view>
+      <view class="snowlit-dialog-button snowlit-dialog-button--confirm" bindtap="handleConfirm">
+        {{confirmText}}
+      </view>
+    </view>
+  </view>
+</view>

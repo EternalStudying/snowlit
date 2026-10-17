@@ -1,0 +1,116 @@
+<view class="album-detail-page">
+  <view class="top-action">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="album-state" wx:if="{{loading}}">相册加载中...</view>
+
+  <view class="album-locked snowlit-subpage-heading" wx:elif="{{locked}}">
+    <view class="snowlit-subpage-brand">PRIVATE ALBUM</view>
+    <view class="snowlit-subpage-title">私密相册</view>
+    <view class="snowlit-subpage-subtitle">输入密码后继续查看照片</view>
+    <input
+      class="unlock-input"
+      password
+      placeholder="输入相册密码"
+      value="{{password}}"
+      bindinput="handlePasswordInput"
+    />
+    <view class="unlock-button" bindtap="submitUnlock">
+      {{unlockLoading ? '解锁中...' : '解锁相册'}}
+    </view>
+    <view class="unlock-message" wx:if="{{message}}">{{message}}</view>
+  </view>
+
+  <view class="album-state" wx:elif="{{message}}">{{message}}</view>
+
+  <block wx:elif="{{album}}">
+    <view class="album-head snowlit-subpage-heading">
+      <view class="snowlit-subpage-brand">ALBUM</view>
+      <view class="snowlit-subpage-title">{{album.title}}</view>
+      <view class="snowlit-subpage-subtitle">{{album.description}}</view>
+      <view class="album-badges">
+        <view
+          class="album-badge"
+          wx:for="{{album.badges}}"
+          wx:key="*this"
+        >
+          {{item}}
+        </view>
+      </view>
+    </view>
+
+    <view class="cover-frame" wx:if="{{album.hasCover}}">
+      <image
+        class="cover-photo"
+        src="{{album.cover}}"
+        mode="aspectFill"
+      />
+    </view>
+    <view class="empty-cover" wx:else>暂无照片</view>
+
+    <view class="section-line"></view>
+
+    <view class="meta-row">
+      <view class="meta-cell">
+        <view class="meta-label">事件日期</view>
+        <view class="meta-value">{{album.eventDate}}</view>
+      </view>
+      <view class="meta-cell">
+        <view class="meta-label">地点</view>
+        <view class="meta-value">{{album.location}}</view>
+      </view>
+      <view class="meta-cell">
+        <view class="meta-label">作者</view>
+        <view class="meta-value">{{album.authorName}}</view>
+      </view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="stat-row">
+      <view
+        class="stat-cell stat-cell--{{item.position}} {{item.active ? 'stat-cell--active' : ''}} {{actionLoading && item.type === 'likes' ? 'stat-cell--loading' : ''}}"
+        wx:for="{{album.stats}}"
+        wx:key="type"
+        data-type="{{item.type}}"
+        bindtap="handleStatTap"
+      >
+        <image class="stat-icon" src="{{item.icon}}" mode="aspectFit" />
+        <text class="stat-value">{{item.value}}</text>
+      </view>
+    </view>
+
+    <view class="section-line"></view>
+
+    <view class="photos-heading">
+      <view class="section-label">PHOTOS</view>
+      <view class="photos-count">{{album.photosCountText}}</view>
+    </view>
+
+    <view class="photo-grid" wx:if="{{album.hasPhotos}}">
+      <view
+        class="photo-item"
+        wx:for="{{album.photos}}"
+        wx:key="id"
+      >
+        <image
+          class="photo-image"
+          src="{{item.url}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          bindtap="previewPhoto"
+        />
+        <view class="photo-caption">{{item.caption}}</view>
+        <view class="photo-meta">{{item.meta}}</view>
+      </view>
+    </view>
+    <view class="photo-empty" wx:else>这个相册还没有照片</view>
+    <view class="snowlit-end-tip">没有更多了哦~</view>
+  </block>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />

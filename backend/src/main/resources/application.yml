@@ -1,0 +1,34 @@
+spring:
+  profiles:
+    default: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      max-lifetime: 300000
+      keepalive-time: 120000
+      validation-timeout: 3000
+      connection-timeout: 10000
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 16MB
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8080
+
+geoapify:
+  key: ${GEOAPIFY_KEY:}
+
+open-meteo:
+  key: ${OPEN_METEO_API_KEY:}
+
+snowlit:
+  wechat:
+    miniprogram:
+      app-id: ${WECHAT_MINIPROGRAM_APP_ID:}
+      app-secret: ${WECHAT_MINIPROGRAM_APP_SECRET:}
+      code2-session-url: ${WECHAT_MINIPROGRAM_CODE2_SESSION_URL:https://api.weixin.qq.com/sns/jscode2session}

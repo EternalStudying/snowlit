@@ -1,0 +1,30 @@
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-sheet-mask {{visible ? 'snowlit-sheet-mask--visible' : ''}}"
+  catchtouchmove="noop"
+  bindtap="handleCancel"
+>
+  <view class="snowlit-sheet-panel" catchtap="noop">
+    <view class="snowlit-sheet-head">
+      <view class="snowlit-sheet-cancel" bindtap="handleCancel">{{cancelText}}</view>
+      <view class="snowlit-sheet-title">{{title}}</view>
+      <view class="snowlit-sheet-confirm" bindtap="handleConfirm">{{confirmText}}</view>
+    </view>
+    <picker-view
+      class="snowlit-sheet-picker"
+      value="{{pickerValue}}"
+      indicator-style="height: 72rpx;"
+      bindchange="handleChange"
+    >
+      <picker-view-column>
+        <view wx:for="{{years}}" wx:key="*this" class="snowlit-picker-item">{{item}}</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{months}}" wx:key="*this" class="snowlit-picker-item">{{item}}</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{days}}" wx:key="*this" class="snowlit-picker-item">{{item}}</view>
+      </picker-view-column>
+    </picker-view>
+  </view>
+</view>

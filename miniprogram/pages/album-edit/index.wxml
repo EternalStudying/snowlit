@@ -1,0 +1,146 @@
+<view class="album-edit-page">
+  <view class="album-edit-top">
+    <view class="back-button" bindtap="goBack">
+      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <view class="album-edit-section album-edit-basic">
+    <view class="section-label">BASIC</view>
+    <view class="basic-card">
+      <view class="basic-row">
+        <image class="basic-icon" src="../../assets/icons/home/clipboard-list.svg" mode="aspectFit" />
+        <view class="basic-label">标题</view>
+        <view class="required-star">*</view>
+        <input
+          class="basic-input"
+          value="{{form.title}}"
+          placeholder="给相册起个名字"
+          maxlength="60"
+          data-field="title"
+          bindinput="handleInput"
+        />
+      </view>
+
+      <view class="basic-row" bindtap="openVisibilitySheet">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/lock-keyhole.svg" mode="aspectFit" />
+        <view class="basic-label">可见范围</view>
+        <view class="visibility-pill">{{form.visibilityText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="basic-row" wx:if="{{form.visibility === 'private'}}">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/lock-keyhole.svg" mode="aspectFit" />
+        <view class="basic-label">私密密码</view>
+        <view class="required-star">*</view>
+        <input
+          class="basic-input"
+          password="{{true}}"
+          value="{{form.privatePassword}}"
+          placeholder="写下访问密码"
+          maxlength="32"
+          data-field="privatePassword"
+          bindinput="handleInput"
+        />
+      </view>
+
+      <view class="basic-row" bindtap="togglePinned">
+        <image class="basic-icon" src="../../assets/icons/albums/pin.svg" mode="aspectFit" />
+        <view class="basic-label">置顶</view>
+        <view class="pin-switch {{form.pinned ? 'pin-switch--active' : ''}}">
+          <view class="pin-knob"></view>
+        </view>
+      </view>
+
+      <view class="basic-row" bindtap="openDateSheet">
+        <image class="basic-icon" src="../../assets/icons/diary-edit/calendar-days.svg" mode="aspectFit" />
+        <view class="basic-label">日期</view>
+        <view class="basic-value">{{form.eventDateText}}</view>
+        <image class="chevron-icon" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+
+      <view class="basic-row basic-row--last">
+        <image class="basic-icon" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+        <view class="basic-label">地点</view>
+        <input
+          class="basic-input"
+          value="{{form.location}}"
+          placeholder="写下拍摄地点"
+          maxlength="80"
+          data-field="location"
+          bindinput="handleInput"
+        />
+      </view>
+    </view>
+  </view>
+
+  <view class="album-edit-section album-edit-details">
+    <view class="section-label">DETAILS</view>
+    <view class="details-panel">
+      <textarea
+        class="details-textarea"
+        value="{{form.description}}"
+        placeholder="把这组照片的故事轻轻写下"
+        maxlength="500"
+        data-field="description"
+        bindinput="handleInput"
+      />
+    </view>
+  </view>
+
+  <view class="album-edit-section album-edit-photos">
+    <view class="photos-head">
+      <view class="section-label">PHOTOS</view>
+      <view class="photos-limit">最多 9 张</view>
+    </view>
+    <view class="photo-list">
+      <view class="photo-add" wx:if="{{canAddPhoto}}" bindtap="choosePhotos">
+        <image class="photo-add-icon" src="../../assets/icons/diary-edit/image-plus.svg" mode="aspectFit" />
+        <view class="photo-add-text">添加照片</view>
+      </view>
+      <view
+        class="photo-wrap"
+        wx:for="{{photos}}"
+        wx:key="id"
+      >
+        <image
+          class="photo-item"
+          src="{{item.path}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          bindtap="previewPhoto"
+        />
+        <view class="photo-remove" data-index="{{index}}" catchtap="removePhoto">×</view>
+        <view class="photo-status" wx:if="{{item.message}}">{{item.message}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="edit-message" wx:if="{{message}}">{{message}}</view>
+  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
+  <view class="footer-spacer"></view>
+
+  <view class="album-edit-footer">
+    <view class="cancel-button" bindtap="goBack">取消</view>
+    <button class="save-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="saveAlbum">保存相册</button>
+  </view>
+</view>
+
+<snowlit-toast id="snowlit-toast" />
+<snowlit-dialog id="snowlit-dialog" />
+<snowlit-privacy id="snowlit-privacy" />
+<snowlit-option-sheet
+  visible="{{visibilitySheetVisible}}"
+  title="选择可见范围"
+  options="{{visibilityOptions}}"
+  value="{{form.visibility}}"
+  bindselect="selectVisibilityFromSheet"
+  bindcancel="closeVisibilitySheet"
+/>
+<snowlit-date-sheet
+  visible="{{dateSheetVisible}}"
+  title="选择日期"
+  value="{{form.eventDate}}"
+  bindconfirm="confirmDateFromSheet"
+  bindcancel="closeDateSheet"
+/>

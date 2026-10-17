@@ -1,0 +1,7 @@
+<view class="photo-grid photo-grid--{{columns}}">
+  <block wx:for="{{images}}" wx:key="index">
+    <view class="photo-grid__item" data-index="{{index}}" bindtap="handlePreview">
+      <image class="photo-grid__image" src="{{item.previewUrl || item.url || item.originalUrl || item}}" mode="aspectFill"></image>
+    </view>
+  </block>
+</view>
