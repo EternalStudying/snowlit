@@ -241,15 +241,20 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
   it('keeps backend and frontend semantic contracts aligned without backend rendering fields', () => {
     const frontendTypes = readSource('src/modules/weather/model.ts');
     const weatherVo = readProjectSource('backend/src/main/java/xyz/snowlit/weather/WeatherVos.java');
-    const weatherModule = readProjectSource('backend/src/main/java/xyz/snowlit/weather/WeatherModule.java');
+    const weatherConditions = readProjectSource('backend/src/main/java/xyz/snowlit/weather/WeatherCondition.java');
 
     ['weatherState', 'weatherVariant', 'precipitationKind', 'daylightHint', 'observedAt'].forEach((field) => {
       expect(frontendTypes).toContain(field);
       expect(weatherVo).toContain(field);
     });
     EXPECTED_STATES.forEach((weatherState) => expect(frontendTypes).toContain(`| '${weatherState}'`));
-    expect(weatherModule).toContain('WeatherMapping mapWeather(String rawWeather, String reportTime)');
-    expect(weatherModule).not.toContain('mapWeatherType');
+    // Every state and variant the backend can report must be a state/variant the frontend understands.
+    const backendConditions = [...weatherConditions.matchAll(/^\s+[A-Z_]+\("[^"]*", "(\w+)", "(\w+)", "(\w+)"\)/gm)];
+    expect(backendConditions.length).toBeGreaterThan(10);
+    backendConditions.forEach(([, weatherState, weatherVariant]) => {
+      expect(EXPECTED_STATES, weatherState).toContain(weatherState);
+      expect(frontendTypes, weatherVariant).toContain(`'${weatherVariant}'`);
+    });
     ['weatherType', 'isDay', 'updatedAt', ...BACKEND_RENDER_FIELDS, 'intensity'].forEach((field) => {
       expect(weatherVo, field).not.toContain(field);
     });

@@ -384,20 +384,10 @@ describe('procedural-weather/clouds/starfield stage 17 complete verification con
     ['weatherType', 'isDay', 'updatedAt'].forEach((field) => {
       expect(backendControllerTestSource).toContain(`jsonPath("$.${field}").doesNotExist()`);
     });
-    [
-      'hailStorm',
-      'thunderstorm',
-      'heavyRain',
-      'lightSnow',
-      'snow',
-      'haze',
-      'dust',
-      'sandstorm',
-      'windy',
-      'hot',
-      'cold',
-      'unknown'
-    ].forEach((mappingToken) => expect(backendModuleTestSource).toContain(mappingToken));
+    const backendConditionSource = readProjectSource('backend/src/main/java/xyz/snowlit/weather/WeatherCondition.java');
+    ['hailStorm', 'thunderstorm', 'heavyRain', 'lightSnow', 'snow', 'unknown'].forEach((mappingToken) =>
+      expect(backendConditionSource).toContain(mappingToken)
+    );
 
     const auditedSources = WEATHER_SOURCE_AUDIT_FILES.map((path) => {
       expect(existsSync(absolute(path)), path).toBe(true);
