@@ -61,7 +61,6 @@ class DiaryControllerTests {
 
     @BeforeEach
     void configureRole() {
-        when(homeMapper.findRoleByUserId(1L)).thenReturn("boyfriend");
     }
 
     @Test

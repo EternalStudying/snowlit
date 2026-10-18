@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
 @Service
 public class DiaryModule {
 
-    private static final Set<String> ROLES = Set.of("boyfriend", "girlfriend");
     private static final Set<String> VISIBILITIES = Set.of("shared", "private");
     private static final Set<String> MOOD_KEYS = Set.of(
             "happy", "miss", "calm", "wronged", "expecting",
@@ -268,11 +267,10 @@ public class DiaryModule {
     }
 
     private String resolveRole(AuthenticatedActor actor) {
-        String mapped = Text.trim(homeMapper.findRoleByUserId(actor.userId()));
-        if (ROLES.contains(mapped)) {
-            return mapped;
+        if (actor.coupleRole() == null) {
+            throw ApplicationFailure.invalidInput("DIARY_ROLE_NOT_CONFIGURED", "账号角色尚未配置");
         }
-        throw ApplicationFailure.invalidInput("DIARY_ROLE_NOT_CONFIGURED", "账号角色尚未配置");
+        return actor.coupleRole();
     }
 
     private DiaryEntry requireExistingDiary(Long id) {

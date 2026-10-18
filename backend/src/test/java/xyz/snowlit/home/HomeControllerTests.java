@@ -53,7 +53,6 @@ class HomeControllerTests {
 
     @BeforeEach
     void setUp() {
-        when(homeMapper.findRoleByUserId(1L)).thenReturn("boyfriend");
         when(homeMapper.findCouple()).thenReturn(new Couple(
                 1L,
                 "伴侣 A",

@@ -28,14 +28,6 @@ public interface HomeMapper {
     Couple findCouple();
 
     @Select("""
-            select couple_role
-            from users
-            where id = #{userId}
-            limit 1
-            """)
-    String findRoleByUserId(Long userId);
-
-    @Select("""
             select id as user_id, couple_role as role,
                    home_latitude as latitude, home_longitude as longitude,
                    home_city as city, home_district as district, home_province as province,

@@ -26,15 +26,13 @@ import static org.mockito.Mockito.when;
 class HomeModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null);
+            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend");
     private final HomeMapper homeMapper = mock(HomeMapper.class);
     private HomeModule home;
 
     @BeforeEach
     void setUp() {
         setClock("2026-05-16T12:00:00Z");
-
-        when(homeMapper.findRoleByUserId(1L)).thenReturn("girlfriend");
         when(homeMapper.findCouple()).thenReturn(new Couple(
                 1L,
                 "伴侣 A",

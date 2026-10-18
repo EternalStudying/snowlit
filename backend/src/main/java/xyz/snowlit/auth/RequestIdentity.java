@@ -29,7 +29,8 @@ public final class RequestIdentity {
                 user.getDisplayName(),
                 user.getAvatarUrl(),
                 user.getBio(),
-                user.getMood()
+                user.getMood(),
+                user.validCoupleRole()
         );
     }
 }

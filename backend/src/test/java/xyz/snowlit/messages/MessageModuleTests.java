@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 class MessageModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(3L, "guest", "游客", null, null, null);
+            new AuthenticatedActor(3L, "guest", "游客", null, null, null, null);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-27T12:30:00Z"), ZoneId.of("Asia/Singapore"));
 

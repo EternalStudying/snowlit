@@ -6,6 +6,7 @@ public record AuthenticatedActor(
         String displayName,
         String avatarUrl,
         String bio,
-        String mood
+        String mood,
+        String coupleRole
 ) {
 }

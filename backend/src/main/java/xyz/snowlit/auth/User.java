@@ -1,8 +1,11 @@
 package xyz.snowlit.auth;
 
+import java.util.Set;
 import java.time.LocalDateTime;
 
 public class User {
+
+    private static final Set<String> COUPLE_ROLES = Set.of("boyfriend", "girlfriend");
 
     private Long id;
     private String username;
@@ -100,6 +103,13 @@ public class User {
 
     public void setMood(String mood) {
         this.mood = mood;
+    }
+
+    /**
+     * The configured couple role, or null when the account has no recognised role.
+     */
+    public String validCoupleRole() {
+        return coupleRole != null && COUPLE_ROLES.contains(coupleRole) ? coupleRole : null;
     }
 
     public String getCoupleRole() {

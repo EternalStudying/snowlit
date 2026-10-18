@@ -14,12 +14,10 @@ import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
 
 @Service
 public final class AuthModule {
 
-    private static final Set<String> COUPLE_ROLES = Set.of("boyfriend", "girlfriend");
     private static final int DISPLAY_NAME_MAX_LENGTH = 20;
     private static final int MOOD_MAX_LENGTH = 20;
     private static final int BIO_MAX_LENGTH = 80;
@@ -192,7 +190,7 @@ public final class AuthModule {
                 user.getId(),
                 user.getUsername(),
                 user.getDisplayName(),
-                resolveCoupleRole(user),
+                user.validCoupleRole(),
                 user.getAvatarUrl(),
                 user.getBio(),
                 user.getMood(),
@@ -200,13 +198,6 @@ public final class AuthModule {
         );
     }
 
-    private String resolveCoupleRole(User user) {
-        String mappedRole = Text.trim(user.getCoupleRole());
-        if (COUPLE_ROLES.contains(mappedRole)) {
-            return mappedRole;
-        }
-        return null;
-    }
 
     private boolean isTooLong(String value, int maxLength) {
         return value != null && value.codePointCount(0, value.length()) > maxLength;

@@ -27,6 +27,7 @@ class RequestIdentityTests {
     @Test
     void resolvesActiveSessionToSafeAuthenticatedActor() {
         users.user = new User(1L, "member_a", "伴侣 A", "secret", "/avatar.webp", "bio", "happy", null);
+        users.user.setCoupleRole("girlfriend");
         String token = jwt.generateToken(1L, "member_a");
         sessions.create(token, 1L, "member_a", jwt.tokenTtl());
 
@@ -38,7 +39,8 @@ class RequestIdentityTests {
                 "伴侣 A",
                 "/avatar.webp",
                 "bio",
-                "happy"
+                "happy",
+                "girlfriend"
         ));
     }
 

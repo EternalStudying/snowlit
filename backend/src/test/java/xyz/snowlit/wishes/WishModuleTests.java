@@ -35,9 +35,9 @@ import static org.mockito.Mockito.when;
 class WishModuleTests {
 
     private static final AuthenticatedActor MANAGER =
-            new AuthenticatedActor(1L, "owner", "Owner", null, null, null);
+            new AuthenticatedActor(1L, "owner", "Owner", null, null, null, null);
     private static final AuthenticatedActor GUEST =
-            new AuthenticatedActor(3L, "guest", "Guest", null, null, null);
+            new AuthenticatedActor(3L, "guest", "Guest", null, null, null, null);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 

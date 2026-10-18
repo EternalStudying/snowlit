@@ -13,7 +13,6 @@ import xyz.snowlit.diary.DiaryVos.DiaryDetailVo;
 import xyz.snowlit.diary.DiaryVos.DiaryMonthListVo;
 import xyz.snowlit.diary.DiaryVos.DiaryMonthsVo;
 import xyz.snowlit.diary.DiaryVos.DiarySummaryVo;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
 class DiaryModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null);
+            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend");
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-17T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
@@ -50,9 +49,13 @@ class DiaryModuleTests {
     private final DiaryModule diaryService =
             new DiaryModule(diaryMapper, homeMapper, imageStorageService, CLOCK);
 
-    @BeforeEach
-    void setUp() {
-        when(homeMapper.findRoleByUserId(1L)).thenReturn("girlfriend");
+    @Test
+    void accountWithoutCoupleRoleCannotUseDiaries() {
+        AuthenticatedActor withoutRole = new AuthenticatedActor(3L, "guest", "游客", null, null, null, null);
+
+        assertThatThrownBy(() -> diaryService.months(withoutRole, null))
+                .isInstanceOfSatisfying(ApplicationFailure.class,
+                        failure -> assertThat(failure.code()).isEqualTo("DIARY_ROLE_NOT_CONFIGURED"));
     }
 
     @Test

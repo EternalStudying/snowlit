@@ -145,12 +145,10 @@ public final class HomeModule {
     }
 
     private String resolveRole(AuthenticatedActor actor) {
-        String mappedRole = Text.trim(homeMapper.findRoleByUserId(actor.userId()));
-        if (BOYFRIEND.equals(mappedRole) || GIRLFRIEND.equals(mappedRole)) {
-            return mappedRole;
+        if (actor.coupleRole() == null) {
+            throw ApplicationFailure.invalidInput("HOME_ROLE_NOT_CONFIGURED", "账号角色尚未配置");
         }
-
-        throw ApplicationFailure.invalidInput("HOME_ROLE_NOT_CONFIGURED", "账号角色尚未配置");
+        return actor.coupleRole();
     }
 
     private HomeCoupleVo toCoupleVo(Couple couple, LocalDate today) {

@@ -23,7 +23,13 @@ public final class AuthenticatedRequestFixture {
     private final String token;
 
     public AuthenticatedRequestFixture() {
-        this(new User(1L, "member_a", "伴侣 A", "secret"));
+        this(memberA());
+    }
+
+    private static User memberA() {
+        User user = new User(1L, "member_a", "伴侣 A", "secret");
+        user.setCoupleRole("boyfriend");
+        return user;
     }
 
     public AuthenticatedRequestFixture(User user) {

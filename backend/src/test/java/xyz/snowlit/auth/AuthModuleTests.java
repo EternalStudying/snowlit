@@ -31,7 +31,7 @@ class AuthModuleTests {
 
     private static final String SECRET = "test-secret-key-that-is-long-enough-for-hs256-tests";
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo", "Demo User", null, "About me", "Happy");
+            new AuthenticatedActor(1L, "demo", "Demo User", null, "About me", "Happy", null);
 
     private final UserMapper userMapper = mock(UserMapper.class);
     private final FakeAuthSessionStore sessions = new FakeAuthSessionStore();
