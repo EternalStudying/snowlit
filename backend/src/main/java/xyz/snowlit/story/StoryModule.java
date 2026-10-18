@@ -4,6 +4,8 @@ import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import xyz.snowlit.story.StoryDtos.StoryMomentUpsertDto;
 import xyz.snowlit.story.StoryVos.StoryImageUploadVo;
@@ -26,23 +28,22 @@ import java.util.Set;
 public final class StoryModule {
 
     private static final Set<String> CATEGORIES = Set.of("daily", "date", "travel", "anniversary", "surprise");
-    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
-    private static final long MAX_IMAGE_SIZE = 10L * 1024L * 1024L;
+    private static final ImagePolicy IMAGE = ImagePolicy.standard("STORY", "story", true, "图片上传失败，请稍后重试");
     private static final int MAX_IMAGES = 3;
 
     private final StoryMapper storyMapper;
-    private final StoryImages imageStorage;
+    private final ImageIntake images;
     private final Clock clock;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    public StoryModule(StoryMapper storyMapper, StoryImages imageStorage) {
-        this(storyMapper, imageStorage, Clock.systemDefaultZone());
+    public StoryModule(StoryMapper storyMapper, ImageIntake images) {
+        this(storyMapper, images, Clock.systemDefaultZone());
     }
 
-    StoryModule(StoryMapper storyMapper, StoryImages imageStorage, Clock clock) {
+    StoryModule(StoryMapper storyMapper, ImageIntake images, Clock clock) {
         this.storyMapper = storyMapper;
-        this.imageStorage = imageStorage;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -95,8 +96,7 @@ public final class StoryModule {
 
     public StoryImageUploadVo uploadImage(AuthenticatedActor actor, MultipartFile file) {
         requireManager(actor);
-        validateImage(file);
-        ObjectStore.StoredObject stored = imageStorage.upload(file, actor.userId());
+        ObjectStore.StoredObject stored = images.store(file, IMAGE, actor.userId());
         return new StoryImageUploadVo(stored.url());
     }
 
@@ -165,22 +165,6 @@ public final class StoryModule {
 
     private boolean canManage(AuthenticatedActor actor) {
         return actor != null && SiteManagerPolicy.canManage(actor.userId());
-    }
-
-    private void validateImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw ApplicationFailure.invalidInput("STORY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
-                || filename.endsWith(".png") || filename.endsWith(".webp") || filename.endsWith(".gif");
-        if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
-            throw ApplicationFailure.invalidInput("STORY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE) {
-            throw ApplicationFailure.payloadTooLarge("STORY_IMAGE_TOO_LARGE", "单张图片不能超过 10MB");
-        }
     }
 
     private StoryMomentVo toVo(StoryMoment moment) {

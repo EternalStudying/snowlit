@@ -20,10 +20,3 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:}
   bucket: ${MINIO_BUCKET:snowlit}
   public-base-url: ${MINIO_PUBLIC_BASE_URL}
-  diary-temp-prefix: diary/tmp
-  diary-final-prefix: diary/final
-  feedback-prefix: feedback
-  story-prefix: story
-  album-prefix: album
-  wish-prefix: wish
-  messages-prefix: messages

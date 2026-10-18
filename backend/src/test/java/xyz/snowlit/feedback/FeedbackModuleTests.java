@@ -1,13 +1,15 @@
 package xyz.snowlit.feedback;
 
+import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.support.TestImages;
 
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.feedback.FeedbackDtos.FeedbackCreateDto;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackImageUploadVo;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackSubmitVo;
-import xyz.snowlit.feedback.FeedbackImages;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
@@ -37,45 +39,43 @@ class FeedbackModuleTests {
     private static final String IMAGE_URL = "https://cdn.example.com/feedback/2026/05/one.webp";
 
     private final FeedbackMapper feedbackMapper = mock(FeedbackMapper.class);
-    private final FeedbackImages imageStorage = mock(FeedbackImages.class);
-    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects), CLOCK);
 
     @Test
     void uploadImageRejectsUnsupportedTypeAndOversizeFile() {
-        MockMultipartFile text =
-                new MockMultipartFile("file", "note.txt", MediaType.TEXT_PLAIN_VALUE, "bad".getBytes());
+        assertThatThrownBy(() -> feedback.uploadImage(ACTOR, TestImages.text("file", "note.png")))
+                .isInstanceOfSatisfying(ApplicationFailure.class,
+                        failure -> assertThat(failure.code()).isEqualTo("FEEDBACK_SCREENSHOT_TYPE_NOT_ALLOWED"));
 
-        assertThatThrownBy(() -> feedback.uploadImage(ACTOR, text))
-                .isInstanceOf(ApplicationFailure.class)
-                .hasMessage("截图只支持 jpg、jpeg、png、webp");
-
-        byte[] bytes = new byte[10 * 1024 * 1024 + 1];
-        MockMultipartFile huge =
-                new MockMultipartFile("file", "huge.png", MediaType.IMAGE_PNG_VALUE, bytes);
+        MockMultipartFile huge = TestImages.pngOfSize("file", "huge.png", 10 * 1024 * 1024 + 1);
         assertThatThrownBy(() -> feedback.uploadImage(ACTOR, huge))
-                .isInstanceOf(ApplicationFailure.class)
-                .hasMessage("截图不能超过 10MB");
+                .isInstanceOfSatisfying(ApplicationFailure.class, failure -> {
+                    assertThat(failure.code()).isEqualTo("FEEDBACK_SCREENSHOT_TOO_LARGE");
+                    assertThat(failure.kind()).isEqualTo(ApplicationFailure.Kind.PAYLOAD_TOO_LARGE);
+                });
 
-        verify(imageStorage, never()).upload(any(), any());
+        MockMultipartFile empty = new MockMultipartFile("file", "empty.png", MediaType.IMAGE_PNG_VALUE, new byte[0]);
+        assertThatThrownBy(() -> feedback.uploadImage(ACTOR, empty))
+                .isInstanceOfSatisfying(ApplicationFailure.class,
+                        failure -> assertThat(failure.code()).isEqualTo("FEEDBACK_SCREENSHOT_REQUIRED"));
+
+        assertThat(objects.stored()).isEmpty();
     }
 
     @Test
     void uploadImageStoresRegisteredSystemUrlForAuthenticatedActor() {
-        MockMultipartFile file = new MockMultipartFile("file", "shot.webp", "image/webp", "webp".getBytes());
-        when(imageStorage.upload(file, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "feedback/2026/05/one.webp",
-                IMAGE_URL,
-                "image/webp",
-                4L
-        ));
+        MockMultipartFile file = TestImages.webp("file", "shot.webp");
 
         FeedbackImageUploadVo response = feedback.uploadImage(ACTOR, file);
 
-        assertThat(response.url()).isEqualTo(IMAGE_URL);
+        ObjectStore.StoredObject stored = objects.onlyStored();
+        assertThat(stored.objectName()).matches("feedback/\\d{4}/\\d{2}/1/[0-9a-f-]+\\.webp");
+        assertThat(response.url()).isEqualTo(stored.url());
         ArgumentCaptor<FeedbackImage> imageCaptor = ArgumentCaptor.forClass(FeedbackImage.class);
         verify(feedbackMapper).insertImage(imageCaptor.capture());
         assertThat(imageCaptor.getValue().getUserId()).isEqualTo(1L);
-        assertThat(imageCaptor.getValue().getUrl()).isEqualTo(IMAGE_URL);
+        assertThat(imageCaptor.getValue().getUrl()).isEqualTo(stored.url());
     }
 
     @Test

@@ -1,8 +1,10 @@
 package xyz.snowlit.wishes;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
-import xyz.snowlit.wishes.WishImages;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -40,8 +42,8 @@ class WishControllerTests {
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final WishMapper wishMapper = mock(WishMapper.class);
-    private final WishImages imageStorage = mock(WishImages.class);
-    private final WishModule wishes = new WishModule(wishMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WishController(wishes))
             .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
@@ -103,15 +105,9 @@ class WishControllerTests {
         Wish pending = wish(false);
         Wish completed = wish(true);
         when(wishMapper.findWishById(1L)).thenReturn(pending, completed, completed, pending);
-        when(imageStorage.upload(any(), any())).thenReturn(new ObjectStore.StoredObject(
-                "wish/done.jpg",
-                "/wish-assets/sea-sunset.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                5L
-        ));
 
         mockMvc.perform(multipart("/api/wishes/1/complete")
-                        .file(new MockMultipartFile("image", "done.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes()))
+                        .file(TestImages.jpeg("image", "done.jpg"))
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.completed").value(true));
@@ -130,8 +126,8 @@ class WishControllerTests {
                 .andExpect(jsonPath("$.code").value("WISH_COMPLETION_IMAGE_REQUIRED"));
 
         mockMvc.perform(multipart("/api/wishes/1/complete")
-                        .file(new MockMultipartFile("image", "first.webp", "image/webp", "first".getBytes()))
-                        .file(new MockMultipartFile("image", "second.webp", "image/webp", "second".getBytes()))
+                        .file(TestImages.webp("image", "first.webp"))
+                        .file(TestImages.webp("image", "second.webp"))
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("WISH_IMAGE_LIMIT_EXCEEDED"));
@@ -144,12 +140,6 @@ class WishControllerTests {
             created.setId(1L);
             return 1;
         }).when(wishMapper).insertWish(any());
-        when(imageStorage.upload(any(), any())).thenReturn(new ObjectStore.StoredObject(
-                "wish/create.jpg",
-                "/wish-assets/sea-sunset.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                5L
-        ));
 
         mockMvc.perform(multipart("/api/wishes")
                         .file(new MockMultipartFile("payload", "", MediaType.APPLICATION_JSON_VALUE, """
@@ -162,7 +152,7 @@ class WishControllerTests {
                                   "note":"带相机"
                                 }
                                 """.getBytes()))
-                        .file(new MockMultipartFile("image", "wish.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes()))
+                        .file(TestImages.jpeg("image", "wish.jpg"))
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("一起去海边"));

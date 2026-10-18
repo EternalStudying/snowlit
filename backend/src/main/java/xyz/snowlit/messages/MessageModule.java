@@ -6,6 +6,8 @@ import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.messages.MessageDtos.MessageCreateDto;
 import xyz.snowlit.messages.MessageVos.MessagePageVo;
 import xyz.snowlit.messages.MessageVos.MessageVo;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,25 +25,21 @@ public final class MessageModule {
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 50;
     private static final int MAX_CONTENT_LENGTH = 500;
-    private static final long MAX_IMAGE_SIZE = 10L * 1024L * 1024L;
-    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final ImagePolicy IMAGE =
+            ImagePolicy.standard("MESSAGE", "messages", true, "留言图片上传失败，请稍后重试");
 
     private final MessageMapper messageMapper;
-    private final MessageImages messageImageStorageService;
+    private final ImageIntake images;
     private final Clock clock;
 
     @Autowired
-    public MessageModule(MessageMapper messageMapper, MessageImages messageImageStorageService) {
-        this(messageMapper, messageImageStorageService, Clock.systemDefaultZone());
+    public MessageModule(MessageMapper messageMapper, ImageIntake images) {
+        this(messageMapper, images, Clock.systemDefaultZone());
     }
 
-    public MessageModule(
-            MessageMapper messageMapper,
-            MessageImages messageImageStorageService,
-            Clock clock
-    ) {
+    MessageModule(MessageMapper messageMapper, ImageIntake images, Clock clock) {
         this.messageMapper = messageMapper;
-        this.messageImageStorageService = messageImageStorageService;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -61,8 +59,7 @@ public final class MessageModule {
 
         ObjectStore.StoredObject storedImage = null;
         if (image != null && !image.isEmpty()) {
-            validateImage(image);
-            storedImage = messageImageStorageService.upload(image, actor.userId());
+            storedImage = images.store(image, IMAGE, actor.userId());
         }
 
         Message message = new Message();
@@ -86,7 +83,7 @@ public final class MessageModule {
         }
 
         messageMapper.softDeleteMessage(id, now());
-        messageImageStorageService.deleteBestEffort(message.getImageObjectName());
+        images.deleteBestEffort(message.getImageObjectName());
     }
 
     private Message requireMessage(Long id) {
@@ -103,19 +100,6 @@ public final class MessageModule {
         }
         if (Text.trim(request.content()).length() > MAX_CONTENT_LENGTH) {
             throw ApplicationFailure.invalidInput("MESSAGE_CONTENT_TOO_LONG", "留言内容不能超过 500 字");
-        }
-    }
-
-    private void validateImage(MultipartFile file) {
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
-                || filename.endsWith(".png") || filename.endsWith(".webp");
-        if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
-            throw ApplicationFailure.invalidInput("MESSAGE_IMAGE_TYPE_INVALID", "留言图片只支持 jpg、png、webp");
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE) {
-            throw ApplicationFailure.payloadTooLarge("MESSAGE_IMAGE_TOO_LARGE", "留言图片不能超过 10MB");
         }
     }
 

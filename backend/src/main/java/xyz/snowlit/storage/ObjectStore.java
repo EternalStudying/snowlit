@@ -3,15 +3,13 @@ package xyz.snowlit.storage;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Technology-neutral boundary for binary object persistence.
+ * Technology-neutral seam for binary object persistence. Failures surface as dependency ApplicationFailures.
  */
 public interface ObjectStore {
 
-    StoredObject put(MultipartFile file, String objectName);
+    StoredObject put(MultipartFile file, String objectName, String contentType);
 
     void delete(String objectName);
-
-    boolean isConfigured();
 
     record StoredObject(
             String objectName,

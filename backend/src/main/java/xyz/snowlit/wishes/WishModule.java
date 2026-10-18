@@ -4,6 +4,8 @@ import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import xyz.snowlit.wishes.WishDtos.WishCreateDto;
 import xyz.snowlit.wishes.WishDtos.WishUpdateDto;
@@ -27,21 +29,20 @@ public final class WishModule {
     private static final int DEFAULT_SIZE = 8;
     private static final int MAX_SIZE = 30;
     private static final Set<String> CATEGORIES = Set.of("want_go", "want_do");
-    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
-    private static final long MAX_IMAGE_SIZE = 10L * 1024L * 1024L;
+    private static final ImagePolicy IMAGE = ImagePolicy.standard("WISH", "wish", true, "清单图片上传失败，请稍后重试");
 
     private final WishMapper wishMapper;
-    private final WishImages imageStorage;
+    private final ImageIntake images;
     private final Clock clock;
 
     @Autowired
-    public WishModule(WishMapper wishMapper, WishImages imageStorage) {
-        this(wishMapper, imageStorage, Clock.systemDefaultZone());
+    public WishModule(WishMapper wishMapper, ImageIntake images) {
+        this(wishMapper, images, Clock.systemDefaultZone());
     }
 
-    WishModule(WishMapper wishMapper, WishImages imageStorage, Clock clock) {
+    WishModule(WishMapper wishMapper, ImageIntake images, Clock clock) {
         this.wishMapper = wishMapper;
-        this.imageStorage = imageStorage;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -92,9 +93,7 @@ public final class WishModule {
         if (wish.isCompleted()) {
             throw ApplicationFailure.conflict("WISH_ALREADY_COMPLETED", "这个清单已经完成了");
         }
-        validateImage(image);
-
-        String imageUrl = imageStorage.upload(image, actor.userId()).url();
+        String imageUrl = images.store(image, IMAGE, actor.userId()).url();
         wishMapper.completeWish(id, actor.userId(), now(), imageUrl);
         return toSummary(requireWish(id));
     }
@@ -114,8 +113,7 @@ public final class WishModule {
         validateCreateRequest(request);
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
-            validateImage(image);
-            imageUrl = imageStorage.upload(image, actor.userId()).url();
+            imageUrl = images.store(image, IMAGE, actor.userId()).url();
         }
 
         LocalDateTime now = now();
@@ -225,19 +223,6 @@ public final class WishModule {
         }
         if (!CATEGORIES.contains(Text.trim(request.category()))) {
             throw ApplicationFailure.invalidInput("WISH_CATEGORY_INVALID", "清单分类不正确");
-        }
-    }
-
-    private void validateImage(MultipartFile file) {
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
-                || filename.endsWith(".png") || filename.endsWith(".webp") || filename.endsWith(".gif");
-        if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
-            throw ApplicationFailure.invalidInput("WISH_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE) {
-            throw ApplicationFailure.payloadTooLarge("WISH_IMAGE_TOO_LARGE", "单张图片不能超过 10MB");
         }
     }
 

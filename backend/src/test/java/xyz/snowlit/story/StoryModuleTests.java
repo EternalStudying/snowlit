@@ -1,11 +1,13 @@
 package xyz.snowlit.story;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.story.StoryDtos.StoryMomentUpsertDto;
-import xyz.snowlit.story.StoryImages;
 import xyz.snowlit.story.StoryVos.StoryImageUploadVo;
 import xyz.snowlit.story.StoryVos.StoryMomentListVo;
 import xyz.snowlit.story.StoryVos.StoryMomentVo;
@@ -38,8 +40,8 @@ class StoryModuleTests {
             Clock.fixed(Instant.parse("2026-05-21T10:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final StoryMapper storyMapper = mock(StoryMapper.class);
-    private final StoryImages imageStorageService = mock(StoryImages.class);
-    private final StoryModule story = new StoryModule(storyMapper, imageStorageService, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects), CLOCK);
 
     @Test
     void listMomentsIsPublicAndReturnsFiltersYearsAndCanManage() {
@@ -136,19 +138,14 @@ class StoryModuleTests {
 
     @Test
     void uploadImageRequiresManagerAndValidatesImageFile() {
-        MockMultipartFile file = new MockMultipartFile("file", "story.png", MediaType.IMAGE_PNG_VALUE, "png".getBytes());
-        when(imageStorageService.upload(file, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "story/2026/05/1/one.png",
-                "https://cdn.example.com/story/one.png",
-                MediaType.IMAGE_PNG_VALUE,
-                3L
-        ));
+        MockMultipartFile file = TestImages.png("file", "story.png");
 
         StoryImageUploadVo uploaded = story.uploadImage(MANAGER, file);
 
-        assertThat(uploaded.url()).isEqualTo("https://cdn.example.com/story/one.png");
+        assertThat(uploaded.url()).isEqualTo(objects.onlyStored().url());
+        assertThat(objects.onlyStored().objectName()).matches("story/\\d{4}/\\d{2}/1/[0-9a-f-]+\\.png");
 
-        MockMultipartFile text = new MockMultipartFile("file", "story.txt", MediaType.TEXT_PLAIN_VALUE, "text".getBytes());
+        MockMultipartFile text = TestImages.text("file", "story.txt");
         assertThatThrownBy(() -> story.uploadImage(MANAGER, text))
                 .isInstanceOf(ApplicationFailure.class)
                 .hasMessage("只支持 jpg、png、webp、gif 图片");

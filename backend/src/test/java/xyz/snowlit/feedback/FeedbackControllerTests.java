@@ -1,8 +1,10 @@
 package xyz.snowlit.feedback;
 
+import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.support.TestImages;
 
-import xyz.snowlit.feedback.FeedbackImages;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,8 +37,8 @@ class FeedbackControllerTests {
             Clock.fixed(Instant.parse("2026-05-17T12:30:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final FeedbackMapper feedbackMapper = mock(FeedbackMapper.class);
-    private final FeedbackImages imageStorage = mock(FeedbackImages.class);
-    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new FeedbackController(feedback))
             .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
@@ -61,20 +63,13 @@ class FeedbackControllerTests {
 
     @Test
     void uploadScreenshotProductEntryReturnsSystemUrl() throws Exception {
-        MockMultipartFile file =
-                new MockMultipartFile("file", "shot.png", MediaType.IMAGE_PNG_VALUE, "png".getBytes());
-        when(imageStorage.upload(any(), eq(1L))).thenReturn(new ObjectStore.StoredObject(
-                "feedback/shot.png",
-                "https://cdn.example.com/feedback/shot.png",
-                MediaType.IMAGE_PNG_VALUE,
-                3L
-        ));
+        MockMultipartFile file = TestImages.png("file", "shot.png");
 
         mockMvc.perform(multipart("/api/feedback/screenshots")
                         .file(file)
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.url").value("https://cdn.example.com/feedback/shot.png"));
+                .andExpect(jsonPath("$.url").value(objects.onlyStored().url()));
     }
 
     @Test

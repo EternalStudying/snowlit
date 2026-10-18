@@ -1,10 +1,12 @@
 package xyz.snowlit.wishes;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
-import xyz.snowlit.wishes.WishImages;
 import xyz.snowlit.wishes.WishDtos.WishCreateDto;
 import xyz.snowlit.wishes.WishDtos.WishUpdateDto;
 import xyz.snowlit.wishes.WishVos.WishDetailVo;
@@ -42,8 +44,8 @@ class WishModuleTests {
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final WishMapper wishMapper = mock(WishMapper.class);
-    private final WishImages imageStorage = mock(WishImages.class);
-    private final WishModule wishes = new WishModule(wishMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects), CLOCK);
 
     @Test
     void listReturnsPagedSummaryAndManagerCapability() {
@@ -101,13 +103,7 @@ class WishModuleTests {
         verify(wishMapper, never()).insertWish(any());
 
         MockMultipartFile image =
-                new MockMultipartFile("image", "wish.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes());
-        when(imageStorage.upload(image, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "wish/1/wish.jpg",
-                "https://cdn.example.com/wish/wish.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                5L
-        ));
+                TestImages.jpeg("image", "wish.jpg");
         doAnswer(invocation -> {
             Wish created = invocation.getArgument(0);
             created.setId(88L);
@@ -122,7 +118,7 @@ class WishModuleTests {
         verify(wishMapper).insertWish(argThat(wish ->
                 "一起去海边".equals(wish.getTitle())
                         && !wish.isCompleted()
-                        && "https://cdn.example.com/wish/wish.jpg".equals(wish.getImageUrl())
+                        && objects.onlyStored().url().equals(wish.getImageUrl())
                         && wish.getLastOperatedByUserId().equals(1L)
                         && wish.getCreatedAt().equals(LocalDateTime.of(2026, 5, 16, 20, 0))
         ));
@@ -144,7 +140,7 @@ class WishModuleTests {
         );
 
         MockMultipartFile text =
-                new MockMultipartFile("image", "wish.txt", MediaType.TEXT_PLAIN_VALUE, "text".getBytes());
+                TestImages.text("image", "wish.txt");
         assertFailure(
                 () -> wishes.createWish(MANAGER, createRequest("want_do"), text),
                 "WISH_IMAGE_TYPE_INVALID"
@@ -167,17 +163,11 @@ class WishModuleTests {
     @Test
     void completeAndReopenUseActorAndServerTime() {
         MockMultipartFile image =
-                new MockMultipartFile("image", "done.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes());
+                TestImages.jpeg("image", "done.jpg");
         Wish pending = wish(1L, "想去海边", "want_go", false);
         Wish completed = wish(1L, "想去海边", "want_go", true);
         completed.setCompletedAt(LocalDateTime.of(2026, 5, 16, 20, 0));
         completed.setImageUrl("https://cdn.example.com/wish/done.jpg");
-        when(imageStorage.upload(image, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "wish/1/done.jpg",
-                "https://cdn.example.com/wish/done.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                5L
-        ));
         when(wishMapper.findWishById(1L)).thenReturn(pending, completed, completed, pending);
 
         assertThat(wishes.completeWish(MANAGER, 1L, image).completed()).isTrue();
@@ -185,7 +175,7 @@ class WishModuleTests {
                 1L,
                 1L,
                 LocalDateTime.of(2026, 5, 16, 20, 0),
-                "https://cdn.example.com/wish/done.jpg"
+                objects.onlyStored().url()
         );
 
         assertThat(wishes.reopenWish(MANAGER, 1L).completed()).isFalse();
@@ -195,14 +185,14 @@ class WishModuleTests {
     @Test
     void completeAndReopenValidateImageAndState() {
         MockMultipartFile image =
-                new MockMultipartFile("image", "done.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes());
+                TestImages.jpeg("image", "done.jpg");
         when(wishMapper.findWishById(1L)).thenReturn(wish(1L, "已完成", "want_do", true));
         assertFailure(() -> wishes.completeWish(MANAGER, 1L, image), "WISH_ALREADY_COMPLETED");
 
         when(wishMapper.findWishById(2L)).thenReturn(wish(2L, "未完成", "want_do", false));
         assertFailure(() -> wishes.reopenWish(MANAGER, 2L), "WISH_NOT_COMPLETED");
 
-        verify(imageStorage, never()).upload(any(), any());
+        assertThat(objects.stored()).isEmpty();
     }
 
     @Test

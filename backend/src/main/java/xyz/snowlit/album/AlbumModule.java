@@ -6,6 +6,9 @@ import xyz.snowlit.album.AlbumDtos.AlbumUnlockDto;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
+import xyz.snowlit.storage.ImageFormat;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import xyz.snowlit.text.Text;
 import xyz.snowlit.album.AlbumVos.AlbumCurrentDraftVo;
@@ -25,8 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -48,18 +49,29 @@ public class AlbumModule {
     private static final int MAX_PREVIEW_LIMIT = 9;
     private static final int MAX_UNLOCK_FAILURES = 5;
     private static final int MAX_PHOTOS = 300;
-    private static final long MAX_ORIGINAL_SIZE = 10L * 1024L * 1024L;
+    private static final ImagePolicy ORIGINAL_IMAGE =
+            ImagePolicy.standard("ALBUM", "album", false, "相册图片上传失败，请稍后重试");
+    private static final ImagePolicy.Rejection PREVIEW_NOT_WEBP =
+            new ImagePolicy.Rejection("ALBUM_PREVIEW_TYPE_INVALID", "预览图必须是 WebP");
+    private static final ImagePolicy PREVIEW_IMAGE = new ImagePolicy(
+            "album",
+            false,
+            Set.of(ImageFormat.WEBP),
+            ImagePolicy.TEN_MEGABYTES,
+            PREVIEW_NOT_WEBP,
+            PREVIEW_NOT_WEBP,
+            ORIGINAL_IMAGE.tooLarge(),
+            ORIGINAL_IMAGE.storeFailed()
+    );
     private static final Duration PRIVATE_TOKEN_TTL = Duration.ofHours(1);
     private static final Duration UNLOCK_LOCK_DURATION = Duration.ofMinutes(10);
     private static final ZoneOffset ACTIVITY_ZONE = ZoneOffset.UTC;
     private static final Set<String> VISIBILITIES = Set.of("public", "private");
-    private static final Set<String> ORIGINAL_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
-    private static final Set<String> IMAGE_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
 
     private final AlbumMapper albumMapper;
     private final PasswordEncoder passwordEncoder;
     private final AlbumPrivateAccessTokenStore tokenStore;
-    private final AlbumAssets albumAssetStorageService;
+    private final ImageIntake images;
     private final Clock clock;
 
     @Autowired
@@ -67,22 +79,22 @@ public class AlbumModule {
             AlbumMapper albumMapper,
             PasswordEncoder passwordEncoder,
             AlbumPrivateAccessTokenStore tokenStore,
-            AlbumAssets albumAssetStorageService
+            ImageIntake images
     ) {
-        this(albumMapper, passwordEncoder, tokenStore, albumAssetStorageService, Clock.systemDefaultZone());
+        this(albumMapper, passwordEncoder, tokenStore, images, Clock.systemDefaultZone());
     }
 
     AlbumModule(
             AlbumMapper albumMapper,
             PasswordEncoder passwordEncoder,
             AlbumPrivateAccessTokenStore tokenStore,
-            AlbumAssets albumAssetStorageService,
+            ImageIntake images,
             Clock clock
     ) {
         this.albumMapper = albumMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenStore = tokenStore;
-        this.albumAssetStorageService = albumAssetStorageService;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -250,24 +262,7 @@ public class AlbumModule {
             MultipartFile preview,
             AlbumPhotoMetadataDto metadata
     ) {
-        requireManager(actor);
-        Album album = requireOwnedDraft(albumId, actor.userId());
-        validatePhotoUpload(original, preview, metadata);
-        if (albumMapper.countPhotosByAlbumId(album.getId()) >= MAX_PHOTOS) {
-            throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 300 张照片");
-        }
-
-        ObjectStore.StoredObject originalAsset =
-                albumAssetStorageService.uploadOriginal(original, album.getId(), actor.userId());
-        ObjectStore.StoredObject previewAsset;
-        try {
-            previewAsset = albumAssetStorageService.uploadPreview(preview, album.getId(), actor.userId());
-        } catch (RuntimeException ex) {
-            albumAssetStorageService.deleteBestEffort(originalAsset.objectName());
-            throw ex;
-        }
-
-        return storeUploadedPhoto(album, metadata, originalAsset, previewAsset);
+        return uploadPhoto(actor, albumId, original, preview, PREVIEW_IMAGE, metadata);
     }
 
     public AlbumPhotoVo uploadDraftPhotoFromMobile(
@@ -276,20 +271,33 @@ public class AlbumModule {
             MultipartFile file,
             AlbumPhotoMetadataDto metadata
     ) {
+        return uploadPhoto(actor, albumId, file, file, ORIGINAL_IMAGE, metadata);
+    }
+
+    private AlbumPhotoVo uploadPhoto(
+            AuthenticatedActor actor,
+            Long albumId,
+            MultipartFile original,
+            MultipartFile preview,
+            ImagePolicy previewPolicy,
+            AlbumPhotoMetadataDto metadata
+    ) {
         requireManager(actor);
         Album album = requireOwnedDraft(albumId, actor.userId());
-        validateMobilePhotoUpload(file, metadata);
+        validatePhotoMetadata(metadata);
+        images.verify(original, ORIGINAL_IMAGE);
+        images.verify(preview, previewPolicy);
         if (albumMapper.countPhotosByAlbumId(album.getId()) >= MAX_PHOTOS) {
             throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 300 张照片");
         }
 
         ObjectStore.StoredObject originalAsset =
-                albumAssetStorageService.uploadOriginal(file, album.getId(), actor.userId());
+                images.store(original, ORIGINAL_IMAGE, album.getId(), "original", actor.userId());
         ObjectStore.StoredObject previewAsset;
         try {
-            previewAsset = albumAssetStorageService.uploadPreview(file, album.getId(), actor.userId());
+            previewAsset = images.store(preview, previewPolicy, album.getId(), "preview", actor.userId());
         } catch (RuntimeException ex) {
-            albumAssetStorageService.deleteBestEffort(originalAsset.objectName());
+            images.deleteBestEffort(originalAsset.objectName());
             throw ex;
         }
 
@@ -346,8 +354,8 @@ public class AlbumModule {
         requireManager(actor);
         Album draft = requireOwnedDraft(albumId, actor.userId());
         albumMapper.findPhotosByAlbumId(draft.getId()).forEach(photo -> {
-            albumAssetStorageService.deleteBestEffort(photo.getOriginalObjectName());
-            albumAssetStorageService.deleteBestEffort(photo.getPreviewObjectName());
+            images.deleteBestEffort(photo.getOriginalObjectName());
+            images.deleteBestEffort(photo.getPreviewObjectName());
         });
         albumMapper.deleteAlbumById(draft.getId());
     }
@@ -509,17 +517,6 @@ public class AlbumModule {
         return passwordEncoder.encode(Text.trim(request.privatePassword()));
     }
 
-    private void validatePhotoUpload(MultipartFile original, MultipartFile preview, AlbumPhotoMetadataDto metadata) {
-        validatePhotoMetadata(metadata);
-        validateOriginalImage(original);
-        validatePreviewImage(preview);
-    }
-
-    private void validateMobilePhotoUpload(MultipartFile file, AlbumPhotoMetadataDto metadata) {
-        validatePhotoMetadata(metadata);
-        validateOriginalImage(file);
-    }
-
     private void validatePhotoMetadata(AlbumPhotoMetadataDto metadata) {
         if (metadata.takenAt() == null || metadata.width() == null || metadata.height() == null
                 || metadata.width() < 1 || metadata.height() < 1) {
@@ -527,57 +524,6 @@ public class AlbumModule {
         }
     }
 
-    private void validateOriginalImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw ApplicationFailure.invalidInput("ALBUM_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        if (!ORIGINAL_IMAGE_TYPES.contains(contentType) && !hasAllowedExtension(file) && !hasImageSignature(file)) {
-            throw ApplicationFailure.invalidInput("ALBUM_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        if (file.getSize() > MAX_ORIGINAL_SIZE) {
-            throw ApplicationFailure.payloadTooLarge("ALBUM_IMAGE_TOO_LARGE", "单张原图不能超过 10MB");
-        }
-    }
-
-    private void validatePreviewImage(MultipartFile file) {
-        if (file == null || file.isEmpty() || !"image/webp".equals(Text.trim(file.getContentType()).toLowerCase())) {
-            throw ApplicationFailure.invalidInput("ALBUM_PREVIEW_TYPE_INVALID", "预览图必须是 WebP");
-        }
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        if (!filename.endsWith(".webp")) {
-            throw ApplicationFailure.invalidInput("ALBUM_PREVIEW_TYPE_INVALID", "预览图必须是 WebP");
-        }
-    }
-
-    private boolean hasAllowedExtension(MultipartFile file) {
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        return IMAGE_EXTENSIONS.stream().anyMatch(filename::endsWith);
-    }
-
-    private boolean hasImageSignature(MultipartFile file) {
-        byte[] header = new byte[12];
-        int length;
-        try (InputStream input = file.getInputStream()) {
-            length = input.read(header);
-        } catch (IOException ex) {
-            return false;
-        }
-        if (length < 4) {
-            return false;
-        }
-        boolean jpeg = unsigned(header[0]) == 0xff && unsigned(header[1]) == 0xd8 && unsigned(header[2]) == 0xff;
-        boolean png = unsigned(header[0]) == 0x89 && header[1] == 0x50 && header[2] == 0x4e && header[3] == 0x47;
-        boolean gif = header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46;
-        boolean webp = length >= 12
-                && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
-                && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50;
-        return jpeg || png || gif || webp;
-    }
-
-    private int unsigned(byte value) {
-        return value & 0xff;
-    }
 
     private String defaultLocation(String value) {
         String cleaned = Text.trim(value);

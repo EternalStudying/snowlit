@@ -24,13 +24,6 @@ minio:
   secret-key: ${LOCAL_MINIO_SECRET_KEY:}
   bucket: ${LOCAL_MINIO_BUCKET:snowlit-dev}
   public-base-url: ${LOCAL_MINIO_PUBLIC_BASE_URL:http://127.0.0.1:9000/snowlit-dev}
-  diary-temp-prefix: diary/tmp
-  diary-final-prefix: diary/final
-  feedback-prefix: feedback
-  story-prefix: story
-  album-prefix: album
-  wish-prefix: wish
-  messages-prefix: messages
 
 snowlit:
   wechat:

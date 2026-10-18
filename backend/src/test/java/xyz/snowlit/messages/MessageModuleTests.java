@@ -1,13 +1,15 @@
 package xyz.snowlit.messages;
 
+import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.support.TestImages;
 
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.messages.MessageDtos.MessageCreateDto;
 import xyz.snowlit.messages.MessageVos.MessagePageVo;
 import xyz.snowlit.messages.MessageVos.MessageVo;
-import xyz.snowlit.messages.MessageImages;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -36,8 +38,8 @@ class MessageModuleTests {
             Clock.fixed(Instant.parse("2026-05-27T12:30:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final MessageMapper messageMapper = mock(MessageMapper.class);
-    private final MessageImages imageStorage = mock(MessageImages.class);
-    private final MessageModule messages = new MessageModule(messageMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects), CLOCK);
 
     @Test
     void listMessagesReturnsPagedItemsWithCurrentUserDeletePermission() {
@@ -73,18 +75,12 @@ class MessageModuleTests {
                         && message.getImageUrl() == null
                         && message.getCreatedAt().equals(LocalDateTime.of(2026, 5, 27, 20, 30))
         ));
-        verify(imageStorage, never()).upload(any(), any());
+        assertThat(objects.stored()).isEmpty();
     }
 
     @Test
     void createMessageStoresOptionalImageMetadata() {
-        MockMultipartFile image = new MockMultipartFile("image", "message.webp", "image/webp", "image".getBytes());
-        when(imageStorage.upload(image, 3L)).thenReturn(new ObjectStore.StoredObject(
-                "messages/2026/05/3/message.webp",
-                "https://cdn.example.com/messages/message.webp",
-                "image/webp",
-                5L
-        ));
+        MockMultipartFile image = TestImages.gif("image", "message.gif");
         doAnswer(invocation -> {
             Message message = invocation.getArgument(0);
             message.setId(89L);
@@ -94,11 +90,13 @@ class MessageModuleTests {
 
         messages.createMessage(ACTOR, new MessageCreateDto("有一张图"), image);
 
+        ObjectStore.StoredObject stored = objects.onlyStored();
+        assertThat(stored.objectName()).matches("messages/\\d{4}/\\d{2}/3/[0-9a-f-]+\\.gif");
         verify(messageMapper).insertMessage(argThat(message ->
-                "https://cdn.example.com/messages/message.webp".equals(message.getImageUrl())
-                        && "messages/2026/05/3/message.webp".equals(message.getImageObjectName())
-                        && "image/webp".equals(message.getImageContentType())
-                        && Long.valueOf(5L).equals(message.getImageSizeBytes())
+                stored.url().equals(message.getImageUrl())
+                        && stored.objectName().equals(message.getImageObjectName())
+                        && "image/gif".equals(message.getImageContentType())
+                        && Long.valueOf(image.getSize()).equals(message.getImageSizeBytes())
         ));
     }
 
@@ -108,11 +106,10 @@ class MessageModuleTests {
                 .isInstanceOf(ApplicationFailure.class)
                 .hasMessage("留言内容不能为空");
 
-        MockMultipartFile text =
-                new MockMultipartFile("image", "message.txt", MediaType.TEXT_PLAIN_VALUE, "text".getBytes());
+        MockMultipartFile text = TestImages.text("image", "message.jpg");
         assertThatThrownBy(() -> messages.createMessage(ACTOR, new MessageCreateDto("hello"), text))
-                .isInstanceOf(ApplicationFailure.class)
-                .hasMessage("留言图片只支持 jpg、png、webp");
+                .isInstanceOfSatisfying(ApplicationFailure.class,
+                        failure -> assertThat(failure.code()).isEqualTo("MESSAGE_IMAGE_TYPE_INVALID"));
     }
 
     @Test
@@ -122,6 +119,7 @@ class MessageModuleTests {
         messages.deleteMessage(ACTOR, 8L);
 
         verify(messageMapper).softDeleteMessage(8L, LocalDateTime.of(2026, 5, 27, 20, 30));
+        assertThat(objects.deleted()).containsExactly("messages/8.jpg");
 
         when(messageMapper.findMessageById(9L)).thenReturn(message(9L, 1L));
         assertThatThrownBy(() -> messages.deleteMessage(ACTOR, 9L))

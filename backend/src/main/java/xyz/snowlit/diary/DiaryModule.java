@@ -8,6 +8,8 @@ import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.home.HomeLocation;
 import xyz.snowlit.home.HomeMapper;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import xyz.snowlit.diary.DiaryVos.DiaryDetailVo;
 import xyz.snowlit.diary.DiaryVos.DiaryImageUploadVo;
@@ -22,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,9 +46,7 @@ public class DiaryModule {
             "happy", "miss", "calm", "wronged", "expecting",
             "tired", "sweet", "secret", "angry", "touched"
     );
-    private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
-    private static final Set<String> IMAGE_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
-    private static final long MAX_IMAGE_SIZE = 10L * 1024L * 1024L;
+    private static final ImagePolicy IMAGE = ImagePolicy.standard("DIARY", "diary/tmp", false, "图片上传失败，请稍后重试");
     private static final int MAX_IMAGES_PER_DIARY = 20;
     private static final Pattern H1_PATTERN = Pattern.compile("(?m)^#\\s+(.+?)\\s*$");
     private static final Pattern MARKDOWN_IMAGE_PATTERN = Pattern.compile("!\\[[^\\]]*]\\(([^)\\s]+)(?:\\s+\"[^\"]*\")?\\)");
@@ -60,27 +58,27 @@ public class DiaryModule {
 
     private final DiaryMapper diaryMapper;
     private final HomeMapper homeMapper;
-    private final DiaryImages imageStorageService;
+    private final ImageIntake images;
     private final Clock clock;
 
     @Autowired
     public DiaryModule(
             DiaryMapper diaryMapper,
             HomeMapper homeMapper,
-            DiaryImages imageStorageService
+            ImageIntake images
     ) {
-        this(diaryMapper, homeMapper, imageStorageService, Clock.systemDefaultZone());
+        this(diaryMapper, homeMapper, images, Clock.systemDefaultZone());
     }
 
     DiaryModule(
             DiaryMapper diaryMapper,
             HomeMapper homeMapper,
-            DiaryImages imageStorageService,
+            ImageIntake images,
             Clock clock
     ) {
         this.diaryMapper = diaryMapper;
         this.homeMapper = homeMapper;
-        this.imageStorageService = imageStorageService;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -198,8 +196,7 @@ public class DiaryModule {
     }
 
     public DiaryImageUploadVo uploadImage(AuthenticatedActor actor, MultipartFile file) {
-        validateImage(file);
-        ObjectStore.StoredObject stored = imageStorageService.uploadTemporary(file, actor.userId());
+        ObjectStore.StoredObject stored = images.store(file, IMAGE, actor.userId());
         LocalDateTime now = now();
         DiaryImage image = new DiaryImage();
         image.setUploaderUserId(actor.userId());
@@ -221,7 +218,7 @@ public class DiaryModule {
             if (diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
                 continue;
             }
-            imageStorageService.delete(image.getObjectName());
+            images.delete(image.getObjectName(), IMAGE);
             diaryMapper.markUploadDeleted(image.getId(), now);
         }
     }
@@ -423,57 +420,16 @@ public class DiaryModule {
         diaryMapper.replaceImageReferences(diaryId, plan.references());
     }
 
-    private void cleanupUnreferencedImages(List<DiaryImage> images, LocalDateTime now) {
-        for (DiaryImage image : images) {
+    private void cleanupUnreferencedImages(List<DiaryImage> previousImages, LocalDateTime now) {
+        for (DiaryImage image : previousImages) {
             if (image.isDeleted() || diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
                 continue;
             }
-            imageStorageService.delete(image.getObjectName());
+            images.delete(image.getObjectName(), IMAGE);
             diaryMapper.markUploadDeleted(image.getId(), now);
         }
     }
 
-    private void validateImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw ApplicationFailure.invalidInput("DIARY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        if (!IMAGE_TYPES.contains(contentType) && !hasAllowedExtension(file) && !hasImageSignature(file)) {
-            throw ApplicationFailure.invalidInput("DIARY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
-        }
-        if (file.getSize() > MAX_IMAGE_SIZE) {
-            throw ApplicationFailure.payloadTooLarge("DIARY_IMAGE_TOO_LARGE", "单张图片不能超过 10MB");
-        }
-    }
-
-    private boolean hasAllowedExtension(MultipartFile file) {
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        return IMAGE_EXTENSIONS.stream().anyMatch(filename::endsWith);
-    }
-
-    private boolean hasImageSignature(MultipartFile file) {
-        byte[] header = new byte[12];
-        int length;
-        try (InputStream input = file.getInputStream()) {
-            length = input.read(header);
-        } catch (IOException ex) {
-            return false;
-        }
-        if (length < 4) {
-            return false;
-        }
-        boolean jpeg = unsigned(header[0]) == 0xff && unsigned(header[1]) == 0xd8 && unsigned(header[2]) == 0xff;
-        boolean png = unsigned(header[0]) == 0x89 && header[1] == 0x50 && header[2] == 0x4e && header[3] == 0x47;
-        boolean gif = header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46;
-        boolean webp = length >= 12
-                && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
-                && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50;
-        return jpeg || png || gif || webp;
-    }
-
-    private int unsigned(byte value) {
-        return value & 0xff;
-    }
 
     private String extractTitle(String content) {
         Matcher matcher = H1_PATTERN.matcher(content);

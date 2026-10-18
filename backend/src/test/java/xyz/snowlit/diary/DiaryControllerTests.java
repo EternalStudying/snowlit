@@ -1,5 +1,8 @@
 package xyz.snowlit.diary;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.home.HomeMapper;
@@ -44,8 +47,8 @@ class DiaryControllerTests {
 
     private final DiaryMapper diaryMapper = mock(DiaryMapper.class);
     private final HomeMapper homeMapper = mock(HomeMapper.class);
-    private final DiaryImages imageStorage = mock(DiaryImages.class);
-    private final DiaryModule diaries = new DiaryModule(diaryMapper, homeMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final DiaryModule diaries = new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new DiaryController(diaries))
             .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
@@ -135,14 +138,6 @@ class DiaryControllerTests {
         DiaryEntry existing = entry();
         when(diaryMapper.findDiaryById(10L)).thenReturn(existing);
         when(diaryMapper.findImagesReferencedByDiary(10L)).thenReturn(List.of());
-        when(imageStorage.uploadTemporary(any(), any())).thenReturn(
-                new ObjectStore.StoredObject(
-                        "diary/tmp/1/one.png",
-                        "https://cdn.example.com/tmp.png",
-                        MediaType.IMAGE_PNG_VALUE,
-                        3L
-                )
-        );
         doAnswer(invocation -> {
             DiaryImage image = invocation.getArgument(0);
             image.setId(99L);
@@ -180,14 +175,14 @@ class DiaryControllerTests {
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isNoContent());
 
-        MockMultipartFile file = new MockMultipartFile("file", "note.png", MediaType.IMAGE_PNG_VALUE, "png".getBytes());
+        MockMultipartFile file = TestImages.png("file", "note.png");
         mockMvc.perform(multipart("/api/diary/images")
                         .file(file)
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uploadId").value(99))
                 .andExpect(jsonPath("$.imageId").doesNotExist())
-                .andExpect(jsonPath("$.url").value("https://cdn.example.com/tmp.png"));
+                .andExpect(jsonPath("$.url").value(objects.onlyStored().url()));
 
         verify(diaryMapper).softDeleteDiary(argThat(id -> id.equals(10L)), any());
     }

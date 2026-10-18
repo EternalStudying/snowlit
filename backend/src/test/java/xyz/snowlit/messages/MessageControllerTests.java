@@ -1,9 +1,10 @@
 package xyz.snowlit.messages;
 
-import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.support.TestImages;
 
 import xyz.snowlit.messages.MessageDtos.MessageCreateDto;
-import xyz.snowlit.messages.MessageImages;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -41,8 +43,8 @@ class MessageControllerTests {
             Clock.fixed(Instant.parse("2026-05-27T12:30:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final MessageMapper messageMapper = mock(MessageMapper.class);
-    private final MessageImages imageStorage = mock(MessageImages.class);
-    private final MessageModule messages = new MessageModule(messageMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MessageController(messages))
             .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
@@ -83,12 +85,6 @@ class MessageControllerTests {
 
     @Test
     void createMessageAcceptsMultipartPayloadAndOptionalImage() throws Exception {
-        when(imageStorage.upload(any(), eq(1L))).thenReturn(new ObjectStore.StoredObject(
-                "messages/8.jpg",
-                "https://cdn.example.com/messages/8.jpg",
-                "image/jpeg",
-                5L
-        ));
         doAnswer(invocation -> {
             Message message = invocation.getArgument(0);
             message.setId(8L);
@@ -100,12 +96,14 @@ class MessageControllerTests {
                         .file(new MockMultipartFile("payload", "", MediaType.APPLICATION_JSON_VALUE, """
                                 {"content":"今晚的晚霞很好看。"}
                                 """.getBytes()))
-                        .file(new MockMultipartFile("image", "message.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes()))
+                        .file(TestImages.jpeg("image", "message.jpg"))
                         .header("Authorization", requests.authorization())
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("今晚的晚霞很好看。"))
                 .andExpect(jsonPath("$.imageUrl").value("https://cdn.example.com/messages/8.jpg"));
+
+        assertThat(objects.onlyStored().contentType()).isEqualTo("image/jpeg");
     }
 
     @Test

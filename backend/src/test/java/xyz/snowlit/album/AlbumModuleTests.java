@@ -1,5 +1,8 @@
 package xyz.snowlit.album;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.auth.AuthenticatedActor;
@@ -50,13 +53,13 @@ class AlbumModuleTests {
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final AlbumMapper albumMapper = mock(AlbumMapper.class);
-    private final AlbumAssets albumAssetStorageService = mock(AlbumAssets.class);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
     private final FakeTokenStore tokenStore = new FakeTokenStore();
     private final AlbumModule albumService = new AlbumModule(
             albumMapper,
             new BCryptPasswordEncoder(),
             tokenStore,
-            albumAssetStorageService,
+            new ImageIntake(objects),
             CLOCK
     );
 
@@ -165,20 +168,8 @@ class AlbumModuleTests {
         Album draftAlbum = draftAlbum();
         when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
         when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0);
-        MockMultipartFile original = new MockMultipartFile("original", "memory.jpg", MediaType.IMAGE_JPEG_VALUE, "original".getBytes());
-        MockMultipartFile preview = new MockMultipartFile("preview", "memory.webp", "image/webp", "preview".getBytes());
-        when(albumAssetStorageService.uploadOriginal(original, 9L, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "album/9/original/original.jpg",
-                "https://cdn.example.com/album/original.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                8L
-        ));
-        when(albumAssetStorageService.uploadPreview(preview, 9L, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "album/9/preview/preview.webp",
-                "https://cdn.example.com/album/preview.webp",
-                "image/webp",
-                7L
-        ));
+        MockMultipartFile original = TestImages.jpeg("original", "memory.jpg");
+        MockMultipartFile preview = TestImages.webp("preview", "memory.webp");
         doAnswer(invocation -> {
             AlbumPhoto photo = invocation.getArgument(0);
             photo.setId(901L);
@@ -196,13 +187,19 @@ class AlbumModuleTests {
 
         assertThat(uploaded.previewUrl()).isEqualTo("https://cdn.example.com/album/preview.webp");
         assertThat(uploaded.originalUrl()).isEqualTo("https://cdn.example.com/album/original.jpg");
+        assertThat(objects.stored()).extracting(ObjectStore.StoredObject::contentType)
+                .containsExactly("image/jpeg", "image/webp");
+        ObjectStore.StoredObject storedOriginal = objects.stored().get(0);
+        ObjectStore.StoredObject storedPreview = objects.stored().get(1);
+        assertThat(storedOriginal.objectName()).matches("album/9/original/1/[0-9a-f-]+\\.jpg");
+        assertThat(storedPreview.objectName()).matches("album/9/preview/1/[0-9a-f-]+\\.webp");
         verify(albumMapper).insertPhoto(argThat(photo ->
-                "https://cdn.example.com/album/preview.webp".equals(photo.getPreviewUrl())
-                        && "https://cdn.example.com/album/original.jpg".equals(photo.getOriginalUrl())
-                        && "album/9/original/original.jpg".equals(photo.getOriginalObjectName())
-                        && "album/9/preview/preview.webp".equals(photo.getPreviewObjectName())
-                        && photo.getOriginalSizeBytes() == 8L
-                        && photo.getPreviewSizeBytes() == 7L
+                storedPreview.url().equals(photo.getPreviewUrl())
+                        && storedOriginal.url().equals(photo.getOriginalUrl())
+                        && storedOriginal.objectName().equals(photo.getOriginalObjectName())
+                        && storedPreview.objectName().equals(photo.getPreviewObjectName())
+                        && photo.getOriginalSizeBytes() == original.getSize()
+                        && photo.getPreviewSizeBytes() == preview.getSize()
         ));
     }
 
@@ -217,18 +214,6 @@ class AlbumModuleTests {
                 MediaType.APPLICATION_OCTET_STREAM_VALUE,
                 new byte[]{(byte) 0xff, (byte) 0xd8, (byte) 0xff, 0x00}
         );
-        when(albumAssetStorageService.uploadOriginal(file, 9L, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "album/9/original/mini.jpg",
-                "https://cdn.example.com/album/original.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                4L
-        ));
-        when(albumAssetStorageService.uploadPreview(file, 9L, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "album/9/preview/mini.jpg",
-                "https://cdn.example.com/album/preview.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                4L
-        ));
         doAnswer(invocation -> {
             AlbumPhoto photo = invocation.getArgument(0);
             photo.setId(901L);
@@ -248,13 +233,15 @@ class AlbumModuleTests {
 
         assertThat(uploaded.previewUrl()).isEqualTo("https://cdn.example.com/album/preview.jpg");
         assertThat(uploaded.originalUrl()).isEqualTo("https://cdn.example.com/album/original.jpg");
-        verify(albumAssetStorageService).uploadOriginal(file, 9L, 1L);
-        verify(albumAssetStorageService).uploadPreview(file, 9L, 1L);
+        assertThat(objects.stored()).extracting(ObjectStore.StoredObject::objectName)
+                .satisfiesExactly(
+                        name -> assertThat(name).matches("album/9/original/1/[0-9a-f-]+\\.jpg"),
+                        name -> assertThat(name).matches("album/9/preview/1/[0-9a-f-]+\\.jpg")
+                );
         verify(albumMapper).insertPhoto(argThat(photo ->
-                "https://cdn.example.com/album/preview.jpg".equals(photo.getPreviewUrl())
-                        && "https://cdn.example.com/album/original.jpg".equals(photo.getOriginalUrl())
-                        && "album/9/original/mini.jpg".equals(photo.getOriginalObjectName())
-                        && "album/9/preview/mini.jpg".equals(photo.getPreviewObjectName())
+                objects.stored().get(1).url().equals(photo.getPreviewUrl())
+                        && objects.stored().get(0).url().equals(photo.getOriginalUrl())
+                        && "image/jpeg".equals(photo.getOriginalContentType())
                         && "花".equals(photo.getCaption())
                         && "集市".equals(photo.getLocation())
         ));
@@ -289,8 +276,7 @@ class AlbumModuleTests {
 
         albumService.cancelDraft(MANAGER, 9L);
 
-        verify(albumAssetStorageService).deleteBestEffort("album/9/original/original.jpg");
-        verify(albumAssetStorageService).deleteBestEffort("album/9/preview/preview.webp");
+        assertThat(objects.deleted()).containsExactly("album/9/original/original.jpg", "album/9/preview/preview.webp");
         verify(albumMapper).deleteAlbumById(9L);
     }
 
@@ -398,7 +384,7 @@ class AlbumModuleTests {
                 albumMapper,
                 new BCryptPasswordEncoder(),
                 tokenStore,
-                albumAssetStorageService,
+                new ImageIntake(objects),
                 Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore"))
         );
         LocalDate utcDate = LocalDate.of(2026, 5, 16);
@@ -421,7 +407,7 @@ class AlbumModuleTests {
                 albumMapper,
                 new BCryptPasswordEncoder(),
                 tokenStore,
-                albumAssetStorageService,
+                new ImageIntake(objects),
                 Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles"))
         );
         LocalDate utcDate = LocalDate.of(2026, 5, 17);

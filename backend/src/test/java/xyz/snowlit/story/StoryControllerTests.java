@@ -1,9 +1,11 @@
 package xyz.snowlit.story;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.auth.User;
-import xyz.snowlit.story.StoryImages;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -42,8 +44,8 @@ class StoryControllerTests {
             Clock.fixed(Instant.parse("2026-05-21T10:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final StoryMapper storyMapper = mock(StoryMapper.class);
-    private final StoryImages imageStorage = mock(StoryImages.class);
-    private final StoryModule story = new StoryModule(storyMapper, imageStorage, CLOCK);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
+    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture manager = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = mockMvc(manager);
 
@@ -91,12 +93,6 @@ class StoryControllerTests {
             return 1;
         }).when(storyMapper).insertMoment(any());
         when(storyMapper.findMomentById(10L)).thenReturn(moment());
-        when(imageStorage.upload(any(), any())).thenReturn(new ObjectStore.StoredObject(
-                "story/upload.png",
-                "https://cdn.example.com/story/upload.png",
-                MediaType.IMAGE_PNG_VALUE,
-                3L
-        ));
 
         mockMvc.perform(post("/api/story/moments")
                         .header("Authorization", manager.authorization())
@@ -117,12 +113,12 @@ class StoryControllerTests {
                 .andExpect(status().isNoContent());
 
         MockMultipartFile file =
-                new MockMultipartFile("file", "story.png", MediaType.IMAGE_PNG_VALUE, "png".getBytes());
+                TestImages.png("file", "story.png");
         mockMvc.perform(multipart("/api/story/moments/images")
                         .file(file)
                         .header("Authorization", manager.authorization()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.url").value("https://cdn.example.com/story/upload.png"));
+                .andExpect(jsonPath("$.url").value(objects.onlyStored().url()));
     }
 
     @Test

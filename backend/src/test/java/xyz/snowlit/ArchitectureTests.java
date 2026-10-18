@@ -1,13 +1,8 @@
 package xyz.snowlit;
 
-import xyz.snowlit.album.AlbumAssets;
-import xyz.snowlit.diary.DiaryImages;
-import xyz.snowlit.feedback.FeedbackImages;
+import xyz.snowlit.infrastructure.storage.LocalDiskObjectStore;
 import xyz.snowlit.infrastructure.storage.MinioObjectStore;
-import xyz.snowlit.messages.MessageImages;
 import xyz.snowlit.storage.ObjectStore;
-import xyz.snowlit.story.StoryImages;
-import xyz.snowlit.wishes.WishImages;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -105,18 +100,18 @@ class ArchitectureTests {
     }
 
     @Test
-    void oneObjectStoreAdapterReplacesFeatureSpecificStorageInterfaces() throws Exception {
+    void imagesEnterThroughOneIntakeOverTwoObjectStoreAdapters() throws Exception {
         assertThat(ObjectStore.class.isInterface()).isTrue();
         assertThat(ObjectStore.class).isAssignableFrom(MinioObjectStore.class);
+        assertThat(ObjectStore.class).isAssignableFrom(LocalDiskObjectStore.class);
 
-        assertThat(List.of(
-                AlbumAssets.class,
-                DiaryImages.class,
-                FeedbackImages.class,
-                MessageImages.class,
-                StoryImages.class,
-                WishImages.class
-        )).allMatch(type -> !type.isInterface());
+        assertThat(javaFiles(JAVA_ROOT).stream()
+                .map(path -> path.getFileName().toString())
+                .filter(name -> name.matches("(Album|Diary|Feedback|Message|Story|Wish)(Images|Assets)\\.java")
+                        || name.equals("ObjectKeys.java"))
+                .toList())
+                .describedAs("per-domain image storage modules are replaced by ImageIntake")
+                .isEmpty();
 
         assertThat(javaFiles(JAVA_ROOT).stream()
                 .map(path -> path.getFileName().toString())
@@ -257,25 +252,13 @@ class ArchitectureTests {
         assertThat(dev).contains(
                 "jdbc:mysql://127.0.0.1:3306/snowlit_dev",
                 "host: ${LOCAL_REDIS_HOST:127.0.0.1}",
-                "endpoint: ${LOCAL_MINIO_ENDPOINT:http://127.0.0.1:9000}",
-                "album-prefix: album",
-                "diary-temp-prefix: diary/tmp",
-                "feedback-prefix: feedback",
-                "messages-prefix: messages",
-                "story-prefix: story",
-                "wish-prefix: wish"
+                "endpoint: ${LOCAL_MINIO_ENDPOINT:http://127.0.0.1:9000}"
         );
         assertThat(prod).contains(
                 "url: ${DB_URL}",
                 "host: ${REDIS_HOST}",
                 "endpoint: ${MINIO_ENDPOINT}",
-                "public-base-url: ${MINIO_PUBLIC_BASE_URL}",
-                "album-prefix: album",
-                "diary-temp-prefix: diary/tmp",
-                "feedback-prefix: feedback",
-                "messages-prefix: messages",
-                "story-prefix: story",
-                "wish-prefix: wish"
+                "public-base-url: ${MINIO_PUBLIC_BASE_URL}"
         ).doesNotContain(
                 "jdbc:mysql://127.0.0.1:3306/snowlit_dev",
                 "http://127.0.0.1:9000"

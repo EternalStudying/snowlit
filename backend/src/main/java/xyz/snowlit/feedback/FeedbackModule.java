@@ -6,6 +6,9 @@ import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.feedback.FeedbackDtos.FeedbackCreateDto;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackImageUploadVo;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackSubmitVo;
+import xyz.snowlit.storage.ImageFormat;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,30 +26,39 @@ import java.util.Set;
 public final class FeedbackModule {
 
     private static final Set<String> TYPES = Set.of("bug", "feature", "experience", "other");
-    private static final Set<String> SCREENSHOT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
-    private static final long MAX_SCREENSHOT_SIZE = 10L * 1024L * 1024L;
+    private static final ImagePolicy.Rejection SCREENSHOT_TYPE_NOT_ALLOWED =
+            new ImagePolicy.Rejection("FEEDBACK_SCREENSHOT_TYPE_NOT_ALLOWED", "截图只支持 jpg、png、webp、gif");
+    private static final ImagePolicy SCREENSHOT = new ImagePolicy(
+            "feedback",
+            true,
+            Set.of(ImageFormat.values()),
+            ImagePolicy.TEN_MEGABYTES,
+            new ImagePolicy.Rejection("FEEDBACK_SCREENSHOT_REQUIRED", "请选择截图"),
+            SCREENSHOT_TYPE_NOT_ALLOWED,
+            new ImagePolicy.Rejection("FEEDBACK_SCREENSHOT_TOO_LARGE", "截图不能超过 10MB"),
+            new ImagePolicy.Rejection("FEEDBACK_SCREENSHOT_UPLOAD_FAILED", "截图上传失败，请稍后重试")
+    );
     private static final int MAX_SCREENSHOTS = 3;
 
     private final FeedbackMapper feedbackMapper;
-    private final FeedbackImages imageStorage;
+    private final ImageIntake images;
     private final Clock clock;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public FeedbackModule(FeedbackMapper feedbackMapper, FeedbackImages imageStorage) {
-        this(feedbackMapper, imageStorage, Clock.systemDefaultZone());
+    public FeedbackModule(FeedbackMapper feedbackMapper, ImageIntake images) {
+        this(feedbackMapper, images, Clock.systemDefaultZone());
     }
 
-    FeedbackModule(FeedbackMapper feedbackMapper, FeedbackImages imageStorage, Clock clock) {
+    FeedbackModule(FeedbackMapper feedbackMapper, ImageIntake images, Clock clock) {
         this.feedbackMapper = feedbackMapper;
-        this.imageStorage = imageStorage;
+        this.images = images;
         this.clock = clock;
         this.objectMapper = new ObjectMapper();
     }
 
     public FeedbackImageUploadVo uploadImage(AuthenticatedActor actor, MultipartFile file) {
-        validateScreenshot(file);
-        ObjectStore.StoredObject stored = imageStorage.upload(file, actor.userId());
+        ObjectStore.StoredObject stored = images.store(file, SCREENSHOT, actor.userId());
         FeedbackImage image = new FeedbackImage();
         image.setUserId(actor.userId());
         image.setObjectName(stored.objectName());
@@ -82,29 +94,6 @@ public final class FeedbackModule {
         feedback.setUpdatedAt(now);
         feedbackMapper.insertFeedback(feedback);
         return new FeedbackSubmitVo(feedback.getId(), feedback.getStatus(), feedback.getCreatedAt());
-    }
-
-    private void validateScreenshot(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw ApplicationFailure.invalidInput("FEEDBACK_SCREENSHOT_REQUIRED", "请选择截图");
-        }
-        String contentType = Text.trim(file.getContentType()).toLowerCase();
-        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
-        boolean typeAllowed = SCREENSHOT_TYPES.contains(contentType);
-        boolean extensionAllowed = filename.endsWith(".jpg")
-                || filename.endsWith(".jpeg")
-                || filename.endsWith(".png")
-                || filename.endsWith(".webp");
-        if (!typeAllowed || !extensionAllowed) {
-            throw ApplicationFailure.invalidInput(
-                    "FEEDBACK_SCREENSHOT_TYPE_NOT_ALLOWED",
-                    "截图只支持 jpg、jpeg、png、webp"
-            );
-        }
-        if (file.getSize() > MAX_SCREENSHOT_SIZE) {
-            // Keep the established API contract: this validation error is HTTP 400, not 413.
-            throw ApplicationFailure.invalidInput("FEEDBACK_SCREENSHOT_TOO_LARGE", "截图不能超过 10MB");
-        }
     }
 
     private void validateFeedback(String type, String title, String content, List<String> imageUrls) {

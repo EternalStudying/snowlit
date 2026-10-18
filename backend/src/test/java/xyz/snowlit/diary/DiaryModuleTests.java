@@ -1,5 +1,8 @@
 package xyz.snowlit.diary;
 
+import xyz.snowlit.support.InMemoryObjectStore;
+import xyz.snowlit.storage.ImageIntake;
+import xyz.snowlit.support.TestImages;
 import xyz.snowlit.storage.ObjectStore;
 
 import xyz.snowlit.auth.AuthenticatedActor;
@@ -45,9 +48,9 @@ class DiaryModuleTests {
 
     private final DiaryMapper diaryMapper = mock(DiaryMapper.class);
     private final HomeMapper homeMapper = mock(HomeMapper.class);
-    private final DiaryImages imageStorageService = mock(DiaryImages.class);
+    private final InMemoryObjectStore objects = new InMemoryObjectStore();
     private final DiaryModule diaryService =
-            new DiaryModule(diaryMapper, homeMapper, imageStorageService, CLOCK);
+            new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects), CLOCK);
 
     @Test
     void accountWithoutCoupleRoleCannotUseDiaries() {
@@ -294,7 +297,7 @@ class DiaryModuleTests {
         assertThat(updated.title()).isEqualTo("改过标题");
         assertThat(updated.entryDate()).isEqualTo(LocalDate.of(2026, 5, 1));
         verify(diaryMapper).updateDiary(any(DiaryEntry.class));
-        verify(imageStorageService).delete("diary/final/one.webp");
+        assertThat(objects.deleted()).containsExactly("diary/final/one.webp");
         verify(diaryMapper).markUploadDeleted(100L, LocalDateTime.of(2026, 5, 17, 20, 0));
     }
 
@@ -360,23 +363,18 @@ class DiaryModuleTests {
         diaryService.delete(ACTOR, 11L);
 
         verify(diaryMapper).softDeleteDiary(11L, LocalDateTime.of(2026, 5, 17, 20, 0));
-        verify(imageStorageService).delete("diary/final/one.webp");
+        assertThat(objects.deleted()).containsExactly("diary/final/one.webp");
     }
 
     @Test
     void uploadValidatesImageTypeAndSizeThenStoresTemporaryImage() {
-        MockMultipartFile file = new MockMultipartFile("file", "note.png", MediaType.IMAGE_PNG_VALUE, "png".getBytes());
-        when(imageStorageService.uploadTemporary(file, 1L)).thenReturn(new ObjectStore.StoredObject(
-                "diary/tmp/1/one.png",
-                "https://cdn.example.com/diary/tmp/1/one.png",
-                MediaType.IMAGE_PNG_VALUE,
-                3L
-        ));
+        MockMultipartFile file = TestImages.png("file", "note.png");
 
-        assertThat(diaryService.uploadImage(ACTOR, file).url()).isEqualTo("https://cdn.example.com/diary/tmp/1/one.png");
+        assertThat(diaryService.uploadImage(ACTOR, file).url()).isEqualTo(objects.onlyStored().url());
+        assertThat(objects.onlyStored().objectName()).matches("diary/tmp/1/[0-9a-f-]+\\.png");
         verify(diaryMapper).insertImage(any(DiaryImage.class));
 
-        MockMultipartFile badType = new MockMultipartFile("file", "note.txt", MediaType.TEXT_PLAIN_VALUE, "text".getBytes());
+        MockMultipartFile badType = TestImages.text("file", "note.txt");
         assertThatThrownBy(() -> diaryService.uploadImage(ACTOR, badType))
                 .isInstanceOfSatisfying(
                         ApplicationFailure.class,
@@ -386,24 +384,18 @@ class DiaryModuleTests {
 
     @Test
     void uploadAcceptsMiniProgramImageWhenFilenameOrContentTypeIsWeak() {
-        when(imageStorageService.uploadTemporary(any(MockMultipartFile.class), eq(1L)))
-                .thenAnswer(invocation -> {
-                    MockMultipartFile file = invocation.getArgument(0);
-                    return new ObjectStore.StoredObject(
-                            "diary/tmp/1/wx.png",
-                            "https://cdn.example.com/diary/tmp/1/wx.png",
-                            file.getContentType(),
-                            file.getSize()
-                    );
-                });
-
         MockMultipartFile noExtension = new MockMultipartFile("file", "tmp", MediaType.IMAGE_PNG_VALUE, pngBytes());
         MockMultipartFile octetStream = new MockMultipartFile("file", "tmp.png", MediaType.APPLICATION_OCTET_STREAM_VALUE, pngBytes());
         MockMultipartFile weakMetadata = new MockMultipartFile("file", "tmp", MediaType.APPLICATION_OCTET_STREAM_VALUE, pngBytes());
 
-        assertThat(diaryService.uploadImage(ACTOR, noExtension).url()).contains("/diary/tmp/1/wx.png");
-        assertThat(diaryService.uploadImage(ACTOR, octetStream).url()).contains("/diary/tmp/1/wx.png");
-        assertThat(diaryService.uploadImage(ACTOR, weakMetadata).url()).contains("/diary/tmp/1/wx.png");
+        diaryService.uploadImage(ACTOR, noExtension);
+        diaryService.uploadImage(ACTOR, octetStream);
+        diaryService.uploadImage(ACTOR, weakMetadata);
+
+        assertThat(objects.stored()).hasSize(3).allSatisfy(stored -> {
+            assertThat(stored.objectName()).endsWith(".png");
+            assertThat(stored.contentType()).isEqualTo("image/png");
+        });
     }
 
     @Test
@@ -418,7 +410,7 @@ class DiaryModuleTests {
 
         diaryService.cleanupExpiredTemporaryImages();
 
-        verify(imageStorageService).delete("diary/tmp/1/old.png");
+        assertThat(objects.deleted()).containsExactly("diary/tmp/1/old.png");
         verify(diaryMapper).markUploadDeleted(200L, LocalDateTime.of(2026, 5, 17, 20, 0));
     }
 
