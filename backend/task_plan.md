@@ -26,7 +26,7 @@ Backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18
 - **Status:** complete
 
 ### Phase 8: Second pass (clock/paging, manager flag, weather condition, Home boundaries, album split, diary Markdown)
-- **Status:** complete on branch `refactor/backend-deepening-2` (not merged, not pushed)
+- **Status:** complete; fast-forwarded into local main from `refactor/backend-deepening-2` (not pushed)
 
 ## Entry Points
 

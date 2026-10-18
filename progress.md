@@ -16,7 +16,7 @@ This task updates Markdown only. It does not rerun business tests, start or stop
 
 ## Second Backend Pass (2026-10-18)
 
-Branch `refactor/backend-deepening-2`: 258 backend tests passing and a packaged-jar smoke run against throwaway MySQL/Redis passed (details in [backend progress](backend/progress.md)). Clients were not rerun.
+Merged into local main from `refactor/backend-deepening-2`: 258 backend tests passing and a packaged-jar smoke run against throwaway MySQL/Redis passed (details in [backend progress](backend/progress.md)). Clients were not rerun.
 
 ## Backend Refactor (2026-10-18)
 
