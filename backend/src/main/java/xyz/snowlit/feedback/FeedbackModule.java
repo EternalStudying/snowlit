@@ -1,11 +1,13 @@
 package xyz.snowlit.feedback;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.feedback.FeedbackDtos.FeedbackCreateDto;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackImageUploadVo;
 import xyz.snowlit.feedback.FeedbackVos.FeedbackSubmitVo;
 import xyz.snowlit.storage.ObjectStore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +59,10 @@ public final class FeedbackModule {
     }
 
     public FeedbackSubmitVo submit(AuthenticatedActor actor, FeedbackCreateDto request) {
-        String type = clean(request == null ? null : request.type());
-        String title = clean(request == null ? null : request.title());
-        String content = clean(request == null ? null : request.content());
-        List<String> imageUrls = sanitizeUrls(request == null ? null : request.imageUrls());
+        String type = Text.trim(request.type());
+        String title = Text.trim(request.title());
+        String content = Text.trim(request.content());
+        List<String> imageUrls = sanitizeUrls(request.imageUrls());
 
         validateFeedback(type, title, content, imageUrls);
         ensureImagesBelongToActor(actor.userId(), imageUrls);
@@ -71,10 +73,10 @@ public final class FeedbackModule {
         feedback.setType(type);
         feedback.setTitle(title);
         feedback.setContent(content);
-        feedback.setContact(cleanNullable(request.contact()));
+        feedback.setContact(Text.trimToNull(request.contact()));
         feedback.setImageUrlsJson(toJson(imageUrls));
-        feedback.setPageUrl(cleanNullable(request.pageUrl()));
-        feedback.setUserAgent(cleanNullable(request.userAgent()));
+        feedback.setPageUrl(Text.trimToNull(request.pageUrl()));
+        feedback.setUserAgent(Text.trimToNull(request.userAgent()));
         feedback.setStatus("pending");
         feedback.setCreatedAt(now);
         feedback.setUpdatedAt(now);
@@ -86,8 +88,8 @@ public final class FeedbackModule {
         if (file == null || file.isEmpty()) {
             throw ApplicationFailure.invalidInput("FEEDBACK_SCREENSHOT_REQUIRED", "请选择截图");
         }
-        String contentType = clean(file.getContentType()).toLowerCase();
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         boolean typeAllowed = SCREENSHOT_TYPES.contains(contentType);
         boolean extensionAllowed = filename.endsWith(".jpg")
                 || filename.endsWith(".jpeg")
@@ -130,7 +132,7 @@ public final class FeedbackModule {
         List<FeedbackImage> images = feedbackMapper.findImagesByUrls(imageUrls);
         Set<String> ownedUrls = new HashSet<>();
         for (FeedbackImage image : images) {
-            if (image != null && actorId.equals(image.getUserId())) {
+            if (actorId.equals(image.getUserId())) {
                 ownedUrls.add(image.getUrl());
             }
         }
@@ -147,7 +149,7 @@ public final class FeedbackModule {
             return List.of();
         }
         return urls.stream()
-                .map(this::clean)
+                .map(Text::trim)
                 .filter(url -> !url.isBlank())
                 .distinct()
                 .toList();
@@ -156,8 +158,8 @@ public final class FeedbackModule {
     private String toJson(List<String> values) {
         try {
             return objectMapper.writeValueAsString(values);
-        } catch (Exception ex) {
-            throw ApplicationFailure.internal("FEEDBACK_SERIALIZATION_FAILED", "反馈图片信息处理失败");
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Feedback image URLs cannot be serialized", ex);
         }
     }
 
@@ -165,12 +167,4 @@ public final class FeedbackModule {
         return LocalDateTime.now(clock);
     }
 
-    private String cleanNullable(String value) {
-        String cleaned = clean(value);
-        return cleaned.isBlank() ? null : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
 }

@@ -202,8 +202,6 @@ class WishModuleTests {
         when(wishMapper.findWishById(2L)).thenReturn(wish(2L, "未完成", "want_do", false));
         assertFailure(() -> wishes.reopenWish(MANAGER, 2L), "WISH_NOT_COMPLETED");
 
-        when(wishMapper.findWishById(3L)).thenReturn(wish(3L, "未完成", "want_do", false));
-        assertFailure(() -> wishes.completeWish(MANAGER, 3L, null), "WISH_COMPLETION_IMAGE_REQUIRED");
         verify(imageStorage, never()).upload(any(), any());
     }
 

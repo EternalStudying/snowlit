@@ -1,5 +1,6 @@
 package xyz.snowlit.feedback;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ObjectKeys;
 import xyz.snowlit.storage.ObjectStore;
@@ -28,7 +29,7 @@ public final class FeedbackImages {
             String localPublicPrefix
     ) {
         this.objects = objects;
-        this.prefix = clean(prefix);
+        this.prefix = Text.trim(prefix);
         this.localUploadDirectory = Path.of(defaultText(localUploadDirectory, "target/local-uploads"));
         this.localPublicPrefix = defaultText(localPublicPrefix, "/uploads").replaceAll("/+$", "");
     }
@@ -56,7 +57,7 @@ public final class FeedbackImages {
             return new ObjectStore.StoredObject(
                     objectName,
                     localPublicPrefix + "/" + objectName,
-                    clean(file.getContentType()),
+                    Text.trim(file.getContentType()),
                     file.getSize()
             );
         } catch (Exception exception) {
@@ -73,11 +74,7 @@ public final class FeedbackImages {
     }
 
     private static String defaultText(String value, String fallback) {
-        String cleaned = clean(value);
+        String cleaned = Text.trim(value);
         return cleaned.isBlank() ? fallback : cleaned;
-    }
-
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 }

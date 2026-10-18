@@ -1,5 +1,6 @@
 package xyz.snowlit.story;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
@@ -8,6 +9,7 @@ import xyz.snowlit.story.StoryDtos.StoryMomentUpsertDto;
 import xyz.snowlit.story.StoryVos.StoryImageUploadVo;
 import xyz.snowlit.story.StoryVos.StoryMomentListVo;
 import xyz.snowlit.story.StoryVos.StoryMomentVo;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -45,14 +47,13 @@ public final class StoryModule {
     }
 
     public StoryMomentListVo listMoments(AuthenticatedActor actor, String category, Integer year) {
-        String resolvedCategory = cleanNullable(category);
+        String resolvedCategory = Text.trimToNull(category);
         if (resolvedCategory != null && !CATEGORIES.contains(resolvedCategory)) {
             throw ApplicationFailure.invalidInput("STORY_CATEGORY_INVALID", "点滴类型不正确");
         }
         Integer resolvedYear = validateOptionalYear(year);
         List<StoryMomentVo> items = storyMapper.findMoments(resolvedCategory, resolvedYear)
                 .stream()
-                .filter(moment -> moment.getDeletedAt() == null)
                 .map(this::toVo)
                 .toList();
         return new StoryMomentListVo(items, storyMapper.findAvailableYears(), canManage(actor));
@@ -73,9 +74,6 @@ public final class StoryModule {
         moment.setCreatedAt(now);
         moment.setUpdatedAt(now);
         storyMapper.insertMoment(moment);
-        if (moment.getId() == null) {
-            moment.setId(0L);
-        }
         return toVo(moment);
     }
 
@@ -103,35 +101,32 @@ public final class StoryModule {
     }
 
     private void applyRequest(StoryMoment moment, StoryMomentUpsertDto request, List<String> images) {
-        moment.setTitle(clean(request.title()));
-        moment.setContent(clean(request.content()));
+        moment.setTitle(Text.trim(request.title()));
+        moment.setContent(Text.trim(request.content()));
         moment.setEventTime(request.eventTime());
         moment.setEndTime(request.endTime());
-        moment.setLocationName(clean(request.locationName()));
-        moment.setAddress(cleanNullable(request.address()));
+        moment.setLocationName(Text.trim(request.locationName()));
+        moment.setAddress(Text.trimToNull(request.address()));
         moment.setLongitude(request.longitude());
         moment.setLatitude(request.latitude());
-        moment.setCategory(clean(request.category()));
+        moment.setCategory(Text.trim(request.category()));
         moment.setImagesJson(toJson(images));
     }
 
     private List<String> validateRequest(StoryMomentUpsertDto request) {
-        if (request == null) {
-            throw ApplicationFailure.invalidInput("STORY_REQUEST_INVALID", "点滴内容不正确");
-        }
-        if (clean(request.title()).isBlank()) {
+        if (Text.trim(request.title()).isBlank()) {
             throw ApplicationFailure.invalidInput("STORY_TITLE_REQUIRED", "点滴标题不能为空");
         }
         if (request.eventTime() == null) {
             throw ApplicationFailure.invalidInput("STORY_EVENT_TIME_REQUIRED", "点滴时间不能为空");
         }
-        if (clean(request.locationName()).isBlank()) {
+        if (Text.trim(request.locationName()).isBlank()) {
             throw ApplicationFailure.invalidInput("STORY_LOCATION_REQUIRED", "点滴地点不能为空");
         }
         if (request.longitude() == null || request.latitude() == null) {
             throw ApplicationFailure.invalidInput("STORY_COORDINATE_REQUIRED", "点滴坐标不能为空");
         }
-        if (!CATEGORIES.contains(clean(request.category()))) {
+        if (!CATEGORIES.contains(Text.trim(request.category()))) {
             throw ApplicationFailure.invalidInput("STORY_CATEGORY_INVALID", "点滴类型不正确");
         }
         return sanitizeImages(request.images());
@@ -143,7 +138,7 @@ public final class StoryModule {
         }
         LinkedHashSet<String> sanitized = new LinkedHashSet<>();
         for (String image : images) {
-            String cleaned = clean(image);
+            String cleaned = Text.trim(image);
             if (!cleaned.isBlank()) {
                 sanitized.add(cleaned);
             }
@@ -163,7 +158,7 @@ public final class StoryModule {
     }
 
     private void requireManager(AuthenticatedActor actor) {
-        if (actor == null || !SiteManagerPolicy.canManage(actor.userId())) {
+        if (!SiteManagerPolicy.canManage(actor.userId())) {
             throw ApplicationFailure.forbidden("STORY_FORBIDDEN", "只有站点主人可以管理点滴");
         }
     }
@@ -176,8 +171,8 @@ public final class StoryModule {
         if (file == null || file.isEmpty()) {
             throw ApplicationFailure.invalidInput("STORY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
         }
-        String contentType = clean(file.getContentType()).toLowerCase();
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
                 || filename.endsWith(".png") || filename.endsWith(".webp") || filename.endsWith(".gif");
         if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
@@ -209,19 +204,18 @@ public final class StoryModule {
 
     private List<String> parseImages(String imagesJson) {
         try {
-            List<String> images = objectMapper.readValue(clean(imagesJson), new TypeReference<>() {
+            return objectMapper.readValue(imagesJson, new TypeReference<>() {
             });
-            return sanitizeImages(images);
-        } catch (Exception ex) {
-            return List.of();
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Stored story images are not a JSON array", ex);
         }
     }
 
     private String toJson(List<String> images) {
         try {
             return objectMapper.writeValueAsString(images);
-        } catch (Exception ex) {
-            return "[]";
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Story images cannot be serialized", ex);
         }
     }
 
@@ -239,13 +233,5 @@ public final class StoryModule {
         return LocalDateTime.now(clock);
     }
 
-    private String cleanNullable(String value) {
-        String cleaned = clean(value);
-        return cleaned.isBlank() ? null : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
 
 }

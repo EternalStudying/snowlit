@@ -1,5 +1,6 @@
 package xyz.snowlit.diary;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.diary.DiaryDtos.DiaryCreateDto;
 import xyz.snowlit.diary.DiaryDtos.DiaryUpdateDto;
 import xyz.snowlit.diary.DiaryDtos.DiaryWeatherSnapshotDto;
@@ -17,6 +18,7 @@ import xyz.snowlit.diary.DiaryVos.DiarySummaryVo;
 import xyz.snowlit.diary.DiaryVos.DiaryYearStatVo;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public final class DiaryModule {
+public class DiaryModule {
 
     private static final Set<String> ROLES = Set.of("boyfriend", "girlfriend");
     private static final Set<String> VISIBILITIES = Set.of("shared", "private");
@@ -126,6 +128,7 @@ public final class DiaryModule {
         return toDetail(diary, diaryMapper.findImageUrlsByDiaryId(diary.getId()));
     }
 
+    @Transactional
     public DiarySummaryVo create(AuthenticatedActor actor, DiaryCreateDto request) {
         ActorContext user = context(actor);
         validateCreateRequest(request);
@@ -152,11 +155,11 @@ public final class DiaryModule {
         diary.setUpdatedAt(now);
 
         diaryMapper.insertDiary(diary);
-        ensureGeneratedId(diary);
         persistReferences(diary.getId(), imagePlan, now);
         return toSummary(diary, imageUrls);
     }
 
+    @Transactional
     public DiaryDetailVo update(AuthenticatedActor actor, Long id, DiaryUpdateDto request) {
         ActorContext user = context(actor);
         DiaryEntry diary = requireExistingDiary(id);
@@ -182,6 +185,7 @@ public final class DiaryModule {
         return toDetail(diary, imageUrls);
     }
 
+    @Transactional
     public void delete(AuthenticatedActor actor, Long id) {
         ActorContext user = context(actor);
         DiaryEntry diary = requireExistingDiary(id);
@@ -215,7 +219,7 @@ public final class DiaryModule {
         LocalDateTime now = now();
         List<DiaryImage> expiredImages = diaryMapper.findExpiredTemporaryImages(now.minusHours(6));
         for (DiaryImage image : expiredImages) {
-            if (image == null || image.getId() == null || diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
+            if (diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
                 continue;
             }
             imageStorageService.delete(image.getObjectName());
@@ -226,12 +230,9 @@ public final class DiaryModule {
     private Map<Integer, Map<Integer, Integer>> groupMonthCountsByYear(List<DiaryMonthCount> counts) {
         Map<Integer, Map<Integer, Integer>> grouped = new LinkedHashMap<>();
         for (DiaryMonthCount count : counts) {
-            if (count == null || count.getYear() == null || count.getMonth() == null) {
-                continue;
-            }
             grouped
                     .computeIfAbsent(count.getYear(), ignored -> new LinkedHashMap<>())
-                    .put(count.getMonth(), count.getCount() == null ? 0 : count.getCount());
+                    .put(count.getMonth(), count.getCount());
         }
         return grouped;
     }
@@ -255,9 +256,6 @@ public final class DiaryModule {
                 .toList();
         Map<Long, List<String>> imageUrlsByDiaryId = new LinkedHashMap<>();
         for (DiaryImageReference reference : diaryMapper.findImageUrlsByDiaryIds(diaryIds)) {
-            if (reference.getDiaryId() == null || clean(reference.getImageUrl()).isEmpty()) {
-                continue;
-            }
             imageUrlsByDiaryId
                     .computeIfAbsent(reference.getDiaryId(), ignored -> new ArrayList<>())
                     .add(reference.getImageUrl());
@@ -270,7 +268,7 @@ public final class DiaryModule {
     }
 
     private String resolveRole(AuthenticatedActor actor) {
-        String mapped = clean(homeMapper.findRoleByUserId(actor.userId()));
+        String mapped = Text.trim(homeMapper.findRoleByUserId(actor.userId()));
         if (ROLES.contains(mapped)) {
             return mapped;
         }
@@ -301,7 +299,7 @@ public final class DiaryModule {
     }
 
     private void validateCreateRequest(DiaryCreateDto request) {
-        if (request == null || request.date() == null || clean(request.contentMarkdown()).isEmpty()) {
+        if (request.date() == null || Text.trim(request.contentMarkdown()).isEmpty()) {
             throw ApplicationFailure.invalidInput("DIARY_CONTENT_REQUIRED", "日记内容不能为空");
         }
         validateMood(request.moodKey());
@@ -309,7 +307,7 @@ public final class DiaryModule {
     }
 
     private void validateUpdateRequest(DiaryUpdateDto request) {
-        if (request == null || clean(request.contentMarkdown()).isEmpty()) {
+        if (Text.trim(request.contentMarkdown()).isEmpty()) {
             throw ApplicationFailure.invalidInput("DIARY_CONTENT_REQUIRED", "日记内容不能为空");
         }
         validateMood(request.moodKey());
@@ -317,13 +315,13 @@ public final class DiaryModule {
     }
 
     private void validateMood(String moodKey) {
-        if (!MOOD_KEYS.contains(clean(moodKey))) {
+        if (!MOOD_KEYS.contains(Text.trim(moodKey))) {
             throw ApplicationFailure.invalidInput("DIARY_MOOD_INVALID", "心情不正确");
         }
     }
 
     private void validateVisibility(String visibility) {
-        if (!VISIBILITIES.contains(clean(visibility))) {
+        if (!VISIBILITIES.contains(Text.trim(visibility))) {
             throw ApplicationFailure.invalidInput("DIARY_VISIBILITY_INVALID", "日记可见性不正确");
         }
     }
@@ -336,8 +334,8 @@ public final class DiaryModule {
         }
     }
 
-    private int validateYear(Integer year) {
-        if (year == null || year < 1970 || year > 2100) {
+    private int validateYear(int year) {
+        if (year < 1970 || year > 2100) {
             throw ApplicationFailure.invalidInput("DIARY_YEAR_INVALID", "日记年份不正确");
         }
         return year;
@@ -367,16 +365,16 @@ public final class DiaryModule {
         if (resolved == null) {
             return;
         }
-        diary.setWeather(cleanNullable(resolved.weather()));
-        diary.setRawWeather(cleanNullable(resolved.rawWeather()));
+        diary.setWeather(Text.trimToNull(resolved.weather()));
+        diary.setRawWeather(Text.trimToNull(resolved.rawWeather()));
         diary.setTemperature(resolved.temperature());
-        diary.setWindDirection(cleanNullable(resolved.windDirection()));
-        diary.setWindPower(cleanNullable(resolved.windPower()));
-        diary.setHumidity(cleanNullable(resolved.humidity()));
-        diary.setProvince(cleanNullable(resolved.province()));
-        diary.setCity(cleanNullable(resolved.city()));
-        diary.setDistrict(cleanNullable(resolved.district()));
-        diary.setLocationName(cleanNullable(resolved.locationName()));
+        diary.setWindDirection(Text.trimToNull(resolved.windDirection()));
+        diary.setWindPower(Text.trimToNull(resolved.windPower()));
+        diary.setHumidity(Text.trimToNull(resolved.humidity()));
+        diary.setProvince(Text.trimToNull(resolved.province()));
+        diary.setCity(Text.trimToNull(resolved.city()));
+        diary.setDistrict(Text.trimToNull(resolved.district()));
+        diary.setLocationName(Text.trimToNull(resolved.locationName()));
         diary.setLatitude(resolved.latitude());
         diary.setLongitude(resolved.longitude());
     }
@@ -429,10 +427,7 @@ public final class DiaryModule {
 
     private void cleanupUnreferencedImages(List<DiaryImage> images, LocalDateTime now) {
         for (DiaryImage image : images) {
-            if (image == null || image.getId() == null || image.isDeleted()) {
-                continue;
-            }
-            if (diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
+            if (image.isDeleted() || diaryMapper.countActiveReferencesForUpload(image.getId()) > 0) {
                 continue;
             }
             imageStorageService.delete(image.getObjectName());
@@ -444,7 +439,7 @@ public final class DiaryModule {
         if (file == null || file.isEmpty()) {
             throw ApplicationFailure.invalidInput("DIARY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
         }
-        String contentType = clean(file.getContentType()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
         if (!IMAGE_TYPES.contains(contentType) && !hasAllowedExtension(file) && !hasImageSignature(file)) {
             throw ApplicationFailure.invalidInput("DIARY_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
         }
@@ -454,7 +449,7 @@ public final class DiaryModule {
     }
 
     private boolean hasAllowedExtension(MultipartFile file) {
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         return IMAGE_EXTENSIONS.stream().anyMatch(filename::endsWith);
     }
 
@@ -501,7 +496,7 @@ public final class DiaryModule {
     }
 
     private String cleanMarkdownText(String source) {
-        return clean(source)
+        return Text.trim(source)
                 .replaceAll("<[^>]+>", "")
                 .replaceAll("\\[[^\\]]+\\]\\([^)]+\\)", "")
                 .replaceAll("[*_`~=>#-]", "")
@@ -520,10 +515,6 @@ public final class DiaryModule {
             urls.add(html.group(1));
         }
         return List.copyOf(urls);
-    }
-
-    private DiarySummaryVo toSummary(DiaryEntry diary) {
-        return toSummary(diary, diaryMapper.findImageUrlsByDiaryId(diary.getId()));
     }
 
     private DiarySummaryVo toSummary(DiaryEntry diary, List<String> imageUrls) {
@@ -575,32 +566,17 @@ public final class DiaryModule {
         );
     }
 
-    private void ensureGeneratedId(DiaryEntry diary) {
-        if (diary.getId() == null) {
-            diary.setId(0L);
-        }
-    }
-
     private String authorAvatar(String role) {
         return ROLE_AVATARS.getOrDefault(role, "");
     }
 
     private String truncate(String value, int max) {
-        String text = clean(value);
+        String text = Text.trim(value);
         return text.length() <= max ? text : text.substring(0, max);
     }
 
     private LocalDateTime now() {
         return LocalDateTime.now(clock);
-    }
-
-    private String cleanNullable(String value) {
-        String cleaned = clean(value);
-        return cleaned.isEmpty() ? null : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private record ActorContext(Long actorId, String role) {

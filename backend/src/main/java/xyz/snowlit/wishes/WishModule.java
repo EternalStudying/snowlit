@@ -1,5 +1,6 @@
 package xyz.snowlit.wishes;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
@@ -91,9 +92,6 @@ public final class WishModule {
         if (wish.isCompleted()) {
             throw ApplicationFailure.conflict("WISH_ALREADY_COMPLETED", "这个清单已经完成了");
         }
-        if (image == null || image.isEmpty()) {
-            throw ApplicationFailure.invalidInput("WISH_COMPLETION_IMAGE_REQUIRED", "完成清单需要上传一张图片");
-        }
         validateImage(image);
 
         String imageUrl = imageStorage.upload(image, actor.userId()).url();
@@ -122,15 +120,15 @@ public final class WishModule {
 
         LocalDateTime now = now();
         Wish wish = new Wish();
-        wish.setTitle(clean(request.title()));
-        wish.setDescription(clean(request.description()));
-        wish.setCategory(clean(request.category()));
+        wish.setTitle(Text.trim(request.title()));
+        wish.setDescription(Text.trim(request.description()));
+        wish.setCategory(Text.trim(request.category()));
         wish.setCompleted(false);
         wish.setImageUrl(imageUrl);
-        wish.setLocationName(cleanNullable(request.locationName()));
+        wish.setLocationName(Text.trimToNull(request.locationName()));
         wish.setLatitude(null);
         wish.setLongitude(null);
-        wish.setNote(cleanNullable(request.note()));
+        wish.setNote(Text.trimToNull(request.note()));
         wish.setExpectedCompletedAt(request.expectedCompletedAt());
         wish.setCompletedAt(null);
         wish.setCreatedAt(now);
@@ -138,8 +136,7 @@ public final class WishModule {
         wish.setLastOperatedByUserId(actor.userId());
         wish.setLastOperatedAt(now);
         wishMapper.insertWish(wish);
-        Wish saved = wish.getId() == null ? wish : wishMapper.findWishById(wish.getId());
-        return toSummary(saved == null ? wish : saved);
+        return toSummary(wish);
     }
 
     public WishSummaryVo updateWish(AuthenticatedActor actor, Long id, WishUpdateDto request) {
@@ -150,11 +147,11 @@ public final class WishModule {
         LocalDateTime now = now();
         Wish wish = new Wish();
         wish.setId(id);
-        wish.setTitle(clean(request.title()));
-        wish.setDescription(clean(request.description()));
-        wish.setCategory(clean(request.category()));
-        wish.setLocationName(cleanNullable(request.locationName()));
-        wish.setNote(cleanNullable(request.note()));
+        wish.setTitle(Text.trim(request.title()));
+        wish.setDescription(Text.trim(request.description()));
+        wish.setCategory(Text.trim(request.category()));
+        wish.setLocationName(Text.trimToNull(request.locationName()));
+        wish.setNote(Text.trimToNull(request.note()));
         wish.setExpectedCompletedAt(request.expectedCompletedAt());
         wish.setUpdatedAt(now);
         wish.setLastOperatedByUserId(actor.userId());
@@ -214,32 +211,26 @@ public final class WishModule {
     }
 
     private void validateCreateRequest(WishCreateDto request) {
-        if (request == null) {
-            throw ApplicationFailure.invalidInput("WISH_PAYLOAD_INVALID", "清单内容不正确");
-        }
-        if (clean(request.title()).isBlank()) {
+        if (Text.trim(request.title()).isBlank()) {
             throw ApplicationFailure.invalidInput("WISH_TITLE_REQUIRED", "清单标题不能为空");
         }
-        if (!CATEGORIES.contains(clean(request.category()))) {
+        if (!CATEGORIES.contains(Text.trim(request.category()))) {
             throw ApplicationFailure.invalidInput("WISH_CATEGORY_INVALID", "清单分类不正确");
         }
     }
 
     private void validateUpdateRequest(WishUpdateDto request) {
-        if (request == null) {
-            throw ApplicationFailure.invalidInput("WISH_PAYLOAD_INVALID", "清单内容不正确");
-        }
-        if (clean(request.title()).isBlank()) {
+        if (Text.trim(request.title()).isBlank()) {
             throw ApplicationFailure.invalidInput("WISH_TITLE_REQUIRED", "清单标题不能为空");
         }
-        if (!CATEGORIES.contains(clean(request.category()))) {
+        if (!CATEGORIES.contains(Text.trim(request.category()))) {
             throw ApplicationFailure.invalidInput("WISH_CATEGORY_INVALID", "清单分类不正确");
         }
     }
 
     private void validateImage(MultipartFile file) {
-        String contentType = clean(file.getContentType()).toLowerCase();
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
                 || filename.endsWith(".png") || filename.endsWith(".webp") || filename.endsWith(".gif");
         if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
@@ -298,13 +289,5 @@ public final class WishModule {
         return LocalDateTime.now(clock);
     }
 
-    private String cleanNullable(String value) {
-        String cleaned = clean(value);
-        return cleaned.isBlank() ? null : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
 
 }

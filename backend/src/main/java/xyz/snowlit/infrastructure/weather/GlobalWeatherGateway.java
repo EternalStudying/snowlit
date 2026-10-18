@@ -1,5 +1,6 @@
 package xyz.snowlit.infrastructure.weather;
 
+import xyz.snowlit.text.Text;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,8 +33,8 @@ public final class GlobalWeatherGateway implements WeatherGateway {
 
     GlobalWeatherGateway(RestClient client, String geoapifyKey, String openMeteoKey) {
         this.client = client;
-        this.geoapifyKey = clean(geoapifyKey);
-        this.openMeteoKey = clean(openMeteoKey);
+        this.geoapifyKey = Text.trim(geoapifyKey);
+        this.openMeteoKey = Text.trim(openMeteoKey);
     }
 
     private static RestClient configuredClient(RestClient.Builder builder) {
@@ -165,7 +166,7 @@ public final class GlobalWeatherGateway implements WeatherGateway {
 
     private static String text(JsonNode node, String field) {
         JsonNode value = node.get(field);
-        return value != null && value.isTextual() ? clean(value.asText()) : "";
+        return value != null && value.isTextual() ? Text.trim(value.asText()) : "";
     }
 
     private static Double number(JsonNode node, String field) {
@@ -176,9 +177,5 @@ public final class GlobalWeatherGateway implements WeatherGateway {
     private static Integer integer(JsonNode node, String field) {
         JsonNode value = node.get(field);
         return value != null && value.isIntegralNumber() && value.canConvertToInt() ? value.asInt() : null;
-    }
-
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 }

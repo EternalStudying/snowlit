@@ -38,6 +38,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 class AlbumModuleTests {
 
@@ -178,6 +179,11 @@ class AlbumModuleTests {
                 "image/webp",
                 7L
         ));
+        doAnswer(invocation -> {
+            AlbumPhoto photo = invocation.getArgument(0);
+            photo.setId(901L);
+            return 1;
+        }).when(albumMapper).insertPhoto(any());
         when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
 
         AlbumPhotoVo uploaded = albumService.uploadDraftPhoto(
@@ -223,7 +229,15 @@ class AlbumModuleTests {
                 MediaType.IMAGE_JPEG_VALUE,
                 4L
         ));
-        when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
+        doAnswer(invocation -> {
+            AlbumPhoto photo = invocation.getArgument(0);
+            photo.setId(901L);
+            return 1;
+        }).when(albumMapper).insertPhoto(any());
+        AlbumPhoto stored = storedPhoto(901L, 9L);
+        stored.setOriginalUrl("https://cdn.example.com/album/original.jpg");
+        stored.setPreviewUrl("https://cdn.example.com/album/preview.jpg");
+        when(albumMapper.findPhotoById(901L)).thenReturn(stored);
 
         AlbumPhotoVo uploaded = albumService.uploadDraftPhotoFromMobile(
                 MANAGER,

@@ -24,13 +24,11 @@ public final class RedisAuthSessionStore implements AuthSessionStore {
 
     @Override
     public boolean exists(String token) {
-        return token != null && !token.isBlank() && Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + token));
+        return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + token));
     }
 
     @Override
     public void delete(String token) {
-        if (token != null && !token.isBlank()) {
-            redisTemplate.delete(KEY_PREFIX + token);
-        }
+        redisTemplate.delete(KEY_PREFIX + token);
     }
 }

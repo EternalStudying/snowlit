@@ -1,5 +1,6 @@
 package xyz.snowlit.infrastructure.storage;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ObjectStore;
 import io.minio.BucketExistsArgs;
@@ -27,17 +28,17 @@ public final class MinioObjectStore implements ObjectStore {
             @Value("${minio.bucket:}") String bucket,
             @Value("${minio.public-base-url:}") String publicBaseUrl
     ) {
-        this.endpoint = clean(endpoint);
-        this.accessKey = clean(accessKey);
-        this.secretKey = clean(secretKey);
-        this.bucket = clean(bucket);
-        this.publicBaseUrl = clean(publicBaseUrl).replaceAll("/+$", "");
+        this.endpoint = Text.trim(endpoint);
+        this.accessKey = Text.trim(accessKey);
+        this.secretKey = Text.trim(secretKey);
+        this.bucket = Text.trim(bucket);
+        this.publicBaseUrl = Text.trim(publicBaseUrl).replaceAll("/+$", "");
     }
 
     @Override
     public StoredObject put(MultipartFile file, String objectName) {
         requireConfigured();
-        String contentType = clean(file.getContentType());
+        String contentType = Text.trim(file.getContentType());
         try {
             MinioClient client = client();
             ensureBucket(client);
@@ -53,8 +54,6 @@ public final class MinioObjectStore implements ObjectStore {
                     contentType,
                     file.getSize()
             );
-        } catch (ApplicationFailure failure) {
-            throw failure;
         } catch (Exception exception) {
             throw ApplicationFailure.dependencyFailure(
                     "OBJECT_STORE_WRITE_FAILED",
@@ -118,9 +117,5 @@ public final class MinioObjectStore implements ObjectStore {
                     null
             );
         }
-    }
-
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 }

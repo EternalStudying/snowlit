@@ -1,9 +1,11 @@
 package xyz.snowlit.notices;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.notices.NoticeVos.UpdateNoticeMuteVo;
 import xyz.snowlit.notices.NoticeVos.UpdateNoticeResponseVo;
 import xyz.snowlit.notices.NoticeVos.UpdateNoticeVo;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -59,8 +61,8 @@ public final class NoticeModule {
     private UpdateNoticeVo toVo(Notice notice) {
         return new UpdateNoticeVo(
                 notice.getId(),
-                clean(notice.getTitle()),
-                clean(notice.getVersion()),
+                notice.getTitle(),
+                notice.getVersion(),
                 notice.getPublishedAt(),
                 parseItems(notice.getItemsJson())
         );
@@ -68,14 +70,10 @@ public final class NoticeModule {
 
     private List<String> parseItems(String itemsJson) {
         try {
-            List<String> items = objectMapper.readValue(clean(itemsJson), new TypeReference<>() {
+            return objectMapper.readValue(itemsJson, new TypeReference<>() {
             });
-            return items.stream()
-                    .map(this::clean)
-                    .filter(item -> !item.isBlank())
-                    .toList();
-        } catch (Exception ex) {
-            return List.of();
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Notice items are not a JSON array", ex);
         }
     }
 
@@ -84,10 +82,6 @@ public final class NoticeModule {
     }
 
     private String normalizeClientType(String client) {
-        return CLIENT_MINIPROGRAM.equalsIgnoreCase(clean(client)) ? CLIENT_MINIPROGRAM : CLIENT_WEB;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
+        return CLIENT_MINIPROGRAM.equalsIgnoreCase(Text.trim(client)) ? CLIENT_MINIPROGRAM : CLIENT_WEB;
     }
 }

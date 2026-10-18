@@ -1,5 +1,6 @@
 package xyz.snowlit.weather;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.weather.WeatherVos.WeatherAtmosphereVo;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,24 +77,24 @@ public final class WeatherModule {
                 ? live.daylightHint() : mapping.daylightHint();
         return new WeatherAtmosphereVo(
                 isBlank(loc.city()) ? "unknown" : loc.city(),
-                blankToEmpty(loc.district()),
-                blankToEmpty(loc.province()),
-                blankToEmpty(loc.country()),
+                Text.trim(loc.district()),
+                Text.trim(loc.province()),
+                Text.trim(loc.country()),
                 live.temperature(),
-                blankToEmpty(live.weather()),
+                Text.trim(live.weather()),
                 mapping.weatherState(),
                 mapping.weatherVariant(),
                 mapping.precipitationKind(),
-                blankToEmpty(live.windDirection()),
-                blankToEmpty(live.windPower()),
-                blankToEmpty(live.humidity()),
+                Text.trim(live.windDirection()),
+                Text.trim(live.windPower()),
+                Text.trim(live.humidity()),
                 daylightHint,
                 parseReportTime(live.reportTime()).orElseGet(this::now)
         );
     }
 
     WeatherMapping mapWeather(String rawWeather, String reportTime) {
-        String weather = blankToEmpty(rawWeather);
+        String weather = Text.trim(rawWeather);
         String daylightHint = parseReportTime(reportTime)
                 .map(this::toDaylightHint)
                 .orElse("unknown");
@@ -204,10 +205,6 @@ public final class WeatherModule {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private String blankToEmpty(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private boolean containsAny(String value, String... keywords) {

@@ -144,7 +144,6 @@ class WishControllerTests {
             created.setId(1L);
             return 1;
         }).when(wishMapper).insertWish(any());
-        when(wishMapper.findWishById(1L)).thenReturn(wish(false));
         when(imageStorage.upload(any(), any())).thenReturn(new ObjectStore.StoredObject(
                 "wish/create.jpg",
                 "/wish-assets/sea-sunset.jpg",
@@ -166,7 +165,7 @@ class WishControllerTests {
                         .file(new MockMultipartFile("image", "wish.jpg", MediaType.IMAGE_JPEG_VALUE, "image".getBytes()))
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("一起去海边看日落"));
+                .andExpect(jsonPath("$.title").value("一起去海边"));
     }
 
     @Test

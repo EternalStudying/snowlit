@@ -7,6 +7,7 @@ import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.text.Text;
 import xyz.snowlit.album.AlbumVos.AlbumCurrentDraftVo;
 import xyz.snowlit.album.AlbumVos.AlbumDetailVo;
 import xyz.snowlit.album.AlbumVos.AlbumDraftVo;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -125,7 +127,7 @@ public class AlbumModule {
             throw ApplicationFailure.locked("PRIVATE_ALBUM_UNLOCK_LOCKED", "密码错误次数过多，请 10 分钟后再试");
         }
 
-        String password = request == null || request.password() == null ? "" : request.password();
+        String password = Objects.requireNonNullElse(request.password(), "");
         if (!passwordEncoder.matches(password, album.getPrivatePasswordHash())) {
             int previousFailures = failure == null || failure.getLockedUntil() != null && !failure.getLockedUntil().isAfter(now)
                     ? 0
@@ -221,8 +223,8 @@ public class AlbumModule {
 
         LocalDateTime now = now();
         Album album = new Album();
-        album.setTitle(clean(request.title()));
-        album.setDescription(clean(request.description()));
+        album.setTitle(Text.trim(request.title()));
+        album.setDescription(Text.trim(request.description()));
         album.setCoverPhotoUrl("");
         album.setAuthorName(actor.displayName());
         album.setCreatedAt(now);
@@ -230,7 +232,7 @@ public class AlbumModule {
         album.setLocation(defaultLocation(request.location()));
         album.setViewCount(0);
         album.setLikeCount(0);
-        album.setVisibility(clean(request.visibility()));
+        album.setVisibility(Text.trim(request.visibility()));
         album.setPrivatePasswordHash(privatePasswordHash(request));
         album.setPinned(Boolean.TRUE.equals(request.pinned()));
         album.setSortOrder(Boolean.TRUE.equals(request.pinned()) ? 10 : 100);
@@ -318,8 +320,7 @@ public class AlbumModule {
         photo.setPreviewContentType(previewAsset.contentType());
         photo.setPreviewSizeBytes(previewAsset.sizeBytes());
         albumMapper.insertPhoto(photo);
-        AlbumPhoto saved = photo.getId() == null ? photo : albumMapper.findPhotoById(photo.getId());
-        return toPhotoVo(saved == null ? photo : saved);
+        return toPhotoVo(albumMapper.findPhotoById(photo.getId()));
     }
 
     public AlbumDraftVo publishDraft(AuthenticatedActor actor, Long albumId) {
@@ -333,8 +334,8 @@ public class AlbumModule {
             throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 300 张照片");
         }
         AlbumPhoto firstPhoto = albumMapper.findFirstPhotoByAlbumId(draft.getId());
-        String coverPhotoUrl = clean(draft.getCoverPhotoUrl()).isBlank() && firstPhoto != null
-                ? photoPreviewUrl(firstPhoto)
+        String coverPhotoUrl = draft.getCoverPhotoUrl().isBlank()
+                ? firstPhoto.getPreviewUrl()
                 : draft.getCoverPhotoUrl();
         albumMapper.publishAlbum(draft.getId(), coverPhotoUrl, now());
         Album published = requireAlbum(draft.getId());
@@ -451,8 +452,8 @@ public class AlbumModule {
         return new AlbumPhotoVo(
                 photo.getId(),
                 photo.getAlbumId(),
-                photoPreviewUrl(photo),
-                clean(photo.getOriginalUrl()),
+                photo.getPreviewUrl(),
+                Text.trim(photo.getOriginalUrl()),
                 photo.getCaption(),
                 photo.getDescription(),
                 photo.getTakenAt(),
@@ -464,9 +465,9 @@ public class AlbumModule {
     }
 
     private AlbumDraftVo toDraftVo(Album album) {
-        List<AlbumPhotoVo> photos = album.getId() == null
-                ? List.of()
-                : albumMapper.findPhotosByAlbumId(album.getId()).stream().map(this::toPhotoVo).toList();
+        List<AlbumPhotoVo> photos = albumMapper.findPhotosByAlbumId(album.getId()).stream()
+                .map(this::toPhotoVo)
+                .toList();
         return new AlbumDraftVo(toAlbumVo(album, false, photos.stream().limit(MAX_PREVIEW_LIMIT).toList(), false), photos);
     }
 
@@ -474,11 +475,7 @@ public class AlbumModule {
         if (albumIds.isEmpty()) {
             return Set.of();
         }
-        List<Long> likedAlbumIds = albumMapper.findActiveDailyLikeAlbumIds(userId, todayForActivity(), albumIds);
-        if (likedAlbumIds == null || likedAlbumIds.isEmpty()) {
-            return Set.of();
-        }
-        return new HashSet<>(likedAlbumIds);
+        return new HashSet<>(albumMapper.findActiveDailyLikeAlbumIds(userId, todayForActivity(), albumIds));
     }
 
     private boolean isLikedToday(Long albumId, Long userId) {
@@ -490,29 +487,26 @@ public class AlbumModule {
     }
 
     private void validateCreateRequest(AlbumCreateDto request) {
-        if (request == null) {
-            throw ApplicationFailure.invalidInput("ALBUM_REQUEST_INVALID", "相册内容不正确");
-        }
-        if (clean(request.title()).isBlank()) {
+        if (Text.trim(request.title()).isBlank()) {
             throw ApplicationFailure.invalidInput("ALBUM_TITLE_REQUIRED", "相册标题不能为空");
         }
         if (request.eventDate() == null) {
             throw ApplicationFailure.invalidInput("ALBUM_EVENT_DATE_REQUIRED", "相册日期不能为空");
         }
-        String visibility = clean(request.visibility());
+        String visibility = Text.trim(request.visibility());
         if (!VISIBILITIES.contains(visibility)) {
             throw ApplicationFailure.invalidInput("ALBUM_VISIBILITY_INVALID", "相册可见性不正确");
         }
-        if ("private".equals(visibility) && clean(request.privatePassword()).isBlank()) {
+        if ("private".equals(visibility) && Text.trim(request.privatePassword()).isBlank()) {
             throw ApplicationFailure.invalidInput("ALBUM_PRIVATE_PASSWORD_REQUIRED", "私密相册密码不能为空");
         }
     }
 
     private String privatePasswordHash(AlbumCreateDto request) {
-        if (!"private".equals(clean(request.visibility()))) {
+        if (!"private".equals(Text.trim(request.visibility()))) {
             return null;
         }
-        return passwordEncoder.encode(clean(request.privatePassword()));
+        return passwordEncoder.encode(Text.trim(request.privatePassword()));
     }
 
     private void validatePhotoUpload(MultipartFile original, MultipartFile preview, AlbumPhotoMetadataDto metadata) {
@@ -527,7 +521,7 @@ public class AlbumModule {
     }
 
     private void validatePhotoMetadata(AlbumPhotoMetadataDto metadata) {
-        if (metadata == null || metadata.takenAt() == null || metadata.width() == null || metadata.height() == null
+        if (metadata.takenAt() == null || metadata.width() == null || metadata.height() == null
                 || metadata.width() < 1 || metadata.height() < 1) {
             throw ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确");
         }
@@ -537,7 +531,7 @@ public class AlbumModule {
         if (file == null || file.isEmpty()) {
             throw ApplicationFailure.invalidInput("ALBUM_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
         }
-        String contentType = clean(file.getContentType()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
         if (!ORIGINAL_IMAGE_TYPES.contains(contentType) && !hasAllowedExtension(file) && !hasImageSignature(file)) {
             throw ApplicationFailure.invalidInput("ALBUM_IMAGE_TYPE_INVALID", "只支持 jpg、png、webp、gif 图片");
         }
@@ -547,17 +541,17 @@ public class AlbumModule {
     }
 
     private void validatePreviewImage(MultipartFile file) {
-        if (file == null || file.isEmpty() || !"image/webp".equals(clean(file.getContentType()).toLowerCase())) {
+        if (file == null || file.isEmpty() || !"image/webp".equals(Text.trim(file.getContentType()).toLowerCase())) {
             throw ApplicationFailure.invalidInput("ALBUM_PREVIEW_TYPE_INVALID", "预览图必须是 WebP");
         }
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         if (!filename.endsWith(".webp")) {
             throw ApplicationFailure.invalidInput("ALBUM_PREVIEW_TYPE_INVALID", "预览图必须是 WebP");
         }
     }
 
     private boolean hasAllowedExtension(MultipartFile file) {
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         return IMAGE_EXTENSIONS.stream().anyMatch(filename::endsWith);
     }
 
@@ -585,22 +579,14 @@ public class AlbumModule {
         return value & 0xff;
     }
 
-    private String photoPreviewUrl(AlbumPhoto photo) {
-        return clean(photo.getPreviewUrl());
-    }
-
     private String defaultLocation(String value) {
-        String cleaned = clean(value);
+        String cleaned = Text.trim(value);
         return cleaned.isBlank() ? "地球" : cleaned;
     }
 
     private String defaultCaption(String value) {
-        String cleaned = clean(value);
+        String cleaned = Text.trim(value);
         return cleaned.isBlank() ? "未命名照片" : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private int clampPage(Integer page) {

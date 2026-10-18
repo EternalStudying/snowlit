@@ -1,5 +1,6 @@
 package xyz.snowlit.infrastructure.wechat;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.WechatLoginGateway;
 import xyz.snowlit.failure.ApplicationFailure;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -31,9 +32,9 @@ public final class WechatLoginRestGateway implements WechatLoginGateway {
     ) {
         this.restClient = restClientBuilder.build();
         this.objectMapper = objectMapper;
-        this.appId = clean(appId);
-        this.appSecret = clean(appSecret);
-        this.code2SessionUrl = clean(code2SessionUrl);
+        this.appId = Text.trim(appId);
+        this.appSecret = Text.trim(appSecret);
+        this.code2SessionUrl = Text.trim(code2SessionUrl);
     }
 
     @Override
@@ -63,11 +64,11 @@ public final class WechatLoginRestGateway implements WechatLoginGateway {
         if (response.errcode() != null && response.errcode() != 0) {
             throw ApplicationFailure.unauthenticated("WECHAT_LOGIN_CODE_INVALID", "微信登录凭证无效");
         }
-        String openid = clean(response.openid());
+        String openid = Text.trim(response.openid());
         if (openid.isBlank()) {
             throw ApplicationFailure.unauthenticated("WECHAT_LOGIN_CODE_INVALID", "微信登录凭证无效");
         }
-        return new Session(openid, clean(response.unionid()));
+        return new Session(openid, Text.trim(response.unionid()));
     }
 
     private URI code2SessionUri(String code) {
@@ -81,7 +82,7 @@ public final class WechatLoginRestGateway implements WechatLoginGateway {
     }
 
     private WechatCode2SessionResponse parseResponse(String responseBody) {
-        String body = clean(responseBody);
+        String body = Text.trim(responseBody);
         if (body.isBlank()) {
             return null;
         }
@@ -98,10 +99,6 @@ public final class WechatLoginRestGateway implements WechatLoginGateway {
                 "微信登录服务暂时不可用",
                 cause
         );
-    }
-
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

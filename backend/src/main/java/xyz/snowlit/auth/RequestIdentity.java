@@ -1,8 +1,5 @@
 package xyz.snowlit.auth;
 
-import xyz.snowlit.auth.User;
-import xyz.snowlit.auth.UserMapper;
-import xyz.snowlit.auth.JwtService;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -19,15 +16,10 @@ public final class RequestIdentity {
     }
 
     public Optional<AuthenticatedActor> resolve(String token) {
-        if (token == null || token.isBlank() || !jwtService.isValid(token)) {
+        if (token.isBlank() || !jwtService.isValid(token)) {
             return Optional.empty();
         }
-        try {
-            User user = userMapper.findById(jwtService.getUserId(token));
-            return Optional.ofNullable(user).map(this::toActor);
-        } catch (RuntimeException exception) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(userMapper.findById(jwtService.getUserId(token))).map(this::toActor);
     }
 
     private AuthenticatedActor toActor(User user) {

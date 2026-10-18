@@ -43,7 +43,7 @@ public final class JwtService {
     }
 
     public boolean isValid(String token) {
-        return isSignatureValid(token) && authSessionStore != null && authSessionStore.exists(token);
+        return isSignatureValid(token) && authSessionStore.exists(token);
     }
 
     public boolean isSignatureValid(String token) {

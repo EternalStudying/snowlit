@@ -1,5 +1,6 @@
 package xyz.snowlit.home;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.home.HomeDtos.HomeLocationUpdateDto;
@@ -133,18 +134,18 @@ public final class HomeModule {
         location.setRole(resolveRole(actor));
         location.setLatitude(request.latitude());
         location.setLongitude(request.longitude());
-        location.setCity(cleanNullable(request.city()));
-        location.setDistrict(cleanNullable(request.district()));
-        location.setProvince(cleanNullable(request.province()));
-        location.setCountry(cleanNullable(request.country()));
-        location.setWeather(cleanNullable(request.weather()));
+        location.setCity(Text.trimToNull(request.city()));
+        location.setDistrict(Text.trimToNull(request.district()));
+        location.setProvince(Text.trimToNull(request.province()));
+        location.setCountry(Text.trimToNull(request.country()));
+        location.setWeather(Text.trimToNull(request.weather()));
         location.setTemperature(request.temperature());
         location.setLastOnlineAt(LocalDateTime.now(clock));
         homeMapper.upsertLocation(location);
     }
 
     private String resolveRole(AuthenticatedActor actor) {
-        String mappedRole = clean(homeMapper.findRoleByUserId(actor.userId()));
+        String mappedRole = Text.trim(homeMapper.findRoleByUserId(actor.userId()));
         if (BOYFRIEND.equals(mappedRole) || GIRLFRIEND.equals(mappedRole)) {
             return mappedRole;
         }
@@ -222,11 +223,11 @@ public final class HomeModule {
         return new HomePersonStatusVo(
                 role,
                 name,
-                clean(location == null ? "" : location.getCity()),
-                clean(location == null ? "" : location.getDistrict()),
-                clean(location == null ? "" : location.getProvince()),
-                clean(location == null ? "" : location.getCountry()),
-                clean(location == null ? "" : location.getWeather()),
+                Text.trim(location == null ? "" : location.getCity()),
+                Text.trim(location == null ? "" : location.getDistrict()),
+                Text.trim(location == null ? "" : location.getProvince()),
+                Text.trim(location == null ? "" : location.getCountry()),
+                Text.trim(location == null ? "" : location.getWeather()),
                 location == null ? null : location.getTemperature(),
                 pick(MOODS, seed),
                 pick(STATUS_NOTES, seed * 13),
@@ -269,7 +270,7 @@ public final class HomeModule {
                 diary.getTitle(),
                 diary.getEntryDate(),
                 diary.getSummary(),
-                clean(diary.getMoodKey())
+                Text.trim(diary.getMoodKey())
         );
     }
 
@@ -284,14 +285,14 @@ public final class HomeModule {
     private HomeLatestMessageVo toLatestMessageVo(Message message) {
         return message == null ? null : new HomeLatestMessageVo(
                 message.getId(),
-                clean(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
+                Text.trim(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
                 message.getContent(),
                 message.getCreatedAt()
         );
     }
 
     private void validateLocation(HomeLocationUpdateDto request) {
-        if (request == null || request.latitude() == null || request.longitude() == null) {
+        if (request.latitude() == null || request.longitude() == null) {
             throw ApplicationFailure.invalidInput(
                     "HOME_LOCATION_COORDINATES_REQUIRED",
                     "纬度和经度不能为空"
@@ -334,15 +335,6 @@ public final class HomeModule {
 
     private String pick(String[] values, int seed) {
         return values[Math.floorMod(seed, values.length)];
-    }
-
-    private String cleanNullable(String value) {
-        String cleaned = clean(value);
-        return cleaned.isEmpty() ? null : cleaned;
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private record AnniversaryCandidate(String name, LocalDate date, String type, int priority) {

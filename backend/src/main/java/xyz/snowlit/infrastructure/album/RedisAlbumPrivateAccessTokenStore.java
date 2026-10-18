@@ -33,20 +33,16 @@ public final class RedisAlbumPrivateAccessTokenStore implements AlbumPrivateAcce
 
     @Override
     public ValidationStatus validate(String token, Long albumId, Long userId) {
-        if (token == null || token.isBlank()) {
-            return ValidationStatus.INVALID;
-        }
-
         String value = redisTemplate.opsForValue().get(KEY_PREFIX + token);
-        if (value == null || value.isBlank()) {
+        if (value == null) {
             return isExpiredTokenShape(token) ? ValidationStatus.EXPIRED : ValidationStatus.INVALID;
         }
 
         String[] parts = value.split(":");
-        if (parts.length != 3 || !parts[0].equals(String.valueOf(albumId)) || !parts[1].equals(String.valueOf(userId))) {
+        if (!parts[0].equals(String.valueOf(albumId)) || !parts[1].equals(String.valueOf(userId))) {
             return ValidationStatus.INVALID;
         }
-        long expiresAt = parseLong(parts[2]);
+        long expiresAt = Long.parseLong(parts[2]);
         return expiresAt < LocalDateTime.now().atZone(ZONE).toEpochSecond()
                 ? ValidationStatus.EXPIRED
                 : ValidationStatus.VALID;
@@ -64,17 +60,9 @@ public final class RedisAlbumPrivateAccessTokenStore implements AlbumPrivateAcce
         try {
             String payload = new String(Base64.getUrlDecoder().decode(token.substring(6)), StandardCharsets.UTF_8);
             String[] parts = payload.split(":");
-            return parts.length >= 3 && parseLong(parts[2]) < LocalDateTime.now().atZone(ZONE).toEpochSecond();
+            return parts.length >= 3 && Long.parseLong(parts[2]) < LocalDateTime.now().atZone(ZONE).toEpochSecond();
         } catch (IllegalArgumentException ex) {
             return false;
-        }
-    }
-
-    private long parseLong(String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException ex) {
-            return -1L;
         }
     }
 }

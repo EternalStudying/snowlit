@@ -1,5 +1,6 @@
 package xyz.snowlit.auth;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthDtos.LoginDto;
 import xyz.snowlit.auth.AuthDtos.ProfileUpdateDto;
 import xyz.snowlit.auth.AuthDtos.WechatBindLoginDto;
@@ -46,12 +47,12 @@ public final class AuthModule {
         this.passwordEncoder = passwordEncoder;
         this.wechat = wechat;
         this.environment = environment;
-        this.devBindUserId = clean(devBindUserId);
+        this.devBindUserId = Text.trim(devBindUserId);
     }
 
     public LoginVo login(LoginDto request) {
-        String username = request == null ? "" : clean(request.username());
-        String password = request == null ? "" : clean(request.password());
+        String username = Text.trim(request.username());
+        String password = Text.trim(request.password());
         User user = userMapper.findByUsername(username);
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw ApplicationFailure.unauthenticated("ACCOUNT_PASSWORD_INVALID", "账号或密码不正确");
@@ -60,7 +61,7 @@ public final class AuthModule {
     }
 
     public LoginVo wechatLogin(WechatLoginDto request) {
-        String code = request == null ? "" : clean(request.code());
+        String code = Text.trim(request.code());
         if (code.isBlank()) {
             throw ApplicationFailure.invalidInput("WECHAT_LOGIN_CODE_REQUIRED", "code 不能为空");
         }
@@ -76,9 +77,9 @@ public final class AuthModule {
     }
 
     public LoginVo wechatBindLogin(WechatBindLoginDto request) {
-        String code = request == null ? "" : clean(request.code());
-        String username = request == null ? "" : clean(request.username());
-        String password = request == null ? "" : clean(request.password());
+        String code = Text.trim(request.code());
+        String username = Text.trim(request.username());
+        String password = Text.trim(request.password());
         if (code.isBlank()) {
             throw ApplicationFailure.invalidInput("WECHAT_LOGIN_CODE_REQUIRED", "code 不能为空");
         }
@@ -97,7 +98,7 @@ public final class AuthModule {
             throw ApplicationFailure.conflict("WECHAT_OPENID_ALREADY_BOUND", "当前微信已绑定其他账号");
         }
 
-        String currentOpenid = clean(user.getWechatOpenid());
+        String currentOpenid = Text.trim(user.getWechatOpenid());
         if (!currentOpenid.isBlank() && !currentOpenid.equals(session.openid())) {
             throw ApplicationFailure.conflict("WECHAT_ACCOUNT_ALREADY_BOUND", "该账号已绑定其他微信");
         }
@@ -108,13 +109,12 @@ public final class AuthModule {
         int updated = userMapper.bindWechatOpenidIfUnbound(
                 user.getId(),
                 session.openid(),
-                blankToNull(session.unionid())
+                Text.trimToNull(session.unionid())
         );
         if (updated != 1) {
             throw ApplicationFailure.conflict("WECHAT_ACCOUNT_ALREADY_BOUND", "该账号已绑定其他微信");
         }
-        User boundUser = userMapper.findById(user.getId());
-        return issueLogin(boundUser == null ? user : boundUser);
+        return issueLogin(userMapper.findById(user.getId()));
     }
 
     public void logout(String token) {
@@ -129,9 +129,9 @@ public final class AuthModule {
     }
 
     public CurrentUserVo updateProfile(AuthenticatedActor actor, ProfileUpdateDto request) {
-        String displayName = clean(request == null ? "" : request.displayName());
-        String mood = blankToNull(request == null ? "" : request.mood());
-        String bio = blankToNull(request == null ? "" : request.bio());
+        String displayName = Text.trim(request.displayName());
+        String mood = Text.trimToNull(request.mood());
+        String bio = Text.trimToNull(request.bio());
 
         if (displayName.isBlank()) {
             throw ApplicationFailure.invalidInput("PROFILE_DISPLAY_NAME_REQUIRED", "请输入昵称");
@@ -154,7 +154,7 @@ public final class AuthModule {
     }
 
     private User devBindWechatUser(WechatLoginGateway.Session session) {
-        if (environment == null || !environment.acceptsProfiles(Profiles.of("dev")) || devBindUserId.isBlank()) {
+        if (!environment.acceptsProfiles(Profiles.of("dev")) || devBindUserId.isBlank()) {
             return null;
         }
 
@@ -168,7 +168,7 @@ public final class AuthModule {
         int updated = userMapper.bindWechatOpenidIfUnbound(
                 userId,
                 session.openid(),
-                blankToNull(session.unionid())
+                Text.trimToNull(session.unionid())
         );
         return updated == 1 ? userMapper.findById(userId) : null;
     }
@@ -201,7 +201,7 @@ public final class AuthModule {
     }
 
     private String resolveCoupleRole(User user) {
-        String mappedRole = clean(user.getCoupleRole());
+        String mappedRole = Text.trim(user.getCoupleRole());
         if (COUPLE_ROLES.contains(mappedRole)) {
             return mappedRole;
         }
@@ -212,12 +212,4 @@ public final class AuthModule {
         return value != null && value.codePointCount(0, value.length()) > maxLength;
     }
 
-    private String blankToNull(String value) {
-        String cleaned = clean(value);
-        return cleaned.isBlank() ? null : cleaned;
-    }
-
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
 }

@@ -1,5 +1,6 @@
 package xyz.snowlit.messages;
 
+import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.messages.MessageDtos.MessageCreateDto;
@@ -66,7 +67,7 @@ public final class MessageModule {
 
         Message message = new Message();
         message.setAuthorUserId(actor.userId());
-        message.setContent(clean(request.content()));
+        message.setContent(Text.trim(request.content()));
         if (storedImage != null) {
             message.setImageUrl(storedImage.url());
             message.setImageObjectName(storedImage.objectName());
@@ -74,10 +75,8 @@ public final class MessageModule {
             message.setImageSizeBytes(storedImage.sizeBytes());
         }
         message.setCreatedAt(now());
-        message.setDeletedAt(null);
         messageMapper.insertMessage(message);
-        Message saved = message.getId() == null ? message : messageMapper.findMessageById(message.getId());
-        return toVo(saved == null ? message : saved, actor.userId());
+        return toVo(messageMapper.findMessageById(message.getId()), actor.userId());
     }
 
     public void deleteMessage(AuthenticatedActor actor, Long id) {
@@ -99,17 +98,17 @@ public final class MessageModule {
     }
 
     private void validateCreateRequest(MessageCreateDto request) {
-        if (request == null || clean(request.content()).isBlank()) {
+        if (Text.trim(request.content()).isBlank()) {
             throw ApplicationFailure.invalidInput("MESSAGE_CONTENT_REQUIRED", "留言内容不能为空");
         }
-        if (clean(request.content()).length() > MAX_CONTENT_LENGTH) {
+        if (Text.trim(request.content()).length() > MAX_CONTENT_LENGTH) {
             throw ApplicationFailure.invalidInput("MESSAGE_CONTENT_TOO_LONG", "留言内容不能超过 500 字");
         }
     }
 
     private void validateImage(MultipartFile file) {
-        String contentType = clean(file.getContentType()).toLowerCase();
-        String filename = clean(file.getOriginalFilename()).toLowerCase();
+        String contentType = Text.trim(file.getContentType()).toLowerCase();
+        String filename = Text.trim(file.getOriginalFilename()).toLowerCase();
         boolean hasAllowedExtension = filename.endsWith(".jpg") || filename.endsWith(".jpeg")
                 || filename.endsWith(".png") || filename.endsWith(".webp");
         if (!IMAGE_TYPES.contains(contentType) || !hasAllowedExtension) {
@@ -124,7 +123,7 @@ public final class MessageModule {
         return new MessageVo(
                 message.getId(),
                 message.getAuthorUserId(),
-                clean(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
+                Text.trim(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
                 message.getContent(),
                 message.getImageUrl(),
                 message.getCreatedAt(),
@@ -145,10 +144,6 @@ public final class MessageModule {
 
     private LocalDateTime now() {
         return LocalDateTime.now(clock);
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
     }
 
 }

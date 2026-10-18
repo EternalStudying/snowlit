@@ -94,6 +94,7 @@ class MessageControllerTests {
             message.setId(8L);
             return 1;
         }).when(messageMapper).insertMessage(any());
+        when(messageMapper.findMessageById(8L)).thenReturn(message(true));
 
         mockMvc.perform(multipart("/api/messages")
                         .file(new MockMultipartFile("payload", "", MediaType.APPLICATION_JSON_VALUE, """

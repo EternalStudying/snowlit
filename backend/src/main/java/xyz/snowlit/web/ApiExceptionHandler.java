@@ -3,8 +3,10 @@ package xyz.snowlit.web;
 import xyz.snowlit.failure.ApplicationFailure;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,20 +16,18 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ApplicationFailure.class)
     public ResponseEntity<Map<String, Object>> handleApplicationFailure(ApplicationFailure failure) {
-        HttpStatus status = statusFor(failure.kind());
-        return response(status, failure.code(), failure.getMessage());
+        return response(statusFor(failure.kind()), failure.code(), failure.getMessage());
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<Map<String, Object>> handleUnreadableBody(Exception exception) {
+        return response(HttpStatus.BAD_REQUEST, "REQUEST_BODY_INVALID", "请求内容不正确");
     }
 
     private ResponseEntity<Map<String, Object>> response(HttpStatus status, String code, String message) {
-        return response(status.value(), code, message);
-    }
-
-    private ResponseEntity<Map<String, Object>> response(int status, String code, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", status);
-        if (code != null && !code.isBlank()) {
-            body.put("code", code);
-        }
+        body.put("status", status.value());
+        body.put("code", code);
         body.put("message", message);
         return ResponseEntity.status(status).body(body);
     }
