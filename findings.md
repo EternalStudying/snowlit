@@ -12,11 +12,12 @@ Baseline date: 2026-10-17. This file records facts and decisions. Task status be
 | docs | Development instructions and cross-client contracts; not a runtime asset source |
 | codex-work | Git-ignored temporary checks and local debugging material; not a permanent specification |
 
-Web requests share SessionRequest; the regular route shell belongs to Home. Backend web adapters own authentication and HTTP concerns, ApplicationFailure represents business failures, ObjectStore abstracts media storage, and infrastructure contains external adapters.
+Web requests share SessionRequest; the regular route shell belongs to Home. On the backend a required `@CurrentActor` is the only login rule, `AuthSessions` owns opaque business sessions, `ImageIntake` accepts every uploaded image over the ObjectStore seam, ApplicationFailure represents business failures, and infrastructure contains external adapters. Details are in [backend findings](backend/findings.md); domain terms are in the [glossary](GLOSSARY.md).
 
 ## Confirmed User Decisions
 
 - Write all project context and maintenance documents in English; reply to the user in English.
+- Backend refactor decisions (2026-10-18): images are recognised by content for every flow and GIF is allowed everywhere; per-domain image error codes stay; oversized feedback screenshots answer 413; local disk is the object store whenever MinIO is not fully configured; session tokens are opaque (no JWT); `@CurrentActor` is the only login rule; overly defensive code is removed. Domain vocabulary lives in GLOSSARY.md (CONTEXT.md retired).
 - Preserve the public ICP component and its current record number.
 - Do not hardcode personal names, addresses, or real precise coordinates. Use generic initialization data and actual location results; unresolved locations remain unknown.
 - The privacy criterion concerns direct evidence of the user's physical location in mainland China. Chinese language, holidays, simplified fonts, AMap, WeChat, and npm mirror choices may remain.
@@ -25,7 +26,7 @@ Web requests share SessionRequest; the regular route shell belongs to Home. Back
 
 ## Data, Time, and Configuration
 
-- MySQL, Redis, and MinIO are runtime dependencies. Retained databases require SQL_INIT_MODE=never; dev defaults to always and can recreate/reseed tables.
+- MySQL and Redis are runtime dependencies; MinIO is used when fully configured, otherwise uploads go to a served local directory. Retained databases require SQL_INIT_MODE=never; dev defaults to always and can recreate/reseed tables.
 - Local WeChat and Geoapify credentials are read from backend/config/local.properties: ignored by Git, mode 600, outside application resources. Environment variables take precedence; prod does not import this file.
 - Album likes and views use UTC calendar days. The development JDBC default is UTC; existing activity dates are not migrated.
 - Plain YYYY-MM-DD values retain calendar-date semantics. Timestamps retain instant semantics and use client-local presentation.

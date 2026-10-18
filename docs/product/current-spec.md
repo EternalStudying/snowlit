@@ -11,7 +11,8 @@ The Web client owns its existing immersive motion system. The mini program prior
 ## Identity and Authorization
 
 - Web login uses an existing account and password. WeChat code exchange and explicit binding reuse existing users; there is no automatic registration flow.
-- Backend business tokens represent sessions stored through Redis. openid, session_key, and AppSecret are not client credentials.
+- Backend business tokens are opaque random strings for sessions stored in Redis for one hour; clients must not parse them. openid, session_key, and AppSecret are not client credentials.
+- An endpoint requires login exactly when its handler declares a required actor. Every 401 uses `{status, code: "UNAUTHORIZED", message}`; a missing or unreadable request body answers 400 `REQUEST_BODY_INVALID`. Logout is idempotent for a presented token.
 - SiteManagerPolicy currently permits user IDs 1 and 2 for album management, story writes, and wish creation/editing/deletion. Wish complete/reopen currently requires authentication.
 - Diaries use shared/private visibility; private reads and mutations check authorship. Roles come from users.couple_role, never names. The current system is not complete multi-couple tenant isolation.
 - Messages require login and can be deleted only by their author. Client visibility is not authorization.
@@ -59,9 +60,14 @@ Plain YYYY-MM-DD values preserve calendar dates across timezones. Default diary/
 
 ## Messages, Notices, and Feedback
 
-- A message requires text, up to 500 characters, and optionally one jpg/png/webp image up to 10MB. The Web wall reads the latest 20 items; Home includes a text summary.
+- A message requires text, up to 500 characters, and optionally one jpg/png/webp/gif image up to 10MB. The Web wall reads the latest 20 items; Home includes a text summary.
 - Notices and daily mute requests distinguish client=web|miniprogram. Client-specific mute state is independent.
-- Feedback uploads up to three screenshots first, then submits imageUrls. Each image is limited to 10MB. Feedback retains its local-storage fallback when object storage is unconfigured.
+- Feedback uploads up to three screenshots first, then submits imageUrls. Each image is limited to 10MB; an oversized screenshot answers 413.
+
+## Uploaded Images
+
+- Every upload flow accepts JPEG, PNG, WebP, and GIF up to 10MB, recognised from file content rather than the client MIME type or extension (album previews must be WebP). Oversized images answer 413; wrong types answer 400 with the flow's existing code.
+- When object storage is not configured, every flow stores files on local disk and the backend serves them under `/uploads/`.
 
 ## Global Weather
 
@@ -91,7 +97,7 @@ ApplicationFailure is mapped by the HTTP adapter to status/code/message. Field n
 ## Maintenance and User Decisions
 
 - [schema.sql](../../backend/src/main/resources/schema.sql) and current Mappers define data structure. Retained databases must not be initialized again; schema changes require a deliberate migration/recovery plan.
-- Backend domains are under xyz.snowlit; Web modules expose index.ts. Shared ObjectStore retains real external adapters; do not recreate old compatibility layers.
+- Backend domains are under xyz.snowlit; Web modules expose index.ts. Uploads enter through one image intake over the ObjectStore seam (MinIO or local disk); do not recreate per-domain storage classes or old compatibility layers.
 - New platform capabilities require reviewing privacy, legal domains, permissions/categories, and refusal behavior. Local code does not establish WeChat approval or production readiness.
 - New seed data uses demo_a/demo_b, generic partner names, blank locations, and sample password 123456. Existing accounts and bindings remain intact.
 - Keep SiteRecordLink and its current ICP number. Ordinary pages/login display it; immersive routes do not. The code does not establish external registration ownership or validity.

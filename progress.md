@@ -14,6 +14,10 @@
 
 This task updates Markdown only. It does not rerun business tests, start or stop services, access business data, change credentials, or commit to Git.
 
+## Backend Refactor (2026-10-18)
+
+Branch `refactor/backend-deepening`: backend `mvn -o test` 269/269 passing, new album SQL checked on a throwaway MySQL 8.4, and a packaged-jar smoke run against throwaway MySQL/Redis passed (details in [backend progress](backend/progress.md)). Web and mini-program suites were not rerun on this branch; no client code changed.
+
 ## Handover Review (2026-10-17)
 
 The documentation rewrite above was reviewed and committed. Spot checks against source (page count, Java target, Vite proxy, SQL init defaults, weather cache TTLs, album photo limit, mini-program environments) matched. The user confirmed removal of the former Chinese design-reference index and its two mini-program design images under docs/product/assets; the README link to that index was removed.

@@ -13,7 +13,7 @@ This guide describes reproducible commands and configuration. Current observatio
 
 The backend targets Java 17 and uses Maven. The Web client uses Node/npm. Current locally observed tool versions are recorded in root progress rather than treated as permanent requirements.
 
-MySQL, Redis, and MinIO must be configured separately. The repository does not contain a Compose definition. Conventional local ports are 3306, 6379, and 9000; a MinIO console may use 9001. A listening application port does not prove dependency health.
+MySQL and Redis must be configured separately; MinIO is optional in development (uploads fall back to local disk when it is not fully configured). The repository does not contain a Compose definition. Conventional local ports are 3306, 6379, and 9000; a MinIO console may use 9001. A listening application port does not prove dependency health.
 
 ## Web Client
 
@@ -51,6 +51,7 @@ Configure a suitable MySQL database, Redis, and object storage before starting t
 | LOCAL_MINIO_ENDPOINT | Default http://127.0.0.1:9000 |
 | LOCAL_MINIO_ACCESS_KEY / LOCAL_MINIO_SECRET_KEY | Object-store credentials |
 | LOCAL_MINIO_BUCKET / LOCAL_MINIO_PUBLIC_BASE_URL | Bucket and browser-readable media base URL |
+| storage.local.directory / storage.local.public-path | Used when any MinIO setting is blank: files go to `target/local-uploads` and are served at `/uploads/**` |
 | WECHAT_MINIPROGRAM_APP_ID / WECHAT_MINIPROGRAM_APP_SECRET | Server-side WeChat login credentials |
 | WECHAT_MINIPROGRAM_DEV_BIND_USER_ID | Optional explicit dev-only automatic binding target |
 | GEOAPIFY_KEY | Global reverse-geocoding credential; missing key leaves location unknown |
