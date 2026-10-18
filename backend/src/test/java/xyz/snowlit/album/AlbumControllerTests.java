@@ -43,9 +43,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AlbumControllerTests {
 
     private final AlbumModule albumService = mock(AlbumModule.class);
+    private final AlbumDrafts drafts = mock(AlbumDrafts.class);
+    private final AlbumPrivateAccess privateAccess = mock(AlbumPrivateAccess.class);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
-                    new AlbumController(albumService, new ObjectMapper().findAndRegisterModules())
+                    new AlbumController(albumService, drafts, privateAccess, new ObjectMapper().findAndRegisterModules())
             )
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
@@ -143,7 +145,7 @@ class AlbumControllerTests {
 
     @Test
     void unlockLikeAndViewReturnActionPayloads() throws Exception {
-        when(albumService.unlockAlbum(any(AuthenticatedActor.class), eq(2L), any())).thenReturn(
+        when(privateAccess.unlock(any(AuthenticatedActor.class), eq(2L), any())).thenReturn(
                 new AlbumUnlockVo("private-token", LocalDateTime.of(2026, 5, 16, 21, 0))
         );
         when(albumService.likeAlbum(any(AuthenticatedActor.class), eq(2L)))
@@ -180,11 +182,11 @@ class AlbumControllerTests {
 
     @Test
     void draftEndpointsExposeCreateUploadPublishAndCancelContracts() throws Exception {
-        when(albumService.currentDraft(any(AuthenticatedActor.class))).thenReturn(new AlbumCurrentDraftVo(new AlbumDraftVo(album(false, List.of()), List.of())));
-        when(albumService.createDraft(any(AuthenticatedActor.class), any())).thenReturn(new AlbumDraftVo(album(false, List.of()), List.of()));
-        when(albumService.uploadDraftPhoto(any(AuthenticatedActor.class), eq(1L), any(), any(), any())).thenReturn(photo());
-        when(albumService.uploadDraftPhotoFromMobile(any(AuthenticatedActor.class), eq(1L), any(), any())).thenReturn(photo());
-        when(albumService.publishDraft(any(AuthenticatedActor.class), eq(1L)))
+        when(drafts.currentDraft(any(AuthenticatedActor.class))).thenReturn(new AlbumCurrentDraftVo(new AlbumDraftVo(album(false, List.of()), List.of())));
+        when(drafts.createDraft(any(AuthenticatedActor.class), any())).thenReturn(new AlbumDraftVo(album(false, List.of()), List.of()));
+        when(drafts.uploadPhoto(any(AuthenticatedActor.class), eq(1L), any(), any(), any())).thenReturn(photo());
+        when(drafts.uploadMobilePhoto(any(AuthenticatedActor.class), eq(1L), any(), any())).thenReturn(photo());
+        when(drafts.publish(any(AuthenticatedActor.class), eq(1L)))
                 .thenReturn(new AlbumDraftVo(album(false, List.of(photo())), List.of(photo())));
 
         mockMvc.perform(get("/api/albums/drafts/current")
@@ -241,7 +243,7 @@ class AlbumControllerTests {
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isNoContent());
 
-        verify(albumService).cancelDraft(any(AuthenticatedActor.class), eq(1L));
+        verify(drafts).discard(any(AuthenticatedActor.class), eq(1L));
     }
 
     private AlbumVo album(boolean locked, List<AlbumPhotoVo> previewPhotos) {

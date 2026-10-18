@@ -55,13 +55,11 @@ class AlbumModuleTests {
     private final AlbumMapper albumMapper = mock(AlbumMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
     private final FakeTokenStore tokenStore = new FakeTokenStore();
-    private final AlbumModule albumService = new AlbumModule(
-            albumMapper,
-            new BCryptPasswordEncoder(),
-            tokenStore,
-            new ImageIntake(objects, CLOCK),
-            CLOCK
-    );
+    private final AlbumPrivateAccess privateAccess =
+            new AlbumPrivateAccess(albumMapper, new BCryptPasswordEncoder(), tokenStore, CLOCK);
+    private final AlbumModule albumService = new AlbumModule(albumMapper, privateAccess, CLOCK);
+    private final AlbumDrafts drafts =
+            new AlbumDrafts(albumMapper, new BCryptPasswordEncoder(), new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void listAlbumsReturnsPagedItemsAndMasksLockedPrivateAlbum() {
@@ -110,7 +108,7 @@ class AlbumModuleTests {
 
     @Test
     void nonManagerCannotCreateAlbumDraft() {
-        assertThatThrownBy(() -> albumService.createDraft(GUEST, publicDraftRequest()))
+        assertThatThrownBy(() -> drafts.createDraft(GUEST, publicDraftRequest()))
                 .isInstanceOfSatisfying(
                         ApplicationFailure.class,
                         failure -> assertThat(failure.code()).isEqualTo("ALBUM_FORBIDDEN")
@@ -132,7 +130,7 @@ class AlbumModuleTests {
         );
         when(albumMapper.findLatestDraftByUserId(1L)).thenReturn(null);
 
-        AlbumDraftVo draft = albumService.createDraft(MANAGER, request);
+        AlbumDraftVo draft = drafts.createDraft(MANAGER, request);
 
         assertThat(draft.album().title()).isEqualTo("私密小册");
         assertThat(draft.album().location()).isEqualTo("地球");
@@ -155,7 +153,7 @@ class AlbumModuleTests {
         when(albumMapper.findLatestDraftByUserId(1L)).thenReturn(draftAlbum);
         when(albumMapper.findPhotosByAlbumId(9L)).thenReturn(List.of(storedPhoto(901L, 9L)));
 
-        AlbumCurrentDraftVo currentDraft = albumService.currentDraft(MANAGER);
+        AlbumCurrentDraftVo currentDraft = drafts.currentDraft(MANAGER);
 
         assertThat(currentDraft.draft()).isNotNull();
         assertThat(currentDraft.draft().album().id()).isEqualTo(9L);
@@ -177,7 +175,7 @@ class AlbumModuleTests {
         }).when(albumMapper).insertPhoto(any());
         when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
 
-        AlbumPhotoVo uploaded = albumService.uploadDraftPhoto(
+        AlbumPhotoVo uploaded = drafts.uploadPhoto(
                 MANAGER,
                 9L,
                 original,
@@ -224,7 +222,7 @@ class AlbumModuleTests {
         stored.setPreviewUrl("https://cdn.example.com/album/preview.jpg");
         when(albumMapper.findPhotoById(901L)).thenReturn(stored);
 
-        AlbumPhotoVo uploaded = albumService.uploadDraftPhotoFromMobile(
+        AlbumPhotoVo uploaded = drafts.uploadMobilePhoto(
                 MANAGER,
                 9L,
                 file,
@@ -255,13 +253,13 @@ class AlbumModuleTests {
         when(albumMapper.findFirstPhotoByAlbumId(9L)).thenReturn(storedPhoto(901L, 9L));
         when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum, draftAlbum, publishedAlbum());
 
-        assertThatThrownBy(() -> albumService.publishDraft(MANAGER, 9L))
+        assertThatThrownBy(() -> drafts.publish(MANAGER, 9L))
                 .isInstanceOfSatisfying(
                         ApplicationFailure.class,
                         failure -> assertThat(failure.code()).isEqualTo("ALBUM_PHOTO_REQUIRED")
                 );
 
-        AlbumDraftVo published = albumService.publishDraft(MANAGER, 9L);
+        AlbumDraftVo published = drafts.publish(MANAGER, 9L);
 
         assertThat(published.album().title()).isEqualTo("草稿相册");
         verify(albumMapper).publishAlbum(9L, "https://cdn.example.com/album/preview.webp", LocalDateTime.of(2026, 5, 16, 20, 0));
@@ -274,7 +272,7 @@ class AlbumModuleTests {
         when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
         when(albumMapper.findPhotosByAlbumId(9L)).thenReturn(List.of(photo));
 
-        albumService.cancelDraft(MANAGER, 9L);
+        drafts.discard(MANAGER, 9L);
 
         assertThat(objects.deleted()).containsExactly("album/9/original/original.jpg", "album/9/preview/preview.webp");
         verify(albumMapper).deleteAlbumById(9L);
@@ -315,7 +313,7 @@ class AlbumModuleTests {
     void unlockCreatesOneHourTokenAndClearsFailureCount() {
         when(albumMapper.findAlbumById(2L)).thenReturn(privateAlbum());
 
-        AlbumUnlockVo unlocked = albumService.unlockAlbum(MANAGER, 2L, new AlbumUnlockDto("5201314"));
+        AlbumUnlockVo unlocked = privateAccess.unlock(MANAGER, 2L, new AlbumUnlockDto("5201314"));
 
         assertThat(unlocked.privateAccessToken()).isEqualTo("issued-private-token");
         assertThat(unlocked.expiresAt()).isEqualTo(LocalDateTime.of(2026, 5, 16, 21, 0));
@@ -328,7 +326,7 @@ class AlbumModuleTests {
         when(albumMapper.findAlbumById(2L)).thenReturn(privateAlbum());
         when(albumMapper.findUnlockFailure(2L, 1L)).thenReturn(failure(4, null));
 
-        assertThatThrownBy(() -> albumService.unlockAlbum(MANAGER, 2L, new AlbumUnlockDto("wrong")))
+        assertThatThrownBy(() -> privateAccess.unlock(MANAGER, 2L, new AlbumUnlockDto("wrong")))
                 .isInstanceOfSatisfying(
                         ApplicationFailure.class,
                         failure -> assertThat(failure.code()).isEqualTo("PRIVATE_ALBUM_UNLOCK_LOCKED")
@@ -375,13 +373,7 @@ class AlbumModuleTests {
 
     @Test
     void likeUsesUtcDateWhenClockZoneHasAlreadyCrossedMidnight() {
-        AlbumModule albumsAtMidnight = new AlbumModule(
-                albumMapper,
-                new BCryptPasswordEncoder(),
-                tokenStore,
-                new ImageIntake(objects, CLOCK),
-                Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore"))
-        );
+        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore")));
         LocalDate utcDate = LocalDate.of(2026, 5, 16);
         LocalDateTime utcNow = LocalDateTime.of(2026, 5, 16, 16, 30);
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum(), publicAlbumWithLikes(1));
@@ -397,13 +389,7 @@ class AlbumModuleTests {
 
     @Test
     void activityReadsAndViewsUseUtcDayWhenClockZoneIsOnPreviousDay() {
-        AlbumModule albumsAtMidnight = new AlbumModule(
-                albumMapper,
-                new BCryptPasswordEncoder(),
-                tokenStore,
-                new ImageIntake(objects, CLOCK),
-                Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles"))
-        );
+        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles")));
         LocalDate utcDate = LocalDate.of(2026, 5, 17);
         LocalDateTime utcNow = LocalDateTime.of(2026, 5, 17, 0, 30);
         when(albumMapper.countPublishedAlbums()).thenReturn(1L);

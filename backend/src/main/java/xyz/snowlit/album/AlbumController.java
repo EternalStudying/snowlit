@@ -33,10 +33,19 @@ import org.springframework.web.multipart.MultipartFile;
 public final class AlbumController {
 
     private final AlbumModule albums;
+    private final AlbumDrafts drafts;
+    private final AlbumPrivateAccess privateAccess;
     private final ObjectMapper objectMapper;
 
-    public AlbumController(AlbumModule albums, ObjectMapper objectMapper) {
+    public AlbumController(
+            AlbumModule albums,
+            AlbumDrafts drafts,
+            AlbumPrivateAccess privateAccess,
+            ObjectMapper objectMapper
+    ) {
         this.albums = albums;
+        this.drafts = drafts;
+        this.privateAccess = privateAccess;
         this.objectMapper = objectMapper;
     }
 
@@ -59,7 +68,7 @@ public final class AlbumController {
     public AlbumUnlockVo unlock(@CurrentActor AuthenticatedActor actor,
                                 @PathVariable Long albumId,
                                 @RequestBody AlbumUnlockDto request) {
-        return albums.unlockAlbum(actor, albumId, request);
+        return privateAccess.unlock(actor, albumId, request);
     }
 
     @PostMapping("/{albumId}/like")
@@ -77,13 +86,13 @@ public final class AlbumController {
 
     @GetMapping("/drafts/current")
     public AlbumCurrentDraftVo currentDraft(@CurrentActor AuthenticatedActor actor) {
-        return albums.currentDraft(actor);
+        return drafts.currentDraft(actor);
     }
 
     @PostMapping
     public AlbumDraftVo createDraft(@CurrentActor AuthenticatedActor actor,
                                     @RequestBody AlbumCreateDto request) {
-        return albums.createDraft(actor, request);
+        return drafts.createDraft(actor, request);
     }
 
     @PostMapping("/{albumId}/photos")
@@ -98,7 +107,7 @@ public final class AlbumController {
         } catch (Exception ex) {
             throw ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确");
         }
-        return albums.uploadDraftPhoto(actor, albumId, original, preview, metadata);
+        return drafts.uploadPhoto(actor, albumId, original, preview, metadata);
     }
 
     @PostMapping("/{albumId}/photos/mobile")
@@ -112,19 +121,19 @@ public final class AlbumController {
         } catch (Exception ex) {
             throw ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确");
         }
-        return albums.uploadDraftPhotoFromMobile(actor, albumId, file, metadata);
+        return drafts.uploadMobilePhoto(actor, albumId, file, metadata);
     }
 
     @PostMapping("/{albumId}/publish")
     public AlbumDraftVo publish(@CurrentActor AuthenticatedActor actor,
                                 @PathVariable Long albumId) {
-        return albums.publishDraft(actor, albumId);
+        return drafts.publish(actor, albumId);
     }
 
     @DeleteMapping("/{albumId}/draft")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelDraft(@CurrentActor AuthenticatedActor actor,
                             @PathVariable Long albumId) {
-        albums.cancelDraft(actor, albumId);
+        drafts.discard(actor, albumId);
     }
 }

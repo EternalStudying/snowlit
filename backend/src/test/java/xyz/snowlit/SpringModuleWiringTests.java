@@ -1,11 +1,14 @@
 package xyz.snowlit;
 
+import xyz.snowlit.album.AlbumDrafts;
 import xyz.snowlit.album.AlbumModule;
+import xyz.snowlit.album.AlbumPrivateAccess;
 import xyz.snowlit.auth.AuthModule;
 import xyz.snowlit.auth.AuthSessions;
 import xyz.snowlit.diary.DiaryModule;
 import xyz.snowlit.feedback.FeedbackModule;
 import xyz.snowlit.home.HomeModule;
+import xyz.snowlit.home.MemberLocations;
 import xyz.snowlit.messages.MessageModule;
 import xyz.snowlit.notices.NoticeModule;
 import xyz.snowlit.storage.ImageIntake;
@@ -33,7 +36,8 @@ class SpringModuleWiringTests {
     static Stream<Class<?>> businessModules() {
         return Stream.of(AlbumModule.class, AuthModule.class, DiaryModule.class, FeedbackModule.class,
                 HomeModule.class, MessageModule.class, NoticeModule.class, StoryModule.class,
-                WeatherModule.class, WishModule.class, ImageIntake.class, AuthSessions.class);
+                WeatherModule.class, WishModule.class, ImageIntake.class, AuthSessions.class,
+                AlbumDrafts.class, AlbumPrivateAccess.class, MemberLocations.class);
     }
 
     @ParameterizedTest
