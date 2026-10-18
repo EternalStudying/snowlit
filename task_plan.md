@@ -6,7 +6,7 @@ Refactor the backend architecture: deepen shallow modules found in the 2026-10-1
 
 ## Current Phase
 
-Backend refactor complete on branch `refactor/backend-deepening` (unmerged, unpushed). Web and mini-program architecture work has not started.
+Backend refactor complete and fast-forwarded into local main (not pushed). Web and mini-program architecture work has not started.
 
 ### Phase 1: Architecture review and design decisions
 - **Status:** complete

@@ -2,7 +2,7 @@
 
 ## Current State
 
-2026-10-18: backend architecture refactor complete on branch `refactor/backend-deepening` (not merged, not pushed). See [findings](findings.md) for the resulting structure.
+2026-10-18: backend architecture refactor complete and fast-forwarded into local main from `refactor/backend-deepening` (not pushed). See [findings](findings.md) for the resulting structure.
 
 | Commit | Change |
 |---|---|

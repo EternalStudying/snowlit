@@ -16,7 +16,7 @@ This task updates Markdown only. It does not rerun business tests, start or stop
 
 ## Backend Refactor (2026-10-18)
 
-Branch `refactor/backend-deepening`: backend `mvn -o test` 269/269 passing, new album SQL checked on a throwaway MySQL 8.4, and a packaged-jar smoke run against throwaway MySQL/Redis passed (details in [backend progress](backend/progress.md)). Web and mini-program suites were not rerun on this branch; no client code changed.
+Merged into local main from `refactor/backend-deepening`: backend `mvn -o test` 269/269 passing, new album SQL checked on a throwaway MySQL 8.4, and a packaged-jar smoke run against throwaway MySQL/Redis passed (details in [backend progress](backend/progress.md)). Web and mini-program suites were not rerun after the refactor; no client code changed.
 
 ## Handover Review (2026-10-17)
 

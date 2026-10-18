@@ -2,7 +2,7 @@
 
 ## Current Task
 
-Backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18 review). All phases complete; the branch awaits review and merge.
+Backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18 review). All phases complete; merged into local main (not pushed).
 
 ### Phase 1: Defensive-code sweep and diary transactions
 - **Status:** complete
