@@ -1,16 +1,15 @@
-# Web 最近进度
+# Web Progress Baseline
 
-## 当前维护基线
+## Current State
 
-十个业务模块位于 src/modules；共享 SessionRequest、JournalRouteShell、Story SDK 与 Album 视觉/数据边界为当前入口。
+Context initialized; no Web task is active. This task changes no frontend source, starts no development server, and reruns no business tests.
 
-## 2026-10-17
+## Latest Recorded Verification
 
-- 地点提示与测试使用国外/通用样例；旧账号昵称改为通用样例，清理旧文档中的身份信息与路径。ICP 组件按用户要求原样保留。
-- 全球天气自动定位/20 分钟前台更新、隐藏暂停、手动恢复和跨账号响应隔离已实现。天气来源 UI 已按用户要求移除。
-- 日期默认值使用本地自然日；日记重开刷新日期，时间戳仍按时间点处理。
-- 此前 501 项测试与构建通过；本轮结果由根目录 progress.md 汇总。
+The 2026-10-17 baseline records 64 test files, 501 passing tests, and a passing production build. These are earlier results, not a new run.
 
-## 后续
+Desktop pages and authenticated reads were previously exercised locally. Mobile overflow, external maps, and complete write/permission flows still require acceptance. Successful reads do not establish complete UI acceptance.
 
-Web 390px 首页横向溢出、外部地图与其余写入/权限流程需实际验收；新一轮开发先核对当前源码和开发指南。
+## Next Task
+
+Record the requested change, checks actually executed, results, and remaining gaps. Commands are in the [development guide](../docs/development.md).

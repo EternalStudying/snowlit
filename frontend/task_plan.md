@@ -1,25 +1,23 @@
-# Web 前端计划
+# Web Task Plan
 
-## 当前状态
+## Current Task
 
-2026-10-17：个人信息清理、全球天气设置及前台 20 分钟自动刷新完成；64 文件 / 501 项测试与构建通过。天气来源显示已按用户要求移除；Web 服务当前停止；390px 首页横向溢出仍待处理。
+Context initialized. No Web development request is active.
 
-## 开发顺序
+### Phase 1: Baseline Initialization
+- **Status:** complete
 
-1. 阅读根 AGENTS.md、task_plan.md 和本目录 findings.md/progress.md。
-2. 根据需求确定业务模块、共享基础设施及后端/小程序影响。
-3. 改变可观察行为时补对应行为验证；保持现有 DOM、视觉和动效契约，除非用户要求改变。
-4. 运行相关测试与 `npm run build`；需要真实 UI 验收时使用现有浏览器能力。
-5. 将持续有用的接口、架构或验证变化更新到长期文档。
+## Entry Points
 
-## 待处理
+Read root AGENTS.md and task_plan.md, then [findings](findings.md), [progress](progress.md), and the [cross-client specification](../docs/product/current-spec.md).
 
-- 390px 首页横向溢出待处理；补图片上传/删除及其余权限/写入流程验收。
+## Workflow for the Next Request
 
-## 边界
+1. Define the affected module, observable behavior, and acceptance criteria.
+2. Preserve module entry points and the separation between remote state and visual lifecycles. Coordinate contract changes with backend and mini-program callers.
+3. Run relevant tests and the build. Use existing browser capabilities for live UI acceptance when needed.
+4. Record facts and verification separately, then compact completed work into the baseline.
 
-- 模块入口为 `src/modules/<feature>/index.ts`，私有实现留在模块内。
-- 远程生命周期与视觉动效分离，不恢复旧通用目录中的重复 API/type/composable。
-- 不为被删除路径创建兼容 re-export；保留地图/天气运行降级。
-- 共享 SessionRequest 和 auth 为基础设施，不复制到每个业务域。
-- 文档入口：[开发指南](../docs/development.md)、[当前产品规格](../docs/product/current-spec.md)。
+## Known Items, Not Scheduled
+
+The 390px home-page overflow, external maps, and complete write/permission flows require further acceptance work. Do not begin fixes or redesigns without a new request.

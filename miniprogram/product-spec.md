@@ -1,165 +1,76 @@
-# Snowlit 微信小程序产品规格
+# Snowlit Mini Program Product Specification
 
-本文保留当前代码可证明的产品行为和后续开发边界。最近代码与本机模拟器核对日期：2026-10-17。
-微信后台配置、审核结果、线上版本和真机表现不由本地代码证明，发布前需要重新确认。
-接口、目录、环境和平台能力以 [技术规格](technical-spec.md) 为入口；项目执行规则见根目录 `AGENTS.md`。
+This is the current product baseline. See the [technical specification](technical-spec.md) for interfaces, architecture, configuration, and validation, and [AGENTS.md](../AGENTS.md) for project rules. Local implementation does not establish acceptance on physical devices, in production, or by WeChat review.
 
-## 1. 产品定位与范围
+## Scope
 
-Snowlit 小程序是情侣记录空间的轻量移动端，使用微信原生页面并复用现有 Spring Boot 后端。
-小程序与 Web 共用业务数据、账号、权限和图片存储，不建立第二套数据源，不默认引入云开发。
-核心场景是查看近况、日记、点滴、相册和清单，以及完成少量记录和提交反馈。
-Web 视觉可作为参考；小程序优先保证微信内的可读性、稳定性、隐私授权和弱网体验。
+The native WeChat Mini Program is a lightweight companion to the couple's shared record space. It reuses the Web application's Spring Boot backend, accounts, permissions, and media storage. Its main tasks are browsing updates, diaries, moments, albums, and wishes, plus lightweight editing and feedback. Do not introduce a second business data source or cloud development by default.
 
-当前能力：微信登录和账号绑定、首页聚合、日记读写、公开点滴浏览、管理用户记录、相册轻量新增、清单状态流转、资料编辑、公告和反馈。
-暂不支持日记草稿恢复、相册重型批量上传、点滴地图选点、清单新增/编辑配图、反馈历史和公告历史页。
-本文件描述当前工作区，不宣称这些能力已在当前线上版本完成验收。
+Implemented features include WeChat login and existing-account binding, the home dashboard, diaries, a public moments map and list, manager editing, lightweight album creation, wish state changes, profile editing, notices, and feedback.
+Not currently provided: diary draft recovery, large batch albums or resumable uploads, map-based location picking, images when creating/editing wishes, feedback history, notice history, subscription messages, or payments. These are scope boundaries, not scheduled requirements.
 
-## 2. 用户与权限
+## Identity and Permissions
 
-| 用户/身份 | 可用能力 | 权限边界 |
+| Identity | Available features | Final authorization |
 | --- | --- | --- |
-| 游客 | 首页简介、公开点滴列表/详情 | 不请求首页私有聚合、相册、清单、公告等登录接口 |
-| 登录用户 | 首页、相册、清单、公告、资料和反馈；日记按后端可见性读取与写入 | 私密日记只对作者可见；编辑/删除日记最终由后端校验作者 |
-| 管理用户 | 新增/编辑/删除点滴与清单，新增相册 | 当前后端管理策略为用户 ID 1、2；客户端显隐不能授予权限 |
+| Guest | Home introduction and public moments list/details | No private home, album, wish, or notice requests |
+| Signed-in user | Home, albums, wishes, profile, feedback, and permitted diaries | Private diaries are author-only; diary updates/deletion require authorship |
+| Manager | Create/edit/delete moments and wishes; create albums | Current backend manager IDs are 1 and 2; client visibility cannot grant permission |
 
-账号数据使用当前后端 `users` 表。微信身份绑定仅由后端处理，小程序不得保存或接收 `openid`、`session_key`、AppSecret。
-客户端保存后端业务 token、必要用户展示缓存和私密相册访问 token；退出时清理这些登录相关缓存。
-登录页必须由用户主动勾选服务协议与隐私政策；默认不选中，未同意不调用微信登录或绑定接口。
+WeChat login connects existing Snowlit accounts; it does not register new accounts. Users must actively accept the service agreement and privacy policy before login. A bound account signs in directly; an unbound identity uses a fresh WeChat code plus existing account credentials. Binding conflicts remain explicit errors on the login page.
+The client stores only the business session and necessary display/access caches, never WeChat identity secrets. Logout clears session-related caches. Expired sessions prompt login and return to the intended page afterward.
 
-微信登录仅接入已有 Snowlit 账号，不自动注册：
+Wish completion/reopening requires authentication on the backend; creation/editing/deletion requires management permission. The list allows signed-in users to complete/reopen wishes, while the detail action area currently appears only for managers. Do not describe both entry points as an authorship rule.
 
-1. 已绑定微信时，使用 `wx.login` code 换取 Snowlit 业务 token。
-2. 未绑定时展示已有 Web 账号密码表单；提交时重新获取 code，后端验证后绑定并登录。
-3. 账号或微信已绑定其他身份时展示业务错误，不绕过冲突校验。
-4. 401 清理登录态并提示重新登录；登录后返回原页面，tab 页与普通页面分别使用对应导航方式。
+## Pages and Navigation
 
-清单状态操作与管理写入要分开：后端完成/恢复允许已认证用户，创建/编辑/删除要求管理权限。
-当前小程序列表支持登录用户快速完成/恢复，详情底部操作区仅对管理用户显示；不要把这两处入口统一描述为作者权限。
+There are 17 registered pages and no business subpackages. Five tabs are Home, Diary, Albums, Wishes, and Profile; Moments is entered from Home.
 
-## 3. 页面与导航
-
-当前 `app.json` 注册 **17 个页面**，没有业务分包。
-底部 5 个 tab 固定为：首页、日记、相册、清单、我的；点滴从首页进入，不占 tab。
-
-| 页面目录 | 用途 | 进入条件 |
-| --- | --- | --- |
-| `pages/index` | 首页摘要和公开入口 | 游客可进，私有区登录后加载 |
-| `pages/login` | 微信登录和一次性账号绑定 | 无 |
-| `pages/diary` | 月份、筛选、日记列表 | 登录 |
-| `pages/diary-detail` | 日记正文和作者操作 | 登录且后端允许读取 |
-| `pages/diary-edit` | 新增/编辑日记、插入图片 | 登录；编辑最终校验作者 |
-| `pages/story` | 公开原生地图与点滴列表 | 无 |
-| `pages/story-detail` | 点滴详情和管理操作 | 公开读取，写入需管理权限 |
-| `pages/story-edit` | 新增/编辑点滴 | 管理用户 |
-| `pages/albums` | 已发布相册列表 | 登录 |
-| `pages/album-detail` | 相册详情、私密解锁、预览和喜欢 | 登录，私密照片另需解锁 |
-| `pages/album-edit` | 最多 9 张照片的轻量新增 | 管理用户 |
-| `pages/wishes` | 想去、想做、已完成列表 | 登录 |
-| `pages/wish-detail` | 清单详情和管理操作 | 登录 |
-| `pages/wish-edit` | 无配图新增/编辑清单 | 管理用户 |
-| `pages/profile` | 当前用户、公告、反馈和退出 | 登录 |
-| `pages/profile-edit` | 昵称、心情和简介编辑 | 登录 |
-| `pages/feedback` | 反馈表单和最多 3 张截图 | 登录 |
-
-## 4. 各模块行为
-
-### 首页
-
-- 游客看到简介、登录引导和最近公开点滴；不因加载私有区而被强制跳转登录。
-- 返回首页或清单 tab 时刷新数据；登录/退出/切换账号后不保留旧会话的私有展示与管理状态。
-- 登录后加载情侣摘要、每日文案、已有天气/位置、前 2 本相册、清单统计和小程序公告。
-- 清单统计使用聚合接口，不用三次分页列表拼统计；公开最近点滴仅展示少量条目。
-- 公告区按 `notice` 是否存在展示；`shouldShow` 只表示是否主动提示，不能据此隐藏已有公告。
-- 首页打开/登录后默认自动更新位置与天气，首次先说明自动更新频率、第三方服务和隐私用途并取得同意，然后申请原生位置权限。首页在前台时每 20 分钟更新；离开首页、切到后台或卸载页面停止定时器，返回时距上次请求满 20 分钟才刷新。保留“更新位置”手动入口，不做后台持续定位。
-- 取 WGS84 定位；Snowlit 后端将坐标模糊至小数点后 2 位，再向 Geoapify 解析国家/城市、向 Open-Meteo 获取天气，并缓存结果。服务商可能保留查询日志，模糊坐标仍可能暴露大致区域。
-- 同意状态以本机布尔值保存，不缓存 GPS 或天气到本地存储。取消说明/拒绝隐私或原生权限后，本次运行不反复自动弹窗；手动入口可重试，系统已拒绝时引导用户主动前往设置恢复。
-- 仅保存实际解析出的地点；没有国家/城市/地区时显示“位置待更新”，不写假地点。只有天气时更新当前页天气并保留未知地点，不自动刷新覆盖新天气；地点有解析但天气无覆盖时仍可保存地点并说明天气暂不可用。两项均失败时保留已有展示，禁止默认国家或城市。
-- 拒绝授权、定位失败或请求失败时保留已有天气/位置，不阻断其他浏览功能。
-
-### 日记
-
-- 使用真实月份元数据和月列表；默认当前月份，横向月份入口覆盖所选年份 01–12 月。
-- 支持全部、我的、另一位、私密筛选；可见内容由后端过滤，客户端筛选不能替代权限校验。
-- 详情和预览按 `contentMarkdown` 顺序渲染段落、标题、引用、列表、代码、表格、链接和穿插图片。
-- 新增提交正文、日期、心情和可见范围；标题转换为正文开头的一级标题，不另建标题字段契约。
-- 后端当前按角色与日期检查重复日记，同角色同一天已有记录时返回冲突；这不是按情侣空间隔离的约束。
-- 图片最多 20 张，先逐张上传，再把返回 URL 插入 Markdown；上传未完成或失败时不能保存正文。
-- 编辑复用新增页，只更新正文、心情和可见范围；日期只读，后端更新接口不接收日期。
-- 作者可以删除自己的日记，删除前二次确认；不提供本地草稿恢复。
-
-### 点滴
-
-- 游客可读列表和详情，支持分类和年份筛选；再次点击当前分类打开该分类年份选择。
-- 初始布局为全地图，地图和列表通过吸附/拖动切换占比，共用一份点滴数据。
-- 原生地图展示既有经纬度；点击单点选中对应列表项，点击列表项进入详情。
-- 默认缩放下约 500 米内的点位聚合，缩放时调整聚合距离，点击聚合点放大该区域；拖动/列表吸附不能重置地图视野。
-- 管理用户新增/编辑/删除点滴；标题、正文、起止时间、地点、地址、坐标、分类和图片沿用后端契约。
-- 单条最多 3 张图片；地点和坐标手动输入，当前发布/编辑页不调用地图选点或当前位置。
-- 浏览地图不申请用户位置；首页天气定位与点滴既有坐标展示属于不同场景。
-
-### 相册
-
-- 列表仅展示已发布相册，分页读取；支持公开预览、私密锁定态、置顶和照片/浏览/喜欢统计。
-- 私密相册密码解锁后保存有期限的访问 token；无效或过期时清理并引导重新解锁。
-- 照片优先展示 `previewUrl`，保留 `originalUrl`；当前不提供原图下载授权或长按保存能力。
-- 详情支持图片预览、静默浏览记录和每日喜欢/取消喜欢；请求期间阻止重复点击。
-- 管理用户可新增最多 9 张照片，填写标题、可见范围、私密密码、置顶、日期、地点和说明。
-- 保存流程为临时创建 → 逐张上传 → 发布；失败时保留表单并尽量清理临时内容，供重试。
-- 如已有未完成记录，查询当前记录并经用户确认清理后再保存；这不是草稿恢复入口。
-- 不支持 300 张批量上传、断点续传、完整草稿恢复或客户端 WebP 双资产生成。
-
-### 清单
-
-- 展示“想去”“想做”“已完成”三个分区，各自分页、计数、loading、空态和错误态。
-- 未完成列表不显示配图；详情无图片时使用现有占位图；完成列表展示完成照片。
-- 管理用户创建/编辑字段为标题、类型、预计时间、预计地点、详情说明、备注；当前不支持新增/编辑配图。
-- 完成必须先选择并上传一张完成照片；没有图片不发起完成请求。恢复未完成不要求图片。
-- 列表状态操作不触发行跳转；成功后播放短退出反馈，再刷新分区和统计。
-- 管理用户详情操作支持编辑、删除、完成/恢复；删除二次确认，失败保留当前内容。
-
-### 我的、公告和反馈
-
-- 我的页读取当前用户并更新缓存；点击资料卡编辑昵称、心情和简介，账号只读，不恢复头像上传。
-- 退出先确认并调用后端退出接口；即使请求失败，也清理本地登录态和私密相册 token。
-- 公告固定请求小程序客户端内容，今日不再提示状态与 Web 客户端隔离。
-- 反馈提交类型、标题、正文、联系方式和最多 3 张截图；图片上传成功后使用 `imageUrls` 提交。
-- 设备型号、系统、微信和基础库版本只用于问题诊断；提交有 loading，失败保留输入，成功不重复提交。
-- 当前不展示反馈历史、处理流程或历史公告中心。
-
-## 5. 体验、隐私与验收
-
-页面保持极简、留白、黑白灰、细分割线和短反馈动效。日期、时间、类型选择复用 Snowlit 底部弹层。
-字体使用 `Snowlit Sans` UI 子集，缺失动态字形回退系统字体；不复刻 Web 的 GSAP/Lenis/Three 沉浸效果。
-所有页面适配 iPhone SE 到 iPad；长文本、无图、多图、空数据和键盘遮挡都需要检查。
-
-权限仅在使用时申请，不启动时一次索取，不诱导分享或关注。
-隐私指引覆盖登录/账号绑定、资料、位置、图片选择和上传、反馈联系方式、设备信息及必要本地缓存。位置用途须同时披露 Geoapify/Open-Meteo 的模糊坐标查询和可能的日志留存；本地说明已更新，微信后台隐私保护指引仍需在发布前同步核对，代码不能证明后台已完成。
-拒绝位置授权不影响主要浏览；拒绝图片隐私授权不继续选择/上传；上传失败保留输入并允许重试。
-新增定位、保存图片、订阅消息等能力必须同时明确用途、微信后台配置、类目/权限和降级方案。
-
-开发验收重点：游客公开路径、登录绑定和回跳、日记作者权限、私密相册解锁、管理写入、清单完成照片、反馈失败恢复，以及跨端数据一致性。
-冷启动首屏 < 1.5 秒、普通页面切换 < 300ms 是体验目标，不是本轮已测结果。
-必须用开发者工具和 iOS/Android 真机复查；Node 测试不能证明审核通过、合法域名有效或真机接口可用。
-
-日记、相册等 `YYYY-MM-DD` 日期按日历日期展示，不能因设备时区变化而少一天或归入上个月。
-带时区的时间戳按实际时间点转为设备本地时间；日期与时间点的边界回归见技术规格。
-
-## 6. 后续扩展边界与维护
-
-后续候选仅表示可评估方向，不代表本轮开发承诺：
-
-| 方向 | 进入开发前的条件 |
+| Page directory | Purpose and access |
 | --- | --- |
-| 微信绑定状态/解绑管理 | 后端绑定冲突、解绑策略和身份校验明确 |
-| 日记草稿恢复 | 草稿保存/恢复/清理、图片临时态和最终权限明确 |
-| 点滴地图选点/当前位置回填 | 真机定位、类目、权限、隐私和手动输入降级确认 |
-| 相册分页/懒加载、保存图片 | 图片性能、私密 token、保存授权和下载域名确认 |
-| 清单新增/编辑配图 | 与完成照片区分，并确认上传协议 |
-| 纪念日/倒计时、统一回忆时间线 | 使用稳定聚合接口，避免客户端拉多域全量数据拼接 |
-| 反馈历史、公告中心 | 有实际处理闭环和后端查询策略 |
-| 订阅消息 | 有明确提醒场景、模板、用户授权和隐私/审核方案 |
+| `pages/index` | Guest-accessible home; private sections load after login |
+| `pages/login` | WeChat login and existing-account binding |
+| `pages/diary`, `pages/diary-detail`, `pages/diary-edit` | Signed-in diary browsing/editing, subject to backend visibility and authorship |
+| `pages/story`, `pages/story-detail`, `pages/story-edit` | Public map/details; editing requires management permission |
+| `pages/albums`, `pages/album-detail`, `pages/album-edit` | Signed-in listing, unlocking/previewing, and lightweight creation; creation requires management permission |
+| `pages/wishes`, `pages/wish-detail`, `pages/wish-edit` | Signed-in wishes/details; editing requires management permission |
+| `pages/profile`, `pages/profile-edit`, `pages/feedback` | Current account, notices, profile editing, and feedback |
 
-支付、客服、分享裂变、重型富文本、云开发迁移和 Web 沉浸效果不作为默认扩展。
-产品范围或权限变化更新本文；接口、架构、平台配置和隐私影响同步更新技术规格。
-只保留当前有效约束与未解决问题，不重新累积已完成实施流水账。
+## Feature Behavior
+
+### Home and Weather
+
+- Guests load public moments only. Signed-in users see the couple summary, daily copy, saved weather/location, the first two albums, aggregated wish statistics, and Mini Program notices. Render a notice when `notice` exists; `shouldShow` controls proactive prompting only.
+- Home and Wishes refresh when their tabs return. Login, logout, or account switching clears private display state; responses from an old session cannot populate a new session.
+- Opening Home or completing login starts an automatic weather/location update. First explain the purpose, third-party processing, and frequency, obtain consent, then request native location permission. Refresh every 20 minutes while Home is visible; stop timers when hidden, backgrounded, or unloaded. Refresh on return only when 20 minutes have elapsed since the last attempt. Keep manual refresh; do not continuously locate in the background.
+- Persist only a local consent boolean. Cancellation or denial suppresses repeated automatic prompts for the current run. Manual refresh can retry; opening system settings requires an explicit user action.
+- Display actual resolved places, with an unknown-location placeholder when unavailable; never assume a country or city. A resolved place can be saved without weather. Weather alone updates the current page without saving a false place. If both fail, retain the previous display.
+- Do not persist GPS or weather in local storage. The technical specification describes the actual location and third-party data flow.
+
+### Diaries and Moments
+
+Diaries use real month metadata and support all, mine, partner, and private filters. Store the title as a Markdown level-one heading and render text, images, quotes, lists, code, and tables in order. Creation submits a date; editing keeps it read-only. Allow up to 20 images, uploading before inserting them into Markdown; incomplete/failed uploads block saving. Authors confirm deletion. There is no local draft recovery.
+
+Guests can browse moments, filter by category/year, and adjust the native map/list layout. The map displays recorded coordinates without requesting the viewer's location. A single marker selects its item; a list item opens details. Nearby markers cluster and can be expanded. Empty maps use a world view; records without coordinates remain in the list. Managers enter place/address/coordinates manually and attach up to three images.
+
+### Albums
+
+Signed-in users browse published albums with pagination, private locks, pinning, and photo/view/like statistics. Private access tokens expire and require unlocking again. Prefer preview images while retaining an optional original URL. There is no dedicated original-download or save-image flow. Likes and views use the backend's UTC calendar day.
+
+Managers can create an album with up to nine photos: create a temporary album, upload, then publish. An existing draft triggers a choice to discard and recreate; this is not draft recovery. Failures retain input and attempt cleanup, without guaranteeing that cleanup succeeded.
+
+### Wishes, Profile, and Feedback
+
+Wishes have separate paginated Want to Go, Want to Do, and Completed sections, with counts, empty states, and errors. Creation/editing supports title, category, expected date/place, description, and notes. Completion requires one uploaded image; reopening needs none. Prevent duplicate operations, refresh after success, and confirm deletion.
+
+Profile refreshes current account data and notices. Users can edit display name, mood, and bio; username and avatar are read-only. Logout clears local sessions even if its backend call fails. Feedback includes category, title, content, contact information, up to three screenshots, and a limited device summary. Upload screenshots before submission and preserve input on failure. Notices and daily muting are isolated by Mini Program client.
+
+## Experience and Privacy Boundaries
+
+Use restrained black/white/gray styling, whitespace, short feedback, and shared Snowlit sheets/fonts. Support iPhone SE through iPad, with loading, empty, error, and success states. Check long text, keyboard coverage, weak networks, and image preview.
+
+Request permissions in their relevant flow. Location refusal does not block browsing; media refusal stops picking/uploading. Privacy disclosures cover login, profile, location and third-party queries, media, feedback, device information, and necessary caches. Source declarations do not replace WeChat backend configuration.
+
+Privacy concerns actual personal identity and location data. Language, festivals, fonts, and map providers are product/technical choices, not evidence of the user's location. Public moments display recorded addresses/coordinates, and uploads do not currently have a universal EXIF-removal step. These are existing data boundaries, not new feature-change requests.
+
+Physical devices, native photo/camera selection, production domains/TLS, WeChat privacy settings, and review/release require actual acceptance. Node and simulator results do not substitute for external confirmation. Update this document for product or permission changes and the technical specification for interface, architecture, or platform changes.

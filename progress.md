@@ -1,21 +1,44 @@
-# 项目最近进度
+# Snowlit Progress and Verification Baseline
 
-## 当前维护基线
+## Current State
 
-三端现行结构、启动方法和边界见 findings.md、docs/development.md、docs/product/current-spec.md；小程序另读产品与技术规格。维护记录只保留后续开发需要的信息。
+2026-10-17: context initialization only. Historical task narratives and tool-error logs are reset. No business development task is active.
 
-## 2026-10-17 隐私清理与仓库重建
+## Checks in This Task
 
-- 用户明确要求保留 ICP 备案号；其余审计确认的旧昵称、个人目录、地点/坐标设计图和本机检查残留清理。
-- 相册日常活动改用 UTC，开发 JDBC 默认时区同步 UTC；多时区日期回归继续保留，正偏移样例使用 Singapore。
-- 小程序默认图复用通用素材，删除旧地标图和失效打包项；参考素材索引同步清理。
-- 实际账号、微信绑定、用户内容、数据库与本机密钥配置保留；现有库不执行初始化。
-- Web 501/501、后端 259/259、小程序 80/80 通过，Web 构建与小程序原生模板检查通过。UTC 边界含设备时区已跨日和仍在前一天的用例。
-- 后端 8080 已保留数据重启，公开只读接口 200；16 表数量与账号/微信绑定摘要一致，Key 文件和 ICP 组件字节未变。
-- 旧调试输出已移除，当前启动日志实时脱敏；旧 Git 元数据已移除，以 main 分支建立单一通用作者初始提交；没有保留旧历史归档。
-- 文档清理脚本曾缺少 re 导入，补齐后成功；一次无关文件读取路径不存在，未产生改动，后续按当前路径核对。
+| Check | Result |
+|---|---|
+| Context coverage, documented paths, and relative links | 17 Markdown files and 83 relative links checked |
+| English language and consistency with confirmed user decisions | Passed; no CJK prose remains |
+| Non-document files and unchanged agent-rule semantics | 764 protected files unchanged; all 29 rules preserved in English |
 
-## 已完成能力与待验收
+This task updates Markdown only. It does not rerun business tests, start or stop services, access business data, change credentials, or commit to Git.
 
-- 全球地点/天气、前台 20 分钟更新、会话隔离和上传并发修复已实现；真实模拟器主要读写与五类上传此前通过。
-- Web 的移动首页横向溢出仍需处理；真实 Web 地图、微信真机、系统选图、生产域名/TLS、隐私后台和审核另行验收。
+## Handover Review (2026-10-17)
+
+The documentation rewrite above was reviewed and committed. Spot checks against source (page count, Java target, Vite proxy, SQL init defaults, weather cache TTLs, album photo limit, mini-program environments) matched. The user confirmed removal of the former Chinese design-reference index and its two mini-program design images under docs/product/assets; the README link to that index was removed.
+
+Fresh unit-test runs in this review: Web 64 files / 501 tests, backend 259 tests (mvn -o test), mini program 80 tests; all passed. The production build, mini-program template compilation, simulator, and live services were not rerun.
+
+## Most Recent Recorded Business Verification
+
+These results belong to the previous implementation baseline, not a fresh test run in this task.
+
+| Area | Recorded result |
+|---|---|
+| Web | 64 test files, 501 tests, and production build passed |
+| Backend | 259 tests passed, including UTC date boundaries and Spring wiring |
+| Mini program | 80 tests, 112 JS syntax checks, 32 WXML and 35 WXSS compilation checks passed |
+| Simulator | WeChat login/binding/logout, principal read/write flows, five image upload flows, and global location/weather integration checked |
+| Retained data | Earlier table-count and account/binding digests were unchanged; initialization was not rerun |
+
+## Read-Only Environment Observations in This Task
+
+- Available tools: Node 24.16.0, npm 11.13.0, Java 21.0.11, Maven 3.9.16.
+- Port 8080 has a listener; port 5173 does not. This is not a fresh interface or end-to-end acceptance result.
+- The local credential file exists with mode 600; its contents were not displayed. Frontend dependencies are present.
+- Docker dependency health, native WeChat pages, real devices, and production services were not rechecked.
+
+## Next Handoff
+
+Start a new plan from the next user request. Record the exact checks performed and their limits; do not promote historical tests or a listening port into current end-to-end verification.

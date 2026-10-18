@@ -1,15 +1,20 @@
 # Snowlit Domain Context
 
-## 相册
+This file defines shared vocabulary. Rules are in the [current specification](docs/product/current-spec.md); architecture and execution state are in the relevant context files.
 
-- **相册**：围绕同一段回忆组织的一组照片及其标题、描述、可见性和互动信息。
-- **相册草稿**：尚未发布、可以继续补充照片或取消的相册。
-- **私密相册访问**：访问者通过相册密码获得当前浏览会话中的私密相册查看资格。
-- **相册生命周期**：相册从浏览、创建草稿、上传照片、发布，到私密访问、查看和点赞的完整用户流程。
+| Term | Current meaning |
+|---|---|
+| Account / business session | A backend users account and its issued token; WeChat binding is a server-side authentication relationship |
+| Manager | Content-management authority defined by SiteManagerPolicy, never inferred from a name or client button |
+| Home overview | Authenticated aggregation of couple, dailyNote, personStatuses, distance, latest, and stats |
+| Album / draft | A published photo collection / an unpublished upload workspace owned by its creator |
+| Private album access | Time-limited qualification obtained with the album password, checked separately from login and likes |
+| Daily album activity | Like toggling and view deduplication by user, album, and UTC calendar day |
+| Wish | A want_go or want_do goal that can become completed and be reopened under current permissions |
+| Diary | Role/date-organized Markdown; shared/private controls visibility, while authorship controls mutation |
+| Story moment | A public memory with category, time, place, address/coordinates, and up to three images |
+| Weather / location | Independently resolved results for actual coordinates; failure must not create fabricated values |
+| Calendar date / timestamp | YYYY-MM-DD preserves year/month/day; an offset-bearing timestamp represents an instant |
+| Fallback | Preserving available content or an explicit unknown state when permissions, data, or providers fail |
 
-## 清单
-
-- **清单**：两个人希望共同完成的一件事，分为“想去”和“想做”，完成后保留为共同回忆。
-- **清单看板**：由“想去”“想做”“已完成”三条独立分页泳道组成的清单浏览界面。
-- **清单详情**：在摘要基础上补充描述、地点、预计完成时间、备注和操作记录的完整信息。
-- **清单生命周期**：清单从分栏浏览、查看详情、创建，到携图完成、撤回并返回原分类的完整状态流程。
+The clients share one backend and business dataset. A couple-oriented product does not imply complete tenant isolation. Language, holidays, and platform choices do not establish the user's physical location.
