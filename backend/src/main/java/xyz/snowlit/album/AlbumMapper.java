@@ -244,60 +244,59 @@ public interface AlbumMapper {
                                 @Param("userId") Long userId,
                                 @Param("likeDate") LocalDate likeDate);
 
-    @Insert("""
-            insert ignore into album_activity (
-                album_id, user_id, activity_date, viewed, liked, first_viewed_at, liked_at, updated_at
-            )
-            values (
-                #{albumId}, #{userId}, #{likeDate}, false, true, null, #{createdAt}, #{updatedAt}
-            )
-            """)
-    int insertDailyLike(@Param("albumId") Long albumId,
-                        @Param("userId") Long userId,
-                        @Param("likeDate") LocalDate likeDate,
-                        @Param("createdAt") LocalDateTime createdAt,
-                        @Param("updatedAt") LocalDateTime updatedAt);
 
-    @Update("""
-            update album_activity
-            set liked = #{active},
-                liked_at = case when #{active} = true then #{updatedAt} else liked_at end,
-                updated_at = #{updatedAt}
-            where album_id = #{albumId}
-              and user_id = #{userId}
-              and activity_date = #{likeDate}
-              and liked <> #{active}
-            """)
-    int updateDailyLikeActive(@Param("albumId") Long albumId,
-                              @Param("userId") Long userId,
-                              @Param("likeDate") LocalDate likeDate,
-                              @Param("active") boolean active,
-                              @Param("updatedAt") LocalDateTime updatedAt);
 
-    @Select("""
-            select id
-            from album_activity
-            where album_id = #{albumId} and user_id = #{userId} and activity_date = #{viewDate} and viewed = true
-            limit 1
-            """)
-    Long findDailyViewId(@Param("albumId") Long albumId, @Param("userId") Long userId, @Param("viewDate") LocalDate viewDate);
 
+
+    /**
+     * Flips today's like for the user, creating the activity row as liked when absent.
+     * Assignments run left to right, so liked_at reads the previous liked value.
+     */
     @Insert("""
             insert into album_activity (
                 album_id, user_id, activity_date, viewed, liked, first_viewed_at, liked_at, updated_at
             )
             values (
-                #{albumId}, #{userId}, #{viewDate}, true, false, #{createdAt}, null, #{createdAt}
+                #{albumId}, #{userId}, #{day}, false, true, null, #{now}, #{now}
             )
             on duplicate key update
-                first_viewed_at = if(album_activity.viewed = false, values(first_viewed_at), album_activity.first_viewed_at),
-                updated_at = if(album_activity.viewed = false, values(updated_at), album_activity.updated_at),
-                viewed = true
+                liked_at = if(album_activity.liked, album_activity.liked_at, values(liked_at)),
+                updated_at = values(updated_at),
+                liked = not album_activity.liked
+            """)
+    void toggleDailyLike(@Param("albumId") Long albumId,
+                         @Param("userId") Long userId,
+                         @Param("day") LocalDate day,
+                         @Param("now") LocalDateTime now);
+
+    /**
+     * @return 1 when this call created today's viewed activity row
+     */
+    @Insert("""
+            insert ignore into album_activity (
+                album_id, user_id, activity_date, viewed, liked, first_viewed_at, liked_at, updated_at
+            )
+            values (
+                #{albumId}, #{userId}, #{day}, true, false, #{now}, null, #{now}
+            )
             """)
     int insertDailyView(@Param("albumId") Long albumId,
                         @Param("userId") Long userId,
-                        @Param("viewDate") LocalDate viewDate,
-                        @Param("createdAt") LocalDateTime createdAt);
+                        @Param("day") LocalDate day,
+                        @Param("now") LocalDateTime now);
+
+    /**
+     * @return 1 when this call marked an existing (like-only) activity row as viewed
+     */
+    @Update("""
+            update album_activity
+            set viewed = true, first_viewed_at = #{now}, updated_at = #{now}
+            where album_id = #{albumId} and user_id = #{userId} and activity_date = #{day} and viewed = false
+            """)
+    int markDailyViewed(@Param("albumId") Long albumId,
+                        @Param("userId") Long userId,
+                        @Param("day") LocalDate day,
+                        @Param("now") LocalDateTime now);
 
     @Select("""
             select album_id, user_id, failure_count, locked_until

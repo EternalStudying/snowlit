@@ -165,56 +165,32 @@ public class AlbumModule {
     @Transactional
     public AlbumLikeVo likeAlbum(AuthenticatedActor actor, Long albumId) {
         requirePublishedAlbum(albumId);
-        LocalDate likeDate = todayForActivity();
-        LocalDateTime timestamp = nowForActivity();
-        Boolean active = albumMapper.findDailyLikeActive(albumId, actor.userId(), likeDate);
-        boolean likedToday;
-        if (active == null) {
-            int inserted = albumMapper.insertDailyLike(albumId, actor.userId(), likeDate, timestamp, timestamp);
-            if (inserted > 0) {
-                albumMapper.incrementLike(albumId);
-                likedToday = true;
-            } else {
-                likedToday = Boolean.TRUE.equals(albumMapper.findDailyLikeActive(albumId, actor.userId(), likeDate));
-            }
-        } else if (Boolean.TRUE.equals(active)) {
-            int updated = albumMapper.updateDailyLikeActive(albumId, actor.userId(), likeDate, false, timestamp);
-            if (updated > 0) {
-                albumMapper.decrementLike(albumId);
-                likedToday = false;
-            } else {
-                likedToday = Boolean.TRUE.equals(albumMapper.findDailyLikeActive(albumId, actor.userId(), likeDate));
-            }
+        LocalDate today = todayForActivity();
+        albumMapper.toggleDailyLike(albumId, actor.userId(), today, nowForActivity());
+        boolean likedToday = albumMapper.findDailyLikeActive(albumId, actor.userId(), today);
+        if (likedToday) {
+            albumMapper.incrementLike(albumId);
         } else {
-            int updated = albumMapper.updateDailyLikeActive(albumId, actor.userId(), likeDate, true, timestamp);
-            if (updated > 0) {
-                albumMapper.incrementLike(albumId);
-                likedToday = true;
-            } else {
-                likedToday = Boolean.TRUE.equals(albumMapper.findDailyLikeActive(albumId, actor.userId(), likeDate));
-            }
+            albumMapper.decrementLike(albumId);
         }
-        Album updated = requirePublishedAlbum(albumId);
-        return new AlbumLikeVo(albumId, updated.getLikeCount(), likedToday);
+        return new AlbumLikeVo(albumId, requirePublishedAlbum(albumId).getLikeCount(), likedToday);
     }
 
+    @Transactional
     public AlbumViewVo recordAlbumView(AuthenticatedActor actor, Long albumId, String privateAccessToken) {
         Album album = requirePublishedAlbum(albumId);
         if (isPrivate(album)) {
             requirePrivateAccess(album, actor.userId(), privateAccessToken);
         }
 
-        LocalDate viewDate = todayForActivity();
-        boolean counted = false;
-        if (albumMapper.findDailyViewId(albumId, actor.userId(), viewDate) == null) {
-            int inserted = albumMapper.insertDailyView(albumId, actor.userId(), viewDate, nowForActivity());
-            if (inserted > 0) {
-                albumMapper.incrementView(albumId);
-                counted = true;
-            }
+        LocalDate today = todayForActivity();
+        LocalDateTime now = nowForActivity();
+        boolean counted = albumMapper.insertDailyView(albumId, actor.userId(), today, now) == 1
+                || albumMapper.markDailyViewed(albumId, actor.userId(), today, now) == 1;
+        if (counted) {
+            albumMapper.incrementView(albumId);
         }
-        Album updated = requirePublishedAlbum(albumId);
-        return new AlbumViewVo(albumId, updated.getViewCount(), counted);
+        return new AlbumViewVo(albumId, requirePublishedAlbum(albumId).getViewCount(), counted);
     }
 
     public AlbumCurrentDraftVo currentDraft(AuthenticatedActor actor) {

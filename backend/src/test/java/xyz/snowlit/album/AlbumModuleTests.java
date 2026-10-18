@@ -356,10 +356,7 @@ class AlbumModuleTests {
                 publicAlbumWithLikes(0),
                 publicAlbumWithLikes(1)
         );
-        when(albumMapper.findDailyLikeActive(1L, 1L, today)).thenReturn(null, true, false);
-        when(albumMapper.insertDailyLike(1L, 1L, today, now, now)).thenReturn(1);
-        when(albumMapper.updateDailyLikeActive(1L, 1L, today, false, now)).thenReturn(1);
-        when(albumMapper.updateDailyLikeActive(1L, 1L, today, true, now)).thenReturn(1);
+        when(albumMapper.findDailyLikeActive(1L, 1L, today)).thenReturn(true, false, true);
 
         AlbumLikeVo first = albumService.likeAlbum(MANAGER, 1L);
         AlbumLikeVo second = albumService.likeAlbum(MANAGER, 1L);
@@ -371,9 +368,7 @@ class AlbumModuleTests {
         assertThat(second.likedToday()).isFalse();
         assertThat(third.likeCount()).isEqualTo(1);
         assertThat(third.likedToday()).isTrue();
-        verify(albumMapper).insertDailyLike(1L, 1L, today, now, now);
-        verify(albumMapper).updateDailyLikeActive(1L, 1L, today, false, now);
-        verify(albumMapper).updateDailyLikeActive(1L, 1L, today, true, now);
+        verify(albumMapper, times(3)).toggleDailyLike(1L, 1L, today, now);
         verify(albumMapper, times(2)).incrementLike(1L);
         verify(albumMapper).decrementLike(1L);
     }
@@ -390,14 +385,13 @@ class AlbumModuleTests {
         LocalDate utcDate = LocalDate.of(2026, 5, 16);
         LocalDateTime utcNow = LocalDateTime.of(2026, 5, 16, 16, 30);
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum(), publicAlbumWithLikes(1));
-        when(albumMapper.findDailyLikeActive(1L, 1L, utcDate)).thenReturn(null);
-        when(albumMapper.insertDailyLike(1L, 1L, utcDate, utcNow, utcNow)).thenReturn(1);
+        when(albumMapper.findDailyLikeActive(1L, 1L, utcDate)).thenReturn(true);
 
         AlbumLikeVo liked = albumsAtMidnight.likeAlbum(MANAGER, 1L);
 
         assertThat(liked.likeCount()).isEqualTo(1);
         assertThat(liked.likedToday()).isTrue();
-        verify(albumMapper).insertDailyLike(1L, 1L, utcDate, utcNow, utcNow);
+        verify(albumMapper).toggleDailyLike(1L, 1L, utcDate, utcNow);
         verify(albumMapper).incrementLike(1L);
     }
 
@@ -417,7 +411,6 @@ class AlbumModuleTests {
         when(albumMapper.findActiveDailyLikeAlbumIds(1L, utcDate, List.of(1L))).thenReturn(List.of(1L));
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum());
         when(albumMapper.findDailyLikeActive(1L, 1L, utcDate)).thenReturn(true);
-        when(albumMapper.findDailyViewId(1L, 1L, utcDate)).thenReturn(null);
         when(albumMapper.insertDailyView(1L, 1L, utcDate, utcNow)).thenReturn(1);
 
         assertThat(albumsAtMidnight.listAlbums(MANAGER, 1, 5, 9).items().get(0).likedToday()).isTrue();
@@ -430,10 +423,8 @@ class AlbumModuleTests {
     @Test
     void likeAllowsLockedPrivateAlbumWithoutUnlockingIt() {
         LocalDate today = LocalDate.of(2026, 5, 16);
-        LocalDateTime now = LocalDateTime.of(2026, 5, 16, 12, 0);
         when(albumMapper.findAlbumById(2L)).thenReturn(privateAlbum(), privateAlbumWithCounts(7, 4));
-        when(albumMapper.findDailyLikeActive(2L, 1L, today)).thenReturn(null);
-        when(albumMapper.insertDailyLike(2L, 1L, today, now, now)).thenReturn(1);
+        when(albumMapper.findDailyLikeActive(2L, 1L, today)).thenReturn(true);
 
         AlbumLikeVo liked = albumService.likeAlbum(MANAGER, 2L);
 
@@ -444,39 +435,24 @@ class AlbumModuleTests {
     }
 
     @Test
-    void duplicateInitialLikeInsertDoesNotIncrementAgain() {
+    void viewCountsOncePerUserPerDayAndRequiresPrivateToken() {
         LocalDate today = LocalDate.of(2026, 5, 16);
         LocalDateTime now = LocalDateTime.of(2026, 5, 16, 12, 0);
-        when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbumWithLikes(1), publicAlbumWithLikes(1));
-        when(albumMapper.findDailyLikeActive(1L, 1L, today)).thenReturn(null, true);
-        when(albumMapper.insertDailyLike(1L, 1L, today, now, now)).thenReturn(0);
-
-        AlbumLikeVo liked = albumService.likeAlbum(MANAGER, 1L);
-
-        assertThat(liked.likeCount()).isEqualTo(1);
-        assertThat(liked.likedToday()).isTrue();
-        verify(albumMapper, never()).incrementLike(1L);
-        verify(albumMapper, never()).decrementLike(1L);
-    }
-
-    @Test
-    void viewCountsOncePerUserPerDayAndRequiresPrivateToken() {
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum(), publicAlbumWithViews(22));
-        when(albumMapper.findDailyViewId(1L, 1L, LocalDate.of(2026, 5, 16))).thenReturn(null);
-        when(albumMapper.insertDailyView(1L, 1L, LocalDate.of(2026, 5, 16), LocalDateTime.of(2026, 5, 16, 12, 0)))
-                .thenReturn(1);
+        when(albumMapper.insertDailyView(1L, 1L, today, now)).thenReturn(1);
 
         AlbumViewVo first = albumService.recordAlbumView(MANAGER, 1L, null);
         assertThat(first.counted()).isTrue();
         assertThat(first.viewCount()).isEqualTo(22);
-        verify(albumMapper).insertDailyView(1L, 1L, LocalDate.of(2026, 5, 16), LocalDateTime.of(2026, 5, 16, 12, 0));
         verify(albumMapper).incrementView(1L);
 
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbumWithViews(22));
-        when(albumMapper.findDailyViewId(1L, 1L, LocalDate.of(2026, 5, 16))).thenReturn(99L);
+        when(albumMapper.insertDailyView(1L, 1L, today, now)).thenReturn(0);
+        when(albumMapper.markDailyViewed(1L, 1L, today, now)).thenReturn(0);
         AlbumViewVo repeated = albumService.recordAlbumView(MANAGER, 1L, null);
         assertThat(repeated.counted()).isFalse();
         assertThat(repeated.viewCount()).isEqualTo(22);
+        verify(albumMapper, times(1)).incrementView(1L);
 
         when(albumMapper.findAlbumById(2L)).thenReturn(privateAlbum());
         assertThatThrownBy(() -> albumService.recordAlbumView(MANAGER, 2L, null))
@@ -484,6 +460,18 @@ class AlbumModuleTests {
                         ApplicationFailure.class,
                         failure -> assertThat(failure.code()).isEqualTo("PRIVATE_ALBUM_LOCKED")
                 );
+    }
+
+    @Test
+    void viewAfterLikingTheSameDayMarksTheExistingActivityAsViewed() {
+        LocalDate today = LocalDate.of(2026, 5, 16);
+        LocalDateTime now = LocalDateTime.of(2026, 5, 16, 12, 0);
+        when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum(), publicAlbumWithViews(23));
+        when(albumMapper.insertDailyView(1L, 1L, today, now)).thenReturn(0);
+        when(albumMapper.markDailyViewed(1L, 1L, today, now)).thenReturn(1);
+
+        assertThat(albumService.recordAlbumView(MANAGER, 1L, null).counted()).isTrue();
+        verify(albumMapper).incrementView(1L);
     }
 
     private Album publicAlbum() {
