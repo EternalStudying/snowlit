@@ -1,5 +1,6 @@
 package xyz.snowlit.infrastructure.weather;
 
+import xyz.snowlit.weather.WeatherCondition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -68,7 +69,7 @@ class GlobalWeatherGatewayTests {
              "wind_speed_10m":5.5,"wind_direction_10m":225,"time":"2026-06-21T20:30"}
             """);
         var weather = gateway.weather(point).orElseThrow();
-        assertThat(weather.weather()).isEqualTo("雷阵雨并伴有冰雹");
+        assertThat(weather.condition()).isEqualTo(WeatherCondition.THUNDERSTORM_WITH_HAIL);
         assertThat(weather.temperature()).isEqualTo(17.2);
         assertThat(weather.windDirection()).isEqualTo("西南风");
         assertThat(weather.windPower()).isEqualTo("4");
@@ -86,7 +87,7 @@ class GlobalWeatherGatewayTests {
             """);
         var weather = gateway.weather(point).orElseThrow();
         assertThat(weather.temperature()).isNull();
-        assertThat(weather.weather()).isEqualTo("阴");
+        assertThat(weather.condition()).isEqualTo(WeatherCondition.OVERCAST);
         assertThat(weather.daylightHint()).isEqualTo("unknown");
         assertThat(weather.humidity()).isEmpty();
         assertThat(weather.windDirection()).isEmpty();
@@ -115,9 +116,29 @@ class GlobalWeatherGatewayTests {
     }
 
     @ParameterizedTest
-    @CsvSource({"0,晴", "1,少云", "2,多云", "3,阴", "45,雾", "48,冻雾", "51,毛毛雨", "57,冻雨", "61,小雨", "63,中雨", "65,大雨", "67,冻雨", "71,小雪", "73,中雪", "75,大雪", "77,中雪", "80,阵雨", "81,中雨", "82,强阵雨", "85,小雪", "86,大雪", "95,雷阵雨", "99,雷阵雨并伴有冰雹", "100,''"})
-    void mapsWmoWeatherCodes(int code, String description) {
-        assertThat(GlobalWeatherGateway.describeWeather(code)).isEqualTo(description);
+    @CsvSource({
+            "0,CLEAR,晴,clear,clear,none", "1,FEW_CLOUDS,少云,cloudy,partlyCloudy,none",
+            "2,PARTLY_CLOUDY,多云,cloudy,partlyCloudy,none", "3,OVERCAST,阴,cloudy,overcast,none",
+            "45,FOG,雾,fog,mist,none", "48,FREEZING_FOG,冻雾,fog,mist,none",
+            "51,DRIZZLE,毛毛雨,drizzle,lightRain,rain", "57,FREEZING_RAIN,冻雨,rain,moderateRain,rain",
+            "61,LIGHT_RAIN,小雨,drizzle,lightRain,rain", "63,MODERATE_RAIN,中雨,rain,moderateRain,rain",
+            "65,HEAVY_RAIN,大雨,heavyRain,heavyRain,rain", "67,FREEZING_RAIN,冻雨,rain,moderateRain,rain",
+            "71,LIGHT_SNOW,小雪,lightSnow,lightSnow,snow", "73,MODERATE_SNOW,中雪,snow,snow,snow",
+            "75,HEAVY_SNOW,大雪,blizzard,heavySnow,snow", "77,MODERATE_SNOW,中雪,snow,snow,snow",
+            "80,RAIN_SHOWERS,阵雨,drizzle,lightRain,rain", "81,MODERATE_RAIN,中雨,rain,moderateRain,rain",
+            "82,VIOLENT_RAIN_SHOWERS,强阵雨,heavyRain,heavyRain,rain", "85,LIGHT_SNOW,小雪,lightSnow,lightSnow,snow",
+            "86,HEAVY_SNOW,大雪,blizzard,heavySnow,snow", "95,THUNDERSTORM,雷阵雨,storm,thunderstorm,rain",
+            "99,THUNDERSTORM_WITH_HAIL,雷阵雨并伴有冰雹,storm,hailStorm,hail", "100,UNKNOWN,'',cloudy,unknown,none"
+    })
+    void mapsWmoWeatherCodesToConditions(int code, WeatherCondition expected, String label, String state,
+            String variant, String precipitation) {
+        WeatherCondition condition = GlobalWeatherGateway.condition(code);
+
+        assertThat(condition).isEqualTo(expected);
+        assertThat(condition.label()).isEqualTo(label);
+        assertThat(condition.state()).isEqualTo(state);
+        assertThat(condition.variant()).isEqualTo(variant);
+        assertThat(condition.precipitation()).isEqualTo(precipitation);
     }
 
     private void expectWeather(String current) {

@@ -65,101 +65,29 @@ public final class WeatherModule {
         }
 
         WeatherGateway.Location loc = location.orElse(new WeatherGateway.Location("", "", "", ""));
-        WeatherGateway.LiveWeather live = weather.orElse(new WeatherGateway.LiveWeather("", null, "", "", "", "", "unknown"));
-        WeatherMapping mapping = mapWeather(live.weather(), live.reportTime());
+        WeatherGateway.LiveWeather live = weather.orElse(
+                new WeatherGateway.LiveWeather(WeatherCondition.UNKNOWN, null, "", "", "", "", "unknown"));
+        WeatherCondition condition = live.condition();
+        Optional<LocalDateTime> reportTime = parseReportTime(live.reportTime());
         String daylightHint = "day".equals(live.daylightHint()) || "night".equals(live.daylightHint())
-                ? live.daylightHint() : mapping.daylightHint();
+                ? live.daylightHint()
+                : reportTime.map(this::toDaylightHint).orElse("unknown");
         return new WeatherAtmosphereVo(
                 isBlank(loc.city()) ? "unknown" : loc.city(),
                 Text.trim(loc.district()),
                 Text.trim(loc.province()),
                 Text.trim(loc.country()),
                 live.temperature(),
-                Text.trim(live.weather()),
-                mapping.weatherState(),
-                mapping.weatherVariant(),
-                mapping.precipitationKind(),
+                condition.label(),
+                condition.state(),
+                condition.variant(),
+                condition.precipitation(),
                 Text.trim(live.windDirection()),
                 Text.trim(live.windPower()),
                 Text.trim(live.humidity()),
                 daylightHint,
-                parseReportTime(live.reportTime()).orElseGet(this::now)
+                reportTime.orElseGet(this::now)
         );
-    }
-
-    WeatherMapping mapWeather(String rawWeather, String reportTime) {
-        String weather = Text.trim(rawWeather);
-        String daylightHint = parseReportTime(reportTime)
-                .map(this::toDaylightHint)
-                .orElse("unknown");
-
-        if (isBlank(weather) || weather.contains("未知") || "unknown".equalsIgnoreCase(weather)) {
-            return new WeatherMapping("cloudy", "unknown", "none", daylightHint);
-        }
-        if (weather.contains("雷阵雨并伴有冰雹")) {
-            return new WeatherMapping("storm", "hailStorm", "hail", daylightHint);
-        }
-        if (weather.contains("雷")) {
-            return new WeatherMapping("storm", "thunderstorm", "rain", daylightHint);
-        }
-        if (containsAny(weather, "大雨", "暴雨", "大暴雨", "特大暴雨", "强阵雨")) {
-            return new WeatherMapping("heavyRain", "heavyRain", "rain", daylightHint);
-        }
-        if (containsAny(weather, "小雨", "毛毛雨", "细雨", "阵雨")) {
-            return new WeatherMapping("drizzle", "lightRain", "rain", daylightHint);
-        }
-        if (containsAny(weather, "雨夹雪", "雨雪")) {
-            return new WeatherMapping("snow", "snow", "mixed", daylightHint);
-        }
-        if (containsAny(weather, "中雨", "雨")) {
-            return new WeatherMapping("rain", "moderateRain", "rain", daylightHint);
-        }
-        if (containsAny(weather, "大雪", "暴雪")) {
-            return new WeatherMapping("blizzard", "heavySnow", "snow", daylightHint);
-        }
-        if (containsAny(weather, "阵雪", "小雪")) {
-            return new WeatherMapping("lightSnow", "lightSnow", "snow", daylightHint);
-        }
-        if (weather.contains("冰雹")) {
-            return new WeatherMapping("snow", "hail", "hail", daylightHint);
-        }
-        if (containsAny(weather, "中雪", "雪")) {
-            return new WeatherMapping("snow", "snow", "snow", daylightHint);
-        }
-        if (weather.contains("霾")) {
-            return new WeatherMapping("fog", "haze", "none", daylightHint);
-        }
-        if (weather.contains("雾")) {
-            return new WeatherMapping("fog", "mist", "none", daylightHint);
-        }
-        if (containsAny(weather, "沙尘暴", "强沙尘暴")) {
-            return new WeatherMapping("sandstorm", "sandstorm", "none", daylightHint);
-        }
-        if (containsAny(weather, "浮尘", "扬沙")) {
-            return new WeatherMapping("sandstorm", "dust", "none", daylightHint);
-        }
-        if (weather.contains("晴间多云")) {
-            return new WeatherMapping("clear", "partlyCloudy", "none", daylightHint);
-        }
-        if (weather.contains("晴")) {
-            return new WeatherMapping("clear", "clear", "none", daylightHint);
-        }
-        if (containsAny(weather, "多云", "少云")) {
-            return new WeatherMapping("cloudy", "partlyCloudy", "none", daylightHint);
-        }
-        if (weather.contains("阴")) {
-            return new WeatherMapping("cloudy", "overcast", "none", daylightHint);
-        }
-        if (containsAny(weather, "有风", "微风", "强风", "大风", "风暴", "风")) {
-            return new WeatherMapping("cloudy", "windy", "none", daylightHint);
-        }
-        if (weather.contains("热")) {
-            return new WeatherMapping("clear", "hot", "none", daylightHint);
-        }
-        if (weather.contains("冷")) {
-            return new WeatherMapping("cloudy", "cold", "none", daylightHint);
-        }
-        return new WeatherMapping("cloudy", "unknown", "none", daylightHint);
     }
 
     private Optional<LocalDateTime> parseReportTime(String reportTime) {
@@ -201,15 +129,6 @@ public final class WeatherModule {
         return value == null || value.isBlank();
     }
 
-    private boolean containsAny(String value, String... keywords) {
-        for (String keyword : keywords) {
-            if (value.contains(keyword)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private WeatherAtmosphereVo fallback() {
         return new WeatherAtmosphereVo(
                 "unknown",
@@ -234,8 +153,5 @@ public final class WeatherModule {
     }
 
     private record CacheEntry(WeatherAtmosphereVo value, java.time.Instant expiresAt) {
-    }
-
-    record WeatherMapping(String weatherState, String weatherVariant, String precipitationKind, String daylightHint) {
     }
 }

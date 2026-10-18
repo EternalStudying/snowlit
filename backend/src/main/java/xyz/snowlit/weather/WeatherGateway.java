@@ -25,7 +25,7 @@ public interface WeatherGateway {
     record Location(String city, String province, String district, String country) {
     }
 
-    record LiveWeather(String weather, Double temperature, String windDirection, String windPower, String humidity,
-            String reportTime, String daylightHint) {
+    record LiveWeather(WeatherCondition condition, Double temperature, String windDirection, String windPower,
+            String humidity, String reportTime, String daylightHint) {
     }
 }

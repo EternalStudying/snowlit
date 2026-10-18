@@ -4,6 +4,7 @@ import xyz.snowlit.weather.WeatherVos.WeatherAtmosphereVo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.lang.reflect.RecordComponent;
 import java.time.Clock;
@@ -33,7 +34,7 @@ class WeatherModuleTests {
                 new WeatherGateway.Location("Example City", "Example Region", "Example District", "德国")
         ));
         when(weatherGateway.weather(new WeatherGateway.Coordinates(52.52, 13.41))).thenReturn(Optional.of(
-                new WeatherGateway.LiveWeather("\u5c0f\u96e8", 22.3, "\u4e1c\u98ce", "3", "80", "2026-04-28 13:00:00", "unknown")
+                new WeatherGateway.LiveWeather(WeatherCondition.LIGHT_RAIN, 22.3, "\u4e1c\u98ce", "3", "80", "2026-04-28 13:00:00", "unknown")
         ));
 
         WeatherAtmosphereVo response = weather.getBrowserAtmosphere("52.52", "13.41");
@@ -57,62 +58,21 @@ class WeatherModuleTests {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', textBlock = """
-            \u96f7\u9635\u96e8\u5e76\u4f34\u6709\u51b0\u96f9 | storm | hailStorm | hail
-            \u96f7\u9635\u96e8 | storm | thunderstorm | rain
-            \u5c0f\u96e8 | drizzle | lightRain | rain
-            \u6bdb\u6bdb\u96e8 | drizzle | lightRain | rain
-            \u7ec6\u96e8 | drizzle | lightRain | rain
-            \u9635\u96e8 | drizzle | lightRain | rain
-            \u4e2d\u96e8 | rain | moderateRain | rain
-            \u96e8 | rain | moderateRain | rain
-            \u5927\u96e8 | heavyRain | heavyRain | rain
-            \u66b4\u96e8 | heavyRain | heavyRain | rain
-            \u5927\u66b4\u96e8 | heavyRain | heavyRain | rain
-            \u7279\u5927\u66b4\u96e8 | heavyRain | heavyRain | rain
-            \u5f3a\u9635\u96e8 | heavyRain | heavyRain | rain
-            \u9635\u96ea | lightSnow | lightSnow | snow
-            \u5c0f\u96ea | lightSnow | lightSnow | snow
-            \u4e2d\u96ea | snow | snow | snow
-            \u96ea | snow | snow | snow
-            \u5927\u96ea | blizzard | heavySnow | snow
-            \u66b4\u96ea | blizzard | heavySnow | snow
-            \u51b0\u96f9 | snow | hail | hail
-            \u96fe | fog | mist | none
-            \u8f7b\u96fe | fog | mist | none
-            \u973e | fog | haze | none
-            \u91cd\u5ea6\u973e | fog | haze | none
-            \u6d6e\u5c18 | sandstorm | dust | none
-            \u626c\u6c99 | sandstorm | dust | none
-            \u6c99\u5c18\u66b4 | sandstorm | sandstorm | none
-            \u5f3a\u6c99\u5c18\u66b4 | sandstorm | sandstorm | none
-            \u6674 | clear | clear | none
-            \u6674\u95f4\u591a\u4e91 | clear | partlyCloudy | none
-            \u591a\u4e91 | cloudy | partlyCloudy | none
-            \u5c11\u4e91 | cloudy | partlyCloudy | none
-            \u9634 | cloudy | overcast | none
-            \u6709\u98ce | cloudy | windy | none
-            \u5927\u98ce | cloudy | windy | none
-            \u98ce | cloudy | windy | none
-            \u70ed | clear | hot | none
-            \u51b7 | cloudy | cold | none
-            \u672a\u77e5 | cloudy | unknown | none
-            """)
-    void mapsProviderDescriptionsToSemanticWeather(String rawWeather, String weatherState, String weatherVariant,
-            String precipitationKind) {
+    @EnumSource(WeatherCondition.class)
+    void reportsTheConditionsLabelAndSemanticWeather(WeatherCondition condition) {
         when(weatherGateway.reverseGeocode(new WeatherGateway.Coordinates(52.52, 13.41))).thenReturn(Optional.of(
                 new WeatherGateway.Location("Example City", "Example Region", "Example District", "德国")
         ));
         when(weatherGateway.weather(new WeatherGateway.Coordinates(52.52, 13.41))).thenReturn(Optional.of(
-                new WeatherGateway.LiveWeather(rawWeather, 22.3, "\u4e1c\u98ce", "3", "80", "2026-04-28 13:00:00", "unknown")
+                new WeatherGateway.LiveWeather(condition, 22.3, "东风", "3", "80", "2026-04-28 13:00:00", "unknown")
         ));
 
         WeatherAtmosphereVo response = weather.getBrowserAtmosphere("52.52", "13.41");
 
-        assertThat(response.rawWeather()).isEqualTo(rawWeather);
-        assertThat(response.weatherState()).isEqualTo(weatherState);
-        assertThat(response.weatherVariant()).isEqualTo(weatherVariant);
-        assertThat(response.precipitationKind()).isEqualTo(precipitationKind);
+        assertThat(response.rawWeather()).isEqualTo(condition.label());
+        assertThat(response.weatherState()).isEqualTo(condition.state());
+        assertThat(response.weatherVariant()).isEqualTo(condition.variant());
+        assertThat(response.precipitationKind()).isEqualTo(condition.precipitation());
         assertThat(response.daylightHint()).isEqualTo("day");
     }
 
@@ -129,7 +89,7 @@ class WeatherModuleTests {
                 new WeatherGateway.Location("Example City", "Example Region", "Example District", "德国")
         ));
         when(weatherGateway.weather(new WeatherGateway.Coordinates(52.52, 13.41))).thenReturn(Optional.of(
-                new WeatherGateway.LiveWeather("\u6674", 22.3, "\u4e1c\u98ce", "3", "80", reportTime, "unknown")
+                new WeatherGateway.LiveWeather(WeatherCondition.CLEAR, 22.3, "\u4e1c\u98ce", "3", "80", reportTime, "unknown")
         ));
 
         WeatherAtmosphereVo response = weather.getBrowserAtmosphere("52.52", "13.41");
@@ -206,7 +166,7 @@ class WeatherModuleTests {
     void sharesCacheByRoundedCoordinateAndKeepsProviderDaylight() {
         var point = new WeatherGateway.Coordinates(52.52, 13.41);
         when(weatherGateway.reverseGeocode(point)).thenReturn(Optional.of(new WeatherGateway.Location("Berlin", "", "", "Germany")));
-        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather("晴", 18.0, "", "", "", "2026-06-21T20:30", "day")));
+        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather(WeatherCondition.CLEAR, 18.0, "", "", "", "2026-06-21T20:30", "day")));
         var first = weather.getBrowserAtmosphere("52.52048", "13.40572");
         var second = weather.getBrowserAtmosphere("52.52123", "13.40621");
         assertThat(second).isSameAs(first);
@@ -219,7 +179,7 @@ class WeatherModuleTests {
     @Test
     void weatherSuccessDoesNotDependOnGeocoding() {
         var point = new WeatherGateway.Coordinates(-33.87, 151.21);
-        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather("阴", 0.0, "", "", "", "2026-10-17T06:00", "night")));
+        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather(WeatherCondition.OVERCAST, 0.0, "", "", "", "2026-10-17T06:00", "night")));
         var result = weather.getBrowserAtmosphere("-33.87", "151.21");
         assertThat(result.city()).isEqualTo("unknown");
         assertThat(result.country()).isEmpty();
@@ -246,7 +206,7 @@ class WeatherModuleTests {
         var cachedWeather = new WeatherModule(weatherGateway, moving);
         var point = new WeatherGateway.Coordinates(52.52, 13.41);
         when(weatherGateway.reverseGeocode(point)).thenReturn(Optional.of(new WeatherGateway.Location("Berlin", "", "", "Germany")));
-        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather("晴", 18.0, "", "", "", "2026-11-01T10:00", "day")));
+        when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather(WeatherCondition.CLEAR, 18.0, "", "", "", "2026-11-01T10:00", "day")));
         cachedWeather.getBrowserAtmosphere("52.52", "13.41");
         instant.set(instant.get().plusSeconds(19 * 60));
         cachedWeather.getBrowserAtmosphere("52.52", "13.41");

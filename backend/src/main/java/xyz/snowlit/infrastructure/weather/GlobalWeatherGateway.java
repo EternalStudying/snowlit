@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import xyz.snowlit.weather.WeatherCondition;
 import xyz.snowlit.weather.WeatherGateway;
 
 import java.net.http.HttpClient;
@@ -90,15 +91,15 @@ public final class GlobalWeatherGateway implements WeatherGateway {
             }
             Double temperature = number(current, "temperature_2m");
             Integer code = integer(current, "weather_code");
-            String weather = describeWeather(code);
-            if (temperature == null && weather.isBlank()) {
+            WeatherCondition condition = condition(code);
+            if (temperature == null && condition == WeatherCondition.UNKNOWN) {
                 return Optional.empty();
             }
             Double speed = number(current, "wind_speed_10m");
             Double direction = number(current, "wind_direction_10m");
             Double humidity = number(current, "relative_humidity_2m");
             Integer isDay = integer(current, "is_day");
-            return Optional.of(new LiveWeather(weather, temperature, windDirection(direction), windPower(speed),
+            return Optional.of(new LiveWeather(condition, temperature, windDirection(direction), windPower(speed),
                     humidity != null && humidity >= 0 && humidity <= 100 ? Long.toString(Math.round(humidity)) : "",
                     text(current, "time"), isDay != null && isDay == 1 ? "day" : isDay != null && isDay == 0 ? "night" : "unknown"));
         } catch (RuntimeException ex) {
@@ -106,31 +107,33 @@ public final class GlobalWeatherGateway implements WeatherGateway {
         }
     }
 
-    static String describeWeather(Integer code) {
+    /**
+     * Maps a WMO weather interpretation code from Open-Meteo.
+     */
+    static WeatherCondition condition(Integer code) {
         if (code == null) {
-            return "";
+            return WeatherCondition.UNKNOWN;
         }
         return switch (code) {
-            case 0 -> "晴";
-            case 1 -> "少云";
-            case 2 -> "多云";
-            case 3 -> "阴";
-            case 45 -> "雾";
-            case 48 -> "冻雾";
-            case 51, 53, 55 -> "毛毛雨";
-            case 56, 57, 66, 67 -> "冻雨";
-            case 61 -> "小雨";
-            case 63 -> "中雨";
-            case 65 -> "大雨";
-            case 71, 85 -> "小雪";
-            case 73, 77 -> "中雪";
-            case 75, 86 -> "大雪";
-            case 80 -> "阵雨";
-            case 81 -> "中雨";
-            case 82 -> "强阵雨";
-            case 95 -> "雷阵雨";
-            case 96, 99 -> "雷阵雨并伴有冰雹";
-            default -> "";
+            case 0 -> WeatherCondition.CLEAR;
+            case 1 -> WeatherCondition.FEW_CLOUDS;
+            case 2 -> WeatherCondition.PARTLY_CLOUDY;
+            case 3 -> WeatherCondition.OVERCAST;
+            case 45 -> WeatherCondition.FOG;
+            case 48 -> WeatherCondition.FREEZING_FOG;
+            case 51, 53, 55 -> WeatherCondition.DRIZZLE;
+            case 56, 57, 66, 67 -> WeatherCondition.FREEZING_RAIN;
+            case 61 -> WeatherCondition.LIGHT_RAIN;
+            case 63, 81 -> WeatherCondition.MODERATE_RAIN;
+            case 65 -> WeatherCondition.HEAVY_RAIN;
+            case 71, 85 -> WeatherCondition.LIGHT_SNOW;
+            case 73, 77 -> WeatherCondition.MODERATE_SNOW;
+            case 75, 86 -> WeatherCondition.HEAVY_SNOW;
+            case 80 -> WeatherCondition.RAIN_SHOWERS;
+            case 82 -> WeatherCondition.VIOLENT_RAIN_SHOWERS;
+            case 95 -> WeatherCondition.THUNDERSTORM;
+            case 96, 99 -> WeatherCondition.THUNDERSTORM_WITH_HAIL;
+            default -> WeatherCondition.UNKNOWN;
         };
     }
 

@@ -53,7 +53,7 @@ class WeatherControllerTests {
                 new WeatherGateway.Location("示例城市 A", "示例地区 A", "示例街区 A", "德国")
         ));
         when(gateway.weather(new WeatherGateway.Coordinates(52.52, 13.41))).thenReturn(Optional.of(
-                new WeatherGateway.LiveWeather("小雨", 22.3, "东风", "3", "80", "2026-04-28 13:00:00", "unknown")
+                new WeatherGateway.LiveWeather(WeatherCondition.LIGHT_RAIN, 22.3, "东风", "3", "80", "2026-04-28 13:00:00", "unknown")
         ));
 
         mockMvc.perform(get("/api/weather/atmosphere/browser")
