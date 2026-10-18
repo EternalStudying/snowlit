@@ -17,6 +17,9 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Web a
 ### Phase 3: Documentation and glossary
 - **Status:** complete
 
+### Phase 4: Second backend pass (review items 3–7)
+- **Status:** complete on branch `refactor/backend-deepening-2` (not merged, not pushed); migrations and real-database tests excluded by user decision
+
 ## Context Entry Points
 
 | Scope | Required reading |

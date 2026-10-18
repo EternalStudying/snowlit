@@ -14,6 +14,19 @@
 | 0c2245a | Atomic album like toggle and view counting |
 | d50b52e | `@Autowired` on `ImageIntake`; wiring test covers it |
 
+## Second Refactor (2026-10-18, branch `refactor/backend-deepening-2`)
+
+| Commit | Change |
+|---|---|
+| 238c1a0 | One injected `Clock` bean; `PageWindow` replaces three paging clamps |
+| 7604425 | Manager status decided by `User` and carried on the actor; `SiteManagerPolicy` removed |
+| e72ea89 | Weather gateway returns `WeatherCondition`; Chinese keyword matcher removed |
+| dd29a6f | Home reads other features through their modules; `MemberLocations`; mapper-boundary architecture test |
+| f98190b | Album split into `AlbumModule`, `AlbumDrafts`, `AlbumPrivateAccess` |
+| e7780cf | `DiaryMarkdown` extracted from `DiaryModule` |
+
+Checks: `mvn -o test` 258 tests passing. Packaged-jar smoke run against throwaway MySQL 8.4 / Redis 7.4 (seeded): home latest/stats shape, album list paging and canManage, private album lock and wrong-password errors, draft upload with WebP-preview rule, publish, like, view, new draft + discard, diary title/summary from Markdown, wish and story canManage for manager vs guest, weather fallback on invalid coordinates, demo_b login. Weather provider calls were not exercised to avoid sending coordinates to external services.
+
 ## Verification Run in This Task
 
 - `mvn -o test`: 269 tests, 0 failures.

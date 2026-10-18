@@ -13,10 +13,22 @@ Ten vertical domains are album, auth, diary, feedback, home, messages, notices, 
 | storage | `ImageIntake`, `ImagePolicy`, `ImageFormat`, and the `ObjectStore` seam |
 | failure | `ApplicationFailure`, mapped to HTTP by `ApiExceptionHandler` |
 | text | `Text.trim` / `Text.trimToNull` for optional user-entered text |
+| paging | `PageWindow`: page/size clamping, offset, hasMore |
 | infrastructure | Adapters: MinIO and local-disk object stores, Redis session and album-token stores, WeChat and weather gateways |
-| config | Wiring, including `StorageConfig`, which picks the object store |
+| config | Wiring: `ClockConfig` (the one application `Clock`), `StorageConfig` (picks the object store) |
 
-Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. A class with more than one constructor needs `@Autowired` on the injection constructor; `SpringModuleWiringTests` covers every business module plus `ImageIntake` and `AuthSessions`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
+Inside features:
+
+| Feature | Modules |
+|---|---|
+| album | `AlbumModule` (published catalog, daily likes/views, highlights), `AlbumDrafts` (create/fill/publish/discard), `AlbumPrivateAccess` (password unlock, failure lock, access tokens); package-private `Albums` holds shared lookups and response mapping |
+| diary | `DiaryModule`; package-private `DiaryMarkdown` reads title, summary and image URLs from Markdown |
+| home | `HomeModule` composes the overview from other features' modules; `MemberLocations` owns each member's stored location (Diary uses it for weather snapshots) |
+| weather | `WeatherModule`; `WeatherCondition` is the typed condition (label + state/variant/precipitation) the gateway reports |
+
+Features read each other only through modules: `DiaryModule.latestShared`, `AlbumModule.latestPublicPhoto/photoCount`, `WishModule.latest/totals`, `MessageModule.latest/count`. `ArchitectureTests.mappersOnlyQueryTheirOwnFeature` fails when a mapper imports another feature.
+
+Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. Modules have one constructor and take the shared `Clock` bean; tests pass a fixed clock. `SpringModuleWiringTests` covers every business module plus `ImageIntake`, `AuthSessions`, `AlbumDrafts`, `AlbumPrivateAccess` and `MemberLocations`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
 
 Defensive style: trust framework guarantees (generated ids, required bodies, injected beans, non-null columns) and let unexpected infrastructure failures surface. Null handling belongs only where data is genuinely optional (nullable columns, optional request fields, absent rows).
 
@@ -25,11 +37,11 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - A business session is a 256-bit random URL-safe token stored in Redis (`loginSession:<token>` → user id) for one hour. There is no JWT. Logout revokes the presented token idempotently and answers 401 only when no token is sent.
 - A handler requires login exactly when it declares a required `@CurrentActor` parameter; there is no URL-based rule. `ArchitectureTests.everyEndpointDeclaresWhetherItNeedsLogin` fails for any endpoint that neither requires an actor nor appears in its explicit public list (login, WeChat login/bind, logout, story list/detail).
 - Every 401 uses the standard `{status, code, message}` body with code `UNAUTHORIZED`. Missing or unreadable request bodies answer 400 `REQUEST_BODY_INVALID`.
-- `AuthenticatedActor` carries the validated couple role (`boyfriend`/`girlfriend`, or null). Home and Diary reject a null role with their own `*_ROLE_NOT_CONFIGURED` codes.
+- `AuthenticatedActor` carries the validated couple role (`boyfriend`/`girlfriend`, or null) and the manager flag. Home and Diary reject a null role with their own `*_ROLE_NOT_CONFIGURED` codes; album, story and wish writes call `actor.requireManager` with their own `*_FORBIDDEN` codes.
 
 ## Authorization and Data Contracts
 
-- [SiteManagerPolicy](src/main/java/xyz/snowlit/auth/SiteManagerPolicy.java) currently grants management to user IDs 1 and 2. Complete multi-couple tenant isolation is not implemented.
+- `User.isManager` currently grants management to user IDs 1 and 2. Complete multi-couple tenant isolation is not implemented; it would need couple-owned records and a schema change, which was deliberately left out.
 - Private diaries are author-readable; updates/deletes check authorship. Messages can be deleted only by their author. Album draft operations check ownership. Wish complete/reopen requires authentication. Client visibility cannot replace backend authorization.
 - WeChat login/binding reuses users and Redis sessions. Business tokens are returned; openid, session_key, and AppSecret are not returned to clients.
 - Current fields include originalUrl/previewUrl, diary entryDate with date on creation, and feedback imageUrls. Contract changes require checking both clients.
@@ -60,6 +72,12 @@ Geoapify and Open-Meteo receive WGS84 coordinates only after WeatherGateway.Coor
 Complete results cache for 20 minutes, partial/failure results for 2 minutes, with about 2048 grid entries and same-grid request coalescing. Expiry uses Instant. Geoapify credentials remain backend-only; an Open-Meteo commercial key is optional.
 
 HomeVo contains couple, dailyNote, personStatuses, distance, latest, and stats. Seed accounts are demo_a/demo_b with blank location; existing accounts, bindings, and actual content remain preserved.
+
+## Deliberately Not Done
+
+- Entities stay mutable classes: MyBatis inserts write generated ids back through setters, so records do not fit.
+- No migration tool and no tests against a real database (user decision, 2026-10-18).
+- Weather keyword variants that no provider produces (haze, dust, sandstorm, windy, hot, cold) are no longer mapped.
 
 ## Verification Limits
 

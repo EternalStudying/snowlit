@@ -25,6 +25,9 @@ Backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18
 ### Phase 7: Documentation, glossary, smoke verification
 - **Status:** complete
 
+### Phase 8: Second pass (clock/paging, manager flag, weather condition, Home boundaries, album split, diary Markdown)
+- **Status:** complete on branch `refactor/backend-deepening-2` (not merged, not pushed)
+
 ## Entry Points
 
 Read root AGENTS.md and task_plan.md, then [findings](findings.md), [progress](progress.md), the [glossary](../GLOSSARY.md), and the [cross-client specification](../docs/product/current-spec.md).

@@ -13,7 +13,7 @@ The Web client owns its existing immersive motion system. The mini program prior
 - Web login uses an existing account and password. WeChat code exchange and explicit binding reuse existing users; there is no automatic registration flow.
 - Backend business tokens are opaque random strings for sessions stored in Redis for one hour; clients must not parse them. openid, session_key, and AppSecret are not client credentials.
 - An endpoint requires login exactly when its handler declares a required actor. Every 401 uses `{status, code: "UNAUTHORIZED", message}`; a missing or unreadable request body answers 400 `REQUEST_BODY_INVALID`. Logout is idempotent for a presented token.
-- SiteManagerPolicy currently permits user IDs 1 and 2 for album management, story writes, and wish creation/editing/deletion. Wish complete/reopen currently requires authentication.
+- Managers are currently user IDs 1 and 2 (decided once per request on the backend) for album management, story writes, and wish creation/editing/deletion. Wish complete/reopen currently requires authentication.
 - Diaries use shared/private visibility; private reads and mutations check authorship. Roles come from users.couple_role, never names. The current system is not complete multi-couple tenant isolation.
 - Messages require login and can be deleted only by their author. Client visibility is not authorization.
 - Editable profile fields are displayName, mood, and bio. Avatar upload is not implemented.
