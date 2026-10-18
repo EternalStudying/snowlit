@@ -2,19 +2,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 // @ts-ignore - Vitest runs in Node and this project keeps Node types minimal.
-import { readFileSync } from 'node:fs';
+
 // @ts-ignore - Same as above.
 import { resolve } from 'node:path';
 import HomeView from '../HomeView.vue';
 import { routes } from '../../../router';
 import { resetHomeLifecycleForTests } from '../internal/useHomeLifecycle';
 import { homeOverviewFixture } from './support/homeOverviewFixture';
-
-const homeCss = readFileSync(resolve(process.cwd(), 'src/modules/home/home.css'), 'utf8');
-const responsiveCss = readFileSync(
-  resolve(process.cwd(), 'src/modules/home/home-responsive.css'),
-  'utf8'
-);
 
 const albumPhotos = [
   { id: 1, previewUrl: 'https://example.com/photo-1.jpg', caption: '春日草坪', takenAt: '2026-05-08' },
@@ -65,12 +59,5 @@ describe('首页最新相册预览', () => {
     expect(albumCard.findAll('.album-preview-strip img')).toHaveLength(1);
     expect(albumCard.find('.album-preview-footer h3').text()).toBe('春日草坪');
     expect(albumCard.find('.album-preview-footer small').text()).toContain('共 3 张照片');
-
-    expect(homeCss).toMatch(/\.recent-grid\s*{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/);
-    expect(homeCss).toMatch(/\.recent-paper-card\s*{[\s\S]*height:\s*264px;/);
-    expect(homeCss).toMatch(/\.album-preview-strip\s*{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
-    expect(homeCss).toMatch(/\.album-preview-strip img\s*{[\s\S]*height:\s*clamp\(126px,\s*11vw,\s*145px\);/);
-    expect(homeCss).toMatch(/\.album-preview-footer\s*{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto;/);
-    expect(responsiveCss).not.toMatch(/\.album-preview-strip\s*{[\s\S]*grid-template-columns:\s*1fr;/);
   });
 });

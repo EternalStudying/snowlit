@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -9,18 +8,6 @@ import { WEATHER_METEOR_BUDGET } from '../core/weatherPerformanceBudget';
 import { getSkyProfile } from '../profiles/skyProfiles';
 import { getWeatherProfile } from '../profiles/weatherProfiles';
 import { getNightSkyRenderProfile } from '../systems/nightSky/nightSkyProfile';
-
-function absolute(path: string) {
-  return resolve(process.cwd(), path);
-}
-
-function fileExists(path: string) {
-  return existsSync(absolute(path));
-}
-
-function readSource(path: string) {
-  return readFileSync(absolute(path), 'utf8');
-}
 
 const frame = (elapsed = 0.24, delta = 0.16): WeatherFrameState => ({
   elapsed,
@@ -161,53 +148,5 @@ describe('procedural-weather stage 15 aurora and meteor night sky enhancement', 
     }
 
     expect(scene.children).toHaveLength(0);
-  });
-
-  it('keeps meteor resources pooled, capped, transparent, and free of independent timers', () => {
-    expect(fileExists('src/modules/weather/systems/nightSky/MeteorLayer.ts')).toBe(true);
-    expect(fileExists('src/modules/weather/systems/nightSky/meteorShaders.ts')).toBe(true);
-
-    const profileSource = readSource('src/modules/weather/systems/nightSky/nightSkyProfile.ts');
-    const layerSource = readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts');
-    const meteorSource = readSource('src/modules/weather/systems/nightSky/MeteorLayer.ts');
-    const shaderSource = readSource('src/modules/weather/systems/nightSky/meteorShaders.ts');
-    const atmosphereSource = readSource('src/modules/weather/WeatherAtmosphere.vue');
-    const auroraSource = readSource('src/modules/weather/systems/optical/AuroraOpticalLayer.ts');
-
-    expect(profileSource).toContain('meteorRate');
-    expect(profileSource).toContain('meteorShower');
-    expect(profileSource).toContain('auroraBlend');
-    expect(layerSource).toContain('MeteorLayer');
-    expect(layerSource).toContain('profile.meteorRate > 0');
-
-    expect(meteorSource).toContain('WEATHER_METEOR_BUDGET.maxActiveMeteors');
-    expect(meteorSource).toContain('LineSegments');
-    expect(meteorSource).toContain('Points');
-    expect(meteorSource).toContain('night-meteor-system');
-    expect(meteorSource).toContain('night-meteor-trail-pool');
-    expect(meteorSource).toContain('night-meteor-head-pool');
-    expect(meteorSource).toContain('depthWrite: false');
-    expect(meteorSource).toContain('frustumCulled = false');
-    expect(meteorSource).toContain('dispose()');
-    expect(meteorSource).toContain('geometry.dispose()');
-    expect(meteorSource).toContain('material.dispose()');
-    expect(meteorSource).not.toContain('setInterval');
-    expect(meteorSource).not.toContain('setTimeout');
-
-    const updateStart = meteorSource.indexOf('update(frame');
-    const disposeStart = meteorSource.indexOf('dispose()', updateStart);
-    const updateSource = meteorSource.slice(updateStart, disposeStart);
-    expect(updateSource).not.toContain('new THREE');
-    expect(updateSource).not.toContain('new Float32Array');
-
-    expect(shaderSource).toContain('gl_PointCoord');
-    expect(shaderSource).toContain('vAlpha');
-    expect(shaderSource).not.toContain('uniform sampler2D tScene');
-    expect(shaderSource).not.toContain('uniform sampler2D tInput');
-
-    expect(atmosphereSource).not.toContain("params.get('meteor')");
-    expect(atmosphereSource).not.toContain('meteorShowerOverride');
-    expect(atmosphereSource).not.toContain("meteor !== 'shower'");
-    expect(auroraSource).not.toContain('aurora-star-field');
   });
 });

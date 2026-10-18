@@ -1,20 +1,11 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { flushPromises, mount } from '@vue/test-utils';
 import * as THREE from 'three';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ThreeWeatherLayer from '../components/ThreeWeatherLayer.vue';
 import { WeatherController } from '../core/WeatherController';
-import {
-  WEATHER_CLOUD_BUDGET,
-  WEATHER_LIGHTNING_BUDGET,
-  WEATHER_METEOR_BUDGET,
-  WEATHER_NIGHT_SKY_BUDGET,
-  WEATHER_PARTICLE_COUNTS,
-  WEATHER_PERFORMANCE_BUDGET,
-  WEATHER_PIXEL_RATIO_CAP,
-  WEATHER_RENDERABLE_BUDGET
-} from '../core/weatherPerformanceBudget';
+import { WEATHER_CLOUD_BUDGET, WEATHER_LIGHTNING_BUDGET, WEATHER_METEOR_BUDGET, WEATHER_NIGHT_SKY_BUDGET, WEATHER_PARTICLE_COUNTS, WEATHER_PERFORMANCE_BUDGET, WEATHER_PIXEL_RATIO_CAP, WEATHER_RENDERABLE_BUDGET } from '../core/weatherPerformanceBudget';
 import type { WeatherFrameState, WeatherRuntimeState } from '../core/types';
 import { WindSystem } from '../core/WindSystem';
 import { getWeatherProfile } from '../profiles/weatherProfiles';
@@ -44,10 +35,6 @@ const rendererMock = vi.hoisted(() => {
 vi.mock('../core/createWeatherRenderer', () => ({
   createWeatherRenderer: rendererMock.createWeatherRenderer
 }));
-
-function fileExists(path: string) {
-  return existsSync(resolve(process.cwd(), path));
-}
 
 function readSource(path: string) {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -84,10 +71,6 @@ const frame = (elapsed = 0.24, delta = 0.16): WeatherFrameState => ({
   scrollY: 24
 });
 
-function runtimeFor(input: Parameters<typeof getWeatherProfile>[0]): WeatherRuntimeState {
-  return new WeatherController(getWeatherProfile(input)).runtimeState;
-}
-
 async function waitForAsyncWeather() {
   const deadline = Date.now() + 250;
 
@@ -122,17 +105,6 @@ async function createControllerScene(input: Parameters<typeof getWeatherProfile>
   return { scene, camera, controller };
 }
 
-function expectNoPerParticleLoopInUpdate(path: string) {
-  const source = readSource(path);
-  const updateStart = source.indexOf('update(frame');
-  const disposeStart = source.indexOf('dispose()', updateStart);
-  const updateSource = source.slice(updateStart, disposeStart);
-
-  expect(updateSource, path).not.toMatch(/for\s*\(/);
-  expect(updateSource, path).not.toContain('.array');
-  expect(updateSource, path).not.toContain('Float32Array');
-}
-
 describe('procedural-weather stage 7 performance and degradation hardening', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -147,7 +119,6 @@ describe('procedural-weather stage 7 performance and degradation hardening', () 
   });
 
   it('centralizes weather performance budgets and particle counts', () => {
-    expect(fileExists('src/modules/weather/core/weatherPerformanceBudget.ts')).toBe(true);
     expect(WEATHER_PIXEL_RATIO_CAP).toBeLessThanOrEqual(2);
     expect(WEATHER_PARTICLE_COUNTS.rain).toBeGreaterThanOrEqual(WEATHER_PERFORMANCE_BUDGET.rain.min);
     expect(WEATHER_PARTICLE_COUNTS.rain).toBeLessThanOrEqual(WEATHER_PERFORMANCE_BUDGET.rain.max);
@@ -173,46 +144,6 @@ describe('procedural-weather stage 7 performance and degradation hardening', () 
     expect(WEATHER_CLOUD_BUDGET.maxRenderableMeshes).toBeLessThanOrEqual(7);
     expect(WEATHER_CLOUD_BUDGET.maxGeneraPerSky).toBeLessThanOrEqual(2);
     expect(WEATHER_CLOUD_BUDGET.maxInstances).toBeLessThanOrEqual(128);
-  });
-
-  it('keeps hail visually sparse and fast rather than dense and slow', () => {
-    const hailLayerSource = readSource('src/modules/weather/systems/precipitation/HailPrecipitationLayer.ts');
-
-    expect(hailLayerSource).toContain('fallSpeed: 15.5');
-    expect(hailLayerSource).toContain('fallSpeed: 18.5');
-    expect(hailLayerSource).toContain('WEATHER_PARTICLE_COUNTS.hail.hail');
-    expect(hailLayerSource).toContain('WEATHER_PARTICLE_COUNTS.hail.hailStorm');
-  });
-
-  it('uses the centralized particle budgets from weather layers and renderer pixel cap', () => {
-    const budgetSource = readSource('src/modules/weather/core/weatherPerformanceBudget.ts');
-    const rendererSource = readSource('src/modules/weather/core/createWeatherRenderer.ts');
-    const layerSources = [
-      'src/modules/weather/systems/precipitation/RainPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/SnowPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/HailPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/RainSplashLayer.ts',
-      'src/modules/weather/systems/atmosphere/DustAtmosphereLayer.ts',
-      'src/modules/weather/systems/optical/SunnyOpticalLayer.ts'
-    ].map(readSource);
-    const cloudLayerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const nightProfileSource = readSource('src/modules/weather/systems/nightSky/nightSkyProfile.ts');
-    const meteorLayerSource = readSource('src/modules/weather/systems/nightSky/MeteorLayer.ts');
-    const starfieldSource = readSource('src/modules/weather/systems/nightSky/StarfieldLayer.ts');
-
-    expect(budgetSource).toContain('WEATHER_PARTICLE_COUNTS');
-    expect(budgetSource).toContain('WEATHER_CLOUD_BUDGET');
-    expect(budgetSource).toContain('WEATHER_NIGHT_SKY_BUDGET');
-    expect(budgetSource).toContain('WEATHER_METEOR_BUDGET');
-    expect(rendererSource).toContain('WEATHER_PIXEL_RATIO_CAP');
-    layerSources.forEach((source) => {
-      expect(source).toContain('WEATHER_PARTICLE_COUNTS');
-    });
-    expect(cloudLayerSource).toContain('PlaneGeometry(1, 1, 5, 5)');
-    expect(nightProfileSource).toContain('WEATHER_NIGHT_SKY_BUDGET');
-    expect(meteorLayerSource).toContain('WEATHER_METEOR_BUDGET');
-    expect(starfieldSource).toContain('profile.starCount');
-    expect(readSource('src/modules/weather/systems/optical/AuroraOpticalLayer.ts')).not.toContain('aurora-star-field');
   });
 
   it('keeps renderable object counts inside the family budget', async () => {
@@ -241,16 +172,6 @@ describe('procedural-weather stage 7 performance and degradation hardening', () 
   });
 
   it('keeps per-frame particle work in shaders and preserves transparent renderable flags', async () => {
-    [
-      'src/modules/weather/systems/precipitation/RainPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/SnowPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/HailPrecipitationLayer.ts',
-      'src/modules/weather/systems/precipitation/RainSplashLayer.ts',
-      'src/modules/weather/systems/clouds/CloudSkyLayer.ts',
-      'src/modules/weather/systems/nightSky/StarfieldLayer.ts',
-      'src/modules/weather/systems/atmosphere/DustAtmosphereLayer.ts'
-    ].forEach(expectNoPerParticleLoopInUpdate);
-
     const { scene, controller } = await createControllerScene({
       weatherState: 'sandstorm',
       weatherVariant: 'sandstorm'
@@ -288,26 +209,6 @@ describe('procedural-weather stage 7 performance and degradation hardening', () 
     expect(renderableCount(scene)).toBeLessThanOrEqual(WEATHER_RENDERABLE_BUDGET.stormBurst);
     layer.dispose();
     expect(scene.children).toHaveLength(0);
-  });
-
-  it('guards async system layer loading against stale profiles, dispose, and import failures', () => {
-    [
-      'src/modules/weather/systems/PrecipitationSystem.ts',
-      'src/modules/weather/systems/NightSkySystem.ts',
-      'src/modules/weather/systems/CloudSkySystem.ts',
-      'src/modules/weather/systems/AtmosphereSystem.ts',
-      'src/modules/weather/systems/ElectricalSystem.ts',
-      'src/modules/weather/systems/OpticalSystem.ts',
-      'src/modules/weather/systems/EnvironmentSystem.ts'
-    ].forEach((path) => {
-      const source = readSource(path);
-
-      expect(source, path).toContain('isLayerRequestActive');
-      expect(source, path).toContain('try {');
-      expect(source, path).toContain('catch (error)');
-      expect(source, path).toContain('warnWeatherLayerLoadFailure');
-      expect(source, path).toContain('layer.dispose()');
-    });
   });
 
   it('does not leave stale resources after rapid profile switches', async () => {

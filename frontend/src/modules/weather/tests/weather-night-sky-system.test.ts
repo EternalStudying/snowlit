@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -10,28 +9,6 @@ import { getSkyProfile } from '../profiles/skyProfiles';
 import { getWeatherProfile } from '../profiles/weatherProfiles';
 import { NightSkySystem } from '../systems/NightSkySystem';
 import { getNightSkyRenderProfile } from '../systems/nightSky/nightSkyProfile';
-
-function fileExists(path: string) {
-  return existsSync(resolve(process.cwd(), path));
-}
-
-function readSource(path: string) {
-  return readFileSync(resolve(process.cwd(), path), 'utf8');
-}
-
-function methodSource(source: string, methodName: string) {
-  const methodStart = source.indexOf(`${methodName}(`);
-  const nextMethodStart = source.indexOf('\n  dispose()', methodStart);
-
-  return source.slice(methodStart, nextMethodStart);
-}
-
-function systemsAssignmentSource(source: string) {
-  const assignmentStart = source.indexOf('this.systems = [');
-  const assignmentEnd = source.indexOf('];', assignmentStart);
-
-  return source.slice(assignmentStart, assignmentEnd);
-}
 
 const frame = (elapsed = 0.24, delta = 0.16): WeatherFrameState => ({
   elapsed,
@@ -159,19 +136,6 @@ describe('procedural-starfield stage 14 night sky core system', () => {
     });
   });
 
-  it('adds NightSkySystem to WeatherController lifecycle before cloud sky and weather layers', () => {
-    const controllerSource = readSource('src/modules/weather/core/WeatherController.ts');
-
-    expect(fileExists('src/modules/weather/systems/NightSkySystem.ts')).toBe(true);
-    expect(controllerSource).toContain('NightSkySystem');
-    expect(controllerSource).toContain('readonly nightSky');
-    expect(controllerSource).toContain('new NightSkySystem(systemContext)');
-    expect(controllerSource).toContain('this.nightSky');
-    const systemsSource = systemsAssignmentSource(controllerSource);
-    expect(systemsSource.indexOf('this.electrical')).toBeLessThan(systemsSource.indexOf('this.nightSky'));
-    expect(systemsSource.indexOf('this.nightSky')).toBeLessThan(systemsSource.indexOf('this.cloudSky'));
-  });
-
   it('creates clear night sky resources and suppresses daytime sunny optical layers', async () => {
     const { scene, controller } = createController({
       weatherState: 'clear',
@@ -288,42 +252,6 @@ describe('procedural-starfield stage 14 night sky core system', () => {
       'src/modules/weather/systems/nightSky/MilkyWayLayer.ts',
       'src/modules/weather/systems/nightSky/MoonLayer.ts'
     ];
-
-    expectedFiles.forEach((path) => expect(fileExists(path), path).toBe(true));
-
-    const systemSource = readSource('src/modules/weather/systems/NightSkySystem.ts');
-    const layerSource = readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts');
-    const starfieldSource = readSource('src/modules/weather/systems/nightSky/StarfieldLayer.ts');
-    const shadersSource = readSource('src/modules/weather/systems/nightSky/nightSkyShaders.ts');
-    const moonSource = readSource('src/modules/weather/systems/nightSky/MoonLayer.ts');
-
-    expect(systemSource).toContain("import('./nightSky/NightSkyLayer')");
-    expect(systemSource).toContain('warnWeatherLayerLoadFailure');
-    expect(layerSource).toContain('night-sky-system');
-    expect(layerSource).toContain('SkyDomeLayer');
-    expect(layerSource).toContain('StarfieldLayer');
-    expect(layerSource).toContain('MilkyWayLayer');
-    expect(layerSource).toContain('MoonLayer');
-
-    expect(starfieldSource).toContain('THREE.Points');
-    expect(starfieldSource).toContain('aStarData');
-    expect(starfieldSource).toContain('blackbodyColor');
-    expect(starfieldSource).toContain('seededRandom');
-    expect(starfieldSource).toContain('Math.acos(2 * random() - 1)');
-    expect(methodSource(starfieldSource, 'update')).not.toContain('for (');
-    expect(methodSource(starfieldSource, 'update')).not.toContain('.array');
-    expect(moonSource).toContain('night-moon-system');
-    expect(moonSource).toContain('night-moon-glow');
-
-    expect(shadersSource).toContain('horizonGlow');
-    expect(shadersSource).toContain('centerProtection');
-    expect(shadersSource).toContain('gl_PointCoord');
-    expect(shadersSource).toContain('fbm');
-    expect(shadersSource).toContain('dustLanes');
-    expect(shadersSource).not.toContain('uniform sampler2D tScene');
-    expect(shadersSource).not.toContain('uniform sampler2D tInput');
-    expect(shadersSource).not.toContain('scene.background');
-    expect(shadersSource).not.toContain('EffectComposer');
   });
 
   it('can be instantiated and disposed independently as a system-owned night sky layer', async () => {

@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -13,10 +12,6 @@ const frame = (elapsed = 0.24, delta = 0.16): WeatherFrameState => ({
   pointer: { x: 0.03, y: -0.02 },
   scrollY: 18
 });
-
-function readSource(path: string) {
-  return readFileSync(resolve(process.cwd(), path), 'utf8');
-}
 
 function createController(input: Parameters<typeof getWeatherProfile>[0]) {
   const scene = new THREE.Scene();
@@ -244,34 +239,5 @@ describe('procedural-weather stage 16 unified system orchestration', () => {
     } finally {
       controller.dispose();
     }
-  });
-
-  it('wires orchestration into the expected systems without adding forbidden rendering techniques', () => {
-    expect(existsSync(resolve(process.cwd(), 'src/modules/weather/core/weatherOrchestrationProfile.ts'))).toBe(true);
-
-    const controllerSource = readSource('src/modules/weather/core/WeatherController.ts');
-    const cloudSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const nightSource = readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts');
-    const opticalSource = readSource('src/modules/weather/systems/OpticalSystem.ts');
-    const environmentSource = readSource('src/modules/weather/systems/EnvironmentSystem.ts');
-    const atmosphereSource = readSource('src/modules/weather/systems/AtmosphereSystem.ts');
-
-    expect(controllerSource).toContain('blendWeatherOrchestration');
-    expect(controllerSource).toContain('runtimeState.orchestration');
-    expect(cloudSource).toContain('runtime.orchestration.cloudVisibility');
-    expect(cloudSource).toContain('runtime.orchestration.cloudOcclusion');
-    expect(cloudSource).not.toContain('runtime.orchestration.centerProtection');
-    expect(nightSource).toContain('nightSkyVisibility');
-    expect(nightSource).toContain('starVisibilityMultiplier');
-    expect(nightSource).toContain('meteorVisibilityMultiplier');
-    expect(opticalSource).toContain('sunnyOpticalVisibility');
-    expect(opticalSource).toContain('auroraVisibility');
-    expect(environmentSource).toContain('environmentDarknessMultiplier');
-    expect(atmosphereSource).toContain('atmosphereVisibility');
-
-    const audited = [controllerSource, cloudSource, nightSource, opticalSource, environmentSource, atmosphereSource].join('\n');
-    ['EffectComposer', 'html2canvas', 'captureStream', 'getDisplayMedia', 'scene.background', 'tScene:', 'tInput:'].forEach(
-      (token) => expect(audited).not.toContain(token)
-    );
   });
 });

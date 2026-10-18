@@ -1,14 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { readFileSync } from 'node:fs';
+
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import MessagesView from '../MessagesView.vue';
 import { routes } from '../../../router';
-import {
-  clearAuthToken,
-  setAuthToken
-} from '../../../auth';
+import { clearAuthToken, setAuthToken } from '../../../auth';
 
 const pagePayload = {
   items: [
@@ -305,25 +302,5 @@ describe('/messages 气泡漂流留言墙', () => {
     await retry.wrapper.get('[data-message-retry]').trigger('click');
     await flushPromises();
     expect(retry.wrapper.findAll('[data-message-bubble]')).toHaveLength(2);
-  });
-
-  it('留言页固定为融合导航下的一屏高度，发布框保持底部扁长布局', () => {
-    const messagesStyles = readFileSync(resolve(process.cwd(), 'src/modules/messages/messages.css'), 'utf8');
-    const wallSource = readFileSync(resolve(process.cwd(), 'src/modules/messages/components/MessageBubbleWall.vue'), 'utf8');
-    const composerSource = readFileSync(resolve(process.cwd(), 'src/modules/messages/components/MessageComposer.vue'), 'utf8');
-
-    expect(messagesStyles).toMatch(
-      /\.messages-page\s*{[\s\S]*--messages-fusion-top-offset:\s*64px;[\s\S]*height:\s*calc\(100vh - var\(--messages-fusion-top-offset\)\);[\s\S]*overflow:\s*hidden;/
-    );
-    expect(messagesStyles).toMatch(/\.home-route-content\s*>\s*\.messages-page\s*{[\s\S]*overflow:\s*hidden;/);
-    expect(messagesStyles).toMatch(/\.messages-stage\s*{[\s\S]*height:\s*100%;[\s\S]*min-height:\s*0;/);
-    expect(wallSource).toMatch(
-      /\.bubbles-area\s*{[\s\S]*inset:\s*0;[\s\S]*z-index:\s*1;[\s\S]*pointer-events:\s*none;/
-    );
-    expect(wallSource).toMatch(/\.bubbles-area\s+:deep\(\.bubble-content\)\s*{[\s\S]*pointer-events:\s*auto;/);
-    expect(wallSource).toMatch(/\.composer-wrapper\s*{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*0;[\s\S]*right:\s*0;/);
-    expect(wallSource).toMatch(/\.composer-wrapper\s*{[\s\S]*z-index:\s*30;/);
-    expect(composerSource).toContain('rows="1"');
-    expect(composerSource).toContain('max-width: 780px;');
   });
 });

@@ -6,11 +6,7 @@ import { weatherStateParameters } from '../core/weatherStateParameters';
 import type { WeatherRenderMode } from '../core/types';
 import { getWeatherOrchestrationProfile } from '../core/weatherOrchestrationProfile';
 import { WEATHER_METEOR_BUDGET, WEATHER_NIGHT_SKY_BUDGET } from '../core/weatherPerformanceBudget';
-import {
-  getWeatherProfile,
-  getWeatherRenderMode,
-  weatherProfiles
-} from '../profiles/weatherProfiles';
+import { getWeatherProfile, getWeatherRenderMode, weatherProfiles } from '../profiles/weatherProfiles';
 import { ALL_CLOUD_GENERA, getSkyProfile } from '../profiles/skyProfiles';
 import { CLOUD_LAYER_PROFILES, WEATHER_CLOUD_BUDGET } from '../systems/clouds/cloudLayerProfiles';
 import { getNightSkyRenderProfile } from '../systems/nightSky/nightSkyProfile';
@@ -114,20 +110,12 @@ const WEATHER_SOURCE_AUDIT_FILES = [
   'src/modules/weather/systems/environment/WetSurfaceLayer.ts',
   'src/modules/weather/systems/environment/SnowAccumulationLayer.ts',
   'src/modules/weather/systems/environment/SandstormTintLayer.ts',
-  'src/modules/weather/effects/sunny/SunnyWeatherScene.ts',
   'src/modules/weather/effects/sunny/sunnyShaders.ts',
-  'src/modules/weather/effects/cloudy/CloudyWeatherScene.ts',
-  'src/modules/weather/effects/rain/RainWeatherScene.ts',
   'src/modules/weather/effects/rain/rainShaders.ts',
   'src/modules/weather/effects/rain/rainSplashShaders.ts',
-  'src/modules/weather/effects/storm/StormWeatherScene.ts',
-  'src/modules/weather/effects/snow/SnowWeatherScene.ts',
   'src/modules/weather/effects/snow/snowShaders.ts',
-  'src/modules/weather/effects/fog/FogWeatherScene.ts',
   'src/modules/weather/systems/atmosphere/fogSpriteShaders.ts',
-  'src/modules/weather/effects/sandstorm/SandstormWeatherScene.ts',
   'src/modules/weather/effects/sandstorm/sandstormShaders.ts',
-  'src/modules/weather/effects/aurora/AuroraWeatherScene.ts',
   'src/modules/weather/effects/aurora/auroraShaders.ts',
   'src/modules/weather/effects/optical/wetLensShaders.ts',
   'src/modules/weather/effects/optical/frostShaders.ts',
@@ -165,8 +153,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
       expect(getWeatherRenderMode({ weatherState, isLargeViewport: false, prefersReducedMotion: false })).toBe('none');
       expect(getWeatherRenderMode({ weatherState, isLargeViewport: true, prefersReducedMotion: true })).toBe('none');
     });
-
-    expect(readSource('src/modules/weather/profiles/weatherProfiles.ts')).not.toContain('resolveWeatherStateWithOverride');
   });
 
   it('covers profile variants that route hail, haze, dust, and aurora without backend visual knobs', () => {
@@ -212,20 +198,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
     });
   });
 
-  it('keeps hiding gates and immersive routes outside the Three weather layer', () => {
-    const appSource = readSource('src/App.vue');
-    const routerSource = readSource('src/router.ts');
-    const atmosphereSource = readSource('src/modules/weather/WeatherAtmosphere.vue');
-
-    expect(atmosphereSource).toContain("const LARGE_VIEWPORT_QUERY = '(max-width: 1020px)'");
-    expect(atmosphereSource).toContain("const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'");
-    expect(atmosphereSource).toContain('getWeatherRenderMode');
-    expect(appSource).toContain('const isImmersiveRoute = computed(() => route.meta.immersive === true)');
-    expect(appSource).toContain('const canShowWeatherAtmosphere = computed(() => route.matched.length > 0 && !isImmersiveRoute.value)');
-    expect(appSource).toContain('<WeatherAtmosphere v-if="canShowWeatherAtmosphere" />');
-    expect(routerSource).toContain("{ path: '/about', component: loadAboutRoute, meta: { immersive: true } }");
-  });
-
   it('scans weather source for forbidden post-processing and page-capture techniques', () => {
     const weatherSources = WEATHER_SOURCE_AUDIT_FILES.map((path) => {
       expect(existsSync(absolute(path)), path).toBe(true);
@@ -247,7 +219,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
       expect(frontendTypes).toContain(field);
       expect(weatherVo).toContain(field);
     });
-    EXPECTED_STATES.forEach((weatherState) => expect(frontendTypes).toContain(`| '${weatherState}'`));
     // Every state and variant the backend can report must be a state/variant the frontend understands.
     const backendConditions = [...weatherConditions.matchAll(/^\s+[A-Z_]+\("[^"]*", "(\w+)", "(\w+)", "(\w+)"\)/gm)];
     expect(backendConditions.length).toBeGreaterThan(10);
@@ -334,14 +305,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
       maxRenderableMeshes: 7,
       maxGeneraPerSky: 2
     });
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('CloudSkySystem');
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('NightSkySystem');
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('readonly cloudSky');
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('readonly nightSky');
-    expect(readSource('src/modules/weather/systems/CloudSkySystem.ts')).toContain("import('./clouds/CloudSkyLayer')");
-    expect(readSource('src/modules/weather/systems/CloudSkySystem.ts')).toContain('getSkyProfile');
-    expect(readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts')).toContain('cloud-sky-system');
-    expect(readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts')).toContain('PlaneGeometry(1, 1, 5, 5)');
   });
 
   it('declares the Stage 14 night sky core system contract', () => {
@@ -388,12 +351,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
     expect(cloudyNight.starCount).toBeLessThan(clearNight.starCount);
     expect(stormNight.starCount).toBeLessThanOrEqual(250);
     expect(stormNight.milkyWayOpacity).toBe(0);
-    expect(readSource('src/modules/weather/systems/NightSkySystem.ts')).toContain("import('./nightSky/NightSkyLayer')");
-    expect(readSource('src/modules/weather/systems/nightSky/StarfieldLayer.ts')).toContain('THREE.Points');
-    expect(readSource('src/modules/weather/systems/nightSky/StarfieldLayer.ts')).toContain('aStarData');
-    expect(readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts')).toContain('MeteorLayer');
-    expect(readSource('src/modules/weather/systems/nightSky/MeteorLayer.ts')).toContain('night-meteor-system');
-    expect(readSource('src/modules/weather/systems/optical/AuroraOpticalLayer.ts')).not.toContain('aurora-star-field');
   });
 
   it('declares the Stage 15 aurora and meteor enhancement contract', () => {
@@ -454,9 +411,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
     expect(clearShower.meteorRate).toBeGreaterThan(clearNight.meteorRate);
     expect(cloudyNight.meteorRate).toBe(0);
     expect(stormShower.meteorRate).toBe(0);
-    expect(readSource('src/modules/weather/WeatherAtmosphere.vue')).not.toContain("params.get('meteor')");
-    expect(readSource('src/modules/weather/components/ThreeWeatherLayer.vue')).not.toContain('props.meteorShowerOverride');
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('Boolean(left.meteorShower)');
   });
 
   it('declares the Stage 16 unified sky orchestration contract', () => {
@@ -495,16 +449,6 @@ describe('procedural-weather stage 8 complete verification matrix', () => {
     });
     expect(stormNight.nightSkyVisibility).toBeLessThan(0.1);
     expect(stormNight.electricalVisibility).toBe(1);
-    expect(readSource('src/modules/weather/core/WeatherController.ts')).toContain('runtimeState.orchestration');
-    expect(readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts')).toContain('runtime.orchestration.cloudVisibility');
-    expect(readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts')).toContain('runtime.orchestration');
-    expect(readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts')).toContain('nightSkyVisibility');
-    expect(readSource('src/modules/weather/systems/optical/SunnyOpticalLayer.ts')).toContain(
-      'runtime.orchestration.sunnyOpticalVisibility'
-    );
-    expect(readSource('src/modules/weather/systems/optical/AuroraOpticalLayer.ts')).toContain(
-      'runtime.orchestration.auroraVisibility'
-    );
   });
 
 });

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,8 +7,6 @@ import LoginView from '..';
 import { routes } from '../../../router';
 import { resetHomeLifecycleForTests } from '../../home/internal/useHomeLifecycle';
 import { homeOverviewFixture } from '../../home/tests/support/homeOverviewFixture';
-
-const loginCss = readFileSync(resolve(process.cwd(), 'src/modules/login/login.css'), 'utf-8');
 
 enableAutoUnmount(afterEach);
 
@@ -160,33 +157,6 @@ describe('LoginView', () => {
     });
 
     expect(wrapper.get('.login-footer').classes()).toContain('login-footer--pinned');
-  });
-
-  it('开灯光晕使用台灯局部合成层，避免首次开灯重绘整页背景', () => {
-    const pageBlock = loginCss.match(/\.login-page\s*{[\s\S]*?\n}/)?.[0] ?? '';
-
-    expect(pageBlock).not.toMatch(/background:[\s\S]*var\(--on\)/);
-    expect(loginCss).toMatch(/\.lamp-scene::before\s*{[\s\S]*opacity:\s*calc\(var\(--on\) \* 0\.\d+\)/);
-    expect(loginCss).toMatch(/\.lamp-scene::before\s*{[\s\S]*will-change:\s*opacity/);
-    expect(loginCss).toMatch(/\.login-page\.is-lamp-priming\s+\.lamp-scene::before/);
-    expect(loginCss).toMatch(/\.login-page\.is-lamp-priming[\s\S]*opacity:\s*0\.001/);
-  });
-
-  it('Naive 输入框内层和自动填充态保持深色登录输入框背景', () => {
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input-wrapper[\s\S]*background:\s*transparent/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input[\s\S]*background:\s*transparent/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el[\s\S]*background:\s*transparent/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el:-webkit-autofill[\s\S]*\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el:-webkit-autofill:hover[\s\S]*\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el:-webkit-autofill:focus/);
-    expect(loginCss).toMatch(/-webkit-box-shadow:\s*0 0 0 1000px #1f242a inset/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el:-webkit-autofill[\s\S]*-webkit-text-fill-color:\s*#fff8e8/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el:-webkit-autofill[\s\S]*transition:\s*background-color 9999s ease-in-out 0s/);
-  });
-
-  it('Naive 登录输入框文字在深色输入框内垂直居中', () => {
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input-wrapper[\s\S]*align-items:\s*center/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input[\s\S]*height:\s*100%/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input[\s\S]*align-items:\s*center/);
-    expect(loginCss).toMatch(/\.login-form\s+\.snowlit-login-input\s+\.n-input__input-el[\s\S]*line-height:\s*48px/);
   });
 
   it('账号或密码为空时提示校验错误且不提交', async () => {

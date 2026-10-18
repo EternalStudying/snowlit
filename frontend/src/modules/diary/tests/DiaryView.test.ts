@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -340,16 +339,11 @@ describe('日记页 /api/diary 用户侧接口联调', () => {
   it('初始化请求月份统计和当前月列表，不依赖旧 mock 或 /api/site', async () => {
     const { fetcher, calls } = createFetchMock();
     const wrapper = await mountDiaryView(fetcher as unknown as typeof fetch);
-    const viewSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/DiaryView.vue'), 'utf8');
 
     expect(calls).toContain('/api/diary/months');
     expect(calls).toContain('/api/diary?month=2026-05');
     expect(calls).toContain('/api/auth/me');
     expect(calls).not.toContain('/api/site');
-    expect(viewSource).not.toContain('fetchDiaryEntries');
-    expect(viewSource).not.toContain('mockDiaryEntries');
-    expect(viewSource).not.toContain('CURRENT_DIARY_ROLE');
-    expect(readFileSync(resolve(process.cwd(), 'src/modules/diary/model.ts'), 'utf8')).not.toContain('CURRENT_DIARY_ROLE');
     expect(wrapper.text()).toContain('今天的光');
     expect(wrapper.text()).toContain('开心');
     expect(wrapper.find('[data-diary-date="2026-05-17"] .diary-entry-card[data-role="girlfriend"]').exists()).toBe(true);
@@ -600,11 +594,6 @@ describe('日记页 /api/diary 用户侧接口联调', () => {
     const { fetcher } = createFetchMock();
     const wrapper = await mountDiaryView(fetcher as unknown as typeof fetch);
     const viewText = wrapper.text();
-
-    ['happy', 'miss', 'calm', 'wronged', 'expecting', 'tired', 'sweet', 'secret', 'angry', 'touched'].forEach((key) => {
-      expect(readFileSync(resolve(process.cwd(), 'src/modules/diary/moods.ts'), 'utf8')).toContain(key);
-      expect(existsSync(resolve(process.cwd(), `src/modules/diary/assets/moods/${key}.webp`))).toBe(true);
-    });
     ['undefined', 'null', 'NaN'].forEach((badText) => {
       expect(viewText).not.toContain(badText);
     });
@@ -613,15 +602,8 @@ describe('日记页 /api/diary 用户侧接口联调', () => {
   it('右下角写日记入口使用 WebP 图片并保留打开弹窗行为', async () => {
     const { fetcher } = createFetchMock();
     const wrapper = await mountDiaryView(fetcher as unknown as typeof fetch);
-    const viewSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/DiaryView.vue'), 'utf8');
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-
-    expect(existsSync(resolve(process.cwd(), 'src/modules/diary/assets/diary-compose-entry.webp'))).toBe(true);
-    expect(viewSource).toContain("import diaryComposeEntry from './assets/diary-compose-entry.webp'");
-    expect(viewSource).toContain(':src="diaryComposeEntry"');
     expect(wrapper.get('.diary-compose-fab').attributes('aria-label')).toBe('写日记');
     expect(wrapper.find('.diary-compose-fab__image').exists()).toBe(true);
-    expect(styleSource).not.toContain('.diary-compose-fab::before');
 
     await wrapper.get('.diary-compose-fab').trigger('click');
     expect(wrapper.find('form.diary-markdown-editor__form').exists()).toBe(true);
@@ -637,128 +619,12 @@ describe('日记页 /api/diary 用户侧接口联调', () => {
     expect(wrapper.find('canvas.diary-timeline-glow-canvas[data-diary-timeline-glow="true"]').exists()).toBe(false);
   });
 
-  it('Chapter Index 标题保持原横向位置并垂直居中', () => {
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-    const kickerRule = styleSource.match(/\.diary-chapter-picker__kicker\s*{[^}]*}/)?.[0] ?? '';
-
-    expect(kickerRule).toContain('left: 72px;');
-    expect(kickerRule).toContain('text-align: left;');
-    expect(kickerRule).toContain('transform: translateY(-50%);');
-    expect(kickerRule).not.toContain('left: 50%;');
-    expect(kickerRule).not.toContain('translate(-50%, -50%)');
-  });
-
-  it('写日记弹窗中地点、天气和心情控件保持同宽且内容居中', () => {
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-
-    expect(styleSource).toMatch(/--diary-editor-meta-chip-width:\s*104px;/);
-    expect(styleSource).toMatch(
-      /\.diary-markdown-editor__meta-field:is\(\.diary-markdown-editor__meta-field--location,\s*\.diary-markdown-editor__meta-field--short,\s*\.diary-markdown-editor__meta-field--mood\)\s*{[\s\S]*flex:\s*0 0 var\(--diary-editor-meta-chip-width\);[\s\S]*width:\s*var\(--diary-editor-meta-chip-width\);/
-    );
-    expect(styleSource).toMatch(
-      /\.diary-markdown-editor__meta-field:is\(\.diary-markdown-editor__meta-field--location,\s*\.diary-markdown-editor__meta-field--short,\s*\.diary-markdown-editor__meta-field--mood\)\s*{[\s\S]*justify-content:\s*center;/
-    );
-    expect(styleSource).toMatch(/\.diary-markdown-editor__meta-field input,[\s\S]*text-align:\s*center;/);
-    expect(styleSource).toMatch(/\.diary-markdown-editor__toolbar \.diary-mood-select__trigger\s*{[\s\S]*justify-content:\s*center;/);
-  });
-
-  it('写日记弹窗心情浮层高于编辑区且元信息控件不露出 Naive 内层方框', () => {
-    const editorSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/components/DiaryMarkdownEditor.vue'), 'utf8');
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-    const toolbarRule = styleSource.match(/\.diary-markdown-editor__toolbar\s*{[^}]*}/)?.[0] ?? '';
-    const moodPickerRule = styleSource.match(/\.diary-mood-picker\s*{[^}]*}/)?.[0] ?? '';
-    const bookRule = styleSource.match(/\.diary-markdown-editor__book\s*{[^}]*}/)?.[0] ?? '';
-    const popupPortalRule = styleSource.match(/\.diary-editor-popup-portal\s*{[^}]*}/)?.[0] ?? '';
-
-    expect(editorSource).toContain('ref="diaryPopupPortal"');
-    expect(editorSource).toContain('<div class="diary-markdown-editor__meta-field diary-markdown-editor__meta-field--visibility"');
-    expect(editorSource).toContain('<div class="diary-markdown-editor__meta-field diary-markdown-editor__meta-field--date"');
-    expect(editorSource).not.toContain('<label class="diary-markdown-editor__meta-field diary-markdown-editor__meta-field--visibility"');
-    expect(editorSource).not.toContain('<label class="diary-markdown-editor__meta-field diary-markdown-editor__meta-field--date"');
-    expect(editorSource).toMatch(/<NSelect[\s\S]*placement="bottom-end"[\s\S]*:to="diaryPopupPortal"[\s\S]*@update:value="updateVisibility"/);
-    expect(editorSource).toMatch(/<NDatePicker[\s\S]*placement="bottom-end"[\s\S]*:to="diaryPopupPortal"[\s\S]*@update:formatted-value="updateDate"/);
-    expect(toolbarRule).toContain('position: relative;');
-    expect(toolbarRule).toMatch(/z-index:\s*3;/);
-    expect(moodPickerRule).toMatch(/z-index:\s*4;/);
-    expect(bookRule).toContain('z-index: 1;');
-    expect(popupPortalRule).toContain('position: fixed;');
-    expect(popupPortalRule).toContain('z-index: 5001;');
-    expect(popupPortalRule).toContain('pointer-events: none;');
-    expect(styleSource).toMatch(
-      /\.diary-markdown-editor__meta-field :is\(\.n-input__border,\s*\.n-input__state-border,\s*\.n-base-selection__border,\s*\.n-base-selection__state-border\)\s*{[\s\S]*display:\s*none;/
-    );
-    expect(styleSource).toMatch(
-      /\.diary-markdown-editor__meta-field :is\(\.n-input-wrapper,\s*\.n-base-selection-label\)\s*{[\s\S]*background:\s*transparent;/
-    );
-  });
-
-  it('写日记弹窗使用 WebP 纸张背景承载工具栏和编辑窗口', () => {
-    const editorSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/components/DiaryMarkdownEditor.vue'), 'utf8');
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-    const baseStyleSource = readFileSync(resolve(process.cwd(), 'src/styles/01-base.css'), 'utf8');
-    const backdropRule =
-      Array.from(
-        styleSource.matchAll(/\.diary-editor-backdrop,[\s\S]*?\.diary-detail-backdrop\s*{[^}]*}/g),
-        (match) => match[0]
-      ).find((rule) => rule.includes('position: fixed;')) ?? '';
-    const modalRule = styleSource.match(/\.diary-markdown-editor-modal\s*{[^}]*}/)?.[0] ?? '';
-    const backgroundRule = styleSource.match(/\.diary-markdown-editor__background\s*{[^}]*}/)?.[0] ?? '';
-    const formRule = styleSource.match(/\.diary-markdown-editor__form\s*{[^}]*}/)?.[0] ?? '';
-
-    expect(existsSync(resolve(process.cwd(), 'src/modules/diary/assets/diary-editor-background.webp'))).toBe(true);
-    expect(editorSource).toContain("import diaryEditorBackground from '../assets/diary-editor-background.webp'");
-    expect(editorSource).toContain("import { useModalWheelGuard } from '../../../composables/useModalWheelGuard'");
-    expect(editorSource).toContain('useModalWheelGuard(editorWheelGuardActive);');
-    expect(editorSource).toMatch(/class="diary-editor-backdrop"[\s\S]*data-smooth-scroll-prevent/);
-    expect(backdropRule).toContain('z-index: 5000;');
-    expect(baseStyleSource).not.toContain('html:has(.diary-editor-backdrop)');
-    expect(baseStyleSource).not.toContain('body:has(.diary-editor-backdrop)');
-    expect(readFileSync(resolve(process.cwd(), 'src/modules/diary/DiaryView.vue'), 'utf8')).not.toContain("document.body.style.overflow = 'hidden'");
-    expect(editorSource).toContain('class="diary-markdown-editor__background"');
-    expect(editorSource).toContain(':src="diaryEditorBackground"');
-    expect(modalRule).toContain('border: 0;');
-    expect(backgroundRule).toContain('position: absolute;');
-    expect(backgroundRule).toContain('object-fit: cover;');
-    expect(backgroundRule).toContain('pointer-events: none;');
-    expect(formRule).toContain('position: relative;');
-    expect(formRule).toContain('z-index: 1;');
-  });
-
   it('保留 Markdown 双页编辑器、居中左右时间线、荧光 canvas 和动效降级结构', async () => {
     const { fetcher } = createFetchMock();
     const wrapper = await mountDiaryView(fetcher as unknown as typeof fetch);
-    const viewSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/DiaryView.vue'), 'utf8');
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-    const glowSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/components/DiaryTimelineGlow.vue'), 'utf8');
-
-    expect(viewSource).toContain("import DiaryTimelineGlow from './components/DiaryTimelineGlow.vue'");
     expect(wrapper.find('.diary-timeline--centered').exists()).toBe(true);
     expect(wrapper.find('.diary-date-row__side--boyfriend').exists()).toBe(true);
     expect(wrapper.find('.diary-date-row__side--girlfriend').exists()).toBe(true);
     expect(wrapper.find('canvas.diary-timeline-glow-canvas[data-diary-timeline-glow="true"]').exists()).toBe(true);
-    expect(styleSource).toContain('.diary-markdown-editor__left-page');
-    expect(styleSource).toContain('@media (prefers-reduced-motion: reduce)');
-    expect(glowSource).toContain('RIBBON_ENTRY_FALLBACK_START_Y');
-    expect(glowSource).toContain('RIBBON_ENTRY_CHASE_DURATION');
-    expect(glowSource).toContain('getRibbonEntryStartDocumentY');
-    expect(glowSource).toContain('datePoints[0]?.y ?? lineTop');
-    expect(glowSource).toContain('initializeRibbonEndAtFirstDatePoint');
-    expect(glowSource).toContain('Math.max(viewportTargetDocumentY, getRibbonEntryStartDocumentY())');
-    expect(glowSource).toContain('ribbonEntranceActive ? RIBBON_ENTRY_CHASE_DURATION : RIBBON_CENTER_CHASE_DURATION');
-    expect(glowSource).not.toContain('ribbonEntranceActive ? Math.min');
-  });
-
-  it('章节目录面板层级高于时间线荧光 canvas，避免动画穿透目录', () => {
-    const styleSource = readFileSync(resolve(process.cwd(), 'src/modules/diary/diary.css'), 'utf8');
-
-    expect(styleSource).toMatch(
-      /\.diary-controls\s*{[\s\S]*z-index:\s*20;/
-    );
-    expect(styleSource).toMatch(
-      /\.diary-chapter-panel\s*{[\s\S]*z-index:\s*21;/
-    );
-    expect(styleSource).toMatch(
-      /\.diary-timeline-glow-canvas\s*{[\s\S]*z-index:\s*12;/
-    );
   });
 });

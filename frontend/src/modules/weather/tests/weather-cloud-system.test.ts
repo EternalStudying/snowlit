@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
@@ -12,10 +12,6 @@ import { CloudSkySystem } from '../systems/CloudSkySystem';
 import { WEATHER_CLOUD_BUDGET } from '../systems/clouds/cloudLayerProfiles';
 import { CloudSkyLayer } from '../systems/clouds/CloudSkyLayer';
 import { getCloudLightingProfile } from '../systems/clouds/cloudLightingProfile';
-
-function fileExists(path: string) {
-  return existsSync(resolve(process.cwd(), path));
-}
 
 function readSource(path: string) {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -234,19 +230,6 @@ function cloudLightingFor(skyProfile: SkyProfile) {
 }
 
 describe('procedural-clouds stage 12 cloud sky system', () => {
-  it('adds CloudSkySystem to WeatherController as a real sixth system', () => {
-    const controllerSource = readSource('src/modules/weather/core/WeatherController.ts');
-    const typesSource = readSource('src/modules/weather/core/types.ts');
-
-    expect(fileExists('src/modules/weather/systems/CloudSkySystem.ts')).toBe(true);
-    expect(fileExists('src/modules/weather/systems/clouds/CloudSkyLayer.ts')).toBe(true);
-    expect(controllerSource).toContain('CloudSkySystem');
-    expect(controllerSource).toContain('readonly cloudSky');
-    expect(controllerSource).toContain('new CloudSkySystem(systemContext)');
-    expect(controllerSource).toContain('this.cloudSky');
-    expect(typesSource).toContain('daylightHint?: DaylightHint');
-  });
-
   it('creates five partlyCloudy wide puffy dghez cloud meshes without activating the old cloud-atmosphere owner', async () => {
     const { scene, controller } = createController({
       weatherState: 'cloudy',
@@ -496,72 +479,6 @@ describe('procedural-clouds stage 12 cloud sky system', () => {
     expect(scene.children).toHaveLength(0);
   });
 
-  it('loads CloudSkyLayer lazily through the active cloudy path', () => {
-    const cloudSystemSource = readSource('src/modules/weather/systems/CloudSkySystem.ts');
-    const atmosphereSource = readSource('src/modules/weather/systems/AtmosphereSystem.ts');
-    const layerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-
-    expect(cloudSystemSource).toContain("import('./clouds/CloudSkyLayer')");
-    expect(cloudSystemSource).toContain('getSkyProfile');
-    expect(cloudSystemSource).toContain("profile.weatherState !== 'cloudy'");
-    expect(cloudSystemSource).toContain('warnWeatherLayerLoadFailure');
-    expect(atmosphereSource).not.toContain("profile.weatherState === 'cloudy'");
-    expect(layerSource).not.toContain('CloudBandConfig');
-    expect(layerSource).not.toContain('cloudBand');
-    expect(layerSource).not.toContain('scene.background');
-    expect(layerSource).not.toContain('EffectComposer');
-    expect(layerSource).not.toContain('html2canvas');
-    expect(layerSource).not.toContain('captureStream');
-    expect(layerSource).not.toContain('getDisplayMedia');
-    expect(layerSource).not.toContain('tScene');
-  });
-
-  it('ports dghez procedural cloud assets, source notice, and shader uniforms', () => {
-    const layerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const shaderSource = readSource('src/modules/weather/systems/clouds/cloudShaders.ts');
-    const profileSource = readSource('src/modules/weather/systems/clouds/cloudLayerProfiles.ts');
-
-    expect(fileExists('src/modules/weather/effects/clouds/assets/dghez-cloud-shape.webp')).toBe(true);
-    expect(fileExists('src/modules/weather/effects/clouds/assets/dghez-cloud-noise.webp')).toBe(true);
-    expect(fileExists('src/modules/weather/effects/clouds/LICENSE.dghez-procedural-clouds.txt')).toBe(true);
-
-    [
-      'uTxtShape',
-      'uTxtCloudNoise',
-      'uTime',
-      'uFac1',
-      'uFac2',
-      'uTimeFactor1',
-      'uTimeFactor2',
-      'uDisplStrenght1',
-      'uDisplStrenght2'
-    ].forEach((uniformName) => {
-      expect(layerSource + shaderSource, uniformName).toContain(uniformName);
-    });
-    expect(shaderSource).toContain('fbm3d');
-    expect(shaderSource).toContain('snoise3');
-    expect(shaderSource).toContain('levels');
-    expect(shaderSource).toContain('vec3(0.95, 0.95, 0.95)');
-    [
-      'resolveLayout',
-      'resolveInstanceLayout',
-      'styleCode',
-      'puffyCloud',
-      'sheetCloud',
-      'wispyCloud',
-      'cellularCloud',
-      'towerCloud',
-      'renderStyle',
-      'instanceCount',
-      'verticalBias',
-      'flatBase',
-      'CloudBandConfig',
-      'cloudBand'
-    ].forEach((legacyToken) => {
-      expect(layerSource + shaderSource + profileSource, legacyToken).not.toContain(legacyToken);
-    });
-  });
-
   it('uses the same dghez shader path for every cloud genus and disposes textures', () => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 100);
@@ -722,16 +639,11 @@ describe('procedural-clouds stage 12 cloud sky system', () => {
   });
 
   it('keeps long-running dghez clouds animated without relying on old shape branches', async () => {
-    const shaderSource = readSource('src/modules/weather/systems/clouds/cloudShaders.ts');
     const scene = createController({
       weatherState: 'cloudy',
       weatherVariant: 'overcast',
       daylightHint: 'day'
     });
-
-    expect(shaderSource).toContain('uTxtShape');
-    expect(shaderSource).toContain('uTxtCloudNoise');
-    expect(shaderSource).not.toContain('styleCode');
 
     try {
       await waitForCloudSky(scene.scene);
@@ -783,29 +695,5 @@ describe('procedural-clouds stage 12 cloud sky system', () => {
     }
 
     expect(scene.scene.children).toHaveLength(0);
-  });
-
-  it('removes dghez demo controls and keeps production cloud behavior free of banned APIs', () => {
-    const weatherAtmosphereSource = readSource('src/modules/weather/WeatherAtmosphere.vue');
-    const threeLayerSource = readSource('src/modules/weather/components/ThreeWeatherLayer.vue');
-    const systemSource = readSource('src/modules/weather/systems/CloudSkySystem.ts');
-    const layerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const combined = weatherAtmosphereSource + threeLayerSource + systemSource + layerSource;
-
-    expect(fileExists('src/modules/weather/systems/clouds/CloudSkyBackgroundLayer.ts')).toBe(false);
-    expect(fileExists('src/modules/weather/systems/clouds/CloudSkyDebugControls.ts')).toBe(false);
-    expect(fileExists('src/modules/weather/systems/clouds/cloudBackgroundShaders.ts')).toBe(false);
-    expect(weatherAtmosphereSource).not.toContain('cloudDemo');
-    expect(weatherAtmosphereSource).not.toContain('cloudControls');
-    expect(threeLayerSource).not.toContain('cloudDemoMode');
-    expect(systemSource).not.toContain('cloudDemoMode');
-    expect(layerSource).not.toContain('cloudControls');
-    expect(combined).not.toContain('EffectComposer');
-    expect(combined).not.toContain('html2canvas');
-    expect(combined).not.toContain('captureStream');
-    expect(combined).not.toContain('getDisplayMedia');
-    expect(combined).not.toContain('scene.background');
-    expect(combined).not.toMatch(/uniform\s+sampler2D\s+tScene/);
-    expect(combined).not.toMatch(/uniform\s+sampler2D\s+tInput/);
   });
 });

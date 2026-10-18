@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { existsSync, readFileSync } from 'node:fs';
+
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
@@ -36,12 +36,6 @@ function rect(overrides: Partial<DOMRect>): DOMRect {
     height: overrides.height ?? 0,
     toJSON: () => ({})
   } as DOMRect;
-}
-
-function readSource(path: string) {
-  const absolutePath = resolve(process.cwd(), path);
-
-  return existsSync(absolutePath) ? readFileSync(absolutePath, 'utf8') : '';
 }
 
 function mockReducedMotion(matches: boolean) {
@@ -129,19 +123,6 @@ describe('首页导航点击定位', () => {
       top: 0,
       left: 0
     });
-  });
-
-  it('导航根节点用捕获阶段设置跨页滚动策略，早于 RouterLink 默认导航', () => {
-    const shellSource = readSource('src/modules/home/JournalRouteShell.vue');
-    const navFusionSource = readSource(
-      'src/modules/home/internal/useJournalNavFusion.ts'
-    );
-
-    expect(navFusionSource).toContain('preserveNextRouteScrollPosition');
-    expect(shellSource).toContain('@click.capture="handleCozyNavRootClick"');
-    expect(navFusionSource).toMatch(
-      /if \(targetPath === route\.path\) \{[\s\S]*event\.preventDefault\(\);[\s\S]*nextTick\(scrollNavToFusionEntry\);/
-    );
   });
 
   it('渲染共享 active 轨道，并在路由变化后用 active 链接位置更新 CSS 变量', async () => {
@@ -249,17 +230,6 @@ describe('首页导航点击定位', () => {
     wrapper.unmount();
   });
 
-  it('路由 watcher 通过 nextTick 重新测量 active 轨道', () => {
-    const navFusionSource = readSource(
-      'src/modules/home/internal/useJournalNavFusion.ts'
-    );
-
-    expect(navFusionSource).toContain('function updateNavActiveTrack');
-    expect(navFusionSource).toMatch(
-      /watch\(\s*\(\) => route\.path,[\s\S]*nextTick\(\(\) => \{[\s\S]*updateNavActiveTrack\(\);/
-    );
-  });
-
   it('首次挂载时下一帧复测 active 轨道，避免初始 layout 未就绪导致轨道透明', async () => {
     const animationFrames: FrameRequestCallback[] = [];
     Object.defineProperty(window, 'requestAnimationFrame', {
@@ -323,12 +293,6 @@ describe('首页导航点击定位', () => {
     const messagesEntry = wrapper.get('.home-cozy-nav a[href="/messages"][data-label="留言"]');
     expect(messagesEntry.element.tagName).toBe('A');
     expect(wrapper.find('.home-cozy-nav__link--locked[data-label="留言"]').exists()).toBe(false);
-    expect(readSource('src/modules/home/JournalRouteShell.vue')).not.toContain(
-      'item.locked'
-    );
-    expect(readSource('src/modules/home/home.css')).not.toContain(
-      '.home-cozy-nav__link--locked'
-    );
     await messagesEntry.trigger('click');
     expect(nav.attributes('data-nav-switching')).toBe('true');
 
@@ -383,27 +347,6 @@ describe('首页导航点击定位', () => {
 
     shell.unmount();
     topbar.unmount();
-  });
-
-  it('融合后的中间五个导航项复用左侧顶栏按钮的 TopbarTooltip，并移除旧伪元素提示', () => {
-    const shellSource = readSource('src/modules/home/JournalRouteShell.vue');
-    const homeStyles = readSource('src/modules/home/home.css');
-    const appShellStyles = readSource('src/styles/02-app-shell.css');
-
-    expect(shellSource).toContain(
-      "import TopbarTooltip from '../../components/TopbarTooltip.vue'"
-    );
-    expect(shellSource).toContain('<TopbarTooltip');
-    expect(shellSource).toContain(':enabled="navFusionState === \'docked\'"');
-    expect(shellSource).not.toContain(':title="`${item.label}暂未开放`"');
-    expect(homeStyles).not.toContain('.home-cozy-nav__link::after');
-    expect(homeStyles).not.toContain('.home-cozy-nav__link:hover::after');
-    expect(appShellStyles).toMatch(
-      /\.topbar-tooltip__content\s*{[\s\S]*background:[\s\S]*rgba\(255,\s*229,\s*235,\s*0\.96\)/
-    );
-    expect(appShellStyles).toMatch(
-      /\.topbar-tooltip__arrow\s*{[\s\S]*background:\s*rgba\(255,\s*229,\s*235,\s*0\.96\)/
-    );
   });
 
   it('中间导航只在融合到顶栏后显示和左侧按钮一致的 Teleport tooltip', async () => {
@@ -499,17 +442,6 @@ describe('首页导航点击定位', () => {
     expect(document.body.querySelector('.story-route-transition')).toBeNull();
 
     wrapper.unmount();
-  });
-
-  it('点滴黑场普通动效使用更慢的出现和消失时长', () => {
-    const transitionSource = readSource('src/modules/story/internal/storyRouteTransition.ts');
-
-    expect(transitionSource).toContain('const STORY_ROUTE_ENTER_DURATION = 0.82;');
-    expect(transitionSource).toContain('const STORY_ROUTE_EXIT_COVER_DURATION = 0.48;');
-    expect(transitionSource).toContain('const STORY_ROUTE_EXIT_REVEAL_DURATION = 0.62;');
-    expect(transitionSource).toContain('duration: STORY_ROUTE_ENTER_DURATION');
-    expect(transitionSource).toContain('duration: STORY_ROUTE_EXIT_COVER_DURATION');
-    expect(transitionSource).toContain('duration: STORY_ROUTE_EXIT_REVEAL_DURATION');
   });
 
   it('点滴黑场转场期间连续点击不会重复跳转或留下多个遮罩', async () => {

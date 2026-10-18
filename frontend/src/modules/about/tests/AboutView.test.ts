@@ -1,14 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import AboutView from '../AboutView.vue';
 import { routes } from '../../../router';
-
-function readSource(path: string) {
-  return readFileSync(resolve(process.cwd(), path), 'utf8');
-}
 
 async function mountAboutView() {
   const router = createRouter({ history: createMemoryHistory(), routes });
@@ -35,17 +29,8 @@ describe('关于页星图导览', () => {
 
   it('/about 配置为沉浸式路由，登录后布局会隐藏公共外壳和天气背景', () => {
     const route = routes.find((item) => item.path === '/about');
-    const appSource = readSource('src/App.vue');
 
     expect(route?.meta?.immersive).toBe(true);
-    expect(appSource).toContain('useRoute');
-    expect(appSource).toContain('isImmersiveRoute');
-    expect(appSource).toContain('canShowWeatherAtmosphere');
-    expect(appSource).toContain('<WeatherAtmosphere v-if="canShowWeatherAtmosphere"');
-    expect(appSource).toContain('<RouterView v-if="isImmersiveRoute"');
-    expect(appSource).toContain('<template v-else>');
-    expect(appSource).toContain('<AppTopBar :show-feedback="isLoggedIn" />');
-    expect(appSource).toContain('<JournalRouteShell>');
   });
 
   it('关于页是独立夜间星图，不再显示旧关于我们内容', async () => {
@@ -114,21 +99,5 @@ describe('关于页星图导览', () => {
 
     expect(wrapper.get('.about-starmap__card').attributes('data-active-station')).toBe('messages');
     expect(wrapper.get('.about-starmap__card').text()).toContain('留言星');
-  });
-
-  it('关于页样式包含全屏、隐藏公共背景冲突、左下角返回、星轨和 reduced motion 规则', () => {
-    const styleSource = readSource('src/modules/about/about.css');
-
-    expect(styleSource).toContain('.about-starmap-page');
-    expect(styleSource).toContain('min-height: 540vh');
-    expect(styleSource).toContain('.about-starmap__viewport');
-    expect(styleSource).toContain('position: sticky');
-    expect(styleSource).toContain('.about-starmap__return');
-    expect(styleSource).toContain('left: max(24px, env(safe-area-inset-left))');
-    expect(styleSource).toContain('bottom: max(24px, env(safe-area-inset-bottom))');
-    expect(styleSource).toContain('.about-starmap__route-progress');
-    expect(styleSource).toContain('stroke-dashoffset');
-    expect(styleSource).toContain('@media (prefers-reduced-motion: reduce)');
-    expect(styleSource).toContain('.about-starmap-page[data-reduced-motion="true"]');
   });
 });

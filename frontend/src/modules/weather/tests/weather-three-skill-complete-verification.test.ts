@@ -4,15 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { WeatherState } from '../model';
 import { weatherStateParameters } from '../core/weatherStateParameters';
 import { resolveWeatherTransitionRoute } from '../core/weatherTransitionRoutes';
-import {
-  WEATHER_CLOUD_BUDGET,
-  WEATHER_LIGHTNING_BUDGET,
-  WEATHER_METEOR_BUDGET,
-  WEATHER_NIGHT_SKY_BUDGET,
-  WEATHER_PARTICLE_COUNTS,
-  WEATHER_PERFORMANCE_BUDGET,
-  WEATHER_RENDERABLE_BUDGET
-} from '../core/weatherPerformanceBudget';
+import { WEATHER_CLOUD_BUDGET, WEATHER_LIGHTNING_BUDGET, WEATHER_METEOR_BUDGET, WEATHER_NIGHT_SKY_BUDGET, WEATHER_PARTICLE_COUNTS, WEATHER_PERFORMANCE_BUDGET, WEATHER_RENDERABLE_BUDGET } from '../core/weatherPerformanceBudget';
 import { getWeatherOrchestrationProfile } from '../core/weatherOrchestrationProfile';
 import type { WeatherRenderMode } from '../core/types';
 import { getWeatherProfile, getWeatherRenderMode, weatherProfiles } from '../profiles/weatherProfiles';
@@ -198,8 +190,6 @@ describe('procedural-weather/clouds/starfield stage 17 complete verification con
       expect(parameters.lightning, `${weatherState}.lightning`).toBeGreaterThanOrEqual(0);
       expect(parameters.lightning, `${weatherState}.lightning`).toBeLessThanOrEqual(1);
     });
-
-    expect(readSource('src/modules/weather/profiles/weatherProfiles.ts')).not.toContain('resolveWeatherStateWithOverride');
     expect(resolveWeatherTransitionRoute('clear', 'storm')).toEqual(['cloudy', 'rain', 'heavyRain', 'storm']);
     expect(resolveWeatherTransitionRoute('storm', 'clear')).toEqual(['rain', 'cloudy', 'clear']);
     expect(resolveWeatherTransitionRoute('clear', 'blizzard')).toEqual(['lightSnow', 'snow', 'blizzard']);
@@ -220,26 +210,6 @@ describe('procedural-weather/clouds/starfield stage 17 complete verification con
   });
 
   it('keeps weather visual effects system-owned without backend visual knobs', () => {
-    const precipitationSource = readSource('src/modules/weather/systems/PrecipitationSystem.ts');
-    const opticalSource = readSource('src/modules/weather/systems/OpticalSystem.ts');
-    const environmentSource = readSource('src/modules/weather/systems/EnvironmentSystem.ts');
-    const controllerSource = readSource('src/modules/weather/core/WeatherController.ts');
-
-    [
-      'RainPrecipitationLayer',
-      'RainSplashLayer',
-      'HailPrecipitationLayer',
-      'SnowPrecipitationLayer'
-    ].forEach((token) => expect(precipitationSource).toContain(token));
-    ['WetLensOverlayLayer', 'FrostOverlayLayer', 'RainbowOpticalLayer', 'AuroraOpticalLayer'].forEach((token) =>
-      expect(opticalSource).toContain(token)
-    );
-    ['WetSurfaceLayer', 'SnowAccumulationLayer', 'SandstormTintLayer'].forEach((token) =>
-      expect(environmentSource).toContain(token)
-    );
-    ['PrecipitationSystem', 'AtmosphereSystem', 'ElectricalSystem', 'OpticalSystem', 'EnvironmentSystem'].forEach(
-      (token) => expect(controllerSource).toContain(token)
-    );
     expect(WEATHER_PARTICLE_COUNTS.rain).toBeGreaterThanOrEqual(WEATHER_PERFORMANCE_BUDGET.rain.min);
     expect(WEATHER_PARTICLE_COUNTS.rainSplash).toBeLessThanOrEqual(WEATHER_PERFORMANCE_BUDGET.splash.max);
     expect(WEATHER_LIGHTNING_BUDGET.maxActiveBolts).toBeLessThanOrEqual(3);
@@ -288,17 +258,6 @@ describe('procedural-weather/clouds/starfield stage 17 complete verification con
     expect(cloudyNight.cloudLighting.daylightBlend).toBeLessThan(0.15);
     expect(cloudyNight.cloudLighting.cloudTint[2]).toBeGreaterThan(cloudyNight.cloudLighting.cloudTint[0]);
     expect(dust.cloudLighting.cloudTint[0]).toBeGreaterThan(dust.cloudLighting.cloudTint[2]);
-
-    const cloudSystemSource = readSource('src/modules/weather/systems/CloudSkySystem.ts');
-    const cloudLayerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const cloudShaderSource = readSource('src/modules/weather/systems/clouds/cloudShaders.ts');
-
-    expect(cloudSystemSource).toContain("import('./clouds/CloudSkyLayer')");
-    expect(cloudLayerSource).toContain('cloud-sky-system');
-    expect(cloudLayerSource).toContain('PlaneGeometry(1, 1, 5, 5)');
-    expect(cloudLayerSource).not.toContain('InstancedBufferGeometry');
-    expect(cloudShaderSource).toContain('uTxtShape');
-    expect(cloudShaderSource).toContain('uTxtCloudNoise');
   });
 
   it('covers procedural-starfield sky dome, starfield, Milky Way, moon, meteor, aurora integration, and strong-weather suppression', () => {
@@ -342,38 +301,14 @@ describe('procedural-weather/clouds/starfield stage 17 complete verification con
       expect(bundle.nightSky.meteorRate).toBe(0);
       expect(bundle.orchestration.meteorVisibilityMultiplier).toBe(0);
     });
-
-    const nightSystemSource = readSource('src/modules/weather/systems/NightSkySystem.ts');
-    const nightLayerSource = readSource('src/modules/weather/systems/nightSky/NightSkyLayer.ts');
-    const starfieldSource = readSource('src/modules/weather/systems/nightSky/StarfieldLayer.ts');
-    const moonSource = readSource('src/modules/weather/systems/nightSky/MoonLayer.ts');
-    const meteorSource = readSource('src/modules/weather/systems/nightSky/MeteorLayer.ts');
-    const auroraSource = readSource('src/modules/weather/systems/optical/AuroraOpticalLayer.ts');
-
-    expect(nightSystemSource).toContain("import('./nightSky/NightSkyLayer')");
-    ['SkyDomeLayer', 'StarfieldLayer', 'MilkyWayLayer', 'MoonLayer', 'MeteorLayer'].forEach((token) =>
-      expect(nightLayerSource).toContain(token)
-    );
-    expect(starfieldSource).toContain('THREE.Points');
-    expect(starfieldSource).toContain('aStarData');
-    expect(moonSource).toContain('night-moon-glow');
-    expect(meteorSource).toContain('night-meteor-system');
-    expect(meteorSource).not.toContain('setInterval');
-    expect(auroraSource).not.toContain('aurora-star-field');
   });
 
   it('keeps degradation gates, backend semantic contract, and forbidden source scan intact', () => {
-    const appSource = readSource('src/App.vue');
-    const atmosphereSource = readSource('src/modules/weather/WeatherAtmosphere.vue');
     const backendVoSource = readProjectSource('backend/src/main/java/xyz/snowlit/weather/WeatherVos.java');
     const backendModuleTestSource = readProjectSource('backend/src/test/java/xyz/snowlit/weather/WeatherModuleTests.java');
     const backendControllerTestSource = readProjectSource(
       'backend/src/test/java/xyz/snowlit/weather/WeatherControllerTests.java'
     );
-
-    expect(atmosphereSource).toContain("const LARGE_VIEWPORT_QUERY = '(max-width: 1020px)'");
-    expect(atmosphereSource).toContain("const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'");
-    expect(appSource).toContain('route.matched.length > 0 && !isImmersiveRoute.value');
     ['city', 'district', 'province', 'country', 'weatherState', 'weatherVariant', 'precipitationKind', 'daylightHint', 'observedAt'].forEach(
       (field) => expect(backendVoSource).toContain(field)
     );

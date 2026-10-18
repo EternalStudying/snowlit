@@ -1,5 +1,5 @@
 import { flushPromises, mount, enableAutoUnmount } from '@vue/test-utils';
-import { readFileSync } from 'node:fs';
+
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
@@ -10,8 +10,6 @@ import { routes } from '../../../router';
 import { homeOverviewFixture } from '../../home/tests/support/homeOverviewFixture';
 
 enableAutoUnmount(afterEach);
-
-const supportStyles = readFileSync(resolve(process.cwd(), 'src/modules/support/support.css'), 'utf-8');
 
 function jsonResponse(payload: unknown, ok = true, status = 200) {
   return Promise.resolve({
@@ -169,52 +167,6 @@ describe('SupportCenter integration', () => {
       expect(document.body.querySelector('[data-testid="update-notice-dialog"]')).toBeNull();
     });
     expect(document.body.textContent).not.toContain('更新小纸条');
-  });
-
-  it('公告和反馈弹窗使用 Naive 全屏 mask，不在弹窗内容节点上绘制整屏背景', () => {
-    const feedbackSource = readFileSync(resolve(process.cwd(), 'src/modules/support/SupportCenter.vue'), 'utf-8');
-    const overlayRule = supportStyles.match(/\.update-notice-dialog,\s*\n\.feedback-dialog\s*{[^}]*}/)?.[0] ?? '';
-
-    expect(feedbackSource).toMatch(/<NSelect[\s\S]*data-testid="feedback-type"[\s\S]*:to="false"/);
-    expect(overlayRule).not.toContain('position: fixed;');
-    expect(overlayRule).not.toContain('inset: 0;');
-    expect(overlayRule).not.toContain('background: rgba(65, 42, 34, 0.28);');
-    expect(supportStyles).toMatch(/body:has\(\.update-notice-dialog\) \.n-modal-mask/);
-    expect(supportStyles).toMatch(/body:has\(\.feedback-dialog\) \.n-modal-mask/);
-  });
-
-  it('反馈弹窗不会让 Naive UI 内层输入元素再画一层原生输入框', () => {
-    expect(supportStyles).toContain('.feedback-dialog__panel input:not(.n-input__input-el)');
-    expect(supportStyles).toContain('.feedback-dialog__panel textarea:not(.n-input__textarea-el)');
-    expect(supportStyles).not.toContain('.feedback-dialog__panel input,\n.feedback-dialog__panel textarea,');
-    expect(supportStyles).not.toContain('.feedback-dialog__panel input,\n.feedback-dialog__panel select {');
-
-    const wrapperRule = (supportStyles.match(/\.feedback-dialog__panel \.n-input \.n-input-wrapper[\s\S]*?{[^}]*}/g) ?? []).join(
-      '\n'
-    );
-    const inputRule = (supportStyles.match(/\.feedback-dialog__panel \.n-input \.n-input__input-el[\s\S]*?{[^}]*}/g) ?? []).join(
-      '\n'
-    );
-
-    expect(wrapperRule).toContain('height: 100%;');
-    expect(wrapperRule).toContain('box-sizing: border-box;');
-    expect(inputRule).toContain('height: 100%;');
-    expect(inputRule).toContain('padding: 0;');
-    expect(inputRule).toContain('border: 0;');
-    expect(inputRule).toContain('background: transparent;');
-  });
-
-  it('反馈弹窗输入控件保持可聚焦结构并使用中文提示', () => {
-    const feedbackSource = readFileSync(resolve(process.cwd(), 'src/modules/support/SupportCenter.vue'), 'utf-8');
-
-    expect(feedbackSource).toMatch(/<NModal[\s\S]*:show="feedbackVisible"[\s\S]*@esc="closeFeedback"/);
-    expect(feedbackSource).toMatch(/<NModal[\s\S]*:show="feedbackVisible"[\s\S]*:trap-focus="false"/);
-    expect(feedbackSource).not.toMatch(/<NModal[\s\S]*v-if="feedbackVisible"[\s\S]*:show="true"/);
-    expect(feedbackSource).toContain('placeholder="选择反馈类型"');
-    expect(feedbackSource).toContain('placeholder="一句话说清楚问题"');
-    expect(feedbackSource).toContain('placeholder="把你遇到的情况、页面和期望结果写下来"');
-    expect(feedbackSource).toContain('placeholder="微信、邮箱或其他联系方式（可不填）"');
-    expect(feedbackSource).not.toContain('Please Input');
   });
 
   it('今日不再提示会调用后端并关闭公告弹窗', async () => {

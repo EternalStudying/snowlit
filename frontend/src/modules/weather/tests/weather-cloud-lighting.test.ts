@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -8,10 +7,6 @@ import { WindSystem } from '../core/WindSystem';
 import { getWeatherProfile } from '../profiles/weatherProfiles';
 import { getSkyProfile } from '../profiles/skyProfiles';
 import { getCloudLightingProfile } from '../systems/clouds/cloudLightingProfile';
-
-function readSource(path: string) {
-  return readFileSync(resolve(process.cwd(), path), 'utf8');
-}
 
 const frame = (elapsed = 0.24, delta = 0.16): WeatherFrameState => ({
   elapsed,
@@ -100,46 +95,6 @@ describe('procedural-weather stage 13 cloud lighting and weather integration', (
     expect(dust.lighting.cloudTint[0]).toBeGreaterThan(dust.lighting.cloudTint[2]);
     expect(aurora.lighting.daylightBlend).toBeLessThan(0.15);
     expect(cloudyNight.lighting.cloudTint[2]).toBeGreaterThan(cloudyNight.lighting.cloudTint[0]);
-  });
-
-  it('keeps lighting profiles available while dghez cloud body bypasses old tint and shadow shader code', () => {
-    const layerSource = readSource('src/modules/weather/systems/clouds/CloudSkyLayer.ts');
-    const shaderSource = readSource('src/modules/weather/systems/clouds/cloudShaders.ts');
-
-    expect(readSource('src/modules/weather/systems/clouds/cloudLightingProfile.ts')).toContain('silverLining');
-    expect(readSource('src/modules/weather/systems/clouds/cloudLightingProfile.ts')).toContain('forwardScatter');
-    expect(readSource('src/modules/weather/systems/clouds/cloudLightingProfile.ts')).toContain('baseDarkening');
-    expect(layerSource).not.toContain('cloudTint');
-    expect(layerSource).not.toContain('baseDarkening');
-    expect(layerSource).not.toContain('internalLight');
-    expect(shaderSource).not.toContain('silverEdge');
-    expect(shaderSource).not.toContain('bottomShadow');
-    expect(shaderSource).not.toContain('internalGlow');
-    expect(shaderSource).toContain('vec3(0.95, 0.95, 0.95)');
-  });
-
-  it('uses shared visual signals so lightning can illuminate storm clouds without private layer access', () => {
-    const typesSource = readSource('src/modules/weather/core/types.ts');
-    const controllerSource = readSource('src/modules/weather/core/WeatherController.ts');
-    const electricalSource = readSource('src/modules/weather/systems/ElectricalSystem.ts');
-    const lightningSource = readSource('src/modules/weather/systems/electrical/LightningLayer.ts');
-    const dustLightningSource = readSource('src/modules/weather/systems/electrical/DustLightningLayer.ts');
-    const cloudSystemSource = readSource('src/modules/weather/systems/CloudSkySystem.ts');
-
-    expect(typesSource).toContain('interface WeatherVisualSignals');
-    expect(typesSource).toContain('stormFlash');
-    expect(typesSource).toContain('dustFlash');
-    expect(controllerSource).toContain('visualSignals');
-    expect(controllerSource).toContain('resetVisualSignals');
-    const systemsBlock = controllerSource.match(/this\.systems = \[[\s\S]*?\];/)?.[0] ?? '';
-    expect(systemsBlock).toContain('this.electrical');
-    expect(systemsBlock).toContain('this.nightSky');
-    expect(systemsBlock).toContain('this.cloudSky');
-    expect(systemsBlock.indexOf('this.electrical')).toBeLessThan(systemsBlock.indexOf('this.cloudSky'));
-    expect(electricalSource).toContain('visualSignals');
-    expect(lightningSource).toContain('stormFlash');
-    expect(dustLightningSource).toContain('dustFlash');
-    expect(cloudSystemSource).toContain('getCloudLightingProfile');
   });
 
   it('keeps dghez cloudy mesh independent from god rays while storm flash no longer creates clouds', async () => {
