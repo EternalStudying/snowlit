@@ -1,3 +1,4 @@
+import { invalidateSession } from '../../../auth';
 import { resolve } from 'node:path';
 import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -304,7 +305,7 @@ describe('App auth flow', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { wrapper } = await mountApp();
 
-    window.dispatchEvent(new CustomEvent('snowlit:logout'));
+    invalidateSession();
     await wrapper.vm.$nextTick();
 
     expect(localStorage.getItem('snowlit_token')).toBeNull();

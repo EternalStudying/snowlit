@@ -13,6 +13,7 @@ import type {
 import { createHttpStoryGateway } from './httpStoryGateway';
 import type { StoryGateway } from './ports';
 import { errorMessage } from '../../../display';
+import { createLatestRequest, createSharedRequests } from '../../../requestGuards';
 
 export interface StoryLifecycleState {
   moments: Readonly<Ref<StoryMoment[]>>;
@@ -76,9 +77,9 @@ export function useStoryLifecycle({
   const selectedYear = ref<number | null>(null);
   const selectedId = ref<number | null>(null);
   const selectedMoment = ref<StoryMoment | null>(null);
-  const pendingDetails = new Map<number, Promise<StoryMoment>>();
-  let listIntent = 0;
-  let detailIntent = 0;
+  const detailRequests = createSharedRequests<number, StoryMoment>();
+  const latestList = createLatestRequest();
+  const latestDetail = createLatestRequest();
 
   const sortedMoments = computed(() =>
     [...moments.value].sort(
@@ -128,7 +129,7 @@ export function useStoryLifecycle({
   });
 
   async function loadMoments(): Promise<boolean> {
-    const intent = ++listIntent;
+    const isCurrent = latestList.begin();
     loading.value = true;
     loadError.value = '';
 
@@ -140,7 +141,7 @@ export function useStoryLifecycle({
             : selectedCategory.value,
         year: selectedYear.value ?? undefined
       });
-      if (intent !== listIntent) {
+      if (!isCurrent()) {
         return false;
       }
 
@@ -153,7 +154,7 @@ export function useStoryLifecycle({
       synchronizeSelection(response.items);
       return true;
     } catch (error) {
-      if (intent === listIntent) {
+      if (isCurrent()) {
         loadError.value = errorMessage(
           error,
           '点滴地图加载失败'
@@ -161,7 +162,7 @@ export function useStoryLifecycle({
       }
       return false;
     } finally {
-      if (intent === listIntent) {
+      if (isCurrent()) {
         loading.value = false;
       }
     }
@@ -203,7 +204,7 @@ export function useStoryLifecycle({
   async function selectMoment(
     id: number
   ): Promise<StoryMoment | null> {
-    const intent = ++detailIntent;
+    const isCurrent = latestDetail.begin();
     selectedId.value = id;
     selectedMoment.value =
       moments.value.find((moment) => moment.id === id) ?? null;
@@ -212,7 +213,7 @@ export function useStoryLifecycle({
     try {
       const detail = await requestDetail(id);
       if (
-        intent !== detailIntent ||
+        !isCurrent() ||
         selectedId.value !== id
       ) {
         return null;
@@ -220,7 +221,7 @@ export function useStoryLifecycle({
       selectedMoment.value = detail;
       return detail;
     } catch (error) {
-      if (intent === detailIntent) {
+      if (isCurrent()) {
         actionError.value = errorMessage(
           error,
           '点滴详情加载失败'
@@ -231,23 +232,11 @@ export function useStoryLifecycle({
   }
 
   function requestDetail(id: number): Promise<StoryMoment> {
-    const pending = pendingDetails.get(id);
-    if (pending) {
-      return pending;
-    }
-
-    const request = gateway.fetchMoment(id);
-    const tracked = request.finally(() => {
-      if (pendingDetails.get(id) === tracked) {
-        pendingDetails.delete(id);
-      }
-    });
-    pendingDetails.set(id, tracked);
-    return tracked;
+    return detailRequests.run(id, () => gateway.fetchMoment(id));
   }
 
   function clearSelection(): void {
-    detailIntent += 1;
+    latestDetail.cancel();
     selectedId.value = null;
     selectedMoment.value = null;
   }

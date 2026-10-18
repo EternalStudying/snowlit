@@ -15,6 +15,7 @@ import type { HttpAdapter } from '../../../http/sessionRequest';
 import type { AlbumPreviewGenerator } from './ports';
 import { createAlbumUploadQueue } from './uploadQueue';
 import { errorMessage } from '../../../display';
+import { createLatestRequest } from '../../../requestGuards';
 
 const PAGE_SIZE = 5;
 const PREVIEW_PHOTO_LIMIT = 9;
@@ -70,7 +71,9 @@ export function useAlbumLifecycle({
   const draftNotice = ref('');
   const draftSaving = ref(false);
   const draftPublishing = ref(false);
-  let catalogGeneration = 0;
+  // A catalog reload makes earlier page and draft responses stale; next pages share the current catalog.
+  const latestCatalog = createLatestRequest();
+  let isCatalogCurrent = latestCatalog.begin();
 
   const uploadQueue = createAlbumUploadQueue({
     generatePreview,
@@ -81,18 +84,18 @@ export function useAlbumLifecycle({
   const collections = computed<AlbumCollection[]>(() => albums.value.map((album) => toCollection(album)));
 
   async function loadInitialCatalog() {
-    const generation = ++catalogGeneration;
-    await loadPage(1, generation, true);
+    isCatalogCurrent = latestCatalog.begin();
+    await loadPage(1, isCatalogCurrent, true);
   }
 
   async function loadNextPage() {
     if (!hasMore.value || loading.value || loadingMore.value) {
       return;
     }
-    await loadPage(page.value + 1, catalogGeneration, false);
+    await loadPage(page.value + 1, isCatalogCurrent, false);
   }
 
-  async function loadPage(targetPage: number, generation: number, loadDraft: boolean) {
+  async function loadPage(targetPage: number, isCurrent: () => boolean, loadDraft: boolean) {
     const isFirstPage = targetPage === 1;
     loading.value = isFirstPage;
     loadingMore.value = !isFirstPage;
@@ -104,7 +107,7 @@ export function useAlbumLifecycle({
         size: PAGE_SIZE,
         previewLimit: PREVIEW_PHOTO_LIMIT
       });
-      if (generation !== catalogGeneration) {
+      if (!isCurrent()) {
         return;
       }
       albums.value = isFirstPage ? response.items : [...albums.value, ...response.items];
@@ -113,30 +116,30 @@ export function useAlbumLifecycle({
       hasMore.value = response.hasMore;
       loaded.value = true;
       if (loadDraft && isFirstPage && response.canManage) {
-        void loadCurrentDraft(generation);
+        void loadCurrentDraft(isCurrent);
       }
     } catch (error) {
-      if (generation !== catalogGeneration) {
+      if (!isCurrent()) {
         return;
       }
       catalogError.value = errorMessage(error, '相册数据加载失败');
       loaded.value = true;
     } finally {
-      if (generation === catalogGeneration) {
+      if (isCurrent()) {
         loading.value = false;
         loadingMore.value = false;
       }
     }
   }
 
-  async function loadCurrentDraft(generation: number) {
+  async function loadCurrentDraft(isCurrent: () => boolean) {
     try {
       const response = await gateway.fetchCurrentDraft();
-      if (generation === catalogGeneration) {
+      if (isCurrent()) {
         currentDraft.value = response.draft;
       }
     } catch (error) {
-      if (generation === catalogGeneration) {
+      if (isCurrent()) {
         catalogNotice.value = errorMessage(error, '相册草稿加载失败');
       }
     }
@@ -365,10 +368,10 @@ export function useAlbumLifecycle({
   }
 
   async function refreshCatalogAfterPublish() {
-    const generation = ++catalogGeneration;
+    isCatalogCurrent = latestCatalog.begin();
     catalogNotice.value = '';
     loadingMore.value = false;
-    await loadPage(1, generation, false);
+    await loadPage(1, isCatalogCurrent, false);
     if (catalogError.value) {
       catalogNotice.value = '相册已发布，但列表刷新失败，请稍后刷新页面';
       catalogError.value = '';

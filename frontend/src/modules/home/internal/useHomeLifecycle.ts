@@ -10,7 +10,9 @@ import type {
 } from '../model';
 import { createHttpHomeGateway } from './httpHomeGateway';
 import type { HomeGateway } from './ports';
+import { onSessionChange } from '../../../auth';
 import { errorMessage } from '../../../display';
+import { createLatestRequest } from '../../../requestGuards';
 
 interface Coordinates {
   latitude: number;
@@ -46,8 +48,8 @@ export function createHomeLifecycle({
   const loading = ref(false);
   const loaded = ref(false);
   const error = ref('');
-  let loadIntent = 0;
-  let locationIntent = 0;
+  const latestLoad = createLatestRequest();
+  const latestLocation = createLatestRequest();
   let pendingLoad: Promise<HomeOverview | null> | null = null;
   let pendingLocation:
     | { signature: string; promise: Promise<void> }
@@ -64,13 +66,13 @@ export function createHomeLifecycle({
       return pendingLoad;
     }
 
-    const intent = ++loadIntent;
+    const isCurrent = latestLoad.begin();
     loading.value = true;
     error.value = '';
     const request = gateway
       .fetchOverview()
       .then((data) => {
-        if (intent !== loadIntent) {
+        if (!isCurrent()) {
           return null;
         }
         overview.value = data;
@@ -78,7 +80,7 @@ export function createHomeLifecycle({
         return data;
       })
       .catch((loadError) => {
-        if (intent === loadIntent) {
+        if (isCurrent()) {
           error.value = errorMessage(
             loadError,
             '首页数据加载失败'
@@ -87,7 +89,7 @@ export function createHomeLifecycle({
         return null;
       });
     const tracked = request.finally(() => {
-      if (intent === loadIntent) {
+      if (isCurrent()) {
         loading.value = false;
       }
       if (pendingLoad === tracked) {
@@ -122,17 +124,18 @@ export function createHomeLifecycle({
       return pendingLocation.promise;
     }
 
-    const intent = ++locationIntent;
+    const isCurrent = latestLocation.begin();
     const request = gateway
       .reportLocation(snapshot)
       .then(async () => {
-        if (intent === locationIntent) {
-          lastReportedLocationSignature = signature;
+        if (!isCurrent()) {
+          return;
         }
+        lastReportedLocationSignature = signature;
         await refreshOverview();
       })
       .catch((reportError) => {
-        if (intent === locationIntent) {
+        if (isCurrent()) {
           error.value = errorMessage(
             reportError,
             '位置上报失败'
@@ -147,6 +150,19 @@ export function createHomeLifecycle({
     pendingLocation = { signature, promise: tracked };
     return tracked;
   }
+
+  // The overview belongs to the signed-in member; a session change must not show it to the next one.
+  onSessionChange(() => {
+    latestLoad.cancel();
+    latestLocation.cancel();
+    pendingLoad = null;
+    pendingLocation = null;
+    lastReportedLocationSignature = '';
+    overview.value = null;
+    loading.value = false;
+    loaded.value = false;
+    error.value = '';
+  });
 
   return {
     state: {

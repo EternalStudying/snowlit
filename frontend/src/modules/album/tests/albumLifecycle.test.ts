@@ -163,7 +163,8 @@ describe('useAlbumLifecycle catalog behavior', () => {
 
     expect(getAuthToken()).toBe('');
     expect(logoutListener).toHaveBeenCalledTimes(1);
-    expect(unauthorizedLifecycle.state.catalogError.value).toBe('登录状态已失效');
+    // The 401 ended the session, so the request's outcome belongs to no one and is not shown.
+    expect(unauthorizedLifecycle.state.catalogError.value).toBe('');
 
     setAuthToken('jwt-token');
     logoutListener.mockClear();

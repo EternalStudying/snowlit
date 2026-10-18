@@ -11,7 +11,6 @@ import {
 } from 'naive-ui';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  clearAuthToken,
   getAuthToken,
   onSessionInvalidated,
   setAuthToken
@@ -44,7 +43,6 @@ async function handleAuthenticated(session: LoginSession) {
 }
 
 function handleSessionInvalidated() {
-  clearAuthToken();
   isLoggedIn.value = false;
 }
 

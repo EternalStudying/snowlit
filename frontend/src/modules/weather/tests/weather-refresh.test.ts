@@ -102,7 +102,8 @@ describe('weather location lifecycle', () => {
     gps.mockImplementationOnce((success) => { resolveGps = success; });
     const { loadWeather, useWeatherAtmosphereData } = await import('../internal/useWeatherAtmosphereData');
     const pending = loadWeather({ requestLocation: true });
-    localStorage.setItem('snowlit_token', 'account-b');
+    const auth = await import('../../../auth');
+    auth.setAuthToken('account-b');
     resolveGps({ coords: { latitude: 52.52, longitude: 13.41 } });
     await pending;
     expect(fetcher).not.toHaveBeenCalled();
@@ -116,7 +117,8 @@ describe('weather location lifecycle', () => {
     const { loadWeather, useWeatherAtmosphereData } = await import('../internal/useWeatherAtmosphereData');
     const pending = loadWeather({ requestLocation: true });
     await flushPromises();
-    localStorage.setItem('snowlit_token', 'account-b');
+    const auth = await import('../../../auth');
+    auth.setAuthToken('account-b');
     await loadWeather();
     resolveRequest({ ok: true, status: 200, json: async () => fixture });
     await pending;

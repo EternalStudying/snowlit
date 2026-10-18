@@ -1,5 +1,6 @@
 import { ref } from 'vue';
-import { getAuthToken } from '../../../auth';
+import { getAuthToken, onSessionChange, sessionEpoch } from '../../../auth';
+import { createLatestRequest } from '../../../requestGuards';
 import type {
   WeatherAtmosphereData,
   WeatherCoordinates,
@@ -26,9 +27,19 @@ let loadingPromise: Promise<WeatherAtmosphereData> | null = null;
 let weatherDataSource: WeatherDataSource | null = null;
 let permissionDenied = false;
 let lastUpdatedAt = 0;
-let sessionToken: string | null = null;
-let requestGeneration = 0;
+const latestWeather = createLatestRequest();
 export const WEATHER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+
+// Weather and coordinates belong to the signed-in member's session.
+onSessionChange(() => {
+  latestWeather.cancel();
+  weather.value = null;
+  lastCoordinates.value = null;
+  loadingPromise = null;
+  loading.value = false;
+  lastUpdatedAt = 0;
+  weatherDataSource = null;
+});
 
 const weatherStateLabels: Record<WeatherState, string> = {
   clear: '晴',
@@ -81,14 +92,6 @@ export function useWeatherAtmosphereData() {
 
 export async function loadWeather(options: { force?: boolean; requestLocation?: boolean } = {}): Promise<WeatherAtmosphereData> {
   const token = getAuthToken();
-  if (sessionToken !== token) {
-    sessionToken = token;
-    requestGeneration++;
-    weather.value = null;
-    lastCoordinates.value = null;
-    loadingPromise = null;
-    lastUpdatedAt = 0;
-  }
   // Passive rendering never triggers a browser permission dialog.
   if (!options.requestLocation || !token || (permissionDenied && !options.force)) {
     return weather.value ?? setFallbackWeather();
@@ -97,9 +100,8 @@ export async function loadWeather(options: { force?: boolean; requestLocation?: 
     return weather.value;
   }
   if (loadingPromise) return loadingPromise;
-  const generation = requestGeneration;
   loading.value = true;
-  const pending = loadWeatherOnce(token, generation).finally(() => {
+  const pending = loadWeatherOnce(latestWeather.begin()).finally(() => {
     if (loadingPromise === pending) {
       loading.value = false;
       loadingPromise = null;
@@ -109,9 +111,8 @@ export async function loadWeather(options: { force?: boolean; requestLocation?: 
   return pending;
 }
 
-async function loadWeatherOnce(token: string, generation: number): Promise<WeatherAtmosphereData> {
+async function loadWeatherOnce(isCurrent: () => boolean): Promise<WeatherAtmosphereData> {
   const coords = await getBrowserCoordinates();
-  const isCurrent = () => token === getAuthToken() && generation === requestGeneration;
   if (!isCurrent()) return createLocalFallbackWeather();
   if (!coords) {
     error.value = new Error(permissionDenied ? '定位权限未开启，可在浏览器设置中允许后重试' : '暂时无法获取位置，稍后将自动重试');
@@ -146,15 +147,15 @@ export function startWeatherUpdates(onUpdated: (data: WeatherAtmosphereData) => 
   let lastAttempt = 0;
   const update = async () => {
     if (stopped || document.visibilityState === 'hidden' || permissionDenied) return;
-    const token = getAuthToken();
-    if (!token) return;
+    if (!getAuthToken()) return;
+    const session = sessionEpoch();
     if (weatherDataSource === 'api' && lastUpdatedAt && Date.now() - lastUpdatedAt < WEATHER_REFRESH_INTERVAL_MS) {
       lastAttempt = lastUpdatedAt;
       return;
     }
     lastAttempt = Date.now();
     const data = await loadWeather({ requestLocation: true, force: true });
-    if (!stopped && token === getAuthToken()) await onUpdated(data);
+    if (!stopped && session === sessionEpoch()) await onUpdated(data);
   };
   const schedule = () => {
     if (timer) clearTimeout(timer);

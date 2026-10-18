@@ -30,6 +30,7 @@ import {
   type DiaryAtmosphereContext as WeatherContext
 } from './weatherSnapshot';
 import { errorMessage } from '../../../display';
+import { createLatestRequest, createSharedRequests } from '../../../requestGuards';
 
 export interface DiaryLifecycleState {
   entries: Readonly<Ref<DiaryEntry[]>>;
@@ -90,13 +91,10 @@ export function useDiaryLifecycle({
   const saving = ref(false);
   const deleting = ref(false);
   const error = ref('');
-  const pendingDetailRequests = new Map<
-    number,
-    Promise<DiaryEntry>
-  >();
-  let initializationIntent = 0;
-  let monthIntent = 0;
-  let detailIntent = 0;
+  const detailRequests = createSharedRequests<number, DiaryEntry>();
+  const latestInitialization = createLatestRequest();
+  const latestMonth = createLatestRequest();
+  const latestDetail = createLatestRequest();
 
   const sortedEntries = computed(() =>
     [...entries.value].sort((left, right) => {
@@ -122,7 +120,7 @@ export function useDiaryLifecycle({
   );
 
   async function loadInitial(): Promise<boolean> {
-    const intent = ++initializationIntent;
+    const isCurrent = latestInitialization.begin();
     loaded.value = false;
     error.value = '';
 
@@ -131,7 +129,7 @@ export function useDiaryLifecycle({
         gateway.fetchCurrentRole(),
         gateway.fetchArchive()
       ]);
-      if (intent !== initializationIntent) {
+      if (!isCurrent()) {
         return false;
       }
 
@@ -140,7 +138,7 @@ export function useDiaryLifecycle({
       const defaultMonth = getDefaultMonth(yearChapters.value);
       return await loadMonth(defaultMonth);
     } catch (loadError) {
-      if (intent === initializationIntent) {
+      if (isCurrent()) {
         error.value = errorMessage(
           loadError,
           '用户信息加载失败'
@@ -148,21 +146,21 @@ export function useDiaryLifecycle({
       }
       return false;
     } finally {
-      if (intent === initializationIntent) {
+      if (isCurrent()) {
         loaded.value = true;
       }
     }
   }
 
   async function loadMonth(month: string): Promise<boolean> {
-    const intent = ++monthIntent;
+    const isCurrent = latestMonth.begin();
     selectedMonth.value = month;
     monthLoading.value = true;
     error.value = '';
 
     try {
       const response = await gateway.fetchMonth(month);
-      if (intent !== monthIntent) {
+      if (!isCurrent()) {
         return false;
       }
 
@@ -170,7 +168,7 @@ export function useDiaryLifecycle({
       entries.value = response.items.map(normalizeSummary);
       return true;
     } catch (loadError) {
-      if (intent === monthIntent) {
+      if (isCurrent()) {
         error.value = errorMessage(
           loadError,
           '日记数据加载失败'
@@ -178,16 +176,16 @@ export function useDiaryLifecycle({
       }
       return false;
     } finally {
-      if (intent === monthIntent) {
+      if (isCurrent()) {
         monthLoading.value = false;
       }
     }
   }
 
   async function selectEntry(id: number): Promise<DiaryEntry | null> {
-    const intent = ++detailIntent;
+    const isCurrent = latestDetail.begin();
     if (!entries.value.some((entry) => entry.id === id)) {
-      if (intent === detailIntent) {
+      if (isCurrent()) {
         error.value = '日记不存在或尚未加载';
       }
       return null;
@@ -196,13 +194,13 @@ export function useDiaryLifecycle({
     error.value = '';
     try {
       const detail = await requestDetail(id);
-      if (intent !== detailIntent) {
+      if (!isCurrent()) {
         return null;
       }
       selectedEntry.value = detail;
       return detail;
     } catch (detailError) {
-      if (intent === detailIntent) {
+      if (isCurrent()) {
         error.value = errorMessage(
           detailError,
           '日记详情加载失败'
@@ -213,21 +211,7 @@ export function useDiaryLifecycle({
   }
 
   function requestDetail(id: number): Promise<DiaryEntry> {
-    const pendingRequest = pendingDetailRequests.get(id);
-    if (pendingRequest) {
-      return pendingRequest;
-    }
-
-    const detailRequest = gateway
-      .fetchDetail(id)
-      .then((detail) => storeDetail(detail));
-    const trackedRequest = detailRequest.finally(() => {
-      if (pendingDetailRequests.get(id) === trackedRequest) {
-        pendingDetailRequests.delete(id);
-      }
-    });
-    pendingDetailRequests.set(id, trackedRequest);
-    return trackedRequest;
+    return detailRequests.run(id, () => gateway.fetchDetail(id).then((detail) => storeDetail(detail)));
   }
 
   function storeDetail(detail: DiaryDetailDto): DiaryEntry {
@@ -239,7 +223,7 @@ export function useDiaryLifecycle({
   }
 
   function clearSelectedEntry(): void {
-    detailIntent += 1;
+    latestDetail.cancel();
     selectedEntry.value = null;
   }
 

@@ -1,3 +1,4 @@
+import { clearAuthToken, setAuthToken } from '../../../auth';
 import {
   describe,
   expect,
@@ -48,6 +49,37 @@ describe('HomeLifecycle', () => {
     const lifecycle = createHomeLifecycle({gateway: createMemoryHomeGateway({overview: homeOverviewFixture, overrides: {reportLocation}})});
     await lifecycle.syncWeatherLocation({...weatherFixture, city: '', district: '', province: '', country: 'Exampleland', temperature: null, rawWeather: '', weatherVariant: 'unknown'}, coordinates);
     expect(reportLocation).toHaveBeenCalledWith({...coordinates, city: '', district: '', province: '', country: 'Exampleland', weather: null, temperature: null});
+  });
+
+  it('forgets the previous member\'s overview when the session changes', async () => {
+    const lifecycle = createHomeLifecycle({
+      gateway: createMemoryHomeGateway({ overview: homeOverviewFixture })
+    });
+    await lifecycle.loadOverview();
+    expect(lifecycle.state.overview.value).toEqual(homeOverviewFixture);
+
+    setAuthToken('another-member');
+
+    expect(lifecycle.state.overview.value).toBeNull();
+    expect(lifecycle.state.loaded.value).toBe(false);
+    clearAuthToken();
+  });
+
+  it('ignores an overview that arrives after the session changed', async () => {
+    let resolve!: (value: typeof homeOverviewFixture) => void;
+    const lifecycle = createHomeLifecycle({
+      gateway: createMemoryHomeGateway({
+        overview: homeOverviewFixture,
+        overrides: { fetchOverview: () => new Promise((done) => (resolve = done)) }
+      })
+    });
+    const pending = lifecycle.loadOverview();
+    setAuthToken('another-member');
+    resolve(homeOverviewFixture);
+
+    await expect(pending).resolves.toBeNull();
+    expect(lifecycle.state.overview.value).toBeNull();
+    clearAuthToken();
   });
 
   it('共享普通加载请求，并在成功后复用总览缓存', async () => {

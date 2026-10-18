@@ -17,6 +17,7 @@ import { WISH_LANE_KEYS } from '../model';
 import { createHttpWishGateway } from './httpWishGateway';
 import type { WishGateway } from './ports';
 import { errorMessage } from '../../../display';
+import { createLatestRequest, createSharedRequests } from '../../../requestGuards';
 
 const DEFAULT_PAGE_SIZE = 8;
 
@@ -118,9 +119,9 @@ export function useWishLifecycle({
     wantToDo: null,
     done: null
   };
-  const pendingDetailRequests = new Map<number, Promise<WishItem>>();
+  const detailRequests = createSharedRequests<number, WishItem>();
   const pendingLaneTransitions = new Map<number, WishLaneTransition>();
-  let selectionIntentVersion = 0;
+  const latestSelection = createLatestRequest();
 
   const selectedWish = computed(() => {
     if (selectedWishId.value === null) {
@@ -238,10 +239,10 @@ export function useWishLifecycle({
   }
 
   async function selectWish(id: number): Promise<WishItem | null> {
-    const intentVersion = ++selectionIntentVersion;
+    const isCurrent = latestSelection.begin();
     const location = findWish(id);
     if (!location) {
-      if (intentVersion === selectionIntentVersion) {
+      if (isCurrent()) {
         actionError.value = '清单不存在或尚未加载';
       }
       return null;
@@ -250,13 +251,13 @@ export function useWishLifecycle({
     actionError.value = '';
     try {
       const merged = await requestWishDetail(id, location);
-      if (intentVersion !== selectionIntentVersion) {
+      if (!isCurrent()) {
         return null;
       }
       selectedWishId.value = id;
       return merged;
     } catch (error) {
-      if (intentVersion === selectionIntentVersion) {
+      if (isCurrent()) {
         actionError.value = errorMessage(error, '清单详情加载失败');
       }
       return null;
@@ -267,23 +268,13 @@ export function useWishLifecycle({
     id: number,
     initialLocation: WishLocation
   ): Promise<WishItem> {
-    const pendingRequest = pendingDetailRequests.get(id);
-    if (pendingRequest) {
-      return pendingRequest;
-    }
-
-    setPendingId(pendingDetailWishIds, id, true);
-    const detailRequest = gateway.fetchDetail(id).then((detail) =>
-      storeWishDetail(detail, initialLocation)
-    );
-    const trackedRequest = detailRequest.finally(() => {
-      if (pendingDetailRequests.get(id) === trackedRequest) {
-        pendingDetailRequests.delete(id);
-        setPendingId(pendingDetailWishIds, id, false);
-      }
+    return detailRequests.run(id, () => {
+      setPendingId(pendingDetailWishIds, id, true);
+      return gateway
+        .fetchDetail(id)
+        .then((detail) => storeWishDetail(detail, initialLocation))
+        .finally(() => setPendingId(pendingDetailWishIds, id, false));
     });
-    pendingDetailRequests.set(id, trackedRequest);
-    return trackedRequest;
   }
 
   function storeWishDetail(
@@ -319,7 +310,7 @@ export function useWishLifecycle({
   }
 
   function clearSelectedWish(): void {
-    selectionIntentVersion += 1;
+    latestSelection.cancel();
     selectedWishId.value = null;
   }
 

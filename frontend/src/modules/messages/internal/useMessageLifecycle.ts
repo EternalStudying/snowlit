@@ -6,6 +6,7 @@ import type {
 import { createHttpMessageGateway } from './httpMessageGateway';
 import type { MessageGateway } from './ports';
 import { errorMessage } from '../../../display';
+import { createLatestRequest } from '../../../requestGuards';
 
 const PAGE_SIZE = 20;
 
@@ -47,10 +48,10 @@ export function useMessageLifecycle({
   const loadError = ref('');
   const submitError = ref('');
   const deleteError = ref('');
-  let loadIntent = 0;
+  const latestLoad = createLatestRequest();
 
   async function loadMessages(): Promise<boolean> {
-    const intent = ++loadIntent;
+    const isCurrent = latestLoad.begin();
     loading.value = true;
     loadError.value = '';
 
@@ -59,14 +60,14 @@ export function useMessageLifecycle({
         page: 1,
         size: PAGE_SIZE
       });
-      if (intent !== loadIntent) {
+      if (!isCurrent()) {
         return false;
       }
       messages.value = page.items.slice(0, PAGE_SIZE);
       synchronizeSelection();
       return true;
     } catch (error) {
-      if (intent === loadIntent) {
+      if (isCurrent()) {
         loadError.value = errorMessage(
           error,
           '留言加载失败'
@@ -74,7 +75,7 @@ export function useMessageLifecycle({
       }
       return false;
     } finally {
-      if (intent === loadIntent) {
+      if (isCurrent()) {
         loading.value = false;
       }
     }
