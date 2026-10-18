@@ -1,11 +1,16 @@
 package xyz.snowlit.home;
 
+import xyz.snowlit.album.AlbumModule;
+import xyz.snowlit.album.PhotoHighlight;
+import xyz.snowlit.diary.DiaryHighlight;
+import xyz.snowlit.diary.DiaryModule;
+import xyz.snowlit.messages.MessageHighlight;
+import xyz.snowlit.messages.MessageModule;
+import xyz.snowlit.wishes.WishModule;
+import xyz.snowlit.wishes.WishTotals;
+import xyz.snowlit.wishes.WishVos.WishItemVo;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.home.HomeDtos.HomeLocationUpdateDto;
-import xyz.snowlit.album.AlbumPhoto;
-import xyz.snowlit.diary.DiaryEntry;
-import xyz.snowlit.messages.Message;
-import xyz.snowlit.wishes.Wish;
 import xyz.snowlit.home.HomeVos.HomeVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +34,10 @@ class HomeModuleTests {
     private static final AuthenticatedActor ACTOR =
             new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend", true);
     private final HomeMapper homeMapper = mock(HomeMapper.class);
+    private final DiaryModule diaries = mock(DiaryModule.class);
+    private final AlbumModule albums = mock(AlbumModule.class);
+    private final WishModule wishes = mock(WishModule.class);
+    private final MessageModule messages = mock(MessageModule.class);
     private HomeModule home;
 
     @BeforeEach
@@ -42,9 +52,8 @@ class HomeModuleTests {
                 "把普通日子过成喜欢的样子"
         ));
         stubLatestContent();
-        when(homeMapper.countPhotos()).thenReturn(2L);
-        when(homeMapper.countWishes()).thenReturn(3L);
-        when(homeMapper.countCompletedWishes()).thenReturn(1L);
+        when(albums.photoCount()).thenReturn(2L);
+        when(wishes.totals()).thenReturn(new WishTotals(3L, 1L));
     }
 
     @Test
@@ -144,41 +153,24 @@ class HomeModuleTests {
     private void setClock(String instant) {
         home = new HomeModule(
                 homeMapper,
+                new MemberLocations(homeMapper),
+                diaries,
+                albums,
+                wishes,
+                messages,
                 Clock.fixed(Instant.parse(instant), ZoneId.of("Asia/Singapore"))
         );
     }
 
     private void stubLatestContent() {
-        DiaryEntry memory = new DiaryEntry();
-        memory.setId(1L);
-        memory.setTitle("第一次看海");
-        memory.setEntryDate(LocalDate.of(2026, 5, 1));
-        memory.setSummary("傍晚的海风很温柔，我们走了很久。");
-        memory.setMoodKey("happy");
-        when(homeMapper.findLatestDiary()).thenReturn(memory);
-
-        AlbumPhoto photo = new AlbumPhoto();
-        photo.setId(1L);
-        photo.setPreviewUrl("https://example.com/photo.jpg");
-        photo.setCaption("周末约会");
-        photo.setTakenAt(LocalDate.of(2026, 5, 1));
-        when(homeMapper.findLatestPhoto()).thenReturn(photo);
-
-        Wish wish = new Wish();
-        wish.setId(1L);
-        wish.setTitle("一起去看海");
-        wish.setDone(false);
-        when(homeMapper.findLatestWish()).thenReturn(wish);
-
-        Message message = new Message();
-        message.setId(1L);
-        message.setAuthorUserId(2L);
-        message.setAuthorName("伴侣 B");
-        message.setContent("晚点一起看相册。");
-        message.setImageUrl("https://cdn.example.com/messages/hidden.jpg");
-        message.setCreatedAt(LocalDateTime.of(2026, 5, 16, 10, 30));
-        when(homeMapper.findLatestMessage()).thenReturn(message);
-        when(homeMapper.countMessages()).thenReturn(4L);
+        when(diaries.latestShared()).thenReturn(Optional.of(new DiaryHighlight(
+                1L, "第一次看海", LocalDate.of(2026, 5, 1), "傍晚的海风很温柔，我们走了很久。", "happy")));
+        when(albums.latestPublicPhoto()).thenReturn(Optional.of(new PhotoHighlight(
+                1L, "https://example.com/photo.jpg", "周末约会", LocalDate.of(2026, 5, 1))));
+        when(wishes.latest()).thenReturn(Optional.of(new WishItemVo(1L, "一起去看海", false)));
+        when(messages.latest()).thenReturn(Optional.of(new MessageHighlight(
+                1L, "伴侣 B", "晚点一起看相册。", LocalDateTime.of(2026, 5, 16, 10, 30))));
+        when(messages.count()).thenReturn(4L);
     }
 
     private HomeLocation location(String role, double latitude, double longitude) {

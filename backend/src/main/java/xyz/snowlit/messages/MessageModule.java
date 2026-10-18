@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -78,6 +79,16 @@ public final class MessageModule {
         images.deleteBestEffort(message.getImageObjectName());
     }
 
+    public Optional<MessageHighlight> latest() {
+        return Optional.ofNullable(messageMapper.findLatest())
+                .map(message -> new MessageHighlight(
+                        message.getId(), authorName(message), message.getContent(), message.getCreatedAt()));
+    }
+
+    public long count() {
+        return messageMapper.countMessages();
+    }
+
     private Message requireMessage(Long id) {
         Message message = messageMapper.findMessageById(id);
         if (message == null || message.getDeletedAt() != null) {
@@ -99,7 +110,7 @@ public final class MessageModule {
         return new MessageVo(
                 message.getId(),
                 message.getAuthorUserId(),
-                Text.trim(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
+                authorName(message),
                 message.getContent(),
                 message.getImageUrl(),
                 message.getCreatedAt(),
@@ -111,4 +122,7 @@ public final class MessageModule {
         return LocalDateTime.now(clock);
     }
 
+    private static String authorName(Message message) {
+        return Text.trim(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName();
+    }
 }

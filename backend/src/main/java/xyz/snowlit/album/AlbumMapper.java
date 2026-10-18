@@ -334,4 +334,22 @@ public interface AlbumMapper {
 
     @Delete("delete from album_locks where album_id = #{albumId} and user_id = #{userId}")
     int clearUnlockFailure(@Param("albumId") Long albumId, @Param("userId") Long userId);
+
+    @Select("""
+            select p.id, p.album_id, p.preview_url, p.caption, p.taken_at
+            from photos p
+            join albums a on a.id = p.album_id
+            where a.visibility = 'public'
+            order by p.taken_at desc, p.id desc
+            limit 1
+            """)
+    @Results(id = "latestPublicPhotoMap", value = {
+            @Result(column = "album_id", property = "albumId"),
+            @Result(column = "preview_url", property = "previewUrl"),
+            @Result(column = "taken_at", property = "takenAt")
+    })
+    AlbumPhoto findLatestPublicPhoto();
+
+    @Select("select count(*) from photos")
+    long countAllPhotos();
 }

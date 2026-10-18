@@ -292,4 +292,18 @@ public interface DiaryMapper {
             insertImageReferences(diaryId, references);
         }
     }
+
+    @Select("""
+            select id, title, summary, mood_key, entry_date
+            from diaries
+            where deleted = false
+              and visibility = 'shared'
+            order by entry_date desc, updated_at desc, id desc
+            limit 1
+            """)
+    @Results(id = "latestSharedDiaryMap", value = {
+            @Result(column = "mood_key", property = "moodKey"),
+            @Result(column = "entry_date", property = "entryDate")
+    })
+    DiaryEntry findLatestShared();
 }

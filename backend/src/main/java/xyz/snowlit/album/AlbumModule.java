@@ -35,6 +35,7 @@ import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -233,6 +234,15 @@ public class AlbumModule {
             AlbumPhotoMetadataDto metadata
     ) {
         return uploadPhoto(actor, albumId, file, file, ORIGINAL_IMAGE, metadata);
+    }
+
+    public Optional<PhotoHighlight> latestPublicPhoto() {
+        return Optional.ofNullable(albumMapper.findLatestPublicPhoto())
+                .map(photo -> new PhotoHighlight(photo.getId(), photo.getPreviewUrl(), photo.getCaption(), photo.getTakenAt()));
+    }
+
+    public long photoCount() {
+        return albumMapper.countAllPhotos();
     }
 
     private AlbumPhotoVo uploadPhoto(

@@ -84,4 +84,20 @@ public interface MessageMapper {
               and deleted_at is null
             """)
     int softDeleteMessage(@Param("id") Long id, @Param("deletedAt") LocalDateTime deletedAt);
+
+    @Select("""
+            select m.id, m.author_user_id, coalesce(u.display_name, u.username) as author_name,
+                   m.content, m.created_at
+            from messages m
+            left join users u on u.id = m.author_user_id
+            where m.deleted_at is null
+            order by m.created_at desc, m.id desc
+            limit 1
+            """)
+    @Results(id = "latestMessageMap", value = {
+            @Result(column = "author_user_id", property = "authorUserId"),
+            @Result(column = "author_name", property = "authorName"),
+            @Result(column = "created_at", property = "createdAt")
+    })
+    Message findLatest();
 }

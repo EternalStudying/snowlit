@@ -12,6 +12,7 @@ import xyz.snowlit.diary.DiaryDtos.DiaryUpdateDto;
 import xyz.snowlit.diary.DiaryDtos.DiaryWeatherSnapshotDto;
 import xyz.snowlit.home.HomeLocation;
 import xyz.snowlit.home.HomeMapper;
+import xyz.snowlit.home.MemberLocations;
 import xyz.snowlit.diary.DiaryVos.DiaryDetailVo;
 import xyz.snowlit.diary.DiaryVos.DiaryMonthListVo;
 import xyz.snowlit.diary.DiaryVos.DiaryMonthsVo;
@@ -50,7 +51,7 @@ class DiaryModuleTests {
     private final HomeMapper homeMapper = mock(HomeMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
     private final DiaryModule diaryService =
-            new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects, CLOCK), CLOCK);
+            new DiaryModule(diaryMapper, new MemberLocations(homeMapper), new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void accountWithoutCoupleRoleCannotUseDiaries() {

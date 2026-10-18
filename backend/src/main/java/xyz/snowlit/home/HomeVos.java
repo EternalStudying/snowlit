@@ -1,5 +1,7 @@
 package xyz.snowlit.home;
 
+import xyz.snowlit.album.PhotoHighlight;
+import xyz.snowlit.messages.MessageHighlight;
 import xyz.snowlit.wishes.WishVos.WishItemVo;
 
 import java.time.LocalDate;
@@ -53,19 +55,11 @@ public final class HomeVos {
     ) {
     }
 
-    public record HomeLatestMessageVo(
-            Long id,
-            String authorName,
-            String content,
-            LocalDateTime createdAt
-    ) {
-    }
-
     public record HomeLatestVo(
             HomeLatestDiaryVo diary,
-            PhotoVo photo,
+            PhotoHighlight photo,
             WishItemVo wish,
-            HomeLatestMessageVo message
+            MessageHighlight message
     ) {
     }
 
@@ -102,6 +96,4 @@ public final class HomeVos {
     ) {
     }
 
-    public record PhotoVo(Long id, String previewUrl, String caption, LocalDate takenAt) {
-    }
 }

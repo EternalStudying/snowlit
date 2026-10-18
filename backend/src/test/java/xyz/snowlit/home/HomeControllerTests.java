@@ -1,9 +1,14 @@
 package xyz.snowlit.home;
 
-import xyz.snowlit.album.AlbumPhoto;
-import xyz.snowlit.diary.DiaryEntry;
-import xyz.snowlit.wishes.Wish;
-import xyz.snowlit.messages.Message;
+import xyz.snowlit.album.AlbumModule;
+import xyz.snowlit.album.PhotoHighlight;
+import xyz.snowlit.diary.DiaryHighlight;
+import xyz.snowlit.diary.DiaryModule;
+import xyz.snowlit.messages.MessageHighlight;
+import xyz.snowlit.messages.MessageModule;
+import xyz.snowlit.wishes.WishModule;
+import xyz.snowlit.wishes.WishTotals;
+import xyz.snowlit.wishes.WishVos.WishItemVo;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -21,6 +26,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -37,7 +43,12 @@ class HomeControllerTests {
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
     private final HomeMapper homeMapper = mock(HomeMapper.class);
-    private final HomeModule home = new HomeModule(homeMapper, CLOCK);
+    private final DiaryModule diaries = mock(DiaryModule.class);
+    private final AlbumModule albums = mock(AlbumModule.class);
+    private final WishModule wishes = mock(WishModule.class);
+    private final MessageModule messages = mock(MessageModule.class);
+    private final HomeModule home =
+            new HomeModule(homeMapper, new MemberLocations(homeMapper), diaries, albums, wishes, messages, CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new HomeController(home))
             .setCustomArgumentResolvers(requests.actorResolver())
@@ -61,36 +72,16 @@ class HomeControllerTests {
                 "把普通日子过成喜欢的样子"
         ));
 
-        DiaryEntry diary = new DiaryEntry();
-        diary.setId(1L);
-        diary.setTitle("第一次看海");
-        diary.setEntryDate(LocalDate.of(2026, 5, 1));
-        diary.setSummary("傍晚的海风很温柔，我们走了很久。");
-        diary.setMoodKey("旅行");
-        when(homeMapper.findLatestDiary()).thenReturn(diary);
-
-        AlbumPhoto photo = new AlbumPhoto();
-        photo.setId(1L);
-        photo.setPreviewUrl("https://example.com/photo.jpg");
-        photo.setCaption("周末约会");
-        photo.setTakenAt(LocalDate.of(2026, 5, 1));
-        when(homeMapper.findLatestPhoto()).thenReturn(photo);
-
-        Wish wish = new Wish();
-        wish.setId(1L);
-        wish.setTitle("一起去看海");
-        when(homeMapper.findLatestWish()).thenReturn(wish);
-
-        Message message = new Message();
-        message.setId(1L);
-        message.setAuthorUserId(2L);
-        message.setAuthorName("伴侣 B");
-        message.setContent("晚点一起看相册。");
-        message.setCreatedAt(LocalDateTime.of(2026, 5, 16, 10, 30));
-        when(homeMapper.findLatestMessage()).thenReturn(message);
-        when(homeMapper.countPhotos()).thenReturn(1L);
-        when(homeMapper.countMessages()).thenReturn(4L);
-        when(homeMapper.countWishes()).thenReturn(1L);
+        when(diaries.latestShared()).thenReturn(Optional.of(new DiaryHighlight(
+                1L, "第一次看海", LocalDate.of(2026, 5, 1), "傍晚的海风很温柔，我们走了很久。", "旅行")));
+        when(albums.latestPublicPhoto()).thenReturn(Optional.of(new PhotoHighlight(
+                1L, "https://example.com/photo.jpg", "周末约会", LocalDate.of(2026, 5, 1))));
+        when(wishes.latest()).thenReturn(Optional.of(new WishItemVo(1L, "一起去看海", false)));
+        when(messages.latest()).thenReturn(Optional.of(new MessageHighlight(
+                1L, "伴侣 B", "晚点一起看相册。", LocalDateTime.of(2026, 5, 16, 10, 30))));
+        when(albums.photoCount()).thenReturn(1L);
+        when(messages.count()).thenReturn(4L);
+        when(wishes.totals()).thenReturn(new WishTotals(1L, 0L));
     }
 
     @Test

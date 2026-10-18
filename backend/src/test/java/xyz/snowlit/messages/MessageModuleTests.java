@@ -127,6 +127,17 @@ class MessageModuleTests {
                 .hasMessage("只能删除自己发布的留言");
     }
 
+    @Test
+    void latestMessageHighlightFallsBackToSnowlitForBlankAuthorName() {
+        Message latest = message(9L, 1L);
+        latest.setAuthorName(" ");
+        when(messageMapper.findLatest()).thenReturn(latest);
+
+        assertThat(messages.latest()).get()
+                .extracting(MessageHighlight::authorName)
+                .isEqualTo("Snowlit");
+    }
+
     private Message message(Long id, Long authorUserId) {
         Message message = new Message();
         message.setId(id);

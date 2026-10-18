@@ -4,22 +4,21 @@ import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.home.HomeDtos.HomeLocationUpdateDto;
-import xyz.snowlit.album.AlbumPhoto;
-import xyz.snowlit.diary.DiaryEntry;
-import xyz.snowlit.messages.Message;
-import xyz.snowlit.wishes.Wish;
+import xyz.snowlit.album.AlbumModule;
+import xyz.snowlit.diary.DiaryHighlight;
+import xyz.snowlit.diary.DiaryModule;
+import xyz.snowlit.messages.MessageModule;
+import xyz.snowlit.wishes.WishModule;
+import xyz.snowlit.wishes.WishTotals;
 import xyz.snowlit.home.HomeVos.HomeAnniversaryVo;
 import xyz.snowlit.home.HomeVos.HomeCoupleVo;
 import xyz.snowlit.home.HomeVos.HomeDailyNoteVo;
 import xyz.snowlit.home.HomeVos.HomeDistanceVo;
 import xyz.snowlit.home.HomeVos.HomeLatestDiaryVo;
-import xyz.snowlit.home.HomeVos.HomeLatestMessageVo;
 import xyz.snowlit.home.HomeVos.HomeLatestVo;
 import xyz.snowlit.home.HomeVos.HomePersonStatusVo;
 import xyz.snowlit.home.HomeVos.HomeStatsVo;
 import xyz.snowlit.home.HomeVos.HomeVo;
-import xyz.snowlit.home.HomeVos.PhotoVo;
-import xyz.snowlit.wishes.WishVos.WishItemVo;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -85,10 +84,28 @@ public final class HomeModule {
     );
 
     private final HomeMapper homeMapper;
+    private final MemberLocations memberLocations;
+    private final DiaryModule diaries;
+    private final AlbumModule albums;
+    private final WishModule wishes;
+    private final MessageModule messages;
     private final Clock clock;
 
-    public HomeModule(HomeMapper homeMapper, Clock clock) {
+    public HomeModule(
+            HomeMapper homeMapper,
+            MemberLocations memberLocations,
+            DiaryModule diaries,
+            AlbumModule albums,
+            WishModule wishes,
+            MessageModule messages,
+            Clock clock
+    ) {
         this.homeMapper = homeMapper;
+        this.memberLocations = memberLocations;
+        this.diaries = diaries;
+        this.albums = albums;
+        this.wishes = wishes;
+        this.messages = messages;
         this.clock = clock;
     }
 
@@ -99,8 +116,9 @@ public final class HomeModule {
         }
 
         LocalDate today = LocalDate.now(clock);
-        HomeLocation boyfriendLocation = homeMapper.findLocationByRole(BOYFRIEND);
-        HomeLocation girlfriendLocation = homeMapper.findLocationByRole(GIRLFRIEND);
+        HomeLocation boyfriendLocation = memberLocations.of(BOYFRIEND).orElse(null);
+        HomeLocation girlfriendLocation = memberLocations.of(GIRLFRIEND).orElse(null);
+        WishTotals wishTotals = wishes.totals();
 
         return new HomeVo(
                 toCoupleVo(couple, today),
@@ -111,12 +129,7 @@ public final class HomeModule {
                 ),
                 calculateDistance(boyfriendLocation, girlfriendLocation),
                 createLatest(),
-                new HomeStatsVo(
-                        homeMapper.countPhotos(),
-                        homeMapper.countMessages(),
-                        homeMapper.countWishes(),
-                        homeMapper.countCompletedWishes()
-                )
+                new HomeStatsVo(albums.photoCount(), messages.count(), wishTotals.total(), wishTotals.completed())
         );
     }
 
@@ -135,7 +148,7 @@ public final class HomeModule {
         location.setWeather(Text.trimToNull(request.weather()));
         location.setTemperature(request.temperature());
         location.setLastOnlineAt(LocalDateTime.now(clock));
-        homeMapper.upsertLocation(location);
+        memberLocations.save(location);
     }
 
     private String resolveRole(AuthenticatedActor actor) {
@@ -245,42 +258,15 @@ public final class HomeModule {
 
     private HomeLatestVo createLatest() {
         return new HomeLatestVo(
-                toLatestDiaryVo(homeMapper.findLatestDiary()),
-                toPhotoVo(homeMapper.findLatestPhoto()),
-                toWishItemVo(homeMapper.findLatestWish()),
-                toLatestMessageVo(homeMapper.findLatestMessage())
+                diaries.latestShared().map(HomeModule::toLatestDiaryVo).orElse(null),
+                albums.latestPublicPhoto().orElse(null),
+                wishes.latest().orElse(null),
+                messages.latest().orElse(null)
         );
     }
 
-    private HomeLatestDiaryVo toLatestDiaryVo(DiaryEntry diary) {
-        if (diary == null) {
-            return null;
-        }
-
-        return new HomeLatestDiaryVo(
-                diary.getId(),
-                diary.getTitle(),
-                diary.getEntryDate(),
-                diary.getSummary(),
-                Text.trim(diary.getMoodKey())
-        );
-    }
-
-    private PhotoVo toPhotoVo(AlbumPhoto photo) {
-        return photo == null ? null : new PhotoVo(photo.getId(), photo.getPreviewUrl(), photo.getCaption(), photo.getTakenAt());
-    }
-
-    private WishItemVo toWishItemVo(Wish wishItem) {
-        return wishItem == null ? null : new WishItemVo(wishItem.getId(), wishItem.getTitle(), wishItem.isDone());
-    }
-
-    private HomeLatestMessageVo toLatestMessageVo(Message message) {
-        return message == null ? null : new HomeLatestMessageVo(
-                message.getId(),
-                Text.trim(message.getAuthorName()).isBlank() ? "Snowlit" : message.getAuthorName(),
-                message.getContent(),
-                message.getCreatedAt()
-        );
+    private static HomeLatestDiaryVo toLatestDiaryVo(DiaryHighlight diary) {
+        return new HomeLatestDiaryVo(diary.id(), diary.title(), diary.entryDate(), diary.summary(), diary.moodKey());
     }
 
     private void validateLocation(HomeLocationUpdateDto request) {

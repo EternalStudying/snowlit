@@ -10,6 +10,7 @@ import xyz.snowlit.storage.ObjectStore;
 import xyz.snowlit.wishes.WishDtos.WishCreateDto;
 import xyz.snowlit.wishes.WishDtos.WishUpdateDto;
 import xyz.snowlit.wishes.WishVos.WishDetailVo;
+import xyz.snowlit.wishes.WishVos.WishItemVo;
 import xyz.snowlit.wishes.WishVos.WishPageVo;
 import xyz.snowlit.wishes.WishVos.WishStatsVo;
 import xyz.snowlit.wishes.WishVos.WishSummaryVo;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -152,6 +154,15 @@ public final class WishModule {
         requireManager(actor);
         requireWish(id);
         wishMapper.deleteWish(id);
+    }
+
+    public Optional<WishItemVo> latest() {
+        return Optional.ofNullable(wishMapper.findLatest())
+                .map(wish -> new WishItemVo(wish.getId(), wish.getTitle(), wish.isDone()));
+    }
+
+    public WishTotals totals() {
+        return new WishTotals(wishMapper.countAll(), wishMapper.countWishes(null, true));
     }
 
     private void requireManager(AuthenticatedActor actor) {

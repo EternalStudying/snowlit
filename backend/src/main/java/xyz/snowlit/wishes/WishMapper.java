@@ -119,4 +119,15 @@ public interface WishMapper {
 
     @Delete("delete from wishes where id = #{id}")
     int deleteWish(Long id);
+
+    @Select("""
+            select id, title, category, completed, image_url, created_at, completed_at
+            from wishes
+            order by created_at desc, id desc
+            limit 1
+            """)
+    Wish findLatest();
+
+    @Select("select count(*) from wishes")
+    long countAll();
 }

@@ -7,7 +7,7 @@ import xyz.snowlit.diary.DiaryDtos.DiaryWeatherSnapshotDto;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.home.HomeLocation;
-import xyz.snowlit.home.HomeMapper;
+import xyz.snowlit.home.MemberLocations;
 import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,18 +57,18 @@ public class DiaryModule {
     );
 
     private final DiaryMapper diaryMapper;
-    private final HomeMapper homeMapper;
+    private final MemberLocations memberLocations;
     private final ImageIntake images;
     private final Clock clock;
 
     public DiaryModule(
             DiaryMapper diaryMapper,
-            HomeMapper homeMapper,
+            MemberLocations memberLocations,
             ImageIntake images,
             Clock clock
     ) {
         this.diaryMapper = diaryMapper;
-        this.homeMapper = homeMapper;
+        this.memberLocations = memberLocations;
         this.images = images;
         this.clock = clock;
     }
@@ -213,6 +214,12 @@ public class DiaryModule {
         }
     }
 
+    public Optional<DiaryHighlight> latestShared() {
+        return Optional.ofNullable(diaryMapper.findLatestShared())
+                .map(diary -> new DiaryHighlight(
+                        diary.getId(), diary.getTitle(), diary.getEntryDate(), diary.getSummary(), diary.getMoodKey()));
+    }
+
     private Map<Integer, Map<Integer, Integer>> groupMonthCountsByYear(List<DiaryMonthCount> counts) {
         Map<Integer, Map<Integer, Integer>> grouped = new LinkedHashMap<>();
         for (DiaryMonthCount count : counts) {
@@ -329,8 +336,9 @@ public class DiaryModule {
     private void applySnapshot(DiaryEntry diary, DiaryWeatherSnapshotDto snapshot, String role) {
         DiaryWeatherSnapshotDto resolved = snapshot;
         if (resolved == null) {
-            HomeLocation location = homeMapper.findLocationByRole(role);
-            if (location != null) {
+            Optional<HomeLocation> stored = memberLocations.of(role);
+            if (stored.isPresent()) {
+                HomeLocation location = stored.get();
                 resolved = new DiaryWeatherSnapshotDto(
                         location.getWeather(),
                         location.getWeather(),

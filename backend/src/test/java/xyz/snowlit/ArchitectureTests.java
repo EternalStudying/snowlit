@@ -168,6 +168,26 @@ class ArchitectureTests {
     }
 
     @Test
+    void mappersOnlyQueryTheirOwnFeature() throws Exception {
+        List<String> leaks = new ArrayList<>();
+        for (String domain : DOMAINS) {
+            for (Path source : javaFiles(JAVA_ROOT.resolve(domain))) {
+                if (!source.getFileName().toString().endsWith("Mapper.java")) {
+                    continue;
+                }
+                for (String other : DOMAINS) {
+                    if (!other.equals(domain) && Files.readString(source).contains("import xyz.snowlit." + other + ".")) {
+                        leaks.add(source.getFileName() + " -> " + other);
+                    }
+                }
+            }
+        }
+        assertThat(leaks)
+                .describedAs("read another feature through its module, not through this feature's mapper")
+                .isEmpty();
+    }
+
+    @Test
     void failuresAreTypedAndLegacyStringProtocolIsGone() throws Exception {
         String sources = readJavaFiles(JAVA_ROOT);
         assertThat(sources)
