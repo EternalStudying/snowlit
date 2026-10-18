@@ -40,7 +40,6 @@ class AuthControllerTests {
     );
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(auth))
-            .addInterceptors(requests.actorResolver())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .build();

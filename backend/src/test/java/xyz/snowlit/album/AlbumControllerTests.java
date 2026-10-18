@@ -47,7 +47,6 @@ class AlbumControllerTests {
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
                     new AlbumController(albumService, new ObjectMapper().findAndRegisterModules())
             )
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(

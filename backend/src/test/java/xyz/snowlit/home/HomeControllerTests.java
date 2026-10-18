@@ -40,7 +40,6 @@ class HomeControllerTests {
     private final HomeModule home = new HomeModule(homeMapper, CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new HomeController(home))
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(

@@ -2,7 +2,6 @@ package xyz.snowlit.support;
 
 import xyz.snowlit.auth.AuthSessions;
 import xyz.snowlit.auth.User;
-import xyz.snowlit.web.AuthenticationRequiredInterceptor;
 import xyz.snowlit.web.RequestActorResolver;
 
 public final class AuthenticatedRequestFixture {
@@ -28,10 +27,6 @@ public final class AuthenticatedRequestFixture {
 
     public RequestActorResolver actorResolver() {
         return actorResolver;
-    }
-
-    public AuthenticationRequiredInterceptor authenticationRequired() {
-        return new AuthenticationRequiredInterceptor();
     }
 
     public String authorization() {

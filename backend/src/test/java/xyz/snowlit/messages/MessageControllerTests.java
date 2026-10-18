@@ -47,7 +47,6 @@ class MessageControllerTests {
     private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MessageController(messages))
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(

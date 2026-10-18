@@ -51,7 +51,6 @@ class DiaryControllerTests {
     private final DiaryModule diaries = new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new DiaryController(diaries))
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(

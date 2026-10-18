@@ -1,6 +1,7 @@
 package xyz.snowlit.weather;
 
 import xyz.snowlit.support.AuthenticatedRequestFixture;
+import xyz.snowlit.web.ApiExceptionHandler;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,8 @@ class WeatherControllerTests {
     private final WeatherModule weather = new WeatherModule(gateway, CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WeatherController(weather))
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
+            .setCustomArgumentResolvers(requests.actorResolver())
+            .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(
                     Jackson2ObjectMapperBuilder.json()
                             .modules(new JavaTimeModule())
@@ -83,6 +85,7 @@ class WeatherControllerTests {
         mockMvc.perform(get("/api/weather/atmosphere/browser")
                         .param("latitude", "52.52")
                         .param("longitude", "13.41"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 }

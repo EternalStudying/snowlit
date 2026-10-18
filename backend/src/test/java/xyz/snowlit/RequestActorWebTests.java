@@ -5,7 +5,7 @@ import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.User;
 import xyz.snowlit.support.InMemoryAuthSessionStore;
 import xyz.snowlit.support.SingleUserMapper;
-import xyz.snowlit.web.AuthenticationRequiredInterceptor;
+import xyz.snowlit.web.ApiExceptionHandler;
 import xyz.snowlit.web.CurrentActor;
 import xyz.snowlit.web.RequestActorResolver;
 import org.junit.jupiter.api.Test;
@@ -28,10 +28,10 @@ class RequestActorWebTests {
     private final RequestActorResolver actorResolver = new RequestActorResolver(sessions);
 
     @Test
-    void protectedWebSeamInjectsAuthenticatedActorResolvedOnce() throws Exception {
+    void requiredActorIsResolvedFromBearerToken() throws Exception {
         String token = sessions.issue(member);
 
-        protectedMockMvc().perform(get("/test/protected")
+        mockMvc().perform(get("/test/protected")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1))
@@ -39,28 +39,21 @@ class RequestActorWebTests {
     }
 
     @Test
-    void protectedWebSeamRejectsAnonymousButPublicSeamKeepsOptionalActorEmpty() throws Exception {
-        protectedMockMvc().perform(get("/test/protected"))
+    void requiredActorRejectsAnonymousWhileOptionalActorStaysEmpty() throws Exception {
+        mockMvc().perform(get("/test/protected"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
-        publicMockMvc().perform(get("/test/public")
+        mockMvc().perform(get("/test/public")
                         .header("Authorization", "Bearer invalid"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(false));
     }
 
-    private MockMvc protectedMockMvc() {
+    private MockMvc mockMvc() {
         return MockMvcBuilders.standaloneSetup(new ActorController())
-                .addInterceptors(actorResolver, new AuthenticationRequiredInterceptor())
                 .setCustomArgumentResolvers(actorResolver)
-                .build();
-    }
-
-    private MockMvc publicMockMvc() {
-        return MockMvcBuilders.standaloneSetup(new ActorController())
-                .addInterceptors(actorResolver)
-                .setCustomArgumentResolvers(actorResolver)
+                .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }
 

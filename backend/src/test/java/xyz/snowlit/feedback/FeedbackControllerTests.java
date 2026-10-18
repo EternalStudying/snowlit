@@ -41,7 +41,6 @@ class FeedbackControllerTests {
     private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new FeedbackController(feedback))
-            .addInterceptors(requests.actorResolver(), requests.authenticationRequired())
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
             .setMessageConverters(new MappingJackson2HttpMessageConverter(

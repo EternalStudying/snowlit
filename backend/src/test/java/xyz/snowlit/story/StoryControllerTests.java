@@ -138,7 +138,6 @@ class StoryControllerTests {
 
     private MockMvc mockMvc(AuthenticatedRequestFixture requests) {
         return MockMvcBuilders.standaloneSetup(new StoryController(story))
-                .addInterceptors(requests.actorResolver())
                 .setCustomArgumentResolvers(requests.actorResolver())
                 .setControllerAdvice(new ApiExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(

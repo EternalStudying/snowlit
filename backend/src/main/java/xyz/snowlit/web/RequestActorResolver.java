@@ -1,34 +1,26 @@
 package xyz.snowlit.web;
 
-import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.AuthSessions;
+import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.springframework.web.servlet.HandlerInterceptor;
 
+/**
+ * Supplies {@link CurrentActor} parameters from the bearer token. A handler requires login exactly when it
+ * declares a required {@code @CurrentActor}; this is the only authentication rule for the HTTP API.
+ */
 @Component
-public final class RequestActorResolver implements HandlerInterceptor, HandlerMethodArgumentResolver {
-
-    static final String ACTOR_ATTRIBUTE = RequestActorResolver.class.getName() + ".actor";
+public final class RequestActorResolver implements HandlerMethodArgumentResolver {
 
     private final AuthSessions sessions;
 
     public RequestActorResolver(AuthSessions sessions) {
         this.sessions = sessions;
-    }
-
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        String token = BearerToken.fromAuthorization(request.getHeader("Authorization"));
-        sessions.resolve(token).ifPresent(actor -> request.setAttribute(ACTOR_ATTRIBUTE, actor));
-        return true;
     }
 
     @Override
@@ -44,12 +36,9 @@ public final class RequestActorResolver implements HandlerInterceptor, HandlerMe
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory
     ) {
-        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-        AuthenticatedActor actor = request == null
-                ? null
-                : (AuthenticatedActor) request.getAttribute(ACTOR_ATTRIBUTE);
-        CurrentActor currentActor = parameter.getParameterAnnotation(CurrentActor.class);
-        if (actor == null && currentActor != null && currentActor.required()) {
+        String token = BearerToken.fromAuthorization(webRequest.getHeader("Authorization"));
+        AuthenticatedActor actor = sessions.resolve(token).orElse(null);
+        if (actor == null && parameter.getParameterAnnotation(CurrentActor.class).required()) {
             throw ApplicationFailure.unauthenticated("UNAUTHORIZED", "登录已过期，请重新登录");
         }
         return actor;

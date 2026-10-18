@@ -3,10 +3,16 @@ package xyz.snowlit;
 import xyz.snowlit.infrastructure.storage.LocalDiskObjectStore;
 import xyz.snowlit.infrastructure.storage.MinioObjectStore;
 import xyz.snowlit.storage.ObjectStore;
+import xyz.snowlit.web.CurrentActor;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -122,6 +128,43 @@ class ArchitectureTests {
                 .map(path -> path.getFileName().toString())
                 .filter(name -> name.endsWith("Service.java"))
                 .toList()).isEmpty();
+    }
+
+    @Test
+    void everyEndpointDeclaresWhetherItNeedsLogin() throws Exception {
+        Set<String> publicEndpoints = Set.of(
+                "AuthController.login",
+                "AuthController.wechatLogin",
+                "AuthController.wechatBindLogin",
+                "AuthController.logout",
+                "StoryController.moments",
+                "StoryController.moment"
+        );
+        List<String> anonymousEndpoints = new ArrayList<>();
+        for (Path source : javaFiles(JAVA_ROOT)) {
+            if (!source.getFileName().toString().endsWith("Controller.java")) {
+                continue;
+            }
+            String className = JAVA_ROOT.relativize(source).toString()
+                    .replace(".java", "")
+                    .replace('/', '.');
+            Class<?> controller = Class.forName("xyz.snowlit." + className);
+            for (Method method : controller.getDeclaredMethods()) {
+                if (!AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class)) {
+                    continue;
+                }
+                boolean requiresActor = Arrays.stream(method.getParameters())
+                        .map(parameter -> parameter.getAnnotation(CurrentActor.class))
+                        .anyMatch(annotation -> annotation != null && annotation.required());
+                String name = controller.getSimpleName() + "." + method.getName();
+                if (!requiresActor && !publicEndpoints.contains(name)) {
+                    anonymousEndpoints.add(name);
+                }
+            }
+        }
+        assertThat(anonymousEndpoints)
+                .describedAs("endpoints without a required @CurrentActor must be listed as intentionally public")
+                .isEmpty();
     }
 
     @Test
@@ -243,12 +286,10 @@ class ArchitectureTests {
         String common = Files.readString(Path.of("src/main/resources/application.yml"));
         String dev = Files.readString(Path.of("src/main/resources/application-dev.yml"));
         String prod = Files.readString(Path.of("src/main/resources/application-prod.yml"));
-        String webConfig = Files.readString(JAVA_ROOT.resolve("config/WebConfig.java"));
 
         assertThat(common)
                 .contains("default: dev")
                 .doesNotContain("SERVER_PUBLIC_IP");
-        assertThat(webConfig).contains("\"/api/auth/wechat-login\"");
         assertThat(dev).contains(
                 "jdbc:mysql://127.0.0.1:3306/snowlit_dev",
                 "host: ${LOCAL_REDIS_HOST:127.0.0.1}",
