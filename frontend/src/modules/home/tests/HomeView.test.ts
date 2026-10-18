@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 
 import { resolve } from 'node:path';
-import JournalRouteShell from '../JournalRouteShell.vue';
 import HomeView from '../HomeView.vue';
 import { routes } from '../../../router';
 import { clearAuthToken, setAuthToken } from '../../../auth';
@@ -98,10 +97,6 @@ describe('HomeView', () => {
     expect(wrapper.text()).not.toContain('收好我们的日常与心动');
     expect(wrapper.find('.home-cozy-eyebrow').exists()).toBe(false);
     expect(wrapper.find('.home-cozy-title').exists()).toBe(false);
-  });
-
-  it('uses shared couple avatars in the shell and removes old hardcoded home data sources', () => {
-    expect(JournalRouteShell).toBeTruthy();
   });
 
   it('sanitizes missing backend fields so the page never prints undefined null or NaN', async () => {

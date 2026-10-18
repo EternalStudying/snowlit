@@ -16,7 +16,7 @@ import {
   setAuthToken
 } from './auth';
 import AppTopBar from './components/AppTopBar.vue';
-import { JournalRouteShell } from './modules/home';
+import JournalRouteShell from './shell/JournalRouteShell.vue';
 import PointerEffects from './components/PointerEffects.vue';
 import { useSmoothScroll } from './composables/useSmoothScroll';
 import LoginView, {

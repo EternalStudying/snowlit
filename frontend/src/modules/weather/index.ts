@@ -6,6 +6,7 @@ export {
   startWeatherUpdates,
   useWeatherAtmosphereData
 } from './internal/useWeatherAtmosphereData';
+export { useAutomaticWeather } from './internal/useAutomaticWeather';
 export type {
   DaylightHint,
   PrecipitationKind,

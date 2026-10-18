@@ -89,33 +89,33 @@ describe('frontend architecture', () => {
 
   it('Journal 路由壳只组合首屏、模块显隐和导航融合边界', () => {
     const shell = readFileSync(
-      resolve(process.cwd(), 'src/modules/home/JournalRouteShell.vue'),
+      resolve(process.cwd(), 'src/shell/JournalRouteShell.vue'),
       'utf8'
     );
     const heroExperience = readFileSync(
       resolve(
         process.cwd(),
-        'src/modules/home/internal/useHomeHeroExperience.ts'
+        'src/shell/useJournalHero.ts'
       ),
       'utf8'
     );
     const motionReveal = readFileSync(
       resolve(
         process.cwd(),
-        'src/modules/home/internal/useHomeMotionReveal.ts'
+        'src/shell/useMotionReveal.ts'
       ),
       'utf8'
     );
     const navFusion = readFileSync(
       resolve(
         process.cwd(),
-        'src/modules/home/internal/useJournalNavFusion.ts'
+        'src/shell/useJournalNavFusion.ts'
       ),
       'utf8'
     );
 
-    expect(shell).toContain('useHomeHeroExperience');
-    expect(shell).toContain('useHomeMotionReveal');
+    expect(shell).toContain('useJournalHero');
+    expect(shell).toContain('useMotionReveal');
     expect(shell).toContain('useJournalNavFusion');
     expect(shell).not.toContain('addEventListener(');
     expect(shell).not.toContain('requestAnimationFrame(');

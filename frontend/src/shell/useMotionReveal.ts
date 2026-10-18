@@ -6,7 +6,7 @@ import {
   type Ref
 } from 'vue';
 
-export function useHomeMotionReveal(
+export function useMotionReveal(
   shellRef: Ref<HTMLElement | null>,
   enabled: Readonly<Ref<boolean>>
 ) {

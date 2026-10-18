@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from '../../../motion';
+import { prefersReducedMotion } from '../motion';
 import {
   computed,
   onBeforeUnmount,
@@ -6,7 +6,7 @@ import {
   ref,
   watch
 } from 'vue';
-import { homeHeroSlides } from './homeHeroSlides';
+import { journalHeroSlides } from './journalHeroSlides';
 
 type HeroStickerSide = 'left' | 'right';
 
@@ -29,7 +29,7 @@ const HERO_BURST_CLEANUP_MS = 760;
 const HERO_SLIDE_WARMUP_MS = 1400;
 const HERO_AUTOPLAY_MS = 5000;
 
-export function useHomeHeroExperience() {
+export function useJournalHero() {
   const activeSlideIndex = ref(0);
   const loadedSlideIndexes = ref<ReadonlySet<number>>(new Set([0]));
   const paused = ref(false);
@@ -55,7 +55,7 @@ export function useHomeHeroExperience() {
   const interactionTimers = new Set<number>();
 
   const activeSlide = computed(
-    () => homeHeroSlides[activeSlideIndex.value] ?? homeHeroSlides[0]
+    () => journalHeroSlides[activeSlideIndex.value] ?? journalHeroSlides[0]
   );
   const isImmersive = computed(
     () =>
@@ -181,7 +181,7 @@ export function useHomeHeroExperience() {
 
   function showSlide(index: number) {
     const nextIndex =
-      (index + homeHeroSlides.length) % homeHeroSlides.length;
+      (index + journalHeroSlides.length) % journalHeroSlides.length;
     markSlideLoaded(nextIndex);
     activeSlideIndex.value = nextIndex;
   }
@@ -191,12 +191,12 @@ export function useHomeHeroExperience() {
   }
 
   function scheduleSlideWarmup() {
-    if (homeHeroSlides.length < 2) {
+    if (journalHeroSlides.length < 2) {
       return;
     }
     slideWarmupTimer = window.setTimeout(() => {
       slideWarmupTimer = undefined;
-      homeHeroSlides.forEach((_, index) => markSlideLoaded(index));
+      journalHeroSlides.forEach((_, index) => markSlideLoaded(index));
     }, HERO_SLIDE_WARMUP_MS);
   }
 
@@ -209,7 +209,7 @@ export function useHomeHeroExperience() {
   }
 
   function startAutoplay() {
-    if (reducedMotion || homeHeroSlides.length < 2) {
+    if (reducedMotion || journalHeroSlides.length < 2) {
       return;
     }
 
@@ -440,7 +440,7 @@ export function useHomeHeroExperience() {
   });
 
   return {
-    slides: homeHeroSlides,
+    slides: journalHeroSlides,
     activeSlide,
     activeSlideIndex,
     paused,

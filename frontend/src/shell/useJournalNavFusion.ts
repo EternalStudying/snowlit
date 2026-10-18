@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from '../../../motion';
+import { prefersReducedMotion } from '../motion';
 import {
   computed,
   nextTick,
@@ -9,8 +9,8 @@ import {
   type Ref
 } from 'vue';
 import { useRoute } from 'vue-router';
-import { scrollToWithSmoothScroll } from '../../../composables/useSmoothScroll';
-import { preserveNextRouteScrollPosition } from '../../../navigation/routeScrollPolicy';
+import { scrollToWithSmoothScroll } from '../composables/useSmoothScroll';
+import { preserveNextRouteScrollPosition } from '../navigation/routeScrollPolicy';
 
 type NavFusionState = 'idle' | 'docked';
 type NavLabelState = 'visible' | 'hiding' | 'hidden' | 'showing';

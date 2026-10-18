@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { prefersReducedMotion } from '../motion';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { NModal } from 'naive-ui';
-import { getAuthToken } from '../auth';
 import { syncHomeLocationFromWeather } from '../modules/home';
 import { useRoute, useRouter } from 'vue-router';
-import {
-  formatTopbarWeatherSummary,
-  startWeatherUpdates,
-  useWeatherAtmosphereData
-} from '../modules/weather';
+import { formatTopbarWeatherSummary, useAutomaticWeather } from '../modules/weather';
 import SupportCenter from '../modules/support';
 import { playStoryEnterTransition } from '../modules/story';
 import TopbarTooltip from './TopbarTooltip.vue';
@@ -18,7 +13,10 @@ defineProps<{
   showFeedback?: boolean;
 }>();
 
-const { weather, loading, error, lastCoordinates, loadWeather } = useWeatherAtmosphereData();
+const autoWeather = useAutomaticWeather(syncHomeLocationFromWeather);
+const { weather, loading, error } = autoWeather;
+const automaticWeather = autoWeather.enabled;
+const locationConsentVisible = autoWeather.consentPromptVisible;
 const route = useRoute();
 const router = useRouter();
 const weatherSummary = computed(() => formatTopbarWeatherSummary(weather.value));
@@ -30,47 +28,17 @@ const topbarIcons = {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle fill="currentColor" cx="12" cy="12" r="10"/><path fill="currentColor" d="M12 16v-4m0-4h.01"/></g></svg>'
 };
 
-const locationConsentVisible = ref(false);
 const weatherSettingsVisible = ref(false);
-const automaticWeather = ref(localStorage.getItem('snowlit-weather-location-consent') === 'enabled');
-let stopWeatherUpdates: (() => void) | undefined;
 
-function beginWeatherUpdates() {
-  stopWeatherUpdates?.();
-  stopWeatherUpdates = startWeatherUpdates((data) => syncHomeLocationFromWeather(data, lastCoordinates.value));
-}
-function acceptLocationConsent() {
-  locationConsentVisible.value = false;
-  automaticWeather.value = true;
-  localStorage.setItem('snowlit-weather-location-consent', 'enabled');
-  beginWeatherUpdates();
-}
-function declineLocationConsent() {
-  locationConsentVisible.value = false;
-  automaticWeather.value = false;
-  localStorage.setItem('snowlit-weather-location-consent', 'paused');
-}
+// Asking for consent replaces the settings dialog.
 function toggleAutomaticWeather() {
-  if (automaticWeather.value) {
-    stopWeatherUpdates?.();
-    declineLocationConsent();
-  } else { weatherSettingsVisible.value = false; locationConsentVisible.value = true; }
+  if (!automaticWeather.value) weatherSettingsVisible.value = false;
+  autoWeather.toggle();
 }
-async function refreshWeather() {
-  if (!automaticWeather.value) { weatherSettingsVisible.value = false; locationConsentVisible.value = true; return; }
-  const token = getAuthToken();
-  const data = await loadWeather({ force: true, requestLocation: true });
-  if (token && token === getAuthToken()) await syncHomeLocationFromWeather(data, lastCoordinates.value);
-  // A successful manual retry resumes scheduling after browser permissions were restored.
-  if (!error.value) beginWeatherUpdates();
+function refreshWeather() {
+  if (!automaticWeather.value) weatherSettingsVisible.value = false;
+  void autoWeather.refreshNow();
 }
-onMounted(() => {
-  void loadWeather();
-  if (!getAuthToken()) return;
-  if (automaticWeather.value) beginWeatherUpdates();
-  else if (!localStorage.getItem('snowlit-weather-location-consent')) locationConsentVisible.value = true;
-});
-onUnmounted(() => stopWeatherUpdates?.());
 
 function enterStory(event: MouseEvent | KeyboardEvent) {
   const trigger = event.currentTarget instanceof HTMLElement ? event.currentTarget : document.body;
@@ -142,7 +110,7 @@ function enterStory(event: MouseEvent | KeyboardEvent) {
     </div>
     <NModal v-model:show="locationConsentVisible" preset="dialog" title="自动更新位置与天气"
       positive-text="同意并开启" negative-text="暂不开启" :mask-closable="false"
-      @positive-click="acceptLocationConsent" @negative-click="declineLocationConsent" @close="declineLocationConsent">
+      @positive-click="autoWeather.acceptConsent" @negative-click="autoWeather.declineConsent" @close="autoWeather.declineConsent">
       <p>开启后，页面打开时自动定位，前台每 20 分钟更新，后台暂停。可随时在“天气”中暂停。</p>
       <p>后端会把经纬度四舍五入到小数点后 2 位，再发给 Geoapify（城市解析）和 Open-Meteo（模型天气）。仅发送模糊坐标，不发送账号和内容；服务商可能保留请求日志。位置信息用于首页城市和伴侣距离显示。</p>
     </NModal>

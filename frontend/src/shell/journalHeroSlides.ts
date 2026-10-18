@@ -1,14 +1,14 @@
-import heroStorybookOnsen from '../assets/hero/hero-storybook-onsen.webp';
-import heroStorybookEvening from '../assets/hero/hero-storybook-evening.webp';
+import heroStorybookOnsen from './assets/hero/hero-storybook-onsen.webp';
+import heroStorybookEvening from './assets/hero/hero-storybook-evening.webp';
 
-export type HomeHeroSlide = {
+export type JournalHeroSlide = {
   image: string;
   title: string;
   subtitle: string;
   tone: 'spring-snow' | 'warm-diary';
 };
 
-export const homeHeroSlides: HomeHeroSlide[] = [
+export const journalHeroSlides: JournalHeroSlide[] = [
   {
     image: heroStorybookOnsen,
     title: '樱花温泉边',

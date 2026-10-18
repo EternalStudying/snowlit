@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import './home-paper.css';
-import './home.css';
-import './home-motion.css';
-import './home-responsive.css';
 import { computed, ref } from 'vue';
-import partnerAAvatar from '../../assets/couple-avatars/partner-a.webp';
-import partnerBAvatar from '../../assets/couple-avatars/partner-b.webp';
-import heartSticker from './assets/paper/heart-sticker.webp';
-import navPaperPill from './assets/paper/nav-paper-pill.webp';
-import SiteRecordLink from '../../components/SiteRecordLink.vue';
-import TopbarTooltip from '../../components/TopbarTooltip.vue';
-import { useHomeHeroExperience } from './internal/useHomeHeroExperience';
-import { useHomeLifecycle } from './internal/useHomeLifecycle';
-import { useHomeMotion } from './internal/useHomeMotion';
-import { useHomeMotionReveal } from './internal/useHomeMotionReveal';
-import { useJournalNavFusion } from './internal/useJournalNavFusion';
+import partnerAAvatar from '../assets/couple-avatars/partner-a.webp';
+import partnerBAvatar from '../assets/couple-avatars/partner-b.webp';
+import heartSticker from './assets/heart-sticker.webp';
+import navPaperPill from './assets/nav-paper-pill.webp';
+import SiteRecordLink from '../components/SiteRecordLink.vue';
+import TopbarTooltip from '../components/TopbarTooltip.vue';
+import { useHomeLifecycle, useHomeMotion } from '../modules/home';
+import { useJournalHero } from './useJournalHero';
+import { useJournalNavFusion } from './useJournalNavFusion';
+import { useMotionReveal } from './useMotionReveal';
 
 interface CozyNavItem {
   to: string;
@@ -50,10 +45,10 @@ const {
   setStickerTarget: setHeroStickerTarget,
   clearStickerTarget: clearHeroStickerTarget,
   triggerStickerInteraction: triggerHeroStickerInteraction
-} = useHomeHeroExperience();
+} = useJournalHero();
 const shellRef = ref<HTMLElement | null>(null);
 const { requestRevealCheck: requestMotionRevealCheck } =
-  useHomeMotionReveal(shellRef, homeMotionEnabled);
+  useMotionReveal(shellRef, homeMotionEnabled);
 const {
   navAnchorRef,
   navRef,

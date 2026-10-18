@@ -3,13 +3,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import AppTopBar from '../../../components/AppTopBar.vue';
+import AppTopBar from '../../components/AppTopBar.vue';
 import JournalRouteShell from '../JournalRouteShell.vue';
-import { preserveNextRouteScrollPosition } from '../../../navigation/routeScrollPolicy';
-import appRouter, { routes } from '../../../router';
-import { loadStoryRoute } from '../../story';
-import { resetHomeLifecycleForTests } from '../internal/useHomeLifecycle';
-import { homeOverviewFixture } from './support/homeOverviewFixture';
+import { preserveNextRouteScrollPosition } from '../../navigation/routeScrollPolicy';
+import appRouter, { routes } from '../../router';
+import { loadStoryRoute } from '../../modules/story';
+import { resetHomeLifecycleForTests } from '../../modules/home/internal/useHomeLifecycle';
+import { homeOverviewFixture } from '../../modules/home/tests/support/homeOverviewFixture';
 
 function mockHomeShellFetch() {
   return vi.fn((input: RequestInfo | URL) => {
