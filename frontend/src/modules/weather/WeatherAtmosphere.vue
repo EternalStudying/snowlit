@@ -2,7 +2,6 @@
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useWeatherAtmosphereData } from './internal/useWeatherAtmosphereData';
 import { getWeatherRenderMode } from './profiles/weatherProfiles';
-import LegacyWeatherAtmosphere from './components/LegacyWeatherAtmosphere.vue';
 import SunnyWeatherLayer from './components/SunnyWeatherLayer.vue';
 
 const ThreeWeatherLayer = defineAsyncComponent(
@@ -26,7 +25,6 @@ const renderMode = computed(() =>
     prefersReducedMotion: prefersReducedMotion.value
   })
 );
-const isWeatherLayerSuppressed = computed(() => renderMode.value === 'none');
 
 function updateMediaState() {
   isSmallViewport.value = viewportMediaQuery?.matches ?? false;
@@ -68,13 +66,7 @@ onUnmounted(cleanupMediaQueries);
     :static="prefersReducedMotion"
   />
   <ThreeWeatherLayer
-    v-else-if="weather && !isWeatherLayerSuppressed && (renderMode === 'three-cloudy' || renderMode === 'three-rain' || renderMode === 'three-storm' || renderMode === 'three-snow' || renderMode === 'three-fog' || renderMode === 'three-sandstorm' || renderMode === 'three-aurora')"
+    v-else-if="weather"
     :weather="weather"
-    :weather-state="weather.weatherState"
-  />
-  <LegacyWeatherAtmosphere
-    v-else-if="weather && renderMode === 'legacy'"
-    :weather="weather"
-    :is-static="prefersReducedMotion"
   />
 </template>

@@ -5,26 +5,11 @@ import type {
   WeatherState
 } from '../model';
 import type { WeatherController } from '../core/WeatherController';
-import type {
-  WeatherFrameState,
-  WeatherProfile,
-  WeatherRenderer,
-  WeatherRuntimeState
-} from '../core/types';
-import { warnWeatherLayerLoadFailure } from '../core/weatherLayerLoading';
+import type { WeatherFrameState, WeatherRenderer } from '../core/types';
 import { getWeatherProfile } from '../profiles/weatherProfiles';
-
-type WeatherScene = {
-  setProfile(profile: WeatherProfile): void;
-  update(frame: WeatherFrameState, runtime: WeatherRuntimeState): void;
-  dispose(): void;
-};
-
-type WeatherSceneFamily = 'clear' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog' | 'sandstorm' | 'aurora';
 
 const props = defineProps<{
   weather: WeatherAtmosphereData;
-  weatherState: WeatherState;
 }>();
 
 const RAIN_FAMILY_STATES: WeatherState[] = ['drizzle', 'rain', 'heavyRain'];
@@ -48,12 +33,9 @@ let renderer: WeatherRenderer | undefined;
 let scene: import('three').Scene | undefined;
 let camera: import('three').PerspectiveCamera | undefined;
 let controller: WeatherController | undefined;
-let weatherScene: WeatherScene | undefined;
-let currentSceneFamily: WeatherSceneFamily | null = null;
 let clockStart = 0;
 let lastFrameTime = 0;
 let initLayerToken = 0;
-let sceneLoadToken = 0;
 let animationLoopActive = false;
 let isLayerDisposed = false;
 
@@ -94,7 +76,7 @@ function handleVisibilityChange() {
 }
 
 function renderFrame(now: number) {
-  if (!renderer || !scene || !camera || !controller || !weatherScene) {
+  if (!renderer || !scene || !camera || !controller) {
     return;
   }
 
@@ -107,8 +89,7 @@ function renderFrame(now: number) {
     scrollY
   };
 
-  const runtime = controller.update(frame);
-  weatherScene.update(frame, runtime);
+  controller.update(frame);
   renderer.render(scene, camera);
 }
 
@@ -131,136 +112,25 @@ function stopAnimationLoop() {
   animationLoopActive = false;
 }
 
-function getWeatherSceneFamily(weatherState: WeatherState): WeatherSceneFamily | null {
-  if (weatherState === 'clear') {
-    return 'clear';
-  }
 
-  if (weatherState === 'cloudy') {
-    return 'cloudy';
-  }
 
-  if (RAIN_FAMILY_STATES.includes(weatherState)) {
-    return 'rain';
-  }
-
-  if (SNOW_FAMILY_STATES.includes(weatherState)) {
-    return 'snow';
-  }
-
-  if (weatherState === 'storm' || weatherState === 'fog' || weatherState === 'sandstorm') {
-    return weatherState;
-  }
-
-  if (weatherState === 'aurora') {
-    return 'aurora';
-  }
-
-  return null;
-}
-
-async function loadWeatherScene(profile: WeatherProfile) {
-  if (!scene || !camera || !controller) {
+function applyWeatherProfileChange() {
+  if (!controller || !THREE_WEATHER_STATES.includes(props.weather.weatherState)) {
     return;
   }
 
-  const activeController = controller;
-  const nextSceneFamily = getWeatherSceneFamily(profile.weatherState);
-
-  if (!nextSceneFamily) {
-    return;
-  }
-
-  const token = ++sceneLoadToken;
-  let nextScene: WeatherScene;
-
-  try {
-    if (!isSceneLoadActive(token, activeController) || currentSceneFamily !== null) {
-      return;
-    }
-
-    if (profile.weatherState === 'aurora') {
-      const { AuroraWeatherScene } = await import('../effects/aurora/AuroraWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new AuroraWeatherScene(activeController, profile);
-    } else if (profile.weatherState === 'cloudy') {
-      const { CloudyWeatherScene } = await import('../effects/cloudy/CloudyWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new CloudyWeatherScene(activeController, profile);
-    } else if (profile.weatherState === 'sandstorm') {
-      const { SandstormWeatherScene } = await import('../effects/sandstorm/SandstormWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new SandstormWeatherScene(activeController, profile);
-    } else if (profile.weatherState === 'fog') {
-      const { FogWeatherScene } = await import('../effects/fog/FogWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new FogWeatherScene(activeController, profile);
-    } else if (profile.weatherState === 'storm') {
-      const { StormWeatherScene } = await import('../effects/storm/StormWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new StormWeatherScene(activeController, profile);
-    } else if (SNOW_FAMILY_STATES.includes(profile.weatherState)) {
-      const { SnowWeatherScene } = await import('../effects/snow/SnowWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new SnowWeatherScene(activeController, profile);
-    } else if (RAIN_FAMILY_STATES.includes(profile.weatherState)) {
-      const { RainWeatherScene } = await import('../effects/rain/RainWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new RainWeatherScene(activeController, profile);
-    } else {
-      const { SunnyWeatherScene } = await import('../effects/sunny/SunnyWeatherScene');
-      if (!isSceneLoadActive(token, activeController)) return;
-      nextScene = new SunnyWeatherScene(activeController, profile);
-    }
-  } catch (error) {
-    warnWeatherLayerLoadFailure('ThreeWeatherLayer scene adapter', error);
-    return;
-  }
-
-  if (!isSceneLoadActive(token, activeController)) {
-    nextScene.dispose();
-    return;
-  }
-
-  weatherScene = nextScene;
-  currentSceneFamily = nextSceneFamily;
-  weatherScene.setProfile(profile);
-}
-
-async function applyWeatherProfileChange() {
-  if (!controller) {
-    return;
-  }
-
-  const nextProfile = getWeatherProfile({
-    weatherState: props.weatherState,
+  controller.setWeatherProfile(getWeatherProfile({
+    weatherState: props.weather.weatherState,
     weatherVariant: props.weather.weatherVariant,
     precipitationKind: props.weather.precipitationKind,
     daylightHint: props.weather.daylightHint
-  });
-  const nextSceneFamily = getWeatherSceneFamily(nextProfile.weatherState);
-
-  if (!nextSceneFamily) {
-    return;
-  }
-
-  controller.setWeatherProfile(nextProfile);
-
-  if (weatherScene && currentSceneFamily === nextSceneFamily) {
-    weatherScene.setProfile(nextProfile);
-    return;
-  }
-
-  weatherScene?.dispose();
-  weatherScene = undefined;
-  currentSceneFamily = null;
-  await loadWeatherScene(nextProfile);
+  }));
 }
 
 async function initWeatherLayer() {
   const canvas = canvasRef.value;
 
-  if (!canvas || !THREE_WEATHER_STATES.includes(props.weatherState)) {
+  if (!canvas || !THREE_WEATHER_STATES.includes(props.weather.weatherState)) {
     return;
   }
 
@@ -285,7 +155,7 @@ async function initWeatherLayer() {
     }
 
     const profile = getWeatherProfile({
-      weatherState: props.weatherState,
+      weatherState: props.weather.weatherState,
       weatherVariant: props.weather.weatherVariant,
       precipitationKind: props.weather.precipitationKind,
       daylightHint: props.weather.daylightHint
@@ -307,12 +177,6 @@ async function initWeatherLayer() {
       scene,
       camera
     });
-    await loadWeatherScene(profile);
-
-    if (!isLayerInitActive(token, canvas) || !renderer || !scene || !camera || !controller || !weatherScene) {
-      disposeWeatherLayer();
-      return;
-    }
 
     clockStart = performance.now();
     lastFrameTime = clockStart;
@@ -337,14 +201,10 @@ function isLayerInitActive(token: number, canvas: HTMLCanvasElement) {
   return !isLayerDisposed && token === initLayerToken && canvasRef.value === canvas;
 }
 
-function isSceneLoadActive(token: number, activeController: WeatherController) {
-  return !isLayerDisposed && token === sceneLoadToken && controller === activeController && Boolean(scene && camera);
-}
 
 function disposeWeatherLayer() {
   isLayerDisposed = true;
   initLayerToken += 1;
-  sceneLoadToken += 1;
   window.removeEventListener('resize', updateSize);
   window.removeEventListener('mousemove', handlePointerMove);
   window.removeEventListener('scroll', handleScroll);
@@ -354,14 +214,11 @@ function disposeWeatherLayer() {
     renderer.setAnimationLoop(null);
     renderer.dispose();
   }
-  weatherScene?.dispose();
   controller?.dispose();
   renderer = undefined;
   scene = undefined;
   camera = undefined;
   controller = undefined;
-  weatherScene = undefined;
-  currentSceneFamily = null;
   animationLoopActive = false;
   isReady.value = false;
 }
@@ -375,13 +232,13 @@ onUnmounted(disposeWeatherLayer);
 watch(
   () =>
     [
-      props.weatherState,
+      props.weather.weatherState,
       props.weather.weatherVariant,
       props.weather.precipitationKind,
       props.weather.daylightHint
     ] as const,
   () => {
-    void applyWeatherProfileChange();
+    applyWeatherProfileChange();
   }
 );
 </script>
@@ -391,7 +248,7 @@ watch(
     class="three-weather-layer"
     :class="{ 'three-weather-layer--ready': isReady }"
     data-weather-engine="three"
-    :data-weather-state="weatherState"
+    :data-weather-state="weather.weatherState"
     aria-hidden="true"
   >
     <canvas ref="canvasRef" class="three-weather-layer__canvas"></canvas>

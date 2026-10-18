@@ -11,10 +11,7 @@ export type WeatherRenderMode =
   | 'three-snow'
   | 'three-fog'
   | 'three-sandstorm'
-  | 'three-aurora'
-  | 'legacy';
-
-export type LegacyWeatherKind = 'sunny' | 'cloudy' | 'rain' | 'snow' | 'fog' | 'thunder' | 'windy' | 'night';
+  | 'three-aurora';
 
 export type WeatherRendererKind = 'webgl' | 'webgpu';
 
@@ -36,7 +33,6 @@ export interface WeatherProfile {
   precipitationKind?: PrecipitationKind;
   daylightHint?: DaylightHint;
   meteorShower?: boolean;
-  legacyKind: LegacyWeatherKind;
   label: string;
   renderer: WeatherRenderMode;
   ambientWarmth: number;

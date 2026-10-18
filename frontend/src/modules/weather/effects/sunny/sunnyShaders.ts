@@ -7,23 +7,6 @@ export const sunnyBeamVertexShader = `
   }
 `;
 
-export const sunnyBeamFragmentShader = `
-  precision mediump float;
-
-  uniform float time;
-  uniform vec3 beamColor;
-  uniform float opacity;
-  varying vec2 vUv;
-
-  void main() {
-    float center = 1.0 - abs(vUv.x - 0.5) * 2.0;
-    float verticalFade = smoothstep(0.0, 0.24, vUv.y) * smoothstep(1.0, 0.12, vUv.y);
-    float shimmer = 0.88 + sin(time * 0.48 + vUv.y * 5.6) * 0.12;
-    float alpha = pow(center, 1.7) * verticalFade * opacity * shimmer;
-    gl_FragColor = vec4(beamColor, alpha);
-  }
-`;
-
 export const sunnyRadialRayFragmentShader = `
   precision mediump float;
 

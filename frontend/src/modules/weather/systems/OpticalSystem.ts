@@ -6,7 +6,7 @@ import type {
   WeatherSystemContext,
   WeatherSystemLayer
 } from '../core/types';
-import { warnWeatherLayerLoadFailure } from '../core/weatherLayerLoading';
+import { LazyLayers } from './LazyLayers';
 
 type OpticalLayerKey = 'sunny' | 'rainbow' | 'wet-lens' | 'frost' | 'aurora';
 
@@ -39,153 +39,60 @@ function resolveOpticalLayerKeys(profile: WeatherProfile): OpticalLayerKey[] {
 
 export class OpticalSystem implements WeatherSystem {
   private profile: WeatherProfile | null = null;
-  private readonly activeLayers = new Map<OpticalLayerKey, WeatherSystemLayer>();
-  private activeLayer: WeatherSystemLayer | null = null;
-  private loadToken = 0;
-  private disposed = false;
+  private readonly layers = new LazyLayers<OpticalLayerKey, WeatherSystemLayer>(
+    'OpticalSystem',
+    (key) => this.loadLayer(key),
+    (layer) => layer.setProfile(this.profile!)
+  );
 
   constructor(private readonly context?: WeatherSystemContext) {}
 
   setProfile(profile: WeatherProfile) {
     this.profile = profile;
-    const keys = resolveOpticalLayerKeys(profile);
-
     if (!this.context) {
-      this.clearLayers();
+      this.layers.show([]);
       return;
     }
 
-    if (keys.length === 0) {
-      if (this.activeLayers.size === 0) {
-        this.clearLayers();
-        return;
-      }
-
-      this.activeLayers.forEach((layer) => layer.setProfile(profile));
-      return;
-    }
-
-    this.retainLayerKeys(keys);
-    this.activeLayers.forEach((layer) => layer.setProfile(profile));
-
-    const token = ++this.loadToken;
-    keys.forEach((key) => {
-      if (!this.activeLayers.has(key)) {
-        void this.loadLayer(key, token);
-      }
-    });
+    const keys = resolveOpticalLayerKeys(profile);
+    // With nothing new to show, keep the current layers so they can fade out in update().
+    this.layers.show(keys.length > 0 ? keys : this.layers.keys());
   }
 
   update(frame: WeatherFrameState, runtime: WeatherRuntimeState) {
-    const sunnyOpticalVisibility = runtime.orchestration.sunnyOpticalVisibility;
-    const auroraVisibility = runtime.orchestration.auroraVisibility;
-    this.activeLayers.forEach((layer) => layer.update(frame, runtime));
+    this.layers.update(frame, runtime);
 
-    if (runtime.transitionProgress >= 1 && sunnyOpticalVisibility <= 0.01 && auroraVisibility <= 0.01 && this.profile) {
-      this.retainLayerKeys(resolveOpticalLayerKeys(this.profile));
+    const faded =
+      runtime.orchestration.sunnyOpticalVisibility <= 0.01 && runtime.orchestration.auroraVisibility <= 0.01;
+    if (runtime.transitionProgress >= 1 && faded && this.profile) {
+      this.layers.show(resolveOpticalLayerKeys(this.profile));
     }
   }
 
   dispose() {
-    this.disposed = true;
-    this.loadToken += 1;
-    this.clearLayers();
+    this.layers.dispose();
     this.profile = null;
   }
 
-  private retainLayerKeys(keys: OpticalLayerKey[]) {
-    this.activeLayers.forEach((layer, key) => {
-      if (!keys.includes(key)) {
-        layer.dispose();
-        this.activeLayers.delete(key);
-      }
-    });
-  }
-
-  private async loadLayer(key: OpticalLayerKey, token: number) {
-    const profile = this.profile;
-
-    if (!this.isLayerRequestActive(key, token, profile)) {
-      return;
+  private async loadLayer(key: OpticalLayerKey): Promise<() => WeatherSystemLayer> {
+    const { scene, camera, wind } = this.context!;
+    if (key === 'sunny') {
+      const { SunnyOpticalLayer } = await import('./optical/SunnyOpticalLayer');
+      return () => new SunnyOpticalLayer(scene, camera, wind, this.profile!);
     }
-
-    let layer: WeatherSystemLayer;
-
-    try {
-      if (key === 'sunny') {
-        const { SunnyOpticalLayer } = await import('./optical/SunnyOpticalLayer');
-        const activeProfile = this.getActiveProfileForLayer(key, token);
-        if (!activeProfile || !this.context) {
-          return;
-        }
-        layer = new SunnyOpticalLayer(this.context.scene, this.context.camera, this.context.wind, activeProfile);
-      } else if (key === 'rainbow') {
-        const { RainbowOpticalLayer } = await import('./optical/RainbowOpticalLayer');
-        const activeProfile = this.getActiveProfileForLayer(key, token);
-        if (!activeProfile || !this.context) {
-          return;
-        }
-        layer = new RainbowOpticalLayer(this.context.scene, this.context.camera, activeProfile);
-      } else if (key === 'wet-lens') {
-        const { WetLensOverlayLayer } = await import('./optical/WetLensOverlayLayer');
-        const activeProfile = this.getActiveProfileForLayer(key, token);
-        if (!activeProfile || !this.context) {
-          return;
-        }
-        layer = new WetLensOverlayLayer(this.context.scene, this.context.camera, activeProfile);
-      } else if (key === 'frost') {
-        const { FrostOverlayLayer } = await import('./optical/FrostOverlayLayer');
-        const activeProfile = this.getActiveProfileForLayer(key, token);
-        if (!activeProfile || !this.context) {
-          return;
-        }
-        layer = new FrostOverlayLayer(this.context.scene, this.context.camera, activeProfile);
-      } else {
-        const { AuroraOpticalLayer } = await import('./optical/AuroraOpticalLayer');
-        const activeProfile = this.getActiveProfileForLayer(key, token);
-        if (!activeProfile || !this.context) {
-          return;
-        }
-        layer = new AuroraOpticalLayer(this.context.scene, this.context.camera, activeProfile);
-      }
-    } catch (error) {
-      warnWeatherLayerLoadFailure('OpticalSystem', error);
-      return;
+    if (key === 'rainbow') {
+      const { RainbowOpticalLayer } = await import('./optical/RainbowOpticalLayer');
+      return () => new RainbowOpticalLayer(scene, camera, this.profile!);
     }
-
-    if (!this.isLayerRequestActive(key, token, profile)) {
-      layer.dispose();
-      return;
+    if (key === 'wet-lens') {
+      const { WetLensOverlayLayer } = await import('./optical/WetLensOverlayLayer');
+      return () => new WetLensOverlayLayer(scene, camera, this.profile!);
     }
-
-    this.activeLayers.set(key, layer);
-    this.activeLayer = layer;
-    layer.setProfile(this.profile ?? profile);
-  }
-
-  private getActiveProfileForLayer(key: OpticalLayerKey, token: number) {
-    if (!this.isLayerRequestActive(key, token, this.profile)) {
-      return null;
+    if (key === 'frost') {
+      const { FrostOverlayLayer } = await import('./optical/FrostOverlayLayer');
+      return () => new FrostOverlayLayer(scene, camera, this.profile!);
     }
-
-    const activeProfile = this.profile;
-    return activeProfile;
-  }
-
-  private isLayerRequestActive(key: OpticalLayerKey, token: number, profile: WeatherProfile | null): profile is WeatherProfile {
-    return Boolean(
-      this.context &&
-        profile &&
-        !this.disposed &&
-        token === this.loadToken &&
-        this.profile &&
-        resolveOpticalLayerKeys(this.profile).includes(key)
-    );
-  }
-
-  private clearLayers() {
-    this.activeLayers.forEach((layer) => layer.dispose());
-    this.activeLayers.clear();
-    this.activeLayer = null;
+    const { AuroraOpticalLayer } = await import('./optical/AuroraOpticalLayer');
+    return () => new AuroraOpticalLayer(scene, camera, this.profile!);
   }
 }

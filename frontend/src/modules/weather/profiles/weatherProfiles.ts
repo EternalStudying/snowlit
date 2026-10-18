@@ -13,7 +13,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   clear: {
     weatherState: 'clear',
     weatherVariant: 'clear',
-    legacyKind: 'sunny',
     label: '温柔晨光',
     renderer: 'three-clear',
     ambientWarmth: 1,
@@ -23,7 +22,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   cloudy: {
     weatherState: 'cloudy',
     weatherVariant: 'partlyCloudy',
-    legacyKind: 'cloudy',
     label: '多云',
     renderer: 'three-cloudy',
     ambientWarmth: 0.32,
@@ -33,7 +31,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   drizzle: {
     weatherState: 'drizzle',
     weatherVariant: 'lightRain',
-    legacyKind: 'rain',
     label: '轻柔细雨',
     renderer: 'three-rain',
     ambientWarmth: 0.24,
@@ -43,7 +40,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   rain: {
     weatherState: 'rain',
     weatherVariant: 'moderateRain',
-    legacyKind: 'rain',
     label: '稳定细雨',
     renderer: 'three-rain',
     ambientWarmth: 0.22,
@@ -53,7 +49,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   heavyRain: {
     weatherState: 'heavyRain',
     weatherVariant: 'heavyRain',
-    legacyKind: 'rain',
     label: '强降雨',
     renderer: 'three-rain',
     ambientWarmth: 0.16,
@@ -63,7 +58,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   storm: {
     weatherState: 'storm',
     weatherVariant: 'thunderstorm',
-    legacyKind: 'rain',
     label: '远雷',
     renderer: 'three-storm',
     ambientWarmth: 0.1,
@@ -73,7 +67,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   lightSnow: {
     weatherState: 'lightSnow',
     weatherVariant: 'lightSnow',
-    legacyKind: 'snow',
     label: '轻雪',
     renderer: 'three-snow',
     ambientWarmth: 0.2,
@@ -83,7 +76,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   snow: {
     weatherState: 'snow',
     weatherVariant: 'snow',
-    legacyKind: 'snow',
     label: '飘雪',
     renderer: 'three-snow',
     ambientWarmth: 0.18,
@@ -93,7 +85,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   blizzard: {
     weatherState: 'blizzard',
     weatherVariant: 'heavySnow',
-    legacyKind: 'snow',
     label: '大雪',
     renderer: 'three-snow',
     ambientWarmth: 0.12,
@@ -103,7 +94,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   fog: {
     weatherState: 'fog',
     weatherVariant: 'mist',
-    legacyKind: 'fog',
     label: '薄雾',
     renderer: 'three-fog',
     ambientWarmth: 0.18,
@@ -113,7 +103,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   sandstorm: {
     weatherState: 'sandstorm',
     weatherVariant: 'sandstorm',
-    legacyKind: 'windy',
     label: '沙尘',
     renderer: 'three-sandstorm',
     ambientWarmth: 0.18,
@@ -123,7 +112,6 @@ export const weatherProfiles: Record<WeatherState, WeatherProfile> = {
   aurora: {
     weatherState: 'aurora',
     weatherVariant: 'aurora',
-    legacyKind: 'night',
     label: '极光夜',
     renderer: 'three-aurora',
     ambientWarmth: 0.08,
@@ -272,7 +260,6 @@ export function getWeatherProfile({
       precipitationKind: resolvedPrecipitationKind,
       daylightHint,
       meteorShower: resolvedMeteorShower,
-      legacyKind: 'windy',
       windMultiplier: Math.max(base.windMultiplier, 1.2)
     };
   }
@@ -296,7 +283,6 @@ export function getWeatherProfile({
       precipitationKind: resolvedPrecipitationKind,
       daylightHint,
       meteorShower: resolvedMeteorShower,
-      legacyKind: base.legacyKind === 'sunny' ? 'cloudy' : base.legacyKind,
       ambientWarmth: Math.min(base.ambientWarmth, 0.18)
     };
   }

@@ -130,8 +130,9 @@ describe('procedural-weather stage 13 cloud lighting and weather integration', (
       const cloudyMaterial = firstCloudMaterial(cloudy);
       expect(cloudyMaterial.uniforms.internalLight).toBeUndefined();
 
-      const lightningLayer = (stormController.electrical as unknown as { activeLayer: { strike(value: number): void } })
-        .activeLayer;
+      const lightningLayer = (
+        stormController.electrical as unknown as { layers: { get(key: string): { strike(value: number): void } } }
+      ).layers.get('storm-lightning');
       lightningLayer.strike(1);
       stormController.update(frame(0.56, 0.16));
 

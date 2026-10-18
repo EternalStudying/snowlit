@@ -7,7 +7,7 @@ import type {
   WeatherSystemContext,
   WeatherSystemLayer
 } from '../core/types';
-import { warnWeatherLayerLoadFailure } from '../core/weatherLayerLoading';
+import { LazyLayers } from './LazyLayers';
 
 type EnvironmentLayerKey = 'wet-surface' | 'snow-accumulation' | 'sandstorm-tint';
 
@@ -34,11 +34,12 @@ export class EnvironmentSystem implements WeatherSystem {
   private readonly group = new THREE.Group();
   private readonly ambientLight = new THREE.HemisphereLight(0xffedc4, 0x6f7d96, 0);
   private readonly keyLight = new THREE.DirectionalLight(0xffdea3, 0);
-  private readonly activeLayers = new Map<EnvironmentLayerKey, WeatherSystemLayer>();
-  private activeLayer: WeatherSystemLayer | null = null;
-  private loadToken = 0;
-  private disposed = false;
   private profile: WeatherProfile | null = null;
+  private readonly layers = new LazyLayers<EnvironmentLayerKey, WeatherSystemLayer>(
+    'EnvironmentSystem',
+    (key) => this.loadLayer(key),
+    (layer) => layer.setProfile(this.profile!)
+  );
 
   constructor(private readonly context?: WeatherSystemContext) {
     this.group.name = 'weather-environment-system';
@@ -49,21 +50,7 @@ export class EnvironmentSystem implements WeatherSystem {
 
   setProfile(profile: WeatherProfile) {
     this.profile = profile;
-    const keys = resolveEnvironmentLayerKeys(profile);
-
-    if (!this.context || keys.length === 0) {
-      this.clearLayers();
-      return;
-    }
-
-    this.retainLayerKeys(keys);
-    this.activeLayers.forEach((layer) => layer.setProfile(profile));
-    const token = ++this.loadToken;
-    keys.forEach((key) => {
-      if (!this.activeLayers.has(key)) {
-        void this.loadLayer(key, token);
-      }
-    });
+    this.layers.show(this.context ? resolveEnvironmentLayerKeys(profile) : []);
   }
 
   update(frame: WeatherFrameState, runtime: WeatherRuntimeState) {
@@ -86,96 +73,27 @@ export class EnvironmentSystem implements WeatherSystem {
     this.ambientLight.intensity = (0.22 + warmth * 0.38) * readableDarkness;
     this.keyLight.color.copy(sunCool).lerp(sunWarm, Math.min(warmth, 1));
     this.keyLight.intensity = (0.38 + warmth * 1.08) * readableDarkness;
-    this.activeLayers.forEach((layer) => layer.update(frame, runtime));
+    this.layers.update(frame, runtime);
   }
 
   dispose() {
-    this.disposed = true;
-    this.loadToken += 1;
-    this.clearLayers();
-
-    if (!this.context) {
-      return;
-    }
-
+    this.layers.dispose();
     this.group.removeFromParent();
     this.group.clear();
     this.profile = null;
   }
 
-  private retainLayerKeys(keys: EnvironmentLayerKey[]) {
-    this.activeLayers.forEach((layer, key) => {
-      if (!keys.includes(key)) {
-        layer.dispose();
-        this.activeLayers.delete(key);
-      }
-    });
-  }
-
-  private async loadLayer(key: EnvironmentLayerKey, token: number) {
-    const profile = this.profile;
-
-    if (!this.isLayerRequestActive(key, token, profile)) {
-      return;
+  private async loadLayer(key: EnvironmentLayerKey): Promise<() => WeatherSystemLayer> {
+    const { scene, camera } = this.context!;
+    if (key === 'wet-surface') {
+      const { WetSurfaceLayer } = await import('./environment/WetSurfaceLayer');
+      return () => new WetSurfaceLayer(scene, camera, this.profile!);
     }
-
-    let layer: WeatherSystemLayer;
-
-    try {
-      if (key === 'wet-surface') {
-        const { WetSurfaceLayer } = await import('./environment/WetSurfaceLayer');
-
-        if (!this.isLayerRequestActive(key, token, profile)) {
-          return;
-        }
-
-        layer = new WetSurfaceLayer(this.context!.scene, this.context!.camera, profile);
-      } else if (key === 'snow-accumulation') {
-        const { SnowAccumulationLayer } = await import('./environment/SnowAccumulationLayer');
-
-        if (!this.isLayerRequestActive(key, token, profile)) {
-          return;
-        }
-
-        layer = new SnowAccumulationLayer(this.context!.scene, this.context!.camera, profile);
-      } else {
-        const { SandstormTintLayer } = await import('./environment/SandstormTintLayer');
-
-        if (!this.isLayerRequestActive(key, token, profile)) {
-          return;
-        }
-
-        layer = new SandstormTintLayer(this.context!.scene, this.context!.camera, profile);
-      }
-    } catch (error) {
-      warnWeatherLayerLoadFailure('EnvironmentSystem', error);
-      return;
+    if (key === 'snow-accumulation') {
+      const { SnowAccumulationLayer } = await import('./environment/SnowAccumulationLayer');
+      return () => new SnowAccumulationLayer(scene, camera, this.profile!);
     }
-
-    if (!this.isLayerRequestActive(key, token, profile)) {
-      layer.dispose();
-      return;
-    }
-
-    this.activeLayers.set(key, layer);
-    this.activeLayer = layer;
-    layer.setProfile(this.profile ?? profile);
-  }
-
-  private isLayerRequestActive(key: EnvironmentLayerKey, token: number, profile: WeatherProfile | null): profile is WeatherProfile {
-    return Boolean(
-      this.context &&
-        profile &&
-        !this.disposed &&
-        token === this.loadToken &&
-        this.profile &&
-        resolveEnvironmentLayerKeys(this.profile).includes(key)
-    );
-  }
-
-  private clearLayers() {
-    this.activeLayers.forEach((layer) => layer.dispose());
-    this.activeLayers.clear();
-    this.activeLayer = null;
+    const { SandstormTintLayer } = await import('./environment/SandstormTintLayer');
+    return () => new SandstormTintLayer(scene, camera, this.profile!);
   }
 }

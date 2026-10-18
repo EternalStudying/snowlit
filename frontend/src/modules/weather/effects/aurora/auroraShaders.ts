@@ -63,32 +63,3 @@ void main() {
 }
 `;
 
-export const auroraStarVertexShader = `
-attribute float aSeed;
-
-uniform float time;
-uniform float pointSize;
-
-varying float vAlpha;
-
-void main() {
-  vec3 pos = position;
-  float twinkle = 0.62 + 0.38 * sin(time * (0.7 + aSeed) + aSeed * 17.0);
-  vAlpha = twinkle;
-  vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-  gl_Position = projectionMatrix * mvPos;
-  gl_PointSize = pointSize * (80.0 / max(-mvPos.z, 0.1));
-}
-`;
-
-export const auroraStarFragmentShader = `
-precision highp float;
-
-varying float vAlpha;
-
-void main() {
-  vec2 c = gl_PointCoord - 0.5;
-  float alpha = smoothstep(0.5, 0.08, length(c)) * vAlpha;
-  gl_FragColor = vec4(0.78, 0.88, 1.0, alpha * 0.5);
-}
-`;
