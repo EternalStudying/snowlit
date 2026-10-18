@@ -14,7 +14,6 @@ import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public final class AuthModule {
 
@@ -23,8 +22,7 @@ public final class AuthModule {
     private static final int BIO_MAX_LENGTH = 80;
 
     private final UserMapper userMapper;
-    private final JwtService jwt;
-    private final AuthSessionStore sessions;
+    private final AuthSessions sessions;
     private final PasswordEncoder passwordEncoder;
     private final WechatLoginGateway wechat;
     private final Environment environment;
@@ -32,15 +30,13 @@ public final class AuthModule {
 
     public AuthModule(
             UserMapper userMapper,
-            JwtService jwt,
-            AuthSessionStore sessions,
+            AuthSessions sessions,
             PasswordEncoder passwordEncoder,
             WechatLoginGateway wechat,
             Environment environment,
             @Value("${snowlit.wechat.miniprogram.dev-bind-user-id:}") String devBindUserId
     ) {
         this.userMapper = userMapper;
-        this.jwt = jwt;
         this.sessions = sessions;
         this.passwordEncoder = passwordEncoder;
         this.wechat = wechat;
@@ -116,10 +112,10 @@ public final class AuthModule {
     }
 
     public void logout(String token) {
-        if (!jwt.isSignatureValid(token)) {
+        if (token.isBlank()) {
             throw ApplicationFailure.unauthenticated("UNAUTHORIZED", "登录已过期，请重新登录");
         }
-        sessions.delete(token);
+        sessions.revoke(token);
     }
 
     public CurrentUserVo currentUser(AuthenticatedActor actor) {
@@ -172,9 +168,7 @@ public final class AuthModule {
     }
 
     private LoginVo issueLogin(User user) {
-        String token = jwt.generateToken(user.getId(), user.getUsername());
-        sessions.create(token, user.getId(), user.getUsername(), jwt.tokenTtl());
-        return new LoginVo(token, toVo(user));
+        return new LoginVo(sessions.issue(user), toVo(user));
     }
 
     private User requireUser(Long userId) {

@@ -14,21 +14,20 @@ import static org.mockito.Mockito.when;
 class RedisAuthSessionStoreTests {
 
     @Test
-    void redisStoreUsesLoginSessionKeyAndJwtTtl() {
+    void storesUserIdUnderLoginSessionKeyWithTtl() {
         StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
         @SuppressWarnings("unchecked")
         ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(redisTemplate.hasKey("loginSession:jwt-token")).thenReturn(true);
+        when(valueOperations.get("loginSession:token")).thenReturn("1");
         RedisAuthSessionStore store = new RedisAuthSessionStore(redisTemplate);
 
-        store.create("jwt-token", 1L, "demo", Duration.ofHours(1));
+        store.create("token", 1L, Duration.ofHours(1));
 
-        verify(valueOperations).set("loginSession:jwt-token", "1:demo", Duration.ofHours(1));
-        assertThat(store.exists("jwt-token")).isTrue();
-
-        store.delete("jwt-token");
-
-        verify(redisTemplate).delete("loginSession:jwt-token");
+        verify(valueOperations).set("loginSession:token", "1", Duration.ofHours(1));
+        assertThat(store.userId("token")).contains(1L);
+        assertThat(store.userId("missing")).isEmpty();
+        store.delete("token");
+        verify(redisTemplate).delete("loginSession:token");
     }
 }

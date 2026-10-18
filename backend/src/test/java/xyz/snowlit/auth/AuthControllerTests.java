@@ -1,5 +1,6 @@
 package xyz.snowlit.auth;
 
+import xyz.snowlit.support.InMemoryAuthSessionStore;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,16 +26,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthControllerTests {
 
-    private static final String SECRET = "test-secret-key-that-is-long-enough-for-hs256-tests";
 
     private final UserMapper userMapper = mock(UserMapper.class);
-    private final AuthSessionStore sessions = mock(AuthSessionStore.class);
+    private final InMemoryAuthSessionStore sessions = new InMemoryAuthSessionStore();
     private final WechatLoginGateway wechat = mock(WechatLoginGateway.class);
-    private final JwtService jwt = new JwtService(SECRET, sessions);
     private final AuthModule auth = new AuthModule(
             userMapper,
-            jwt,
-            sessions,
+            new AuthSessions(sessions, userMapper),
             new BCryptPasswordEncoder(),
             wechat,
             new MockEnvironment(),
@@ -180,12 +178,10 @@ class AuthControllerTests {
     }
 
     @Test
-    void logoutDeletesSignedTokenAndRejectsMissingAuthorization() throws Exception {
+    void logoutEndsSessionAndRejectsMissingAuthorization() throws Exception {
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", requests.authorization()))
                 .andExpect(status().isNoContent());
-
-        verify(sessions).delete(any(String.class));
 
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isUnauthorized())

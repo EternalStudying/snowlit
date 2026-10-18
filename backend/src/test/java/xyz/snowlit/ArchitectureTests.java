@@ -121,7 +121,7 @@ class ArchitectureTests {
         assertThat(javaFiles(JAVA_ROOT).stream()
                 .map(path -> path.getFileName().toString())
                 .filter(name -> name.endsWith("Service.java"))
-                .toList()).containsExactly("JwtService.java");
+                .toList()).isEmpty();
     }
 
     @Test

@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @Service
 public final class RedisAuthSessionStore implements AuthSessionStore {
@@ -18,13 +19,13 @@ public final class RedisAuthSessionStore implements AuthSessionStore {
     }
 
     @Override
-    public void create(String token, Long userId, String username, Duration ttl) {
-        redisTemplate.opsForValue().set(KEY_PREFIX + token, userId + ":" + username, ttl);
+    public void create(String token, Long userId, Duration ttl) {
+        redisTemplate.opsForValue().set(KEY_PREFIX + token, userId.toString(), ttl);
     }
 
     @Override
-    public boolean exists(String token) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + token));
+    public Optional<Long> userId(String token) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(KEY_PREFIX + token)).map(Long::valueOf);
     }
 
     @Override

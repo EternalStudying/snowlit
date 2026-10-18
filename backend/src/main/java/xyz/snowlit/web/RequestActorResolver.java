@@ -1,7 +1,7 @@
 package xyz.snowlit.web;
 
 import xyz.snowlit.auth.AuthenticatedActor;
-import xyz.snowlit.auth.RequestIdentity;
+import xyz.snowlit.auth.AuthSessions;
 import xyz.snowlit.failure.ApplicationFailure;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,16 +18,16 @@ public final class RequestActorResolver implements HandlerInterceptor, HandlerMe
 
     static final String ACTOR_ATTRIBUTE = RequestActorResolver.class.getName() + ".actor";
 
-    private final RequestIdentity requestIdentity;
+    private final AuthSessions sessions;
 
-    public RequestActorResolver(RequestIdentity requestIdentity) {
-        this.requestIdentity = requestIdentity;
+    public RequestActorResolver(AuthSessions sessions) {
+        this.sessions = sessions;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String token = BearerToken.fromAuthorization(request.getHeader("Authorization"));
-        requestIdentity.resolve(token).ifPresent(actor -> request.setAttribute(ACTOR_ATTRIBUTE, actor));
+        sessions.resolve(token).ifPresent(actor -> request.setAttribute(ACTOR_ATTRIBUTE, actor));
         return true;
     }
 

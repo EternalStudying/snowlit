@@ -1,11 +1,10 @@
 package xyz.snowlit;
 
+import xyz.snowlit.auth.AuthSessions;
 import xyz.snowlit.auth.AuthenticatedActor;
-import xyz.snowlit.auth.RequestIdentity;
 import xyz.snowlit.auth.User;
-import xyz.snowlit.auth.UserMapper;
-import xyz.snowlit.auth.AuthSessionStore;
-import xyz.snowlit.auth.JwtService;
+import xyz.snowlit.support.InMemoryAuthSessionStore;
+import xyz.snowlit.support.SingleUserMapper;
 import xyz.snowlit.web.AuthenticationRequiredInterceptor;
 import xyz.snowlit.web.CurrentActor;
 import xyz.snowlit.web.RequestActorResolver;
@@ -15,10 +14,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -26,18 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class RequestActorWebTests {
 
-    private static final String SECRET = "test-secret-key-that-is-long-enough-for-hs256-tests";
-
-    private final FakeAuthSessionStore sessions = new FakeAuthSessionStore();
-    private final JwtService jwt = new JwtService(SECRET, sessions);
-    private final FakeUserMapper users = new FakeUserMapper();
-    private final RequestActorResolver actorResolver = new RequestActorResolver(new RequestIdentity(jwt, users));
+    private final User member = new User(1L, "member_a", "伴侣 A", "secret");
+    private final AuthSessions sessions =
+            new AuthSessions(new InMemoryAuthSessionStore(), new SingleUserMapper(member));
+    private final RequestActorResolver actorResolver = new RequestActorResolver(sessions);
 
     @Test
     void protectedWebSeamInjectsAuthenticatedActorResolvedOnce() throws Exception {
-        users.user = new User(1L, "member_a", "伴侣 A", "secret");
-        String token = jwt.generateToken(1L, "member_a");
-        sessions.create(token, 1L, "member_a", jwt.tokenTtl());
+        String token = sessions.issue(member);
 
         protectedMockMvc().perform(get("/test/protected")
                         .header("Authorization", "Bearer " + token))
@@ -83,56 +75,6 @@ class RequestActorWebTests {
         @GetMapping("/test/public")
         Map<String, Object> publicActor(@CurrentActor(required = false) AuthenticatedActor actor) {
             return Map.of("authenticated", actor != null);
-        }
-    }
-
-    private static final class FakeAuthSessionStore implements AuthSessionStore {
-
-        private final Set<String> tokens = new HashSet<>();
-
-        @Override
-        public void create(String token, Long userId, String username, Duration ttl) {
-            tokens.add(token);
-        }
-
-        @Override
-        public boolean exists(String token) {
-            return tokens.contains(token);
-        }
-
-        @Override
-        public void delete(String token) {
-            tokens.remove(token);
-        }
-    }
-
-    private static final class FakeUserMapper implements UserMapper {
-
-        private User user;
-
-        @Override
-        public User findByUsername(String username) {
-            return user;
-        }
-
-        @Override
-        public User findById(Long id) {
-            return user != null && user.getId().equals(id) ? user : null;
-        }
-
-        @Override
-        public User findByWechatOpenid(String openid) {
-            return null;
-        }
-
-        @Override
-        public int bindWechatOpenidIfUnbound(Long id, String openid, String unionid) {
-            return 0;
-        }
-
-        @Override
-        public int updateProfile(Long id, String displayName, String mood, String bio) {
-            return 0;
         }
     }
 }

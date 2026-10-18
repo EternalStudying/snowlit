@@ -1,5 +1,6 @@
 package xyz.snowlit.auth;
 
+import xyz.snowlit.support.InMemoryAuthSessionStore;
 import xyz.snowlit.auth.AuthDtos.LoginDto;
 import xyz.snowlit.auth.AuthDtos.ProfileUpdateDto;
 import xyz.snowlit.auth.AuthDtos.WechatBindLoginDto;
@@ -29,13 +30,11 @@ import static org.mockito.Mockito.when;
 
 class AuthModuleTests {
 
-    private static final String SECRET = "test-secret-key-that-is-long-enough-for-hs256-tests";
     private static final AuthenticatedActor ACTOR =
             new AuthenticatedActor(1L, "demo", "Demo User", null, "About me", "Happy", null);
 
     private final UserMapper userMapper = mock(UserMapper.class);
-    private final FakeAuthSessionStore sessions = new FakeAuthSessionStore();
-    private final JwtService jwt = new JwtService(SECRET, sessions);
+    private final InMemoryAuthSessionStore sessions = new InMemoryAuthSessionStore();
     private final FakeWechatLoginGateway wechat = new FakeWechatLoginGateway();
     private final AuthModule auth = auth("", "dev");
 
@@ -55,9 +54,8 @@ class AuthModuleTests {
 
         assertThat(response.token()).isNotBlank();
         assertThat(response.user()).isEqualTo(sampleVo());
-        assertThat(sessions.valueFor(response.token())).isEqualTo("1:demo");
+        assertThat(sessions.userId(response.token())).contains(1L);
         assertThat(sessions.ttlFor(response.token())).isEqualTo(Duration.ofHours(1));
-        assertThat(jwt.isValid(response.token())).isTrue();
     }
 
     @Test
@@ -200,7 +198,7 @@ class AuthModuleTests {
     }
 
     @Test
-    void logoutDeletesOnlyCurrentSessionAndAllowsAlreadyMissingSignedToken() {
+    void logoutDeletesOnlyCurrentSessionAndIsIdempotent() {
         String firstToken = activeToken();
         String secondToken = activeToken();
 
@@ -209,9 +207,10 @@ class AuthModuleTests {
         assertThat(sessions.exists(firstToken)).isFalse();
         assertThat(sessions.exists(secondToken)).isTrue();
 
-        String alreadyMissing = jwt.generateToken(1L, "demo");
-        assertThatCode(() -> auth.logout(alreadyMissing)).doesNotThrowAnyException();
-        assertThat(sessions.deletedTokens()).contains(alreadyMissing);
+        assertThatCode(() -> auth.logout(firstToken)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> auth.logout(""))
+                .isInstanceOfSatisfying(ApplicationFailure.class,
+                        failure -> assertThat(failure.code()).isEqualTo("UNAUTHORIZED"));
     }
 
     private AuthModule auth(String devBindUserId, String profile) {
@@ -219,8 +218,7 @@ class AuthModuleTests {
         environment.setActiveProfiles(profile);
         return new AuthModule(
                 userMapper,
-                jwt,
-                sessions,
+                new AuthSessions(sessions, userMapper),
                 new BCryptPasswordEncoder(),
                 wechat,
                 environment,
@@ -261,51 +259,9 @@ class AuthModuleTests {
     }
 
     private String activeToken() {
-        String token = jwt.generateToken(1L, "demo");
-        sessions.create(token, 1L, "demo", Duration.ofHours(1));
-        return token;
+        return new AuthSessions(sessions, userMapper).issue(sampleUser("hash"));
     }
 
-    private static final class FakeAuthSessionStore implements AuthSessionStore {
-
-        private final Map<String, StoredSession> sessions = new HashMap<>();
-        private final Set<String> deletedTokens = new HashSet<>();
-
-        @Override
-        public void create(String token, Long userId, String username, Duration ttl) {
-            sessions.put(token, new StoredSession(userId + ":" + username, ttl));
-        }
-
-        @Override
-        public boolean exists(String token) {
-            return sessions.containsKey(token);
-        }
-
-        @Override
-        public void delete(String token) {
-            deletedTokens.add(token);
-            sessions.remove(token);
-        }
-
-        String valueFor(String token) {
-            return sessions.get(token).value();
-        }
-
-        Duration ttlFor(String token) {
-            return sessions.get(token).ttl();
-        }
-
-        Set<String> deletedTokens() {
-            return deletedTokens;
-        }
-
-        int sessionCount() {
-            return sessions.size();
-        }
-    }
-
-    private record StoredSession(String value, Duration ttl) {
-    }
 
     private static final class FakeWechatLoginGateway implements WechatLoginGateway {
 
