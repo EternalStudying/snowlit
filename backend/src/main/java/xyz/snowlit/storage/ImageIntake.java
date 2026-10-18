@@ -1,7 +1,6 @@
 package xyz.snowlit.storage;
 
 import xyz.snowlit.failure.ApplicationFailure;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,12 +22,7 @@ public class ImageIntake {
     private final ObjectStore objects;
     private final Clock clock;
 
-    @Autowired
-    public ImageIntake(ObjectStore objects) {
-        this(objects, Clock.systemDefaultZone());
-    }
-
-    ImageIntake(ObjectStore objects, Clock clock) {
+    public ImageIntake(ObjectStore objects, Clock clock) {
         this.objects = objects;
         this.clock = clock;
     }

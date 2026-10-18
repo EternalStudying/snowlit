@@ -1,5 +1,6 @@
 package xyz.snowlit.album;
 
+import xyz.snowlit.paging.PageWindow;
 import xyz.snowlit.album.AlbumDtos.AlbumCreateDto;
 import xyz.snowlit.album.AlbumDtos.AlbumPhotoMetadataDto;
 import xyz.snowlit.album.AlbumDtos.AlbumUnlockDto;
@@ -24,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,9 +42,8 @@ import java.util.Set;
 public class AlbumModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AlbumModule.class);
-    private static final int DEFAULT_PAGE = 1;
-    private static final int DEFAULT_SIZE = 5;
-    private static final int MAX_SIZE = 20;
+    private static final int DEFAULT_PAGE_SIZE = 5;
+    private static final int MAX_PAGE_SIZE = 20;
     private static final int DEFAULT_PREVIEW_LIMIT = 9;
     private static final int MAX_PREVIEW_LIMIT = 9;
     private static final int MAX_UNLOCK_FAILURES = 5;
@@ -74,17 +73,7 @@ public class AlbumModule {
     private final ImageIntake images;
     private final Clock clock;
 
-    @Autowired
     public AlbumModule(
-            AlbumMapper albumMapper,
-            PasswordEncoder passwordEncoder,
-            AlbumPrivateAccessTokenStore tokenStore,
-            ImageIntake images
-    ) {
-        this(albumMapper, passwordEncoder, tokenStore, images, Clock.systemDefaultZone());
-    }
-
-    AlbumModule(
             AlbumMapper albumMapper,
             PasswordEncoder passwordEncoder,
             AlbumPrivateAccessTokenStore tokenStore,
@@ -99,19 +88,16 @@ public class AlbumModule {
     }
 
     public AlbumPageVo listAlbums(AuthenticatedActor actor, Integer page, Integer size, Integer previewLimit) {
-        int resolvedPage = clampPage(page);
-        int resolvedSize = clampSize(size);
+        PageWindow window = PageWindow.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
         int resolvedPreviewLimit = clampPreviewLimit(previewLimit);
-        int offset = (resolvedPage - 1) * resolvedSize;
         long total = albumMapper.countPublishedAlbums();
-        List<Album> albums = albumMapper.findPublishedAlbums(offset, resolvedSize);
+        List<Album> albums = albumMapper.findPublishedAlbums(window.offset(), window.size());
         List<Long> albumIds = albums.stream().map(Album::getId).toList();
         Set<Long> likedAlbumIds = findActiveLikedAlbumIds(actor.userId(), albumIds);
         List<AlbumVo> items = albums.stream()
                 .map(album -> toAlbumVo(album, isPrivate(album), previewPhotos(album, resolvedPreviewLimit), likedAlbumIds.contains(album.getId())))
                 .toList();
-        boolean hasMore = (long) resolvedPage * resolvedSize < total;
-        return new AlbumPageVo(items, total, resolvedPage, resolvedSize, hasMore, SiteManagerPolicy.canManage(actor.userId()));
+        return new AlbumPageVo(items, total, window.page(), window.size(), window.hasMore(total), SiteManagerPolicy.canManage(actor.userId()));
     }
 
     public AlbumDetailVo getAlbumDetail(AuthenticatedActor actor, Long albumId, String privateAccessToken) {
@@ -500,7 +486,6 @@ public class AlbumModule {
         }
     }
 
-
     private String defaultLocation(String value) {
         String cleaned = Text.trim(value);
         return cleaned.isBlank() ? "地球" : cleaned;
@@ -509,17 +494,6 @@ public class AlbumModule {
     private String defaultCaption(String value) {
         String cleaned = Text.trim(value);
         return cleaned.isBlank() ? "未命名照片" : cleaned;
-    }
-
-    private int clampPage(Integer page) {
-        return page == null || page < 1 ? DEFAULT_PAGE : page;
-    }
-
-    private int clampSize(Integer size) {
-        if (size == null || size < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(size, MAX_SIZE);
     }
 
     private int clampPreviewLimit(Integer previewLimit) {

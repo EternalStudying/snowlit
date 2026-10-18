@@ -50,7 +50,7 @@ class DiaryModuleTests {
     private final HomeMapper homeMapper = mock(HomeMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
     private final DiaryModule diaryService =
-            new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects), CLOCK);
+            new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void accountWithoutCoupleRoleCannotUseDiaries() {

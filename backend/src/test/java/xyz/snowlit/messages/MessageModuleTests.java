@@ -39,7 +39,7 @@ class MessageModuleTests {
 
     private final MessageMapper messageMapper = mock(MessageMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects), CLOCK);
+    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void listMessagesReturnsPagedItemsWithCurrentUserDeletePermission() {

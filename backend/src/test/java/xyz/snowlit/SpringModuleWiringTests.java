@@ -40,11 +40,9 @@ class SpringModuleWiringTests {
     @MethodSource("businessModules")
     void springCanConstructAndProxyBusinessModule(Class<?> module) {
         try (var context = new AnnotationConfigApplicationContext()) {
-            // Mock only external collaborators; Spring must select the real constructor
-            // and create transaction proxies just as application startup does.
-            var constructor = Arrays.stream(module.getConstructors())
-                    .filter(candidate -> Arrays.stream(candidate.getParameterTypes()).noneMatch(type -> type == Clock.class))
-                    .findFirst().orElseThrow();
+            // Mock only collaborators (including the shared Clock); Spring must select the real
+            // constructor and create transaction proxies just as application startup does.
+            var constructor = Arrays.stream(module.getConstructors()).findFirst().orElseThrow();
             Arrays.stream(constructor.getParameterTypes())
                     .filter(type -> type != String.class && type != Environment.class)
                     .distinct()

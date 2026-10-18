@@ -21,7 +21,6 @@ import xyz.snowlit.diary.DiaryVos.DiaryYearStatVo;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
@@ -61,16 +60,7 @@ public class DiaryModule {
     private final ImageIntake images;
     private final Clock clock;
 
-    @Autowired
     public DiaryModule(
-            DiaryMapper diaryMapper,
-            HomeMapper homeMapper,
-            ImageIntake images
-    ) {
-        this(diaryMapper, homeMapper, images, Clock.systemDefaultZone());
-    }
-
-    DiaryModule(
             DiaryMapper diaryMapper,
             HomeMapper homeMapper,
             ImageIntake images,

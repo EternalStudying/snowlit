@@ -45,7 +45,7 @@ class StoryControllerTests {
 
     private final StoryMapper storyMapper = mock(StoryMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects), CLOCK);
+    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects, CLOCK), CLOCK);
     private final AuthenticatedRequestFixture manager = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = mockMvc(manager);
 

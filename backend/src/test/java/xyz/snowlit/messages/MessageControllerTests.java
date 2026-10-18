@@ -44,7 +44,7 @@ class MessageControllerTests {
 
     private final MessageMapper messageMapper = mock(MessageMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects), CLOCK);
+    private final MessageModule messages = new MessageModule(messageMapper, new ImageIntake(objects, CLOCK), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MessageController(messages))
             .setCustomArgumentResolvers(requests.actorResolver())

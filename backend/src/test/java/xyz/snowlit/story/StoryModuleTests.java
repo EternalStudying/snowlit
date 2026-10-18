@@ -41,7 +41,7 @@ class StoryModuleTests {
 
     private final StoryMapper storyMapper = mock(StoryMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects), CLOCK);
+    private final StoryModule story = new StoryModule(storyMapper, new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void listMomentsIsPublicAndReturnsFiltersYearsAndCanManage() {

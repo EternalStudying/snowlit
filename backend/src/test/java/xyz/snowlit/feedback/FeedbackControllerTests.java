@@ -38,7 +38,7 @@ class FeedbackControllerTests {
 
     private final FeedbackMapper feedbackMapper = mock(FeedbackMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects), CLOCK);
+    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects, CLOCK), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new FeedbackController(feedback))
             .setCustomArgumentResolvers(requests.actorResolver())

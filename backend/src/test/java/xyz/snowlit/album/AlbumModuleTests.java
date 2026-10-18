@@ -59,7 +59,7 @@ class AlbumModuleTests {
             albumMapper,
             new BCryptPasswordEncoder(),
             tokenStore,
-            new ImageIntake(objects),
+            new ImageIntake(objects, CLOCK),
             CLOCK
     );
 
@@ -379,7 +379,7 @@ class AlbumModuleTests {
                 albumMapper,
                 new BCryptPasswordEncoder(),
                 tokenStore,
-                new ImageIntake(objects),
+                new ImageIntake(objects, CLOCK),
                 Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore"))
         );
         LocalDate utcDate = LocalDate.of(2026, 5, 16);
@@ -401,7 +401,7 @@ class AlbumModuleTests {
                 albumMapper,
                 new BCryptPasswordEncoder(),
                 tokenStore,
-                new ImageIntake(objects),
+                new ImageIntake(objects, CLOCK),
                 Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles"))
         );
         LocalDate utcDate = LocalDate.of(2026, 5, 17);

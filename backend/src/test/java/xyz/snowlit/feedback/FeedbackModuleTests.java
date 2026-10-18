@@ -40,7 +40,7 @@ class FeedbackModuleTests {
 
     private final FeedbackMapper feedbackMapper = mock(FeedbackMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects), CLOCK);
+    private final FeedbackModule feedback = new FeedbackModule(feedbackMapper, new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void uploadImageRejectsUnsupportedTypeAndOversizeFile() {

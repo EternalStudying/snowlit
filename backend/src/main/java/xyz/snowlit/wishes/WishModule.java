@@ -1,5 +1,6 @@
 package xyz.snowlit.wishes;
 
+import xyz.snowlit.paging.PageWindow;
 import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.auth.SiteManagerPolicy;
@@ -14,7 +15,6 @@ import xyz.snowlit.wishes.WishVos.WishPageVo;
 import xyz.snowlit.wishes.WishVos.WishStatsVo;
 import xyz.snowlit.wishes.WishVos.WishSummaryVo;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
@@ -25,9 +25,8 @@ import java.util.Set;
 @Service
 public final class WishModule {
 
-    private static final int DEFAULT_PAGE = 1;
-    private static final int DEFAULT_SIZE = 8;
-    private static final int MAX_SIZE = 30;
+    private static final int DEFAULT_PAGE_SIZE = 8;
+    private static final int MAX_PAGE_SIZE = 30;
     private static final Set<String> CATEGORIES = Set.of("want_go", "want_do");
     private static final ImagePolicy IMAGE = ImagePolicy.standard("WISH", "wish", true, "清单图片上传失败，请稍后重试");
 
@@ -35,12 +34,7 @@ public final class WishModule {
     private final ImageIntake images;
     private final Clock clock;
 
-    @Autowired
-    public WishModule(WishMapper wishMapper, ImageIntake images) {
-        this(wishMapper, images, Clock.systemDefaultZone());
-    }
-
-    WishModule(WishMapper wishMapper, ImageIntake images, Clock clock) {
+    public WishModule(WishMapper wishMapper, ImageIntake images, Clock clock) {
         this.wishMapper = wishMapper;
         this.images = images;
         this.clock = clock;
@@ -57,20 +51,17 @@ public final class WishModule {
         String resolvedCategory = normalizeCategory(category);
         validateListParams(resolvedCategory, resolvedCompleted);
 
-        int resolvedPage = clampPage(page);
-        int resolvedSize = clampSize(size);
-        int offset = (resolvedPage - 1) * resolvedSize;
+        PageWindow window = PageWindow.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
         long total = wishMapper.countWishes(resolvedCategory, resolvedCompleted);
-        List<WishSummaryVo> items = wishMapper.findWishes(resolvedCategory, resolvedCompleted, offset, resolvedSize).stream()
+        List<WishSummaryVo> items = wishMapper.findWishes(resolvedCategory, resolvedCompleted, window.offset(), window.size()).stream()
                 .map(this::toSummary)
                 .toList();
-        boolean hasMore = (long) resolvedPage * resolvedSize < total;
         return new WishPageVo(
                 items,
                 total,
-                resolvedPage,
-                resolvedSize,
-                hasMore,
+                window.page(),
+                window.size(),
+                window.hasMore(total),
                 SiteManagerPolicy.canManage(actor.userId())
         );
     }
@@ -259,20 +250,8 @@ public final class WishModule {
         );
     }
 
-    private int clampPage(Integer page) {
-        return page == null || page < 1 ? DEFAULT_PAGE : page;
-    }
-
-    private int clampSize(Integer size) {
-        if (size == null || size < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(size, MAX_SIZE);
-    }
-
     private LocalDateTime now() {
         return LocalDateTime.now(clock);
     }
-
 
 }

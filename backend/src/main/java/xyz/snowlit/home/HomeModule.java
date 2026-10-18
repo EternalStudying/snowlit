@@ -21,7 +21,6 @@ import xyz.snowlit.home.HomeVos.HomeVo;
 import xyz.snowlit.home.HomeVos.PhotoVo;
 import xyz.snowlit.wishes.WishVos.WishItemVo;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -88,12 +87,7 @@ public final class HomeModule {
     private final HomeMapper homeMapper;
     private final Clock clock;
 
-    @Autowired
-    public HomeModule(HomeMapper homeMapper) {
-        this(homeMapper, Clock.systemDefaultZone());
-    }
-
-    HomeModule(HomeMapper homeMapper, Clock clock) {
+    public HomeModule(HomeMapper homeMapper, Clock clock) {
         this.homeMapper = homeMapper;
         this.clock = clock;
     }

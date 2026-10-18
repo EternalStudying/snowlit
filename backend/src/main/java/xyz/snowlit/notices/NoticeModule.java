@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -25,11 +24,6 @@ public final class NoticeModule {
     private final NoticeMapper noticeMapper;
     private final Clock clock;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Autowired
-    public NoticeModule(NoticeMapper noticeMapper) {
-        this(noticeMapper, Clock.systemDefaultZone());
-    }
 
     public NoticeModule(NoticeMapper noticeMapper, Clock clock) {
         this.noticeMapper = noticeMapper;

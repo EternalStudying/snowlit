@@ -43,7 +43,7 @@ class WishControllerTests {
 
     private final WishMapper wishMapper = mock(WishMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects), CLOCK);
+    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects, CLOCK), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WishController(wishes))
             .setCustomArgumentResolvers(requests.actorResolver())

@@ -48,7 +48,7 @@ class DiaryControllerTests {
     private final DiaryMapper diaryMapper = mock(DiaryMapper.class);
     private final HomeMapper homeMapper = mock(HomeMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final DiaryModule diaries = new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects), CLOCK);
+    private final DiaryModule diaries = new DiaryModule(diaryMapper, homeMapper, new ImageIntake(objects, CLOCK), CLOCK);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new DiaryController(diaries))
             .setCustomArgumentResolvers(requests.actorResolver())

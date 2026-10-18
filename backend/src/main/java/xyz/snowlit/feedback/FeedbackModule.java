@@ -13,7 +13,6 @@ import xyz.snowlit.storage.ObjectStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
@@ -45,12 +44,7 @@ public final class FeedbackModule {
     private final Clock clock;
     private final ObjectMapper objectMapper;
 
-    @Autowired
-    public FeedbackModule(FeedbackMapper feedbackMapper, ImageIntake images) {
-        this(feedbackMapper, images, Clock.systemDefaultZone());
-    }
-
-    FeedbackModule(FeedbackMapper feedbackMapper, ImageIntake images, Clock clock) {
+    public FeedbackModule(FeedbackMapper feedbackMapper, ImageIntake images, Clock clock) {
         this.feedbackMapper = feedbackMapper;
         this.images = images;
         this.clock = clock;

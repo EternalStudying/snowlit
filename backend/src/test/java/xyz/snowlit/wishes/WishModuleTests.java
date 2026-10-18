@@ -45,7 +45,7 @@ class WishModuleTests {
 
     private final WishMapper wishMapper = mock(WishMapper.class);
     private final InMemoryObjectStore objects = new InMemoryObjectStore();
-    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects), CLOCK);
+    private final WishModule wishes = new WishModule(wishMapper, new ImageIntake(objects, CLOCK), CLOCK);
 
     @Test
     void listReturnsPagedSummaryAndManagerCapability() {

@@ -1,5 +1,6 @@
 package xyz.snowlit.messages;
 
+import xyz.snowlit.paging.PageWindow;
 import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
@@ -10,7 +11,6 @@ import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ImagePolicy;
 import xyz.snowlit.storage.ObjectStore;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
@@ -21,9 +21,8 @@ import java.util.Set;
 @Service
 public final class MessageModule {
 
-    private static final int DEFAULT_PAGE = 1;
-    private static final int DEFAULT_SIZE = 20;
-    private static final int MAX_SIZE = 50;
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int MAX_PAGE_SIZE = 50;
     private static final int MAX_CONTENT_LENGTH = 500;
     private static final ImagePolicy IMAGE =
             ImagePolicy.standard("MESSAGE", "messages", true, "留言图片上传失败，请稍后重试");
@@ -32,26 +31,19 @@ public final class MessageModule {
     private final ImageIntake images;
     private final Clock clock;
 
-    @Autowired
-    public MessageModule(MessageMapper messageMapper, ImageIntake images) {
-        this(messageMapper, images, Clock.systemDefaultZone());
-    }
-
-    MessageModule(MessageMapper messageMapper, ImageIntake images, Clock clock) {
+    public MessageModule(MessageMapper messageMapper, ImageIntake images, Clock clock) {
         this.messageMapper = messageMapper;
         this.images = images;
         this.clock = clock;
     }
 
     public MessagePageVo listMessages(AuthenticatedActor actor, Integer page, Integer size) {
-        int resolvedPage = clampPage(page);
-        int resolvedSize = clampSize(size);
-        int offset = (resolvedPage - 1) * resolvedSize;
+        PageWindow window = PageWindow.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
         long total = messageMapper.countMessages();
-        List<MessageVo> items = messageMapper.findMessages(offset, resolvedSize).stream()
+        List<MessageVo> items = messageMapper.findMessages(window.offset(), window.size()).stream()
                 .map(message -> toVo(message, actor.userId()))
                 .toList();
-        return new MessagePageVo(items, total, resolvedPage, resolvedSize, (long) resolvedPage * resolvedSize < total);
+        return new MessagePageVo(items, total, window.page(), window.size(), window.hasMore(total));
     }
 
     public MessageVo createMessage(AuthenticatedActor actor, MessageCreateDto request, MultipartFile image) {
@@ -113,17 +105,6 @@ public final class MessageModule {
                 message.getCreatedAt(),
                 currentUserId.equals(message.getAuthorUserId())
         );
-    }
-
-    private int clampPage(Integer page) {
-        return page == null || page < 1 ? DEFAULT_PAGE : page;
-    }
-
-    private int clampSize(Integer size) {
-        if (size == null || size < 1) {
-            return DEFAULT_SIZE;
-        }
-        return Math.min(size, MAX_SIZE);
     }
 
     private LocalDateTime now() {

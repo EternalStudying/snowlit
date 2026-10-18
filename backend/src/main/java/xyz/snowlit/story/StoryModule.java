@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Clock;
@@ -36,12 +35,7 @@ public final class StoryModule {
     private final Clock clock;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    public StoryModule(StoryMapper storyMapper, ImageIntake images) {
-        this(storyMapper, images, Clock.systemDefaultZone());
-    }
-
-    StoryModule(StoryMapper storyMapper, ImageIntake images, Clock clock) {
+    public StoryModule(StoryMapper storyMapper, ImageIntake images, Clock clock) {
         this.storyMapper = storyMapper;
         this.images = images;
         this.clock = clock;

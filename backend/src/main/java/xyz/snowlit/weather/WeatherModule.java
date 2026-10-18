@@ -3,7 +3,6 @@ package xyz.snowlit.weather;
 import xyz.snowlit.text.Text;
 import xyz.snowlit.weather.WeatherVos.WeatherAtmosphereVo;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -26,12 +25,7 @@ public final class WeatherModule {
     private final Clock clock;
     private final ConcurrentMap<WeatherGateway.Coordinates, CacheEntry> cache = new ConcurrentHashMap<>();
 
-    @Autowired
-    public WeatherModule(WeatherGateway weatherGateway) {
-        this(weatherGateway, Clock.systemDefaultZone());
-    }
-
-    WeatherModule(WeatherGateway weatherGateway, Clock clock) {
+    public WeatherModule(WeatherGateway weatherGateway, Clock clock) {
         this.weatherGateway = weatherGateway;
         this.clock = clock;
     }
