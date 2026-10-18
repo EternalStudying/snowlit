@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IMAGE_ACCEPT } from '../../imageFiles';
 import './album.css';
 import {
   computed,
@@ -223,17 +224,11 @@ function addDraftFiles(
   albumLifecycle.queueFiles(files);
 }
 
-function getUploadFiles(fileList: UploadFileInfo[]) {
-  return fileList
-    .map((item) => item.file)
-    .filter((file): file is File => file instanceof File);
-}
-
 function handleDraftFiles(
   payload: Event | { fileList: UploadFileInfo[] }
 ) {
   if ('fileList' in payload) {
-    addDraftFiles(getUploadFiles(payload.fileList));
+    addDraftFiles(payload.fileList.map((item) => item.file).filter((file): file is File => file instanceof File));
     albumDraftFileList.value = [];
     return;
   }
@@ -691,11 +686,11 @@ onMounted(() => {
                       <NUpload
                         v-model:file-list="albumDraftFileList"
                         class="album-create-upload__input"
-                        accept="image/*"
+                        :accept="IMAGE_ACCEPT"
                         multiple
                         :default-upload="false"
                         :show-file-list="false"
-                        :input-props="{ accept: 'image/*', multiple: true }"
+                        :input-props="{ accept: IMAGE_ACCEPT, multiple: true }"
                         @change="handleDraftFiles"
                       >
                         <span class="visually-hidden">选择照片</span>
@@ -704,7 +699,7 @@ onMounted(() => {
                         id="album-create-file-input"
                         data-album-file-input
                         type="file"
-                        accept="image/*"
+                        :accept="IMAGE_ACCEPT"
                         multiple
                         @change="handleDraftFiles"
                       />

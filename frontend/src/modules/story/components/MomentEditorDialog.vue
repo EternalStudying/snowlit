@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { errorMessage } from '../../../display';
+import { IMAGE_ACCEPT, pickImages } from '../../../imageFiles';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { CalendarDays, Coffee, Gift, Heart, ImagePlus, Loader2, Luggage, MapPin, Pencil, Star, Trash2 } from 'lucide-vue-next';
@@ -302,10 +303,6 @@ function selectLocationSuggestionFromPointer(event: PointerEvent, suggestion: Lo
   selectLocationSuggestion(suggestion);
 }
 
-function getUploadFiles(fileList: UploadFileInfo[]) {
-  return fileList.map((item) => item.file).filter((file): file is File => file instanceof File);
-}
-
 function updateEventDate(value: string | null) {
   form.eventTime = value ?? '';
 }
@@ -323,19 +320,17 @@ function updateEndDateFromNative(event: Event) {
 }
 
 async function uploadImages(payload: Event | { fileList: UploadFileInfo[] }) {
-  const files =
-    'fileList' in payload
-      ? getUploadFiles(payload.fileList).slice(0, Math.max(0, 3 - form.images.length))
-      : Array.from((payload.target as HTMLInputElement).files ?? []).slice(0, Math.max(0, 3 - form.images.length));
+  const picked = pickImages('fileList' in payload ? payload.fileList : (payload.target as HTMLInputElement).files);
+  const files = picked.accepted.slice(0, Math.max(0, 3 - form.images.length));
   imageFileList.value = [];
   if ('target' in payload) {
     (payload.target as HTMLInputElement).value = '';
   }
+  localError.value = picked.rejection;
   if (!files.length) {
     return;
   }
 
-  localError.value = '';
   isUploading.value = true;
   try {
     for (const file of files) {
@@ -585,12 +580,12 @@ function playEditorClose() {
                   v-model:file-list="imageFileList"
                   class="moment-editor__upload"
                   :class="{ 'is-disabled': !canAddImage }"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  :accept="IMAGE_ACCEPT"
                   multiple
                   :disabled="!canAddImage"
                   :default-upload="false"
                   :show-file-list="false"
-                  :input-props="{ accept: 'image/jpeg,image/png,image/webp,image/gif', multiple: true }"
+                  :input-props="{ accept: IMAGE_ACCEPT, multiple: true }"
                   @change="uploadImages"
                 >
                   <Loader2 v-if="isUploading" :size="18" class="story-spin" />

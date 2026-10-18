@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IMAGE_ACCEPT, pickImages } from '../../imageFiles';
 import './wishes.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type InputHTMLAttributes } from 'vue';
 import { gsap } from 'gsap';
@@ -54,7 +55,7 @@ const createWishForm = ref({
 });
 const completionImageInputProps = {
   'data-wish-complete-image': '',
-  accept: 'image/jpeg,image/png,image/webp,image/gif'
+  accept: IMAGE_ACCEPT
 } as unknown as InputHTMLAttributes;
 const wishTitleInputProps = {
   'data-wish-title-input': '',
@@ -403,11 +404,12 @@ async function requestWishCompletionImage() {
 }
 
 async function handleCompletionImageSelected(options: { fileList: UploadFileInfo[] }) {
-  const image = options.fileList.at(-1)?.file ?? null;
+  const picked = pickImages(options.fileList.slice(-1));
   completionImageFileList.value = [];
+  const image = picked.accepted[0];
 
   if (!image) {
-    completionImageError.value = '请先选择一张完成图片';
+    completionImageError.value = picked.rejection || '请先选择一张完成图片';
     return;
   }
   await completeSelectedWishWithImage(image);
@@ -1479,7 +1481,7 @@ onBeforeUnmount(() => {
               <span ref="completionUploadHostRef" class="visually-hidden">
                 <NUpload
                   v-model:file-list="completionImageFileList"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  :accept="IMAGE_ACCEPT"
                   :max="1"
                   :default-upload="false"
                   :show-file-list="false"

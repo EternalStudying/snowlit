@@ -16,7 +16,7 @@
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/*"
+            :accept="IMAGE_ACCEPT"
             class="hidden-input"
             data-message-image-input
             :disabled="submitting"
@@ -49,12 +49,13 @@
         </button>
       </div>
 
-      <p v-if="submitError" class="composer-error">{{ submitError }}</p>
+      <p v-if="submitError || pickError" class="composer-error">{{ submitError || pickError }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { IMAGE_ACCEPT, pickImages } from '../../../imageFiles';
 import { ref, watch } from 'vue';
 import type { MessageDraft } from '../model';
 
@@ -70,6 +71,7 @@ const emit = defineEmits<{
 
 const textDraft = ref('');
 const fileDraft = ref<File | null>(null);
+const pickError = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 watch(
@@ -86,13 +88,18 @@ const triggerFileInput = () => {
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    fileDraft.value = target.files[0];
+  const picked = pickImages(Array.from(target.files ?? []).slice(0, 1));
+  pickError.value = picked.rejection;
+  if (picked.accepted.length > 0) {
+    fileDraft.value = picked.accepted[0];
+  } else {
+    target.value = '';
   }
 };
 
 const removeFile = () => {
   fileDraft.value = null;
+  pickError.value = '';
   if (fileInputRef.value) {
     fileInputRef.value.value = '';
   }

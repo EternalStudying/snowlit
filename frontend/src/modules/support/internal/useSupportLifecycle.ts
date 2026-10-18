@@ -15,6 +15,7 @@ import type {
   SupportGateway
 } from './ports';
 import { errorMessage } from '../../../display';
+import { IMAGE_RULE_MESSAGE, isAcceptedImage } from '../../../imageFiles';
 
 interface FeedbackPageContext {
   pageUrl: string;
@@ -132,6 +133,10 @@ export function createSupportLifecycle({
     files: File[]
   ): Promise<void> {
     if (!files.length) {
+      return;
+    }
+    if (!files.every(isAcceptedImage)) {
+      feedbackError.value = IMAGE_RULE_MESSAGE;
       return;
     }
     if (

@@ -132,6 +132,6 @@ describe('album upload queue', () => {
     expect(queue.addFiles([new File(['text'], 'notes.txt', { type: 'text/plain' })])).toBe(
       false
     );
-    expect(queue.error.value).toBe('单张原图不能超过 10MB，且必须是图片');
+    expect(queue.error.value).toBe('只支持 jpg、png、webp、gif，单张不超过 10MB');
   });
 });

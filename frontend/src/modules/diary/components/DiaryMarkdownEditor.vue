@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IMAGE_ACCEPT, pickImages, type PickedImages } from '../../../imageFiles';
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch, type InputHTMLAttributes } from 'vue';
 import {
   Bold,
@@ -47,6 +48,7 @@ const props = defineProps<{
   error?: string;
 }>();
 
+const imagePickError = ref('');
 const editorWheelGuardActive = ref(true);
 useModalWheelGuard(editorWheelGuardActive);
 
@@ -79,7 +81,7 @@ const visibilityOptions: SelectOption[] = [
 ];
 const diaryImageInputProps = {
   'data-diary-image-input': '',
-  accept: 'image/*',
+  accept: IMAGE_ACCEPT,
   multiple: true
 } as unknown as InputHTMLAttributes;
 
@@ -243,8 +245,9 @@ function openImagePicker() {
   imageUploadHost.value?.querySelector<HTMLInputElement>('input[data-diary-image-input]')?.click();
 }
 
-async function insertImageFiles(files: File[]) {
-  for (const file of files) {
+async function insertImageFiles({ accepted, rejection }: PickedImages) {
+  imagePickError.value = rejection;
+  for (const file of accepted) {
     const uploaded = await props.uploadImage(file);
     insertBlock(`![图片说明](${uploaded.url})\n\n`);
   }
@@ -256,17 +259,8 @@ function selectMood(key: DiaryMoodKey) {
   markTouched();
 }
 
-function getUploadFiles(fileList: UploadFileInfo[]) {
-  return fileList.map((item) => item.file).filter((file): file is File => file instanceof File && file.type.startsWith('image/'));
-}
-
 function onImageInput(payload: Event | { fileList: UploadFileInfo[] }) {
-  const files =
-    'fileList' in payload
-      ? getUploadFiles(payload.fileList)
-      : Array.from((payload.target as HTMLInputElement).files ?? []).filter((file) => file.type.startsWith('image/'));
-
-  void insertImageFiles(files);
+  void insertImageFiles(pickImages('fileList' in payload ? payload.fileList : (payload.target as HTMLInputElement).files));
   imageFileList.value = [];
   if ('target' in payload) {
     (payload.target as HTMLInputElement).value = '';
@@ -292,25 +286,25 @@ function updateDateFromNative(event: Event) {
 }
 
 function onTextareaPaste(event: ClipboardEvent) {
-  const files = Array.from(event.clipboardData?.files ?? []).filter((file) => file.type.startsWith('image/'));
+  const picked = pickImages(event.clipboardData?.files);
 
-  if (!files.length) {
+  if (!picked.accepted.length && !picked.rejection) {
     return;
   }
 
   event.preventDefault();
-  void insertImageFiles(files);
+  void insertImageFiles(picked);
 }
 
 function onTextareaDrop(event: DragEvent) {
-  const files = Array.from(event.dataTransfer?.files ?? []).filter((file) => file.type.startsWith('image/'));
+  const picked = pickImages(event.dataTransfer?.files);
 
-  if (!files.length) {
+  if (!picked.accepted.length && !picked.rejection) {
     return;
   }
 
   event.preventDefault();
-  void insertImageFiles(files);
+  void insertImageFiles(picked);
 }
 
 onMounted(() => {
@@ -492,7 +486,7 @@ onBeforeUnmount(() => {
           <span ref="imageUploadHost" class="diary-markdown-editor__file-input">
             <NUpload
               v-model:file-list="imageFileList"
-              accept="image/*"
+              :accept="IMAGE_ACCEPT"
               multiple
               :default-upload="false"
               :show-file-list="false"
@@ -535,7 +529,7 @@ onBeforeUnmount(() => {
           </section>
         </div>
 
-        <NAlert v-if="error" class="diary-editor-error" type="error" :show-icon="false">{{ error }}</NAlert>
+        <NAlert v-if="error || imagePickError" class="diary-editor-error" type="error" :show-icon="false">{{ error || imagePickError }}</NAlert>
 
         <footer class="diary-markdown-editor__actions">
           <NButton class="diary-markdown-editor__ghost" attr-type="button" @click="closeEditor">取消</NButton>

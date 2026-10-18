@@ -3,6 +3,7 @@ import type { AlbumPhotoData, AlbumPhotoUploadMetadata } from '../model';
 import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
 import type { AlbumPreviewGenerator } from './ports';
 import { errorMessage } from '../../../display';
+import { IMAGE_RULE_MESSAGE, isAcceptedImage } from '../../../imageFiles';
 
 export type AlbumUploadStatus = 'waiting' | 'generating' | 'uploading' | 'success' | 'failed';
 
@@ -30,7 +31,6 @@ type AlbumUploadQueueOptions = {
 };
 
 const MAX_FILES = 300;
-const MAX_ORIGINAL_BYTES = 10 * 1024 * 1024;
 export function createAlbumUploadQueue({
   generatePreview = encodeCanvasWebpPreview,
   isMobileUpload = detectMobileUpload,
@@ -52,9 +52,8 @@ export function createAlbumUploadQueue({
       return false;
     }
 
-    const invalid = selected.find((file) => file.size > MAX_ORIGINAL_BYTES || !file.type.startsWith('image/'));
-    if (invalid) {
-      error.value = '单张原图不能超过 10MB，且必须是图片';
+    if (!selected.every(isAcceptedImage)) {
+      error.value = IMAGE_RULE_MESSAGE;
       return false;
     }
 

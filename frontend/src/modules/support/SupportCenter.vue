@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IMAGE_ACCEPT } from '../../imageFiles';
 import {
   ref,
   type InputHTMLAttributes,
@@ -74,11 +75,7 @@ async function uploadScreenshotFiles(files: File[]) {
 }
 
 async function handleScreenshotChange(options: { fileList: UploadFileInfo[] }) {
-  await uploadScreenshotFiles(
-    options.fileList
-      .map((item) => item.file)
-      .filter((file): file is File => Boolean(file))
-  );
+  await uploadScreenshotFiles(options.fileList.map((item) => item.file).filter((file): file is File => file instanceof File));
 }
 
 function handleNativeScreenshotChange(event: Event) {
@@ -193,12 +190,12 @@ async function submitCurrentFeedback() {
           <NUpload
             v-model:file-list="screenshotFileList"
             class="feedback-dialog__screenshot-picker"
-            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            :accept="IMAGE_ACCEPT"
             :max="3"
             :disabled="uploadingScreenshot || uploadedScreenshots.length >= 3"
             :default-upload="false"
             :show-file-list="false"
-            :input-props="{ accept: '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp', multiple: true }"
+            :input-props="{ accept: IMAGE_ACCEPT, multiple: true }"
             @change="handleScreenshotChange"
           >
             <NButton secondary :loading="uploadingScreenshot" :disabled="uploadingScreenshot || uploadedScreenshots.length >= 3">
@@ -209,7 +206,7 @@ async function submitCurrentFeedback() {
             class="visually-hidden"
             data-testid="feedback-screenshot-input"
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            :accept="IMAGE_ACCEPT"
             multiple
             :disabled="uploadingScreenshot || uploadedScreenshots.length >= 3"
             @change="handleNativeScreenshotChange"
