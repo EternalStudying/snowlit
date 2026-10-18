@@ -227,7 +227,7 @@ function getCanvasContext(canvas: HTMLCanvasElement) {
 
 function resizeCanvas() {
   const canvas = canvasRef.value;
-  if (!canvas || typeof window === 'undefined') {
+  if (!canvas) {
     return;
   }
 
@@ -258,7 +258,7 @@ function clearCanvas() {
 }
 
 function measureTimeline() {
-  if (typeof window === 'undefined' || !props.timelineElement) {
+  if (!props.timelineElement) {
     datePoints = [];
     lineX = canvasWidth / 2;
     lineTop = 0;
@@ -290,10 +290,6 @@ function measureTimeline() {
 }
 
 function scheduleMeasure() {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
   if (measureFrame) {
     window.cancelAnimationFrame(measureFrame);
   }

@@ -183,7 +183,7 @@ watch(
 );
 
 onMounted(() => {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (typeof window.matchMedia !== 'function') {
     return;
   }
 

@@ -52,7 +52,6 @@ import type {
 
 const ALBUM_UPLOAD_DETAIL_LIMIT = 6;
 const reducedMotion =
-  typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

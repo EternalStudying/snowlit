@@ -27,27 +27,26 @@ export interface AMapMarkerInstance {
 }
 
 export interface AMapMapInstance {
-  destroy?: () => void;
-  on?: (event: 'click' | 'rightclick', handler: (event: AMapMouseEvent) => void) => void;
-  setFitView?: (
+  destroy(): void;
+  on(event: 'click' | 'rightclick', handler: (event: AMapMouseEvent) => void): void;
+  setFitView(
     markers: AMapMarkerInstance[],
     immediately?: boolean,
     avoid?: [number, number, number, number],
     maxZoom?: number
-  ) => void;
-  setZoomAndCenter?: (
+  ): void;
+  setZoomAndCenter(
     zoom: number,
     center: AMapCoordinateTuple,
     immediately?: boolean,
     duration?: number
-  ) => void;
-  setZoom?: (zoom: number, immediately?: boolean, duration?: number) => void;
-  setCenter?: (center: AMapCoordinateTuple) => void;
-  setPitch?: (pitch: number, immediately?: boolean, duration?: number) => void;
-  setRotation?: (rotation: number, immediately?: boolean, duration?: number) => void;
-  getZoom?: (precision?: number) => number;
-  getZooms?: () => [number, number] | { min: number; max: number };
-  getCenter?: () => AMapLngLat | AMapCoordinateTuple;
+  ): void;
+  setZoom(zoom: number, immediately?: boolean, duration?: number): void;
+  setPitch(pitch: number, immediately?: boolean, duration?: number): void;
+  setRotation(rotation: number, immediately?: boolean, duration?: number): void;
+  getZoom(precision?: number): number;
+  getZooms(): [number, number];
+  getCenter(): AMapLngLat;
 }
 
 interface AMapMapOptions {

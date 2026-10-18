@@ -27,10 +27,6 @@ function noticeDismissalKey(notice: UpdateNotice): string {
 }
 
 function readDismissedNoticeKeys(): string[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     const parsed = raw
@@ -48,10 +44,6 @@ function readDismissedNoticeKeys(): string[] {
 }
 
 function writeDismissedNoticeKeys(keys: string[]): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
   try {
     window.sessionStorage.setItem(
       STORAGE_KEY,

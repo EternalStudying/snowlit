@@ -1,3 +1,4 @@
+import { FakeAmapMap } from './support/fakeAmapMap';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   readAmapCoordinate,
@@ -29,7 +30,7 @@ describe('AMap SDK boundary', () => {
 
   it('maps autocomplete results into stable location suggestions', async () => {
     vi.stubGlobal('AMap', {
-      Map: class {},
+      Map: class extends FakeAmapMap {},
       AutoComplete: class {
         search(
           keyword: string,
@@ -66,7 +67,7 @@ describe('AMap SDK boundary', () => {
 
   it('maps reverse-geocode results and degrades when the plugin is absent', async () => {
     vi.stubGlobal('AMap', {
-      Map: class {},
+      Map: class extends FakeAmapMap {},
       Geocoder: class {
         getAddress(
           _coordinate: [number, number],
@@ -87,7 +88,7 @@ describe('AMap SDK boundary', () => {
       address: '瑞士日内瓦湖畔'
     });
 
-    vi.stubGlobal('AMap', { Map: class {} });
+    vi.stubGlobal('AMap', { Map: class extends FakeAmapMap {} });
     await expect(reverseGeocode(6.15, 46.21)).resolves.toBeNull();
   });
 });

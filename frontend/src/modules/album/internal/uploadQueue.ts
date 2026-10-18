@@ -2,6 +2,7 @@ import { computed, ref } from 'vue';
 import type { AlbumPhotoData, AlbumPhotoUploadMetadata } from '../model';
 import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
 import type { AlbumPreviewGenerator } from './ports';
+import { errorMessage } from '../../../display';
 
 export type AlbumUploadStatus = 'waiting' | 'generating' | 'uploading' | 'success' | 'failed';
 
@@ -146,7 +147,7 @@ export function createAlbumUploadQueue({
     } catch (error) {
       updateItem(item.id, {
         status: 'failed',
-        message: error instanceof Error ? error.message : '上传失败',
+        message: errorMessage(error, '上传失败'),
         progress: 0
       });
     }
@@ -178,5 +179,5 @@ function stripExtension(name: string) {
 }
 
 function detectMobileUpload() {
-  return typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+  return window.matchMedia?.('(pointer: coarse)').matches;
 }

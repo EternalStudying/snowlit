@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage, formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { type StoryDraftLocation, type StoryEditorAnchor, type StoryMapLoadingState, type StoryMoment } from '../model';
@@ -15,7 +16,6 @@ import {
   DEFAULT_STORY_MAP_CENTER as DEFAULT_CENTER,
   buildStoryMarkerItems as buildMarkerItems,
   containsStoryMoment as containsMomentId,
-  formatStoryMomentShortDate as formatShortDate,
   getLatestStoryMomentId,
   getStoryFallbackPosition,
   getStoryMapTarget,
@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
     draftMarker.setMap(null);
     draftMarker = null;
   }
-  map?.destroy?.();
+  map?.destroy();
   map = null;
   amapSdk = null;
 });
@@ -190,7 +190,7 @@ watch(
     closeGroupPopover();
     const moment = props.moments.find((item) => item.id === id);
     if (moment && map && hasCoordinates(moment)) {
-      map.setZoomAndCenter?.(Math.max(Number(map.getZoom?.() ?? 12), 12), [moment.longitude, moment.latitude], false, 500);
+      map.setZoomAndCenter(Math.max(map.getZoom(), 12), [moment.longitude, moment.latitude], false, 500);
     }
   }
 );
@@ -231,8 +231,8 @@ async function initMap() {
       scrollWheel: false,
       mapStyle: 'amap://styles/darkblue'
     });
-    map.on?.('click', handleAmapClick);
-    map.on?.('rightclick', handleAmapRightClick);
+    map.on('click', handleAmapClick);
+    map.on('rightclick', handleAmapRightClick);
     bindSmoothWheelZoom();
     mapStatus.value = 'ready';
     emitMapLoadingState({ instanceReady: true });
@@ -241,7 +241,7 @@ async function initMap() {
     renderDraftMarker();
     syncVisibleMapView();
   } catch (error) {
-    const message = error instanceof Error ? error.message : '地图加载失败，请稍后再试';
+    const message = errorMessage(error, '地图加载失败，请稍后再试');
     mapStatus.value = 'fallback';
     sdkMessage.value = message;
     emitMapLoadingState({ sdkSettled: true, instanceReady: true, markersReady: true, labelsReady: true });
@@ -255,7 +255,6 @@ function getVisibleMoments() {
 function getVisibleMarkerItems() {
   return visibleMarkerItems.value;
 }
-
 
 function shouldReplayVisibleMarkers(nextVisibleIds: Set<number>) {
   if (
@@ -340,7 +339,7 @@ function createMarkerElement(item: StoryMarkerItem, index: number, visible: Stor
   button.dataset.storyRevealOrder = String(getMarkerRevealOrderForItem(item, visible));
   button.style.setProperty('--story-marker-index', String(index));
   button.style.setProperty('--story-marker-reveal-order', String(getMarkerRevealOrderForItem(item, visible)));
-  button.setAttribute('aria-label', item.kind === 'group' ? `查看${item.locationName}的 ${item.count} 条点滴` : `查看点滴：${item.representative.title}，${formatShortDate(item.representative.eventTime)}`);
+  button.setAttribute('aria-label', item.kind === 'group' ? `查看${item.locationName}的 ${item.count} 条点滴` : `查看点滴：${item.representative.title}，${formatDottedDate(item.representative.eventTime)}`);
   button.innerHTML = createMarkerHtml(item);
   const label = button.querySelector('.story-marker__label');
   if (label) {
@@ -382,7 +381,7 @@ function formatMarkerLabel(item: StoryMarkerItem) {
   if (item.kind === 'group') {
     return `${item.locationName} · ${item.count}`;
   }
-  return `${formatShortDate(item.representative.eventTime)} ${item.representative.title}`;
+  return `${formatDottedDate(item.representative.eventTime)} ${item.representative.title}`;
 }
 
 function renderDraftMarker() {
@@ -408,7 +407,7 @@ function renderDraftMarker() {
     content
   });
   draftMarker.setMap(map);
-  map.setZoomAndCenter?.(13, [props.draftLocation.longitude, props.draftLocation.latitude], false, 500);
+  map.setZoomAndCenter(13, [props.draftLocation.longitude, props.draftLocation.latitude], false, 500);
 }
 
 function fitVisible(options: FitVisibleOptions = {}) {
@@ -432,16 +431,12 @@ function fitVisible(options: FitVisibleOptions = {}) {
     return target;
   }
   if (markers.length) {
-    if (typeof map.setFitView === 'function') {
-      map.setFitView(
-        markers.map((record) => record.marker),
-        immediate,
-        [160, 180, 190, 280],
-        14
-      );
-    } else {
-      applyMapCenterZoom(fallback.zoom, fallback.center, immediate, immediate ? undefined : duration);
-    }
+    map.setFitView(
+      markers.map((record) => record.marker),
+      immediate,
+      [160, 180, 190, 280],
+      14
+    );
     return readCurrentEntryTarget(fallback);
   }
   return fallback;
@@ -561,72 +556,30 @@ function getEstimatedEntryTarget(isMobile: boolean): EntryTarget {
 }
 
 function readCurrentEntryTarget(fallback: EntryTarget): EntryTarget {
-  if (typeof map?.getZoom !== 'function' || typeof map?.getCenter !== 'function') {
+  if (!map) {
     return fallback;
   }
 
-  const zoom = Number(map?.getZoom?.());
-  const center = map?.getCenter?.();
-  const coordinate = Array.isArray(center)
-    ? {
-        longitude: Number(center[0]),
-        latitude: Number(center[1])
-      }
-    : readAmapCoordinate(center);
-  const longitude = coordinate?.longitude ?? fallback.center.longitude;
-  const latitude = coordinate?.latitude ?? fallback.center.latitude;
-
   return {
-    center: {
-      longitude: Number.isFinite(longitude) ? longitude : fallback.center.longitude,
-      latitude: Number.isFinite(latitude) ? latitude : fallback.center.latitude
-    },
-    zoom: Number.isFinite(zoom) ? zoom : fallback.zoom
+    center: readAmapCoordinate(map.getCenter()) ?? fallback.center,
+    zoom: map.getZoom()
   };
 }
 
 function applyMapCenterZoom(zoom: number, center: { longitude: number; latitude: number }, immediate: boolean, duration?: number) {
   smoothWheelTargetZoom = null;
-  const value: [number, number] = [center.longitude, center.latitude];
-  try {
-    map?.setZoomAndCenter?.(zoom, value, immediate, duration);
-  } catch {
-    try {
-      map?.setZoomAndCenter?.(zoom, value);
-    } catch {
-      map?.setZoom?.(zoom);
-      map?.setCenter?.(value);
-    }
-  }
+  map?.setZoomAndCenter(zoom, [center.longitude, center.latitude], immediate, duration);
 }
 
 function applyMapPitch(value: number, immediate: boolean, duration?: number) {
-  if (!canTiltMap()) {
-    return;
-  }
-  try {
-    map?.setPitch?.(value, immediate, duration);
-  } catch {
-    try {
-      map?.setPitch?.(value);
-    } catch {
-      // Older AMap modes may ignore pitch.
-    }
+  if (canTiltMap()) {
+    map?.setPitch(value, immediate, duration);
   }
 }
 
 function applyMapRotation(value: number, immediate: boolean, duration?: number) {
-  if (!canRotateMap()) {
-    return;
-  }
-  try {
-    map?.setRotation?.(value, immediate, duration);
-  } catch {
-    try {
-      map?.setRotation?.(value);
-    } catch {
-      // Older AMap modes may ignore rotation.
-    }
+  if (canRotateMap()) {
+    map?.setRotation(value, immediate, duration);
   }
 }
 
@@ -707,51 +660,21 @@ function flushSmoothWheelZoom() {
 }
 
 function readCurrentZoom() {
-  try {
-    const preciseZoom = Number(map?.getZoom?.(2));
-    if (Number.isFinite(preciseZoom)) {
-      return preciseZoom;
-    }
-  } catch {
-    // Some AMap-compatible mocks and older implementations ignore precision arguments.
-  }
-
-  const zoom = Number(map?.getZoom?.());
-  return Number.isFinite(zoom) ? zoom : 8;
+  return map ? map.getZoom(2) : 8;
 }
 
 function getSmoothWheelZoomLimits() {
-  try {
-    const zooms = map?.getZooms?.();
-    if (Array.isArray(zooms) && Number.isFinite(Number(zooms[0])) && Number.isFinite(Number(zooms[1]))) {
-      return { min: Number(zooms[0]), max: Number(zooms[1]) };
-    }
-    if (
-      zooms &&
-      !Array.isArray(zooms) &&
-      Number.isFinite(Number(zooms.min)) &&
-      Number.isFinite(Number(zooms.max))
-    ) {
-      return { min: Number(zooms.min), max: Number(zooms.max) };
-    }
-  } catch {
-    // Keep conservative defaults when the SDK does not expose limits.
+  if (!map) {
+    return { min: SMOOTH_WHEEL_ZOOM_MIN, max: SMOOTH_WHEEL_ZOOM_MAX };
   }
-  return { min: SMOOTH_WHEEL_ZOOM_MIN, max: SMOOTH_WHEEL_ZOOM_MAX };
+  const [min, max] = map.getZooms();
+  return { min, max };
 }
 
 function applySmoothWheelZoom(zoom: number) {
   const immediate = props.reducedMotion;
   const duration = props.reducedMotion ? 0 : SMOOTH_WHEEL_ZOOM_DURATION;
-  try {
-    map?.setZoom?.(zoom, immediate, duration);
-  } catch {
-    try {
-      map?.setZoom?.(zoom);
-    } catch {
-      // If setZoom is unavailable there is no reliable custom wheel zoom path.
-    }
-  }
+  map?.setZoom(zoom, immediate, duration);
 }
 
 async function handleAmapClick(event: AMapMouseEvent) {
@@ -770,7 +693,7 @@ async function handleAmapClick(event: AMapMouseEvent) {
 }
 
 function handleAmapRightClick(event: AMapMouseEvent) {
-  event?.originEvent?.preventDefault?.();
+  event.originEvent?.preventDefault();
   if (props.entryLocked) {
     return;
   }
@@ -1361,7 +1284,7 @@ defineExpose({
           @click="selectGroupMoment(moment.id)"
         >
           <strong>{{ moment.title }}</strong>
-          <span>{{ formatShortDate(moment.eventTime) }}</span>
+          <span>{{ formatDottedDate(moment.eventTime) }}</span>
         </button>
       </aside>
     </div>

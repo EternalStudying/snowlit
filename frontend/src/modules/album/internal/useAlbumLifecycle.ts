@@ -14,6 +14,7 @@ import { createBrowserPrivateAccessStore } from './browserPrivateAccessStore';
 import type { HttpAdapter } from '../../../http/sessionRequest';
 import type { AlbumPreviewGenerator } from './ports';
 import { createAlbumUploadQueue } from './uploadQueue';
+import { errorMessage } from '../../../display';
 
 const PAGE_SIZE = 5;
 const PREVIEW_PHOTO_LIMIT = 9;
@@ -443,10 +444,10 @@ function toCollection(
     avatarLabel: author.slice(0, 1).toUpperCase(),
     date: album.eventDate || album.createdAt.slice(0, 10),
     location: album.location || '地球',
-    views: Number.isFinite(album.viewCount) ? album.viewCount : 0,
-    likes: Number.isFinite(album.likeCount) ? album.likeCount : 0,
-    likedToday: Boolean(album.likedToday),
-    photoCount: Number.isFinite(album.photoCount) ? album.photoCount : photos.length,
+    views: album.viewCount,
+    likes: album.likeCount,
+    likedToday: album.likedToday,
+    photoCount: album.photoCount,
     visibility: album.visibility,
     locked: album.locked,
     isPrivate: album.visibility === 'private',
@@ -478,8 +479,4 @@ function collectionFromDetail(detail: AlbumDetailData): AlbumCollection {
     },
     detail.photos.map(toPhoto)
   );
-}
-
-function errorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message || fallback : fallback;
 }

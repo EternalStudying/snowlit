@@ -12,6 +12,7 @@ import type {
 } from '../model';
 import { createHttpStoryGateway } from './httpStoryGateway';
 import type { StoryGateway } from './ports';
+import { errorMessage } from '../../../display';
 
 export interface StoryLifecycleState {
   moments: Readonly<Ref<StoryMoment[]>>;
@@ -371,8 +372,4 @@ export function useStoryLifecycle({
 function momentTimestamp(moment: StoryMoment): number {
   const time = new Date(moment.eventTime).getTime();
   return Number.isFinite(time) ? time : 0;
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
 }

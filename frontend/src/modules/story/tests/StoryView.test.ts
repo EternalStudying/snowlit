@@ -1,3 +1,4 @@
+import { FakeAmapMap } from './support/fakeAmapMap';
 import { mount, flushPromises } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
@@ -381,8 +382,9 @@ describe('点滴地图页', () => {
     const setFeaturesMock = vi.fn();
 
     vi.stubGlobal('AMap', {
-      Map: class {
+      Map: class extends FakeAmapMap {
         constructor(_element: HTMLElement, options: Record<string, unknown>) {
+          super();
           mapOptions.push(options);
         }
 
@@ -430,8 +432,9 @@ describe('点滴地图页', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     vi.stubGlobal('AMap', {
-      Map: class {
+      Map: class extends FakeAmapMap {
         constructor(_element: HTMLElement, options: Record<string, unknown>) {
+          super();
           mapOptions.push(options);
         }
 

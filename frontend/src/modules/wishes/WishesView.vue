@@ -78,7 +78,7 @@ const createWishBackdropRef = ref<HTMLElement | null>(null);
 const createWishDialogRef = ref<HTMLFormElement | null>(null);
 const wishCreatePopupPortal = ref<HTMLElement>();
 const prefersReducedMotion =
-  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const shouldReduceMotion = prefersReducedMotion || import.meta.env.MODE === 'test';
 const wishGsapMotionAttr = computed(() => (shouldReduceMotion ? undefined : 'true'));
 let wishBoardEnterCleanup: (() => void) | undefined;

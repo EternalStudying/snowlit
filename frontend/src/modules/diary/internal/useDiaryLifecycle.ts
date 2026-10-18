@@ -29,6 +29,7 @@ import {
   getDiaryWeatherEditorDefaults,
   type DiaryAtmosphereContext as WeatherContext
 } from './weatherSnapshot';
+import { errorMessage } from '../../../display';
 
 export interface DiaryLifecycleState {
   entries: Readonly<Ref<DiaryEntry[]>>;
@@ -70,13 +71,11 @@ export interface DiaryLifecycle {
 export interface DiaryLifecycleOptions {
   gateway?: DiaryGateway;
   today?: () => string;
-  now?: () => string;
 }
 
 export function useDiaryLifecycle({
   gateway: providedGateway,
-  today: provideToday = formatLocalCalendarDate,
-  now = () => new Date().toISOString()
+  today: provideToday = formatLocalCalendarDate
 }: DiaryLifecycleOptions = {}): DiaryLifecycle {
   const gateway = providedGateway ?? createHttpDiaryGateway();
   const today = provideToday();
@@ -432,55 +431,36 @@ export function useDiaryLifecycle({
     return {
       id: entry.id,
       role: entry.role,
-      authorName:
-        cleanDisplayText(entry.authorName) ||
-        roleFallbackName(entry.role),
+      authorName: entry.authorName || roleFallbackName(entry.role),
       authorAvatar: resolveAuthorAvatar(entry),
-      title:
-        cleanDisplayText(entry.title) || '未命名日记',
-      content: cleanDisplayText(entry.summary),
-      images: Array.isArray(entry.imageUrls)
-        ? entry.imageUrls.filter(Boolean)
-        : [],
-      date: cleanDisplayText(entry.entryDate) || today,
+      title: entry.title || '未命名日记',
+      content: entry.summary,
+      images: entry.imageUrls,
+      date: entry.entryDate,
       moodKey: resolveMoodKey(entry.moodKey),
       mood: moodLabel(entry.moodKey),
-      location:
-        cleanDisplayText(entry.locationName) || '未记录',
-      weather: cleanDisplayText(entry.weather) || '未记录',
-      visibility:
-        entry.visibility === 'private' ? 'private' : 'shared',
-      createdAt: cleanDisplayText(entry.createdAt) || now(),
-      updatedAt:
-        cleanDisplayText(entry.updatedAt) ||
-        cleanDisplayText(entry.createdAt) ||
-        now()
+      location: entry.locationName || '未记录',
+      weather: entry.weather || '未记录',
+      visibility: entry.visibility,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt
     };
   }
 
   function normalizeDetail(entry: DiaryDetailDto): DiaryEntry {
     return {
       ...normalizeSummary(entry),
-      content: cleanDisplayText(entry.contentMarkdown),
-      rawWeather: cleanDisplayText(entry.rawWeather),
-      temperature:
-        typeof entry.temperature === 'number'
-          ? entry.temperature
-          : null,
-      windDirection: cleanDisplayText(entry.windDirection),
-      windPower: cleanDisplayText(entry.windPower),
-      humidity: cleanDisplayText(entry.humidity),
-      province: cleanDisplayText(entry.province),
-      city: cleanDisplayText(entry.city),
-      district: cleanDisplayText(entry.district),
-      latitude:
-        typeof entry.latitude === 'number'
-          ? entry.latitude
-          : null,
-      longitude:
-        typeof entry.longitude === 'number'
-          ? entry.longitude
-          : null
+      content: entry.contentMarkdown,
+      rawWeather: entry.rawWeather ?? '',
+      temperature: entry.temperature,
+      windDirection: entry.windDirection ?? '',
+      windPower: entry.windPower ?? '',
+      humidity: entry.humidity ?? '',
+      province: entry.province ?? '',
+      city: entry.city ?? '',
+      district: entry.district ?? '',
+      latitude: entry.latitude,
+      longitude: entry.longitude
     };
   }
 
@@ -615,21 +595,11 @@ function resolveAuthorAvatar(
   if (entry.role === 'girlfriend') {
     return girlfriendAvatar;
   }
-  return cleanDisplayText(entry.authorAvatar);
+  return entry.authorAvatar;
 }
 
 function roleFallbackName(role: DiaryRole): string {
   return role === 'boyfriend' ? '伴侣 A' : '伴侣 B';
-}
-
-function cleanDisplayText(value: unknown): string {
-  const text = String(value ?? '').trim();
-  return !text ||
-    text === 'undefined' ||
-    text === 'null' ||
-    text === 'NaN'
-    ? ''
-    : text;
 }
 
 function parseLocalDate(date: string): Date {
@@ -650,13 +620,4 @@ function formatWeekday(date: string): string {
   return new Intl.DateTimeFormat('zh-CN', {
     weekday: 'short'
   }).format(parseLocalDate(date));
-}
-
-function errorMessage(
-  error: unknown,
-  fallback: string
-): string {
-  return error instanceof Error && error.message
-    ? error.message
-    : fallback;
 }

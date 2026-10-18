@@ -26,7 +26,7 @@ const numericValue = computed(() => {
 });
 
 function stopAnimation() {
-  if (frameId !== undefined && typeof window !== 'undefined') {
+  if (frameId !== undefined) {
     window.cancelAnimationFrame(frameId);
     frameId = undefined;
   }
@@ -47,7 +47,6 @@ function animateValue(target: number) {
     !props.enabled ||
     !props.start ||
     target <= 0 ||
-    typeof window === 'undefined' ||
     !window.requestAnimationFrame
   ) {
     renderStaticValue();
@@ -81,7 +80,7 @@ function stopVisibilityObserver() {
 function startVisibilityObserver() {
   const element = rootRef.value;
 
-  if (!element || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+  if (!element || !('IntersectionObserver' in window)) {
     isVisible.value = true;
     return;
   }
@@ -119,7 +118,7 @@ watch(
       return;
     }
 
-    if (!props.enabled || numericValue.value <= 0 || typeof window === 'undefined' || !window.requestAnimationFrame) {
+    if (!props.enabled || numericValue.value <= 0 || !window.requestAnimationFrame) {
       renderStaticValue();
       return;
     }

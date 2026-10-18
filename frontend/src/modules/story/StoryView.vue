@@ -85,16 +85,15 @@ let deleteConfirmTl: gsap.core.Tween | undefined;
 let hasPreparedMapEntry = false;
 let hasPlayedPageEnter = false;
 
-const togetherDays = computed(() => safeNumber(home.value?.couple?.togetherDays));
+const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
 const distanceText = computed(() => {
-  const kilometers = home.value?.distance?.kilometers;
+  const kilometers = home.value?.distance.kilometers;
 
-  if (typeof kilometers === 'number' && Number.isFinite(kilometers)) {
+  if (kilometers !== undefined && kilometers !== null) {
     return `距离 ${formatKilometers(kilometers)} km`;
   }
 
-  const label = cleanText(home.value?.distance?.label);
-  return label || '距离待更新';
+  return home.value?.distance.label || '距离待更新';
 });
 
 const storyBootReady = computed(
@@ -366,10 +365,6 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
-function safeNumber(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
 function exitStory(event?: Event) {
   event?.preventDefault();
   if (isExitingStory.value) {
@@ -384,16 +379,6 @@ function exitStory(event?: Event) {
   }).finally(() => {
     isExitingStory.value = false;
   });
-}
-
-function cleanText(value: unknown) {
-  const text = String(value ?? '').trim();
-
-  if (!text || text === 'undefined' || text === 'null' || text === 'NaN') {
-    return '';
-  }
-
-  return text;
 }
 
 function formatKilometers(value: number) {
@@ -743,7 +728,7 @@ function playDeleteFeedback(id: number) {
 }
 
 function setupMotionPreference() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (typeof window.matchMedia !== 'function') {
     isReducedMotion.value = false;
     return;
   }

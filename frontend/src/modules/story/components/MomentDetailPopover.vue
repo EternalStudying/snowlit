@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { CalendarDays, ChevronLeft, ChevronRight, Edit3, MapPin, Tag, Trash2, X } from 'lucide-vue-next';
@@ -65,16 +66,8 @@ onBeforeUnmount(() => {
   detailContext?.revert();
 });
 
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
-
 function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
 function isTestEnvironment() {
@@ -210,8 +203,8 @@ function markViewerImageFailed(src: string) {
       <h2 class="moment-detail__title">{{ renderedMoment.title }}</h2>
 
       <div class="moment-detail__meta">
-        <span><CalendarDays :size="15" />开始 {{ formatDate(renderedMoment.eventTime) }}</span>
-        <span v-if="renderedMoment.endTime"><CalendarDays :size="15" />结束 {{ formatDate(renderedMoment.endTime) }}</span>
+        <span><CalendarDays :size="15" />开始 {{ formatDottedDate(renderedMoment.eventTime) }}</span>
+        <span v-if="renderedMoment.endTime"><CalendarDays :size="15" />结束 {{ formatDottedDate(renderedMoment.endTime) }}</span>
         <span><MapPin :size="15" />{{ renderedMoment.locationName }}</span>
       </div>
 

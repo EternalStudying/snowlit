@@ -7,7 +7,7 @@ export function useModalWheelGuard(isActive: Ref<boolean>) {
   let listening = false;
 
   function start() {
-    if (listening || typeof window === 'undefined') {
+    if (listening) {
       return;
     }
 
@@ -17,7 +17,7 @@ export function useModalWheelGuard(isActive: Ref<boolean>) {
   }
 
   function stop() {
-    if (!listening || typeof window === 'undefined') {
+    if (!listening) {
       return;
     }
 

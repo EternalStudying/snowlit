@@ -40,7 +40,6 @@ export function useHomeHeroExperience() {
   const isSyncing = ref(false);
   const burstParticles = ref<HeroBurstParticle[]>([]);
   const prefersReducedMotion =
-    typeof window !== 'undefined' &&
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   let autoplayTimer: number | undefined;

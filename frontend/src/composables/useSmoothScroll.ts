@@ -229,5 +229,5 @@ function resolveElement(node: unknown) {
 }
 
 function canUseSmoothScroll() {
-  return typeof window !== 'undefined' && typeof document !== 'undefined' && typeof window.ResizeObserver === 'function';
+  return typeof window.ResizeObserver === 'function';
 }

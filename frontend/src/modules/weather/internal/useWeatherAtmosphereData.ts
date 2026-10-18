@@ -226,12 +226,12 @@ export function formatTopbarWeatherSummary(data: WeatherAtmosphereData | null | 
     return null;
   }
 
-  const location = [data.district, data.city, data.province, data.country].map(cleanText).find((value) => value && value.toLowerCase() !== 'unknown') || '位置待更新';
+  const location = [data.district, data.city, data.province, data.country].find((value) => value && value.toLowerCase() !== 'unknown') || '位置待更新';
   const weatherLabel = resolveWeatherLabel(data);
   const temperature = formatTemperature(data.temperature);
   const wind = formatWind(data.windDirection, data.windPower);
   const humidity = formatHumidity(data.humidity);
-  const observedAt = cleanText(data.observedAt);
+  const observedAt = data.observedAt;
   const weatherAndTemperature = [weatherLabel, temperature].filter(Boolean).join(' ');
   const primary = [location, weatherAndTemperature].filter(Boolean).join(' · ');
   const secondary = [wind, humidity].filter(Boolean).join(' · ');
@@ -246,9 +246,9 @@ export function formatTopbarWeatherSummary(data: WeatherAtmosphereData | null | 
 }
 
 function resolveWeatherLabel(data: WeatherAtmosphereData) {
-  if (data.weatherVariant === 'unknown' && !cleanText(data.rawWeather)) return '天气待更新';
+  if (data.weatherVariant === 'unknown' && !data.rawWeather) return '天气待更新';
   return (
-    cleanText(data.rawWeather) ||
+    data.rawWeather ||
     weatherVariantLabels[data.weatherVariant] ||
     weatherStateLabels[data.weatherState] ||
     '天气'
@@ -256,7 +256,7 @@ function resolveWeatherLabel(data: WeatherAtmosphereData) {
 }
 
 function formatTemperature(temperature: number | null) {
-  if (typeof temperature !== 'number' || !Number.isFinite(temperature)) {
+  if (temperature === null) {
     return '';
   }
 
@@ -264,15 +264,10 @@ function formatTemperature(temperature: number | null) {
 }
 
 function formatWind(direction: string, power: string) {
-  const windDirection = cleanText(direction);
-  const windPower = formatWindPower(power);
-
-  return [windDirection, windPower].filter(Boolean).join(' ');
+  return [direction, formatWindPower(power)].filter(Boolean).join(' ');
 }
 
-function formatWindPower(power: string) {
-  const text = cleanText(power);
-
+function formatWindPower(text: string) {
   if (!text) {
     return '';
   }
@@ -284,9 +279,7 @@ function formatWindPower(power: string) {
   return `${text}级`;
 }
 
-function formatHumidity(humidity: string) {
-  const text = cleanText(humidity);
-
+function formatHumidity(text: string) {
   if (!text) {
     return '';
   }
@@ -298,12 +291,3 @@ function formatHumidity(humidity: string) {
   return `湿度 ${text.endsWith('%') ? text : `${text}%`}`;
 }
 
-function cleanText(value: unknown) {
-  const text = String(value ?? '').trim();
-
-  if (!text || text === 'undefined' || text === 'null' || text === 'NaN') {
-    return '';
-  }
-
-  return text;
-}

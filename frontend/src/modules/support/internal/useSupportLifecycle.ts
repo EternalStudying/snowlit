@@ -14,6 +14,7 @@ import type {
   NoticeDismissalStore,
   SupportGateway
 } from './ports';
+import { errorMessage } from '../../../display';
 
 interface FeedbackPageContext {
   pageUrl: string;
@@ -243,20 +244,7 @@ export function useSupportLifecycle(
 
 function defaultPageContext(): FeedbackPageContext {
   return {
-    pageUrl:
-      typeof window === 'undefined'
-        ? ''
-        : window.location.href,
-    userAgent:
-      typeof navigator === 'undefined'
-        ? ''
-        : navigator.userAgent
+    pageUrl: window.location.href,
+    userAgent: navigator.userAgent
   };
-}
-
-function errorMessage(
-  error: unknown,
-  fallback: string
-): string {
-  return error instanceof Error ? error.message : fallback;
 }

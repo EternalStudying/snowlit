@@ -34,7 +34,7 @@ function updateMediaState() {
 }
 
 function setupMediaQueries() {
-  if (typeof window === 'undefined' || !window.matchMedia) {
+  if (!window.matchMedia) {
     return;
   }
 

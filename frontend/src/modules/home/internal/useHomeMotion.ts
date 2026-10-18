@@ -24,7 +24,7 @@ function boolAttr(value: boolean) {
 }
 
 function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function useHomeMotion() {

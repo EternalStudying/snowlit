@@ -388,7 +388,6 @@ describe('procedural-weather stage 7 performance and degradation hardening', () 
       expect(layerSource).toContain('MAX_FRAME_DELTA_SECONDS');
       expect(layerSource).toContain('stopAnimationLoop()');
       expect(layerSource).toContain('startAnimationLoop()');
-      expect(layerSource).toContain('hasBrowserGlobals');
       expect(layerSource).toContain('isLayerDisposed');
 
       wrapper.unmount();

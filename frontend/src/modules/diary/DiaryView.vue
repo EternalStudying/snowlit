@@ -159,7 +159,6 @@ function setMonthSectionRef(
 
 function hasReducedDiaryMotion() {
   return (
-    typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)')
       .matches
@@ -275,7 +274,7 @@ function openCreateEditor() {
     return;
   }
   if (!weather.value) {
-    void loadWeather().catch(() => undefined);
+    void loadWeather();
   }
   editorMode.value = 'create';
   editingEntry.value = null;

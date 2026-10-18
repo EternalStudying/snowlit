@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { CalendarDays, Coffee, Gift, Heart, ImagePlus, Loader2, Luggage, MapPin, Pencil, Star, Trash2 } from 'lucide-vue-next';
@@ -67,10 +68,6 @@ const canAddImage = computed(() => form.images.length < 3 && !isUploading.value)
 const contentLength = computed(() => form.content.length);
 const photoSlots = computed(() => Array.from({ length: 3 }, (_, index) => ({ index, image: form.images[index] ?? '' })));
 const editorPositionStyle = computed(() => {
-  if (typeof window === 'undefined') {
-    return {};
-  }
-
   const viewportWidth = window.innerWidth || 1024;
   const viewportHeight = window.innerHeight || 768;
   const width = Math.min(500, viewportWidth - 16, (viewportHeight - 24) * (1024 / 1536));
@@ -282,7 +279,7 @@ async function searchLocationSuggestions(keyword: string) {
     locationSuggestions.value = results.slice(0, 5);
     locationStatus.value = results.length ? '' : '没有找到匹配地点';
   } catch (error) {
-    locationStatus.value = error instanceof Error ? error.message : '地点联想失败';
+    locationStatus.value = errorMessage(error, '地点联想失败');
   } finally {
     isSearchingLocation.value = false;
   }
@@ -345,7 +342,7 @@ async function uploadImages(payload: Event | { fileList: UploadFileInfo[] }) {
       form.images.push(await props.uploadImage(file));
     }
   } catch (error) {
-    localError.value = error instanceof Error ? error.message : '图片上传失败';
+    localError.value = errorMessage(error, '图片上传失败');
   } finally {
     isUploading.value = false;
   }
@@ -356,7 +353,7 @@ function removeImage(image: string) {
 }
 
 function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
 function isTestEnvironment() {

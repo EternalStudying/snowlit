@@ -22,7 +22,7 @@ function randomRange(min: number, max: number) {
 }
 
 function getMotionQuery() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (typeof window.matchMedia !== 'function') {
     return null;
   }
   return window.matchMedia('(prefers-reduced-motion: reduce)');

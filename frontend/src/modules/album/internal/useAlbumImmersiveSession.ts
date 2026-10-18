@@ -230,10 +230,6 @@ export function useAlbumImmersiveSession({
   }
 
   function restoreReturnScrollPosition() {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     const top = returnScrollY;
     const restore = () => {
       if (!navigator.userAgent.toLowerCase().includes('jsdom')) {

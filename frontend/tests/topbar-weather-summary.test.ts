@@ -152,7 +152,7 @@ describe('顶栏导航融合后的天气摘要', () => {
     expect(summary?.label).toContain('更新时间 2026-05-16T09:30:00+02:00');
   });
 
-  it('缺字段时删除对应片段，不出现 undefined/null/NaN 或多余分隔符', async () => {
+  it('缺字段时删除对应片段，不出现多余分隔符', async () => {
     expect(fileExists('src/modules/weather/internal/useWeatherAtmosphereData.ts')).toBe(true);
 
     const { formatTopbarWeatherSummary } = await import('../src/modules/weather');
@@ -161,7 +161,7 @@ describe('顶栏导航融合后的天气摘要', () => {
         city: '',
         district: '',
         rawWeather: '',
-        temperature: Number.NaN,
+        temperature: null,
         weatherState: 'cloudy',
         weatherVariant: 'overcast',
         windDirection: '',

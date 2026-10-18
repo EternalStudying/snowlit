@@ -166,14 +166,6 @@ export function getStoryFallbackPosition(
   };
 }
 
-export function formatStoryMomentShortDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
-
 function createMarkerItem(group: LocatedStoryMoment[]): StoryMarkerItem {
   const moments = [...group].sort(
     (left, right) => getStoryMomentTime(right) - getStoryMomentTime(left)

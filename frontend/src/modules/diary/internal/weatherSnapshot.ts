@@ -63,10 +63,10 @@ export function createDiaryWeatherSnapshot(
   const currentWeather = context.weather;
   const coordinates = context.coordinates;
   const weatherLabel =
-    cleanText(value.weather) ||
+    value.weather.trim() ||
     resolveDiaryWeatherLabel(currentWeather);
   const locationName =
-    cleanText(value.location) ||
+    value.location.trim() ||
     resolveDiaryWeatherLocation(currentWeather);
 
   if (
@@ -80,17 +80,14 @@ export function createDiaryWeatherSnapshot(
 
   return {
     weather: weatherLabel,
-    rawWeather: cleanText(currentWeather?.rawWeather) || weatherLabel,
-    temperature:
-      typeof currentWeather?.temperature === 'number'
-        ? currentWeather.temperature
-        : null,
-    windDirection: cleanText(currentWeather?.windDirection),
-    windPower: cleanText(currentWeather?.windPower),
-    humidity: cleanText(currentWeather?.humidity),
-    province: cleanText(currentWeather?.province),
-    city: cleanText(currentWeather?.city),
-    district: cleanText(currentWeather?.district),
+    rawWeather: currentWeather?.rawWeather || weatherLabel,
+    temperature: currentWeather?.temperature ?? null,
+    windDirection: currentWeather?.windDirection ?? '',
+    windPower: currentWeather?.windPower ?? '',
+    humidity: currentWeather?.humidity ?? '',
+    province: currentWeather?.province ?? '',
+    city: currentWeather?.city ?? '',
+    district: currentWeather?.district ?? '',
     locationName,
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null
@@ -100,30 +97,20 @@ export function createDiaryWeatherSnapshot(
 function resolveDiaryWeatherLocation(
   data: WeatherAtmosphereData | null | undefined
 ): string {
-  return (
-    cleanText(data?.district) ||
-    cleanText(data?.city) ||
-    cleanText(data?.province)
-  );
+  return data ? data.district || data.city || data.province : '';
 }
 
 function resolveDiaryWeatherLabel(
   data: WeatherAtmosphereData | null | undefined
 ): string {
+  if (!data) {
+    return '';
+  }
   return (
-    cleanText(data?.rawWeather) ||
-    weatherVariantLabels[cleanText(data?.weatherVariant)] ||
-    weatherStateLabels[cleanText(data?.weatherState)] ||
+    data.rawWeather ||
+    weatherVariantLabels[data.weatherVariant] ||
+    weatherStateLabels[data.weatherState] ||
     ''
   );
 }
 
-function cleanText(value: unknown): string {
-  const text = String(value ?? '').trim();
-  return !text ||
-    text === 'undefined' ||
-    text === 'null' ||
-    text === 'NaN'
-    ? ''
-    : text;
-}

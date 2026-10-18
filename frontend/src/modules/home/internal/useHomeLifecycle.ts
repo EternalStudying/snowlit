@@ -10,6 +10,7 @@ import type {
 } from '../model';
 import { createHttpHomeGateway } from './httpHomeGateway';
 import type { HomeGateway } from './ports';
+import { errorMessage } from '../../../display';
 
 interface Coordinates {
   latitude: number;
@@ -213,19 +214,13 @@ function createLocationSnapshot(
     weather:
       weather.weatherVariant === 'unknown'
         ? null
-        : cleanText(weather.rawWeather) ||
-          cleanText(weather.weatherVariant) ||
-          cleanText(weather.weatherState) || null,
-    temperature:
-      typeof weather.temperature === 'number' &&
-      Number.isFinite(weather.temperature)
-        ? weather.temperature
-        : null
+        : weather.rawWeather || weather.weatherVariant,
+    temperature: weather.temperature
   };
 }
 
-function locationText(value: unknown): string {
-  const text = cleanText(value);
+function locationText(value: string): string {
+  const text = value.trim();
   return /^(unknown|未知|位置待更新|城市待更新)$/i.test(text) ? '' : text;
 }
 
@@ -233,19 +228,3 @@ function isFiniteCoordinate(value: number): boolean {
   return Number.isFinite(value);
 }
 
-function cleanText(value: unknown): string {
-  const text = String(value ?? '').trim();
-  if (
-    !text ||
-    text === 'undefined' ||
-    text === 'null' ||
-    text === 'NaN'
-  ) {
-    return '';
-  }
-  return text;
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { STORY_CATEGORY_LABELS, type StoryMoment } from '../model';
@@ -52,14 +53,6 @@ watch(
   },
   { flush: 'post' }
 );
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
 
 function playTimelineMotion() {
   if (!timelineRoot.value) {
@@ -165,11 +158,11 @@ function playNodeFeedback() {
           :data-story-motion-id="moment.id"
           type="button"
           :aria-pressed="selectedId === moment.id"
-          :aria-label="`查看点滴：${moment.title}，${formatDate(moment.eventTime)}`"
+          :aria-label="`查看点滴：${moment.title}，${formatDottedDate(moment.eventTime)}`"
           @click="emit('select', moment.id)"
         >
           <span class="story-timeline__dot" aria-hidden="true" />
-          <span class="story-timeline__date">{{ formatDate(moment.eventTime) }}</span>
+          <span class="story-timeline__date">{{ formatDottedDate(moment.eventTime) }}</span>
           <span class="story-timeline__moment-title">{{ moment.title }}</span>
           <span class="story-timeline__category">{{ STORY_CATEGORY_LABELS[moment.category] }}</span>
         </button>

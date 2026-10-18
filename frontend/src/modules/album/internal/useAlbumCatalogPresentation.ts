@@ -314,7 +314,6 @@ export function useAlbumCatalogPresentation({
   function setupCardRevealObserver() {
     if (
       reducedMotion ||
-      typeof window === 'undefined' ||
       typeof window.IntersectionObserver !== 'function'
     ) {
       collections.value.forEach((collection) =>
@@ -388,7 +387,6 @@ export function useAlbumCatalogPresentation({
 
   function scheduleMasonryMeasure() {
     if (
-      typeof window === 'undefined' ||
       masonryMeasureFrame !== undefined
     ) {
       return;
@@ -398,10 +396,6 @@ export function useAlbumCatalogPresentation({
   }
 
   function setupMasonryObserver() {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     if (typeof window.ResizeObserver !== 'function') {
       scheduleMasonryMeasure();
       return;
@@ -534,10 +528,6 @@ export function useAlbumCatalogPresentation({
   }
 
   function isNearBottom() {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
     const scrollHeight =
       document.documentElement.scrollHeight || document.body.scrollHeight;
     return (

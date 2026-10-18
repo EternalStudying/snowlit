@@ -6,7 +6,7 @@
           <div class="modal-header">
             <div class="modal-meta">
               <span class="author-name">{{ message.authorName }}</span>
-              <span class="created-at">{{ formatDate(message.createdAt) }}</span>
+              <span class="created-at">{{ formatDottedDate(message.createdAt) }}</span>
             </div>
             <button class="close-btn" type="button" data-message-detail-close @click="close">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatDottedDate } from '../../../display';
 import type { MessageEntry } from '../model';
 
 const props = defineProps<{
@@ -65,14 +66,6 @@ const handleDelete = () => {
   }
 };
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) {
-    return dateStr;
-  }
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-};
 </script>
 
 <style scoped>

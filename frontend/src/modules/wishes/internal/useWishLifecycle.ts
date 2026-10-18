@@ -16,6 +16,7 @@ import type {
 import { WISH_LANE_KEYS } from '../model';
 import { createHttpWishGateway } from './httpWishGateway';
 import type { WishGateway } from './ports';
+import { errorMessage } from '../../../display';
 
 const DEFAULT_PAGE_SIZE = 8;
 
@@ -645,8 +646,4 @@ function setPendingId(
     next.delete(id);
   }
   target.value = next;
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
 }

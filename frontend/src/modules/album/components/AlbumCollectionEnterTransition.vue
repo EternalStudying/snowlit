@@ -35,8 +35,8 @@ const sourceStyle = computed(() => {
 });
 
 function getFallbackSourceRect() {
-  const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
-  const viewportHeight = typeof window === 'undefined' ? 900 : window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
 
   return (
     props.sourceRect ?? {
@@ -71,8 +71,8 @@ function getEstimatedPhotoRect(index: number): PhotoRect {
 
 function getFlightPhotoStyle(index: number) {
   const rect = props.photoRects[index] ?? getEstimatedPhotoRect(index);
-  const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
-  const viewportHeight = typeof window === 'undefined' ? 900 : window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
   const row = Math.floor(index / 3);
   const col = index % 3;
   const width = Math.max(rect.width, 1);
@@ -98,8 +98,8 @@ function getFlightPhotoStyle(index: number) {
 
 function getMemoryLineStyle(index: number) {
   const rect = props.photoRects[index] ?? getEstimatedPhotoRect(index);
-  const viewportWidth = typeof window === 'undefined' ? 1440 : window.innerWidth;
-  const viewportHeight = typeof window === 'undefined' ? 900 : window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
   const startX = rect.left + rect.width / 2;
   const startY = rect.top + rect.height / 2;
   const toX = viewportWidth / 2 - startX;

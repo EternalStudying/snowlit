@@ -58,25 +58,25 @@ const progressStatIcons = {
   photo: statIconPhoto
 } as const;
 
-const togetherDays = computed(() => safeNumber(home.value?.couple.togetherDays));
+const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
 const anniversary = computed(() => ({
-  name: cleanText(home.value?.couple.nextAnniversary.name) || '下一纪念日',
-  days: safeNumber(home.value?.couple.nextAnniversary.daysUntil),
-  date: cleanText(home.value?.couple.nextAnniversary.date)
+  name: home.value?.couple.nextAnniversary.name || '下一纪念日',
+  days: home.value?.couple.nextAnniversary.daysUntil ?? 0,
+  date: home.value?.couple.nextAnniversary.date ?? ''
 }));
 const dailyNote = computed(() => ({
-  sentence: cleanText(home.value?.dailyNote.sentence) || '今天也适合认真喜欢你。',
-  weatherHint: cleanText(home.value?.dailyNote.weatherHint) || '天气待更新',
-  activityHint: cleanText(home.value?.dailyNote.activityHint) || '一起留住今天'
+  sentence: home.value?.dailyNote.sentence || '今天也适合认真喜欢你。',
+  weatherHint: home.value?.dailyNote.weatherHint || '天气待更新',
+  activityHint: home.value?.dailyNote.activityHint || '一起留住今天'
 }));
 const latestDiary = computed(() => home.value?.latest.diary ?? null);
 const latestMessage = computed(() => home.value?.latest.message ?? null);
 const latestPhoto = computed(() => home.value?.latest.photo ?? null);
 const latestAlbumPreviewPhotos = computed(() => (latestPhoto.value ? [latestPhoto.value] : []));
 const nextWish = computed(() => home.value?.latest.wish ?? null);
-const messageCount = computed(() => safeNumber(home.value?.stats.messageCount));
-const photoCount = computed(() => safeNumber(home.value?.stats.photoCount));
-const distanceLabel = computed(() => cleanText(home.value?.distance.label) || '距离正在更新');
+const messageCount = computed(() => home.value?.stats.messageCount ?? 0);
+const photoCount = computed(() => home.value?.stats.photoCount ?? 0);
+const distanceLabel = computed(() => home.value?.distance.label || '距离正在更新');
 const progressLedgerBackgroundReady = ref(false);
 const progressLedgerRevealFinished = ref(false);
 const progressLedgerCountUpStarted = computed(
@@ -84,7 +84,7 @@ const progressLedgerCountUpStarted = computed(
 );
 const coupleStatusCards = computed(() => {
   const statuses =
-    home.value?.personStatuses?.length
+    home.value?.personStatuses.length
       ? home.value.personStatuses
       : [
           {
@@ -110,13 +110,13 @@ const coupleStatusCards = computed(() => {
         ];
 
   return statuses.map((person) => ({
-    name: cleanText(person.name) || (person.role === 'girlfriend' ? '伴侣 B' : '伴侣 A'),
+    name: person.name || (person.role === 'girlfriend' ? '伴侣 B' : '伴侣 A'),
     avatar: person.role === 'girlfriend' ? partnerBAvatar : partnerAAvatar,
     city: [person.city, person.district, person.province, person.country]
-      .map(cleanText).find((value) => value && !/^(unknown|未知)$/i.test(value)) || '位置待更新',
+      .find((value) => value && !/^(unknown|未知)$/i.test(value)) || '位置待更新',
     weather: formatStatusWeather(person.weather, person.temperature),
-    mood: cleanText(person.mood) || '状态待更新',
-    note: cleanText(person.note) || '等一下就同步近况',
+    mood: person.mood || '状态待更新',
+    note: person.note || '等一下就同步近况',
     gender: person.role === 'girlfriend' ? '♀' : '♂'
   }));
 });
@@ -128,25 +128,10 @@ const progressStats = computed(() => [
   { value: photoCount.value, unit: '张', label: '共同的照片', icon: 'photo', iconSrc: progressStatIcons.photo }
 ]);
 
-function safeNumber(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
+function formatStatusWeather(weather: string, temperature: number | null) {
+  const temperatureText = temperature === null ? '' : `${Math.round(temperature)}°C`;
 
-function cleanText(value: unknown) {
-  const text = String(value ?? '').trim();
-
-  if (!text || text === 'undefined' || text === 'null' || text === 'NaN') {
-    return '';
-  }
-
-  return text;
-}
-
-function formatStatusWeather(weather: unknown, temperature: unknown) {
-  const weatherText = cleanText(weather);
-  const temperatureText = typeof temperature === 'number' && Number.isFinite(temperature) ? `${Math.round(temperature)}°C` : '';
-
-  return [weatherText, temperatureText].filter(Boolean).join(' ') || '天气待更新';
+  return [weather, temperatureText].filter(Boolean).join(' ') || '天气待更新';
 }
 
 function formatDate(value?: string) {

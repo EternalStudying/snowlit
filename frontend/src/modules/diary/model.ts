@@ -43,8 +43,8 @@ export interface DiarySummaryDto {
   imageUrls: string[];
   entryDate: string;
   moodKey: DiaryMoodKey;
-  locationName: string;
-  weather: string;
+  locationName: string | null;
+  weather: string | null;
   visibility: DiaryVisibility;
   createdAt: string;
   updatedAt: string;
@@ -57,14 +57,14 @@ export interface DiaryMonthDto {
 
 export interface DiaryDetailDto extends DiarySummaryDto {
   contentMarkdown: string;
-  rawWeather: string;
+  rawWeather: string | null;
   temperature: number | null;
-  windDirection: string;
-  windPower: string;
-  humidity: string;
-  province: string;
-  city: string;
-  district: string;
+  windDirection: string | null;
+  windPower: string | null;
+  humidity: string | null;
+  province: string | null;
+  city: string | null;
+  district: string | null;
   latitude: number | null;
   longitude: number | null;
 }

@@ -123,7 +123,7 @@ describe('HomeLifecycle', () => {
     expect(lifecycle.state.loaded.value).toBe(true);
   });
 
-  it('复用天气结果生成干净位置快照，上报成功后刷新首页', async () => {
+  it('复用天气结果生成位置快照（未知地点留空），上报成功后刷新首页', async () => {
     const reportLocation = vi.fn(async () => undefined);
     const fetchOverview = vi.fn(async () =>
       homeOverviewFixture
@@ -139,9 +139,9 @@ describe('HomeLifecycle', () => {
       {
         ...weatherFixture,
         city: '  示例城市  ',
-        district: ' undefined ',
-        rawWeather: ' ',
-        temperature: Number.NaN
+        district: 'unknown',
+        rawWeather: '',
+        temperature: null
       },
       coordinates
     );

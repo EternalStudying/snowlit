@@ -60,12 +60,8 @@ let isLayerDisposed = false;
 const pointer = { x: 0, y: 0 };
 let scrollY = 0;
 
-function hasBrowserGlobals() {
-  return typeof window !== 'undefined' && typeof document !== 'undefined';
-}
-
 function updateSize() {
-  if (!renderer || !camera || !hasBrowserGlobals()) {
+  if (!renderer || !camera) {
     return;
   }
 
@@ -77,27 +73,15 @@ function updateSize() {
 }
 
 function handlePointerMove(event: MouseEvent) {
-  if (!hasBrowserGlobals()) {
-    return;
-  }
-
   pointer.x = event.clientX / Math.max(window.innerWidth, 1) - 0.5;
   pointer.y = event.clientY / Math.max(window.innerHeight, 1) - 0.5;
 }
 
 function handleScroll() {
-  if (!hasBrowserGlobals()) {
-    return;
-  }
-
   scrollY = window.scrollY || document.documentElement.scrollTop || 0;
 }
 
 function handleVisibilityChange() {
-  if (!hasBrowserGlobals()) {
-    return;
-  }
-
   if (document.visibilityState === 'hidden') {
     stopAnimationLoop();
     return;
@@ -129,11 +113,11 @@ function renderFrame(now: number) {
 }
 
 function startAnimationLoop() {
-  if (!renderer || animationLoopActive || !hasBrowserGlobals() || document.visibilityState === 'hidden') {
+  if (!renderer || animationLoopActive || document.visibilityState === 'hidden') {
     return;
   }
 
-  lastFrameTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  lastFrameTime = performance.now();
   renderer.setAnimationLoop(renderFrame);
   animationLoopActive = true;
 }
@@ -330,13 +314,8 @@ async function initWeatherLayer() {
       return;
     }
 
-    clockStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    clockStart = performance.now();
     lastFrameTime = clockStart;
-
-    if (!hasBrowserGlobals()) {
-      disposeWeatherLayer();
-      return;
-    }
 
     window.addEventListener('resize', updateSize);
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
@@ -366,12 +345,10 @@ function disposeWeatherLayer() {
   isLayerDisposed = true;
   initLayerToken += 1;
   sceneLoadToken += 1;
-  if (hasBrowserGlobals()) {
-    window.removeEventListener('resize', updateSize);
-    window.removeEventListener('mousemove', handlePointerMove);
-    window.removeEventListener('scroll', handleScroll);
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }
+  window.removeEventListener('resize', updateSize);
+  window.removeEventListener('mousemove', handlePointerMove);
+  window.removeEventListener('scroll', handleScroll);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   if (renderer) {
     stopAnimationLoop();
     renderer.setAnimationLoop(null);

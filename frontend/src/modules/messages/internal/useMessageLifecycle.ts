@@ -5,6 +5,7 @@ import type {
 } from '../model';
 import { createHttpMessageGateway } from './httpMessageGateway';
 import type { MessageGateway } from './ports';
+import { errorMessage } from '../../../display';
 
 const PAGE_SIZE = 20;
 
@@ -174,8 +175,4 @@ export function useMessageLifecycle({
     clearSelection,
     deleteMessage
   };
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
 }

@@ -56,7 +56,6 @@ export function useJournalNavFusion({
   const isNavSwitching = ref(false);
   const isNavActiveTrackSettling = ref(false);
   const prefersReducedMotion =
-    typeof window !== 'undefined' &&
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   let navFusionFrame: number | undefined;
