@@ -2,10 +2,19 @@
 
 ## Current Task
 
-Context initialized. No Web development request is active.
+Frontend architecture refactor from the 2026-10-18 review: complete on `refactor/frontend-deepening`, awaiting the user's decision to merge.
 
-### Phase 1: Baseline Initialization
-- **Status:** complete
+| Candidate | Status |
+|---|---|
+| Shared display helpers, trusted API types | complete |
+| Behaviour tests instead of source-text tests | complete |
+| Weather pipeline pruned to LazyLayers | complete |
+| One image-picking rule | complete |
+| Session epoch and request guards | complete |
+| Motion module (reduced motion, instant test mode, close-once) | complete |
+| Wishes data split from choreography | complete |
+| Journal shell to src/shell; weather owns its schedule | complete |
+| Browser check against throwaway services | complete |
 
 ## Entry Points
 
@@ -20,4 +29,4 @@ Read root AGENTS.md and task_plan.md, then [findings](findings.md), [progress](p
 
 ## Known Items, Not Scheduled
 
-The 390px home-page overflow, external maps, and complete write/permission flows require further acceptance work. Do not begin fixes or redesigns without a new request.
+The 390px home-page overflow, the pre-existing issues listed in findings.md, external maps, and complete write/permission flows. Do not begin fixes or redesigns without a new request.

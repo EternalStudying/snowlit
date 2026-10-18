@@ -12,12 +12,13 @@ Baseline date: 2026-10-17. This file records facts and decisions. Task status be
 | docs | Development instructions and cross-client contracts; not a runtime asset source |
 | codex-work | Git-ignored temporary checks and local debugging material; not a permanent specification |
 
-Web requests share SessionRequest; the regular route shell belongs to Home. On the backend a required `@CurrentActor` is the only login rule, `AuthSessions` owns opaque business sessions, `ImageIntake` accepts every uploaded image over the ObjectStore seam, ApplicationFailure represents business failures, and infrastructure contains external adapters. Details are in [backend findings](backend/findings.md); domain terms are in the [glossary](GLOSSARY.md).
+Web requests share SessionRequest and drop responses from an earlier session; the regular route shell lives in frontend/src/shell. On the backend a required `@CurrentActor` is the only login rule, `AuthSessions` owns opaque business sessions, `ImageIntake` accepts every uploaded image over the ObjectStore seam, ApplicationFailure represents business failures, and infrastructure contains external adapters. Details are in [backend findings](backend/findings.md); domain terms are in the [glossary](GLOSSARY.md).
 
 ## Confirmed User Decisions
 
 - Write all project context and maintenance documents in English; reply to the user in English.
 - Backend refactor decisions (2026-10-18): images are recognised by content for every flow and GIF is allowed everywhere; per-domain image error codes stay; oversized feedback screenshots answer 413; local disk is the object store whenever MinIO is not fully configured; session tokens are opaque (no JWT); `@CurrentActor` is the only login rule; overly defensive code is removed. Domain vocabulary lives in GLOSSARY.md (CONTEXT.md retired).
+- Frontend refactor decisions (2026-10-18): a session change discards in-flight responses and clears cached feature state; one image rule (JPEG/PNG/WebP/GIF by type or extension, ≤10MB, message "只支持 jpg、png、webp、gif，单张不超过 10MB"); legacy weather scenes removed; a shared motion module with a test-only instant mode replaces test-runner checks and animations must look the same; the wish completion stamp plays only after the server confirms; the journal shell lives in src/shell and weather owns its consent and schedule; source-text tests are replaced by behaviour tests except seam audits and cross-client contract checks; the 390px Home overflow stays out of scope.
 - Preserve the public ICP component and its current record number.
 - Do not hardcode personal names, addresses, or real precise coordinates. Use generic initialization data and actual location results; unresolved locations remain unknown.
 - The privacy criterion concerns direct evidence of the user's physical location in mainland China. Chinese language, holidays, simplified fonts, AMap, WeChat, and npm mirror choices may remain.

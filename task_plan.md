@@ -2,11 +2,11 @@
 
 ## Goal
 
-Refactor the backend architecture: deepen shallow modules found in the 2026-10-18 architecture review and remove overly defensive code, without changing client-visible contracts beyond the decisions recorded in [findings](findings.md).
+Refactor the backend and Web architecture: deepen shallow modules found in the 2026-10-18 architecture review and remove overly defensive code, without changing client-visible contracts beyond the decisions recorded in [findings](findings.md).
 
 ## Current Phase
 
-Backend refactor complete and fast-forwarded into local main (not pushed). Web and mini-program architecture work has not started.
+Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor complete on `refactor/frontend-deepening` (not merged, not pushed). Mini-program architecture work has not started.
 
 ### Phase 1: Architecture review and design decisions
 - **Status:** complete
@@ -19,6 +19,9 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Web a
 
 ### Phase 4: Second backend pass (review items 3–7)
 - **Status:** complete; fast-forwarded into local main from `refactor/backend-deepening-2` (not pushed); migrations and real-database tests excluded by user decision
+
+### Phase 5: Frontend refactor (eight candidates)
+- **Status:** complete on `refactor/frontend-deepening` — see [Web plan](frontend/task_plan.md) and [Web progress](frontend/progress.md)
 
 ## Context Entry Points
 

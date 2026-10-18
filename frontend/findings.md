@@ -6,12 +6,20 @@ Vue 3, Vite, TypeScript, Vue Router, and Naive UI form the application stack. GS
 
 Ten modules live under src/modules: home, album, wishes, diary, story, messages, support, login, weather, and about. Each owns its model, Gateway, lifecycle, components, styles, assets, and tests. index.ts is the public entry point; do not restore compatibility exports for removed paths.
 
+[src/shell](src/shell) holds the journal route shell: the hero carousel, scroll reveal and nav fusion that wrap every regular route. It reads Home data and styles only through the home module's entry.
+
 ## Shared and Visual Boundaries
 
 - [SessionRequest](src/http/sessionRequest.ts) handles tokens, JSON/FormData/204, errors, and session expiry. Private-album business failures must not accidentally clear the login session.
 - [auth](src/auth.ts) manages business sessions. [router](src/router.ts) uses public module loaders and routeScrollPolicy for navigation restoration.
-- [JournalRouteShell](src/modules/home/JournalRouteShell.vue) hosts regular routes. /story and /about are immersive; /story is public.
-- Remote state is separate from GSAP, DOM observers, maps, camera movement, dialogs, and transitions. Listeners, timers, and visual resources need disposal paths.
+- [JournalRouteShell](src/shell/JournalRouteShell.vue) hosts regular routes. /story and /about are immersive; /story is public.
+- Remote state is separate from GSAP, DOM observers, maps, camera movement, dialogs, and transitions. Listeners, timers, and visual resources need disposal paths. Choreography animates changes the lifecycle already made (e.g. [useWishBoardMotion](src/modules/wishes/internal/useWishBoardMotion.ts): the completion stamp plays only after the server confirms).
+- [motion](src/motion.ts) owns the reduced-motion preference, the test-only instant mode (turned on by tests/setup.ts) and the close-once gate for dialogs. Production code never checks whether it runs under the test runner.
+- [auth](src/auth.ts) has a session epoch that changes with every token change; [requestGuards](src/requestGuards.ts) (`createLatestRequest`, `createSharedRequests`) drop responses from an older request or session, and feature state resets on session change.
+- [imageFiles](src/imageFiles.ts) is the one image-picking rule: JPEG/PNG/WebP/GIF by type or extension, at most 10MB, one accept list and one message. The album rejects a whole batch if any file fails; the album WebP preview keeps its own rule.
+- [display](src/display.ts) holds shared presentation helpers (`errorMessage`, `formatDottedDate`). DTO types are trusted as declared; nullable backend fields are typed nullable instead of being cleaned defensively.
+- Weather systems load layers through [LazyLayers](src/modules/weather/systems/LazyLayers.ts); the legacy CSS weather and per-scene classes are gone. [useAutomaticWeather](src/modules/weather/internal/useAutomaticWeather.ts) owns consent, the 20-minute schedule and the session check; AppTopBar only displays.
+- Tests assert behaviour, not source text. Exceptions: tests/architecture.test.ts seam checks, the Naive UI migration audit, and contract checks that read backend sources.
 - [SiteRecordLink](src/components/SiteRecordLink.vue) remains shared and preserved by user request. Do not import runtime assets from docs. Keep third-party licenses.
 
 ## Data and Interaction Contracts
@@ -26,4 +34,4 @@ Ten modules live under src/modules: home, album, wishes, diary, story, messages,
 
 ## Current Limits
 
-The 390px home-page overflow remains unresolved. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.
+The 390px home-page overflow remains unresolved. Found during the 2026-10-18 browser check and present before the refactor: the diary editor shows the weather fallback's "unknown" as a location (the top bar filters it, the diary does not); the immersive album gallery is blank below the album's mobile breakpoint (scroll track hidden, photos stay at the timeline start); the location-consent dialog logs Naive UI slot warnings; the new-wish dialog's background art shows its baked-in text at narrow widths. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.
