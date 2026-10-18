@@ -9,7 +9,7 @@ A shared memory application with a Vue Web client, a Spring Boot backend, and a 
 3. Follow the area-specific entry points in the root plan. Mini-program scope and platform contracts live in its [product](miniprogram/product-spec.md) and [technical](miniprogram/technical-spec.md) specifications.
 4. Use the [development guide](docs/development.md) for commands and configuration, and the [current specification](docs/product/current-spec.md) for cross-client contracts.
 
-Context documents are maintained in English. Replies to the user remain in Chinese. Historical task journals are not the current development plan.
+Context documents are maintained in English. Replies to the user are in English. Historical task journals are not the current development plan.
 
 ## Local Development
 

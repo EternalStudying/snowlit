@@ -16,7 +16,7 @@ Web requests share SessionRequest; the regular route shell belongs to Home. Back
 
 ## Confirmed User Decisions
 
-- Write all project context and maintenance documents in English; reply to the user in Chinese.
+- Write all project context and maintenance documents in English; reply to the user in English.
 - Preserve the public ICP component and its current record number.
 - Do not hardcode personal names, addresses, or real precise coordinates. Use generic initialization data and actual location results; unresolved locations remain unknown.
 - The privacy criterion concerns direct evidence of the user's physical location in mainland China. Chinese language, holidays, simplified fonts, AMap, WeChat, and npm mirror choices may remain.

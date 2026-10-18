@@ -112,7 +112,7 @@ Mini-program Node tests, developer-tool import, and native template checks are d
 
 ## Working Conventions and Acceptance Limits
 
-Follow [AGENTS.md](../AGENTS.md) and the relevant planning files. Maintain context in English; communicate with the user in their requested language. Do not commit unless explicitly requested. Never copy real secrets or personal coordinates into context, reports, screenshots, or command output.
+Follow [AGENTS.md](../AGENTS.md) and the relevant planning files. Maintain context in English; reply to the user in English. Do not commit unless explicitly requested. Never copy real secrets or personal coordinates into context, reports, screenshots, or command output.
 
 Browser artifacts belong in codex-work. Use the application-bundled rg path required by AGENTS.md; if unavailable, use Python rather than PATH rg. Use available browser capabilities and state the verification limit when a preferred tool is unavailable.
 
