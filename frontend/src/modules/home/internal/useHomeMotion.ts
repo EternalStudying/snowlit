@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../../../motion';
 import { computed } from 'vue';
 
 export type HomeMotionModuleKey =
@@ -21,10 +22,6 @@ const homeMotionModules: Record<HomeMotionModuleKey, boolean> = {
 
 function boolAttr(value: boolean) {
   return value ? 'true' : 'false';
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function useHomeMotion() {

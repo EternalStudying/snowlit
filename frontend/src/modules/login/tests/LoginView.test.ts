@@ -238,10 +238,15 @@ describe('App auth flow', () => {
   it('未登录用户可以直接浏览 /story 公开沉浸页', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ items: [], years: [], canManage: false })
-      })
+      vi.fn((input: RequestInfo | URL) =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve(
+              String(input) === '/api/home' ? homeOverviewFixture : { items: [], years: [], canManage: false }
+            )
+        })
+      )
     );
 
     const { wrapper } = await mountApp('/story');

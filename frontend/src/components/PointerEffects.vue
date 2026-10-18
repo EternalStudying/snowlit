@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useReducedMotion } from '../motion';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 type ParticleKind = 'heart' | 'trail';
@@ -22,7 +23,7 @@ const trailInterval = 36;
 let idSeed = 0;
 let lastTrailAt = -trailInterval;
 let finePointerQuery: MediaQueryList | undefined;
-let reducedMotionQuery: MediaQueryList | undefined;
+const reducedMotion = useReducedMotion(() => updateEnabled());
 const timers = new Set<ReturnType<typeof setTimeout>>();
 
 const visibleParticles = computed(() => particles.value);
@@ -36,7 +37,7 @@ function pick<T>(items: T[]) {
 }
 
 function updateEnabled() {
-  enabled.value = Boolean(finePointerQuery?.matches) && !reducedMotionQuery?.matches;
+  enabled.value = Boolean(finePointerQuery?.matches) && !reducedMotion.value;
   if (!enabled.value) {
     particles.value = [];
     timers.forEach((timer) => clearTimeout(timer));
@@ -120,18 +121,15 @@ function createTrail(event: MouseEvent) {
 
 onMounted(() => {
   finePointerQuery = window.matchMedia?.('(pointer: fine)');
-  reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   updateEnabled();
 
   finePointerQuery?.addEventListener('change', updateEnabled);
-  reducedMotionQuery?.addEventListener('change', updateEnabled);
   window.addEventListener('pointerdown', createHeartBurst);
   window.addEventListener('pointermove', createTrail);
 });
 
 onUnmounted(() => {
   finePointerQuery?.removeEventListener('change', updateEnabled);
-  reducedMotionQuery?.removeEventListener('change', updateEnabled);
   window.removeEventListener('pointerdown', createHeartBurst);
   window.removeEventListener('pointermove', createTrail);
   timers.forEach((timer) => clearTimeout(timer));

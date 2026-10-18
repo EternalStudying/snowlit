@@ -6,6 +6,7 @@ import { gsap } from 'gsap';
 import { NAlert, NButton, NDatePicker, NInput, NModal, NUpload, type UploadFileInfo } from 'naive-ui';
 import PageLoader from '../../components/PageLoader.vue';
 import { useModalWheelGuard } from '../../composables/useModalWheelGuard';
+import { createCloseOnce, shouldSkipMotion } from '../../motion';
 import boardDone from './assets/board-done.webp';
 import heroListBanner from './assets/hero-list-banner.webp';
 import boardWantDo from './assets/board-want-do.webp';
@@ -78,17 +79,15 @@ const completionImageFileList = ref<UploadFileInfo[]>([]);
 const createWishBackdropRef = ref<HTMLElement | null>(null);
 const createWishDialogRef = ref<HTMLFormElement | null>(null);
 const wishCreatePopupPortal = ref<HTMLElement>();
-const prefersReducedMotion =
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-const shouldReduceMotion = prefersReducedMotion || import.meta.env.MODE === 'test';
+const shouldReduceMotion = shouldSkipMotion();
 const wishGsapMotionAttr = computed(() => (shouldReduceMotion ? undefined : 'true'));
 let wishBoardEnterCleanup: (() => void) | undefined;
 let wishDetailTimeline: gsap.core.Timeline | undefined;
-let wishDetailClosePromise: Promise<void> | null = null;
+const wishDetailClose = createCloseOnce();
 let createWishTimeline: gsap.core.Timeline | undefined;
-let createWishClosePromise: Promise<void> | null = null;
+const createWishClose = createCloseOnce();
 let imagePreviewTimeline: gsap.core.Timeline | undefined;
-let imagePreviewClosePromise: Promise<void> | null = null;
+const imagePreviewClose = createCloseOnce();
 let wishLaneMoveTimeline: gsap.core.Timeline | undefined;
 let wishLaneMoveGhost: HTMLElement | null = null;
 let wishLaneMoveCleanupFrames: number[] = [];
@@ -160,7 +159,7 @@ const isCreateWishInteractionLocked = computed(
 function openCreateWish(category: WishCategory = 'want_go') {
   if (
     createWishDialogOpen.value ||
-    createWishClosePromise ||
+    createWishClose.closing ||
     isCreateWishInteractionLocked.value
   ) {
     return;
@@ -188,42 +187,32 @@ function updateCreateWishExpectedCompletedAt(value: string | null) {
 }
 
 function closeCreateWish(): Promise<void> {
-  if (createWishClosePromise) {
-    return createWishClosePromise;
-  }
-  if (isCreateWishInteractionLocked.value) {
-    return Promise.resolve();
-  }
-
-  if (!createWishDialogOpen.value) {
+  if (!createWishClose.closing) {
+    if (isCreatingWish.value) {
+      return Promise.resolve();
+    }
     wishLifecycle.clearCreateError();
-    return Promise.resolve();
+    if (!createWishDialogOpen.value) {
+      return Promise.resolve();
+    }
   }
 
-  wishLifecycle.clearCreateError();
-  isCreateWishClosing.value = true;
-  const closeOperation = (async () => {
+  return createWishClose.run(async () => {
+    isCreateWishClosing.value = true;
     try {
       await animateCreateWishClose();
     } finally {
       createWishDialogOpen.value = false;
+      isCreateWishClosing.value = false;
     }
-  })();
-  const trackedOperation = closeOperation.finally(() => {
-    if (createWishClosePromise === trackedOperation) {
-      createWishClosePromise = null;
-    }
-    isCreateWishClosing.value = false;
   });
-  createWishClosePromise = trackedOperation;
-  return trackedOperation;
 }
 
 async function submitCreateWish() {
   if (
     !createWishDialogOpen.value ||
     isCreateWishInteractionLocked.value ||
-    createWishClosePromise
+    createWishClose.closing
   ) {
     return;
   }
@@ -322,15 +311,11 @@ async function openWishDetail(wish: WishItem) {
 }
 
 function closeWishDetail(): Promise<void> {
-  if (wishDetailClosePromise) {
-    return wishDetailClosePromise;
-  }
-
-  if (!selectedWish.value || !isWishDetailDialogVisible.value) {
+  if (!wishDetailClose.closing && (!selectedWish.value || !isWishDetailDialogVisible.value)) {
     return Promise.resolve();
   }
 
-  const closeOperation = (async () => {
+  return wishDetailClose.run(async () => {
     if (isImagePreviewOpen.value) {
       await closeImagePreview();
     }
@@ -345,14 +330,7 @@ function closeWishDetail(): Promise<void> {
       completionImageError.value = '';
       wishLifecycle.clearSelectedWish();
     }
-  })();
-  const trackedOperation = closeOperation.finally(() => {
-    if (wishDetailClosePromise === trackedOperation) {
-      wishDetailClosePromise = null;
-    }
   });
-  wishDetailClosePromise = trackedOperation;
-  return trackedOperation;
 }
 
 async function openImagePreview() {
@@ -367,28 +345,17 @@ async function openImagePreview() {
 }
 
 function closeImagePreview(): Promise<void> {
-  if (imagePreviewClosePromise) {
-    return imagePreviewClosePromise;
-  }
-
-  if (!isImagePreviewOpen.value) {
+  if (!imagePreviewClose.closing && !isImagePreviewOpen.value) {
     return Promise.resolve();
   }
 
-  const closeOperation = (async () => {
+  return imagePreviewClose.run(async () => {
     try {
       await animateImagePreviewClose();
     } finally {
       isImagePreviewOpen.value = false;
     }
-  })();
-  const trackedOperation = closeOperation.finally(() => {
-    if (imagePreviewClosePromise === trackedOperation) {
-      imagePreviewClosePromise = null;
-    }
   });
-  imagePreviewClosePromise = trackedOperation;
-  return trackedOperation;
 }
 
 async function requestWishCompletionImage() {

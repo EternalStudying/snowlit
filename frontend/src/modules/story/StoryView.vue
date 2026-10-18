@@ -13,6 +13,7 @@ import StoryMapLoadingOverlay from './components/StoryMapLoadingOverlay.vue';
 import StoryMapCanvas from './components/StoryMapCanvas.vue';
 import StoryTimeline from './components/StoryTimeline.vue';
 import { useHomeLifecycle } from '../home';
+import { isInstantMotion, useReducedMotion } from '../../motion';
 import { playStoryExitTransition } from './internal/storyRouteTransition';
 import { useStoryLifecycle } from './internal/useStoryLifecycle';
 import addMomentButtonArt from './assets/add-moment-button.webp';
@@ -63,14 +64,13 @@ const isMotionReady = ref(false);
 const hasEnteredMotion = ref(false);
 const isMapEntering = ref(false);
 const isExitingStory = ref(false);
-const isReducedMotion = ref(false);
+const isReducedMotion = useReducedMotion();
 const hasPreloaderRevealed = ref(false);
 const isPreloaderLeaving = ref(false);
 const motionFeedbackId = ref<number | null>(null);
 const removingMotionId = ref<number | null>(null);
 const mapResetSignal = ref(0);
 
-let motionQuery: MediaQueryList | null = null;
 let motionFeedbackTimer: ReturnType<typeof window.setTimeout> | null = null;
 let motionContext: gsap.Context | undefined;
 let selectionMotionContext: gsap.Context | undefined;
@@ -138,11 +138,10 @@ const loadingStageLabel = computed(() => {
 
 const showLoadingOverlay = computed(() => !hasPreloaderRevealed.value);
 const isStoryEntryLocked = computed(
-  () => isMapEntering.value || (!hasEnteredMotion.value && !isReducedMotion.value && !isTestEnvironment())
+  () => isMapEntering.value || (!hasEnteredMotion.value && !isReducedMotion.value && !isInstantMotion())
 );
 
 onMounted(() => {
-  setupMotionPreference();
   isMotionReady.value = true;
   loadMoments();
   window.addEventListener('keydown', handleKeydown);
@@ -150,7 +149,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
-  motionQuery?.removeEventListener?.('change', updateMotionPreference);
   storyMatchMedia?.revert();
   clearMotionFeedback();
   pageEnterTl?.kill();
@@ -385,10 +383,6 @@ function formatKilometers(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function isTestEnvironment() {
-  return import.meta.env.MODE === 'test';
-}
-
 function completePageEnterMotion(cleanupTargets?: {
   filter?: Element[];
   transform?: Element[];
@@ -419,7 +413,7 @@ function completePageEnterMotion(cleanupTargets?: {
 }
 
 function prepareMapEntryCamera() {
-  if (hasPreparedMapEntry || !storyBootReady.value || isReducedMotion.value || isTestEnvironment()) {
+  if (hasPreparedMapEntry || !storyBootReady.value || isReducedMotion.value || isInstantMotion()) {
     return;
   }
 
@@ -436,7 +430,7 @@ function playPageEnterMotion() {
   hasPlayedPageEnter = true;
   isMapEntering.value = true;
   prepareMapEntryCamera();
-  if (isTestEnvironment()) {
+  if (isInstantMotion()) {
     completePageEnterMotion();
     return;
   }
@@ -473,7 +467,7 @@ function playPageEnterMotion() {
   storyMatchMedia.add(
     '(min-width: 0px)',
     () => {
-      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? isReducedMotion.value;
+      const reduceMotion = isReducedMotion.value;
       if (reduceMotion) {
         gsap.set(
           [
@@ -620,11 +614,11 @@ function startPreloaderExit() {
   }
 
   if (storyBootReady.value) {
-    isMapEntering.value = !isReducedMotion.value && !isTestEnvironment();
+    isMapEntering.value = !isReducedMotion.value && !isInstantMotion();
     prepareMapEntryCamera();
   }
 
-  if (isTestEnvironment()) {
+  if (isInstantMotion()) {
     completePreloaderReveal();
     return;
   }
@@ -649,7 +643,7 @@ function markerDescendantSelector(id: number, descendant: string) {
 function playSelectionFeedback(id: number) {
   selectTl?.kill();
   selectionMotionContext?.revert();
-  if (isReducedMotion.value || isTestEnvironment() || !storyRoot.value) {
+  if (isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
     return;
   }
 
@@ -679,7 +673,7 @@ function playSelectionFeedback(id: number) {
 function playDeleteConfirmOpen() {
   deleteConfirmTl?.kill();
   deleteConfirmMotionContext?.revert();
-  if (!deleteTarget.value || isReducedMotion.value || isTestEnvironment() || !storyRoot.value) {
+  if (!deleteTarget.value || isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
     return;
   }
   const root = storyRoot.value;
@@ -693,7 +687,7 @@ function playDeleteFeedback(id: number) {
   selectTl?.kill();
   deleteMotionContext?.revert();
 
-  if (isReducedMotion.value || isTestEnvironment() || !storyRoot.value) {
+  if (isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
     return Promise.resolve();
   }
 
@@ -727,26 +721,11 @@ function playDeleteFeedback(id: number) {
   });
 }
 
-function setupMotionPreference() {
-  if (typeof window.matchMedia !== 'function') {
-    isReducedMotion.value = false;
-    return;
-  }
-
-  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  updateMotionPreference(motionQuery);
-  motionQuery.addEventListener?.('change', updateMotionPreference);
-}
-
-function updateMotionPreference(event: MediaQueryList | MediaQueryListEvent) {
-  isReducedMotion.value = Boolean(event.matches);
-}
-
 function playMomentFeedback(id: number) {
   clearMotionFeedback();
   motionFeedbackId.value = id;
 
-  if (!isReducedMotion.value && !isTestEnvironment()) {
+  if (!isReducedMotion.value && !isInstantMotion()) {
     nextTick(() => {
       if (!storyRoot.value) {
         return;

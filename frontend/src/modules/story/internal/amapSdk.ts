@@ -138,10 +138,6 @@ export function loadAmapSdk(): Promise<AMapSdk> {
     return sdkLoader;
   }
 
-  if (import.meta.env.MODE === 'test') {
-    return Promise.reject(new Error('测试环境显示地图占位'));
-  }
-
   const key = import.meta.env.VITE_AMAP_KEY?.trim();
   if (!key) {
     return Promise.reject(new Error('未配置 VITE_AMAP_KEY，当前显示地图占位'));

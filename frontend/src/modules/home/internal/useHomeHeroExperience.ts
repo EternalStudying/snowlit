@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../../../motion';
 import {
   computed,
   onBeforeUnmount,
@@ -39,8 +40,7 @@ export function useHomeHeroExperience() {
   const isHeartBeating = ref(false);
   const isSyncing = ref(false);
   const burstParticles = ref<HeroBurstParticle[]>([]);
-  const prefersReducedMotion =
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = prefersReducedMotion();
 
   let autoplayTimer: number | undefined;
   let slideWarmupTimer: number | undefined;
@@ -209,7 +209,7 @@ export function useHomeHeroExperience() {
   }
 
   function startAutoplay() {
-    if (prefersReducedMotion || homeHeroSlides.length < 2) {
+    if (reducedMotion || homeHeroSlides.length < 2) {
       return;
     }
 
@@ -326,7 +326,7 @@ export function useHomeHeroExperience() {
 
     activeStickerSide.value = side;
 
-    if (prefersReducedMotion) {
+    if (reducedMotion) {
       return;
     }
 
@@ -359,7 +359,7 @@ export function useHomeHeroExperience() {
   }
 
   function handleExpansionWheel(event: WheelEvent) {
-    if (prefersReducedMotion) {
+    if (reducedMotion) {
       if (
         getCurrentScrollY() <= HERO_EXPANSION_TOP_THRESHOLD &&
         event.deltaY < 0

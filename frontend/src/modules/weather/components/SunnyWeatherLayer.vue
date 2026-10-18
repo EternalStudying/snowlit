@@ -40,6 +40,7 @@ import {
   watch
 } from 'vue';
 import gsap from 'gsap';
+import { useReducedMotion } from '../../../motion';
 
 interface Props {
   active?: boolean
@@ -54,22 +55,11 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const layerRef = ref<HTMLElement | null>(null);
-const reducedMotionQuery =
-  typeof window === 'undefined'
-    ? undefined
-    : window.matchMedia('(prefers-reduced-motion: reduce)');
-const prefersReducedMotion = ref(
-  reducedMotionQuery?.matches ?? false
-);
+const prefersReducedMotion = useReducedMotion();
 const isStatic = computed(
   () => props.static || prefersReducedMotion.value
 );
 let gsapContext: gsap.Context | undefined;
-
-function updateMotionPreference(event?: MediaQueryListEvent) {
-  prefersReducedMotion.value =
-    event?.matches ?? reducedMotionQuery?.matches ?? false;
-}
 
 const dustParticles = Array.from({ length: 24 }).map((_, index) => {
   return {
@@ -158,19 +148,10 @@ async function syncAnimations() {
 }
 
 onMounted(() => {
-  reducedMotionQuery?.addEventListener(
-    'change',
-    updateMotionPreference
-  );
-  updateMotionPreference();
   void syncAnimations();
 });
 
 onBeforeUnmount(() => {
-  reducedMotionQuery?.removeEventListener(
-    'change',
-    updateMotionPreference
-  );
   stopAnimations();
 });
 

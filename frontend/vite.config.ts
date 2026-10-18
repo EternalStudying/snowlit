@@ -13,7 +13,10 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    globals: true
+    globals: true,
+    setupFiles: ['tests/setup.ts'],
+    // Tests never load the real map SDK; the map shows its placeholder.
+    env: { VITE_AMAP_KEY: '' }
   },
   server: {
     proxy: {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
+import { useReducedMotion } from '../../../motion';
 
 interface DatePointSnapshot {
   y: number;
@@ -46,7 +47,7 @@ const props = withDefaults(
 );
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const reducedMotion = ref(false);
+const reducedMotion = useReducedMotion(() => syncTicker());
 
 const VIEWPORT_GLOW_END_RATIO = 0.52;
 const MAX_RIBBON_RADIUS = 7;
@@ -127,8 +128,6 @@ let lastTime = 0;
 let lastScrollAt = 0;
 let tickerActive = false;
 let resizeObserver: ResizeObserver | null = null;
-let mediaQuery: MediaQueryList | null = null;
-let mediaQueryListener: (() => void) | null = null;
 let measureFrame = 0;
 
 function clamp(value: number, min: number, max: number) {
@@ -647,26 +646,6 @@ function syncTicker() {
   addTicker();
 }
 
-function setupReducedMotion() {
-  if (typeof window.matchMedia !== 'function') {
-    reducedMotion.value = false;
-    return;
-  }
-
-  mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  reducedMotion.value = mediaQuery.matches;
-  mediaQueryListener = () => {
-    reducedMotion.value = Boolean(mediaQuery?.matches);
-    syncTicker();
-  };
-
-  if (typeof mediaQuery.addEventListener === 'function') {
-    mediaQuery.addEventListener('change', mediaQueryListener);
-  } else if (typeof mediaQuery.addListener === 'function') {
-    mediaQuery.addListener(mediaQueryListener);
-  }
-}
-
 function observeTimeline(element: HTMLElement | null) {
   resizeObserver?.disconnect();
   resizeObserver = null;
@@ -696,7 +675,6 @@ watch(
 
 onMounted(() => {
   scrollY = window.scrollY || window.pageYOffset || 0;
-  setupReducedMotion();
   resizeCanvas();
   observeTimeline(props.timelineElement);
   measureTimeline();
@@ -718,14 +696,6 @@ onBeforeUnmount(() => {
 
   window.removeEventListener('resize', handleResize);
   window.removeEventListener('scroll', handleScroll);
-
-  if (mediaQuery && mediaQueryListener) {
-    if (typeof mediaQuery.removeEventListener === 'function') {
-      mediaQuery.removeEventListener('change', mediaQueryListener);
-    } else if (typeof mediaQuery.removeListener === 'function') {
-      mediaQuery.removeListener(mediaQueryListener);
-    }
-  }
 });
 </script>
 

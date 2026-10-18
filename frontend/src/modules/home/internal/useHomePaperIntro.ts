@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../../../motion';
 import { gsap } from 'gsap';
 import {
   nextTick,
@@ -571,10 +572,7 @@ export function useHomePaperIntro(
     }
 
     playedModules.add(key);
-    if (
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
-      false
-    ) {
+    if (prefersReducedMotion()) {
       return;
     }
     players[key](element);

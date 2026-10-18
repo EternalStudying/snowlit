@@ -7,6 +7,7 @@ import type {
   WishSummaryDto
 } from '../model';
 import { clearAuthToken, setAuthToken } from '../../../auth';
+import { setInstantMotion } from '../../../motion';
 
 const pendingWish: WishSummaryDto = {
   id: 1,
@@ -34,7 +35,7 @@ const pendingWishDetail: WishDetailDto = {
 describe('Wish modal motion concurrency', () => {
   afterEach(() => {
     gsap.globalTimeline.timeScale(1);
-    vi.unstubAllEnvs();
+    setInstantMotion(true);
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     clearAuthToken();
@@ -329,7 +330,7 @@ function deferred<T>() {
 }
 
 function installProductionMotionEnvironment(): void {
-  vi.stubEnv('MODE', 'production');
+  setInstantMotion(false);
   vi.stubGlobal('matchMedia', () => ({
     matches: false,
     addEventListener: vi.fn(),

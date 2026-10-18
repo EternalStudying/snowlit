@@ -1,4 +1,5 @@
-import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue';
+import { computed, ref, type Ref } from 'vue';
+import { useReducedMotion } from '../../../motion';
 import type { MessageEntry } from '../model';
 
 export type BubbleConfig = {
@@ -21,18 +22,11 @@ function randomRange(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-function getMotionQuery() {
-  if (typeof window.matchMedia !== 'function') {
-    return null;
-  }
-  return window.matchMedia('(prefers-reduced-motion: reduce)');
-}
-
 export function useMessageBubbleLayout(messages: Ref<MessageEntry[]>) {
   const isGlobalPaused = ref(false);
   const hoveredId = ref<number | null>(null);
   const burstingId = ref<number | null>(null);
-  const prefersReducedMotion = ref(false);
+  const prefersReducedMotion = useReducedMotion();
   const layoutCache = new Map<number, CachedBubbleLayout>();
 
   const togglePause = () => {
@@ -42,23 +36,6 @@ export function useMessageBubbleLayout(messages: Ref<MessageEntry[]>) {
   const setHovered = (id: number | null) => {
     hoveredId.value = id;
   };
-
-  const checkMotionPreference = () => {
-    prefersReducedMotion.value = getMotionQuery()?.matches ?? false;
-  };
-
-  onMounted(() => {
-    const mediaQuery = getMotionQuery();
-    checkMotionPreference();
-    mediaQuery?.addEventListener?.('change', checkMotionPreference);
-    mediaQuery?.addListener?.(checkMotionPreference);
-  });
-
-  onUnmounted(() => {
-    const mediaQuery = getMotionQuery();
-    mediaQuery?.removeEventListener?.('change', checkMotionPreference);
-    mediaQuery?.removeListener?.(checkMotionPreference);
-  });
 
   const floatingMessages = computed<FloatingMessage[]>(() => {
     const displayMessages = messages.value.slice(0, 20);

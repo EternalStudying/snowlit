@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../../../motion';
 import {
   computed,
   nextTick,
@@ -55,8 +56,7 @@ export function useJournalNavFusion({
   const navSwitchGlowX = ref(0);
   const isNavSwitching = ref(false);
   const isNavActiveTrackSettling = ref(false);
-  const prefersReducedMotion =
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = prefersReducedMotion();
 
   let navFusionFrame: number | undefined;
   let navLabelTimer: number | undefined;
@@ -168,9 +168,9 @@ export function useJournalNavFusion({
     }
 
     scrollToWithSmoothScroll(Math.ceil(target), 0, {
-      immediate: prefersReducedMotion,
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-      duration: prefersReducedMotion ? 0 : 0.85
+      immediate: reducedMotion,
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      duration: reducedMotion ? 0 : 0.85
     });
     requestNavFusionUpdate();
     requestMotionRevealCheck();
@@ -346,7 +346,7 @@ export function useJournalNavFusion({
     clearNavFusionPhaseTimers();
     setNavFusionLayout('docked');
 
-    if (prefersReducedMotion) {
+    if (reducedMotion) {
       navLabelState.value = 'hidden';
       setNavDensityState('compact');
       return;
@@ -400,7 +400,7 @@ export function useJournalNavFusion({
       0,
       anchorRect.top - navFusionTop.value
     );
-    if (prefersReducedMotion || restoreY <= 1) {
+    if (reducedMotion || restoreY <= 1) {
       setNavFusionLayout('idle');
       return;
     }
@@ -446,7 +446,7 @@ export function useJournalNavFusion({
   }
 
   function beginNavUndock() {
-    if (prefersReducedMotion) {
+    if (reducedMotion) {
       resetNavFusionToIdle();
       return;
     }
@@ -522,7 +522,7 @@ export function useJournalNavFusion({
   }
 
   function triggerNavSwitchGlow() {
-    if (prefersReducedMotion) {
+    if (reducedMotion) {
       return;
     }
 

@@ -2,6 +2,7 @@
 import { formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
+import { isInstantMotion, prefersReducedMotion, shouldSkipMotion } from '../../../motion';
 import { CalendarDays, ChevronLeft, ChevronRight, Edit3, MapPin, Tag, Trash2, X } from 'lucide-vue-next';
 import { STORY_CATEGORY_LABELS, type StoryMoment } from '../model';
 
@@ -66,14 +67,6 @@ onBeforeUnmount(() => {
   detailContext?.revert();
 });
 
-function prefersReducedMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-}
-
-function isTestEnvironment() {
-  return import.meta.env.MODE === 'test';
-}
-
 function playDetailOpen() {
   if (!detailRoot.value) {
     return;
@@ -87,7 +80,7 @@ function playDetailOpen() {
     const softTargets = Array.from(
       root.querySelectorAll<HTMLElement>('.moment-detail__paper-content > *, .moment-detail__scroll > *, .moment-detail__actions button')
     );
-    if (isTestEnvironment() || prefersReducedMotion()) {
+    if (shouldSkipMotion()) {
       gsap.set([root, ...softTargets], { autoAlpha: 1, scale: 1, y: 0, rotation: 0, clearProps: 'transform,visibility' });
       return;
     }
@@ -115,7 +108,7 @@ function playDetailClose() {
   if (!renderedMoment.value) {
     return;
   }
-  if (isTestEnvironment() || !detailRoot.value) {
+  if (isInstantMotion() || !detailRoot.value) {
     renderedMoment.value = null;
     detailContext?.revert();
     return;

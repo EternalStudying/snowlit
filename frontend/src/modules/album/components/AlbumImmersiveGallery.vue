@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useReducedMotion } from '../../../motion';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -52,12 +53,11 @@ const rootRef = ref<HTMLElement | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
 const scrollTrackRef = ref<HTMLElement | null>(null);
 const stageRef = ref<HTMLElement | null>(null);
-const isReducedMotion = ref(false);
+const isReducedMotion = useReducedMotion(() => applyMotionPreference());
 const galleryReady = ref(false);
 let context: gsap.Context | undefined;
 let scrollTrigger: ScrollTrigger | undefined;
 let galleryChromeIntroTimeline: gsap.core.Timeline | undefined;
-let reduceMotionQuery: MediaQueryList | undefined;
 let refreshTimer: number | undefined;
 
 const galleryPhotos = computed(() => (props.photos.length > 0 ? props.photos : props.collection.previewPhotos));
@@ -66,11 +66,8 @@ const scrollTrackStyle = computed(() => ({
   minHeight: `${scrollDistance.value}px`
 }));
 
-function syncReducedMotion() {
-  const nextValue = reduceMotionQuery?.matches ?? false;
-  isReducedMotion.value = nextValue;
-
-  if (nextValue) {
+function applyMotionPreference() {
+  if (isReducedMotion.value) {
     cleanupGallery();
     galleryReady.value = true;
     return;
@@ -315,9 +312,7 @@ function closeGallery() {
 }
 
 onMounted(async () => {
-  reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  syncReducedMotion();
-  reduceMotionQuery.addEventListener('change', syncReducedMotion);
+  applyMotionPreference();
   window.addEventListener('pointermove', handlePointerMove, { passive: true });
   window.addEventListener('resize', handleResize, { passive: true });
   await nextTick();
@@ -326,7 +321,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cleanupGallery();
-  reduceMotionQuery?.removeEventListener('change', syncReducedMotion);
   window.removeEventListener('pointermove', handlePointerMove);
   window.removeEventListener('resize', handleResize);
 });

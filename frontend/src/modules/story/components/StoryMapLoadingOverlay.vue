@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
+import { isInstantMotion } from '../../../motion';
 import loaderTitleArt from '../assets/story-loader-title.webp';
 
 const props = defineProps<{
@@ -56,10 +57,6 @@ watch(
   { flush: 'post' }
 );
 
-function isTestEnvironment() {
-  return import.meta.env.MODE === 'test';
-}
-
 function progressScale() {
   return safeProgress.value / 100;
 }
@@ -76,7 +73,7 @@ function playIntro() {
   introTl?.kill();
   ctx?.revert();
 
-  if (props.reducedMotion || isTestEnvironment()) {
+  if (props.reducedMotion || isInstantMotion()) {
     gsap.set(root.value, { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 0%)' });
     gsap.set(root.value.querySelector<HTMLElement>('.story-map-loader__content'), { autoAlpha: 1, y: 0 });
     gsap.set(routeFill.value, { scaleX: progressScale(), transformOrigin: 'left center' });
@@ -114,7 +111,7 @@ function animateProgress() {
     return;
   }
   progressTween?.kill();
-  if (props.reducedMotion || isTestEnvironment()) {
+  if (props.reducedMotion || isInstantMotion()) {
     gsap.set(routeFill.value, { scaleX: progressScale(), transformOrigin: 'left center' });
     return;
   }
@@ -139,7 +136,7 @@ function playLeave() {
   progressTween?.kill();
   leaveTl?.kill();
 
-  if (props.reducedMotion || isTestEnvironment()) {
+  if (props.reducedMotion || isInstantMotion()) {
     gsap.to(root.value, {
       autoAlpha: 0,
       duration: props.reducedMotion ? 0.1 : 0,

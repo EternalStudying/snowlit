@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useReducedMotion } from '../../motion';
 import './about.css';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -78,7 +79,7 @@ const pageRef = ref<HTMLElement | null>(null);
 const activeIndex = ref(0);
 const scrollProgress = ref(0);
 const toastMessage = ref('');
-const reducedMotion = ref(false);
+const reducedMotion = useReducedMotion();
 let toastTimer: number | undefined;
 
 const activeStation = computed(() => stations[activeIndex.value] || stations[0]);
@@ -128,8 +129,6 @@ function handlePendingStation(station: AboutStation) {
 }
 
 onMounted(() => {
-  const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  reducedMotion.value = Boolean(motionQuery?.matches);
   updateFromScroll();
   window.addEventListener('scroll', updateFromScroll, { passive: true });
   window.addEventListener('resize', updateFromScroll);

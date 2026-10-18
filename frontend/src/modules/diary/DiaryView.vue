@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { prefersReducedMotion } from '../../motion';
 import './diary.css';
 import {
   computed,
@@ -157,13 +158,6 @@ function setMonthSectionRef(
   monthSectionRefs.delete(key);
 }
 
-function hasReducedDiaryMotion() {
-  return (
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)')
-      .matches
-  );
-}
 
 function markDiaryEntryCardVisible(card: Element) {
   if (card instanceof HTMLElement) {
@@ -185,7 +179,7 @@ function observeDiaryEntryCards() {
   }
 
   if (
-    hasReducedDiaryMotion() ||
+    prefersReducedMotion() ||
     typeof IntersectionObserver === 'undefined'
   ) {
     cards.forEach(markDiaryEntryCardVisible);

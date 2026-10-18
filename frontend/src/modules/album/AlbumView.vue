@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { prefersReducedMotion } from '../../motion';
 import { IMAGE_ACCEPT } from '../../imageFiles';
 import './album.css';
 import {
@@ -52,9 +53,7 @@ import type {
 } from './model';
 
 const ALBUM_UPLOAD_DETAIL_LIMIT = 6;
-const reducedMotion =
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reducedMotion = prefersReducedMotion();
 
 const albumLifecycle = useAlbumLifecycle();
 const {

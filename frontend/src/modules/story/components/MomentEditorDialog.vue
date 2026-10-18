@@ -3,6 +3,7 @@ import { errorMessage } from '../../../display';
 import { IMAGE_ACCEPT, pickImages } from '../../../imageFiles';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { gsap } from 'gsap';
+import { isInstantMotion, prefersReducedMotion, shouldSkipMotion } from '../../../motion';
 import { CalendarDays, Coffee, Gift, Heart, ImagePlus, Loader2, Luggage, MapPin, Pencil, Star, Trash2 } from 'lucide-vue-next';
 import { NAlert, NButton, NDatePicker, NInput, NUpload, type UploadFileInfo } from 'naive-ui';
 import {
@@ -347,14 +348,6 @@ function removeImage(image: string) {
   form.images = form.images.filter((item) => item !== image);
 }
 
-function prefersReducedMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-}
-
-function isTestEnvironment() {
-  return import.meta.env.MODE === 'test';
-}
-
 function playEditorOpen() {
   if (!editorRoot.value) {
     return;
@@ -368,7 +361,7 @@ function playEditorOpen() {
     const fields = Array.from(root.querySelectorAll<HTMLElement>('.moment-editor__motion-field'));
     const photos = Array.from(root.querySelectorAll<HTMLElement>('.moment-editor__photo-slot'));
 
-    if (isTestEnvironment() || prefersReducedMotion()) {
+    if (shouldSkipMotion()) {
       gsap.set([root, ...fields, ...photos], { autoAlpha: 1, scale: 1, y: 0, rotation: 0, clearProps: 'transform,visibility' });
       return;
     }
@@ -419,7 +412,7 @@ function playEditorClose() {
   if (!isEditorRendered.value) {
     return;
   }
-  if (isTestEnvironment() || !editorRoot.value) {
+  if (isInstantMotion() || !editorRoot.value) {
     isEditorRendered.value = false;
     editorContext?.revert();
     return;

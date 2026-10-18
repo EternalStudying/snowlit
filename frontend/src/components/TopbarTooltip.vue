@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useReducedMotion } from '../motion';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   autoUpdate,
@@ -39,12 +40,11 @@ const props = withDefaults(
 const triggerEl = ref<HTMLElement | null>(null);
 const floatingEl = ref<HTMLElement | null>(null);
 const isDesktopTooltip = ref(false);
-const prefersReducedMotion = ref(false);
+const prefersReducedMotion = useReducedMotion();
 const isRendered = ref(false);
 const isOpen = ref(false);
 const tooltipId = `topbar-tooltip-${Math.random().toString(36).slice(2)}`;
 let hoverQuery: MediaQueryList | undefined;
-let reducedMotionQuery: MediaQueryList | undefined;
 let openTimer: number | undefined;
 let closeTimer: number | undefined;
 let removeTimer: number | undefined;
@@ -143,7 +143,6 @@ function hideImmediately() {
 
 function syncMediaState() {
   isDesktopTooltip.value = Boolean(hoverQuery?.matches);
-  prefersReducedMotion.value = Boolean(reducedMotionQuery?.matches);
 }
 
 function handleExternalOpen(event: Event) {
@@ -188,17 +187,14 @@ onMounted(() => {
   }
 
   hoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
-  reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   syncMediaState();
   addQueryListener(hoverQuery, syncMediaState);
-  addQueryListener(reducedMotionQuery, syncMediaState);
   window.addEventListener(TOPBAR_TOOLTIP_OPEN_EVENT, handleExternalOpen);
 });
 
 onBeforeUnmount(() => {
   hideImmediately();
   removeQueryListener(hoverQuery, syncMediaState);
-  removeQueryListener(reducedMotionQuery, syncMediaState);
   window.removeEventListener(TOPBAR_TOOLTIP_OPEN_EVENT, handleExternalOpen);
 });
 </script>
