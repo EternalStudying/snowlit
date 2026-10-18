@@ -98,6 +98,9 @@ describe('Wish modal motion concurrency', () => {
       )
     );
 
+    // The stamp celebrates a confirmed completion, so it waits for the server.
+    expect(document.querySelector('.wish-completion-wave')).toBeNull();
+
     gsap.globalTimeline.timeScale(0.1);
     completionResponse.resolve(
       jsonResponse({
@@ -107,6 +110,7 @@ describe('Wish modal motion concurrency', () => {
       })
     );
     await wait(20);
+    expect(document.querySelector('.wish-completion-wave')).not.toBeNull();
     void wrapper.get('.wish-detail-dialog__close').trigger('click');
     gsap.globalTimeline.timeScale(20);
     await waitFor(
