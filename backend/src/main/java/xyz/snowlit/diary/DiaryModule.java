@@ -30,13 +30,10 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class DiaryModule {
@@ -48,9 +45,6 @@ public class DiaryModule {
     );
     private static final ImagePolicy IMAGE = ImagePolicy.standard("DIARY", "diary/tmp", false, "图片上传失败，请稍后重试");
     private static final int MAX_IMAGES_PER_DIARY = 20;
-    private static final Pattern H1_PATTERN = Pattern.compile("(?m)^#\\s+(.+?)\\s*$");
-    private static final Pattern MARKDOWN_IMAGE_PATTERN = Pattern.compile("!\\[[^\\]]*]\\(([^)\\s]+)(?:\\s+\"[^\"]*\")?\\)");
-    private static final Pattern HTML_IMAGE_PATTERN = Pattern.compile("<img[^>]+src=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
     private static final Map<String, String> ROLE_AVATARS = Map.of(
             "boyfriend", "/assets/home-avatars/partner-a.webp",
             "girlfriend", "/assets/home-avatars/partner-b.webp"
@@ -124,17 +118,17 @@ public class DiaryModule {
             throw ApplicationFailure.conflict("DIARY_DAY_ALREADY_EXISTS", "这一天已经写过日记啦");
         }
 
-        String content = request.contentMarkdown().trim();
-        List<String> imageUrls = extractImageUrls(content);
+        DiaryMarkdown content = DiaryMarkdown.read(request.contentMarkdown());
+        List<String> imageUrls = content.imageUrls();
         ImageReferencePlan imagePlan = planImageReferences(null, imageUrls, actor.userId());
         LocalDateTime now = now();
         DiaryEntry diary = new DiaryEntry();
         diary.setRole(user.role());
         diary.setAuthorUserId(actor.userId());
         diary.setAuthorName(actor.displayName());
-        diary.setContentMarkdown(content);
-        diary.setTitle(extractTitle(content));
-        diary.setSummary(extractSummary(content));
+        diary.setContentMarkdown(content.markdown());
+        diary.setTitle(content.title());
+        diary.setSummary(content.summary());
         diary.setVisibility(request.visibility().trim());
         diary.setMoodKey(request.moodKey().trim());
         diary.setEntryDate(request.date());
@@ -156,14 +150,14 @@ public class DiaryModule {
         validateUpdateRequest(request);
 
         List<DiaryImage> previousImages = diaryMapper.findImagesReferencedByDiary(id);
-        String content = request.contentMarkdown().trim();
-        List<String> imageUrls = extractImageUrls(content);
+        DiaryMarkdown content = DiaryMarkdown.read(request.contentMarkdown());
+        List<String> imageUrls = content.imageUrls();
         ImageReferencePlan imagePlan = planImageReferences(id, imageUrls, actor.userId());
         LocalDateTime now = now();
 
-        diary.setContentMarkdown(content);
-        diary.setTitle(extractTitle(content));
-        diary.setSummary(extractSummary(content));
+        diary.setContentMarkdown(content.markdown());
+        diary.setTitle(content.title());
+        diary.setSummary(content.summary());
         diary.setMoodKey(request.moodKey().trim());
         diary.setVisibility(request.visibility().trim());
         diary.setUpdatedAt(now);
@@ -428,47 +422,6 @@ public class DiaryModule {
         }
     }
 
-
-    private String extractTitle(String content) {
-        Matcher matcher = H1_PATTERN.matcher(content);
-        if (matcher.find()) {
-            String title = cleanMarkdownText(matcher.group(1));
-            if (!title.isEmpty()) {
-                return truncate(title, 120);
-            }
-        }
-        return "未命名日记";
-    }
-
-    private String extractSummary(String content) {
-        String withoutImages = MARKDOWN_IMAGE_PATTERN.matcher(content).replaceAll("");
-        withoutImages = withoutImages.replaceAll("(?m)^#\\s+.+$", "");
-        String text = cleanMarkdownText(withoutImages);
-        return truncate(text, 120);
-    }
-
-    private String cleanMarkdownText(String source) {
-        return Text.trim(source)
-                .replaceAll("<[^>]+>", "")
-                .replaceAll("\\[[^\\]]+\\]\\([^)]+\\)", "")
-                .replaceAll("[*_`~=>#-]", "")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
-
-    private List<String> extractImageUrls(String content) {
-        Set<String> urls = new LinkedHashSet<>();
-        Matcher markdown = MARKDOWN_IMAGE_PATTERN.matcher(content);
-        while (markdown.find()) {
-            urls.add(markdown.group(1));
-        }
-        Matcher html = HTML_IMAGE_PATTERN.matcher(content);
-        while (html.find()) {
-            urls.add(html.group(1));
-        }
-        return List.copyOf(urls);
-    }
-
     private DiarySummaryVo toSummary(DiaryEntry diary, List<String> imageUrls) {
         return new DiarySummaryVo(
                 diary.getId(),
@@ -520,11 +473,6 @@ public class DiaryModule {
 
     private String authorAvatar(String role) {
         return ROLE_AVATARS.getOrDefault(role, "");
-    }
-
-    private String truncate(String value, int max) {
-        String text = Text.trim(value);
-        return text.length() <= max ? text : text.substring(0, max);
     }
 
     private LocalDateTime now() {
