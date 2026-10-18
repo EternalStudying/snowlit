@@ -3,7 +3,6 @@ package xyz.snowlit.wishes;
 import xyz.snowlit.paging.PageWindow;
 import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
-import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ImagePolicy;
@@ -62,7 +61,7 @@ public final class WishModule {
                 window.page(),
                 window.size(),
                 window.hasMore(total),
-                SiteManagerPolicy.canManage(actor.userId())
+                actor.manager()
         );
     }
 
@@ -71,7 +70,7 @@ public final class WishModule {
                 wishMapper.countWishes("want_go", false),
                 wishMapper.countWishes("want_do", false),
                 wishMapper.countWishes(null, true),
-                SiteManagerPolicy.canManage(actor.userId())
+                actor.manager()
         );
     }
 
@@ -156,9 +155,7 @@ public final class WishModule {
     }
 
     private void requireManager(AuthenticatedActor actor) {
-        if (!SiteManagerPolicy.canManage(actor.userId())) {
-            throw ApplicationFailure.forbidden("WISH_FORBIDDEN", "只有站点主人可以新增清单");
-        }
+        actor.requireManager("WISH_FORBIDDEN", "只有站点主人可以新增清单");
     }
 
     private Wish requireWish(Long id) {

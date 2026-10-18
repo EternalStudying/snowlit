@@ -21,9 +21,7 @@ class AuthSessionsTests {
 
         assertThat(token).matches("[A-Za-z0-9_-]{43}").isNotEqualTo(another);
         assertThat(store.ttlFor(token)).isEqualTo(Duration.ofHours(1));
-        assertThat(sessions.resolve(token)).contains(new AuthenticatedActor(
-                1L, "member_a", "伴侣 A", "/avatar.webp", "bio", "happy", "girlfriend"
-        ));
+        assertThat(sessions.resolve(token)).contains(new AuthenticatedActor(1L, "member_a", "伴侣 A", "/avatar.webp", "bio", "happy", "girlfriend", true));
     }
 
     @Test

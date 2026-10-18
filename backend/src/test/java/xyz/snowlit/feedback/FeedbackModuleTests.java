@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 class FeedbackModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "member_a", "伴侣 A", null, null, null, null);
+            new AuthenticatedActor(1L, "member_a", "伴侣 A", null, null, null, null, true);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-17T04:30:00Z"), ZoneId.of("Asia/Singapore"));
     private static final String IMAGE_URL = "https://cdn.example.com/feedback/2026/05/one.webp";

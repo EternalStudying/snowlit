@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 class AuthModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo", "Demo User", null, "About me", "Happy", null);
+            new AuthenticatedActor(1L, "demo", "Demo User", null, "About me", "Happy", null, true);
 
     private final UserMapper userMapper = mock(UserMapper.class);
     private final InMemoryAuthSessionStore sessions = new InMemoryAuthSessionStore();

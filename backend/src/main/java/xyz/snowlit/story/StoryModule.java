@@ -2,7 +2,6 @@ package xyz.snowlit.story;
 
 import xyz.snowlit.text.Text;
 import xyz.snowlit.auth.AuthenticatedActor;
-import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ImageIntake;
 import xyz.snowlit.storage.ImagePolicy;
@@ -152,13 +151,11 @@ public final class StoryModule {
     }
 
     private void requireManager(AuthenticatedActor actor) {
-        if (!SiteManagerPolicy.canManage(actor.userId())) {
-            throw ApplicationFailure.forbidden("STORY_FORBIDDEN", "只有站点主人可以管理点滴");
-        }
+        actor.requireManager("STORY_FORBIDDEN", "只有站点主人可以管理点滴");
     }
 
     private boolean canManage(AuthenticatedActor actor) {
-        return actor != null && SiteManagerPolicy.canManage(actor.userId());
+        return actor != null && actor.manager();
     }
 
     private StoryMomentVo toVo(StoryMoment moment) {

@@ -5,7 +5,6 @@ import xyz.snowlit.album.AlbumDtos.AlbumCreateDto;
 import xyz.snowlit.album.AlbumDtos.AlbumPhotoMetadataDto;
 import xyz.snowlit.album.AlbumDtos.AlbumUnlockDto;
 import xyz.snowlit.auth.AuthenticatedActor;
-import xyz.snowlit.auth.SiteManagerPolicy;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.storage.ImageFormat;
 import xyz.snowlit.storage.ImageIntake;
@@ -97,7 +96,7 @@ public class AlbumModule {
         List<AlbumVo> items = albums.stream()
                 .map(album -> toAlbumVo(album, isPrivate(album), previewPhotos(album, resolvedPreviewLimit), likedAlbumIds.contains(album.getId())))
                 .toList();
-        return new AlbumPageVo(items, total, window.page(), window.size(), window.hasMore(total), SiteManagerPolicy.canManage(actor.userId()));
+        return new AlbumPageVo(items, total, window.page(), window.size(), window.hasMore(total), actor.manager());
     }
 
     public AlbumDetailVo getAlbumDetail(AuthenticatedActor actor, Long albumId, String privateAccessToken) {
@@ -339,9 +338,7 @@ public class AlbumModule {
     }
 
     private void requireManager(AuthenticatedActor actor) {
-        if (!SiteManagerPolicy.canManage(actor.userId())) {
-            throw ApplicationFailure.forbidden("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
-        }
+        actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
     }
 
     private Album requireOwnedDraft(Long albumId, Long userId) {

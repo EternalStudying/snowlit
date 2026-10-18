@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 class DiaryModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend");
+            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend", true);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-17T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 
@@ -54,7 +54,7 @@ class DiaryModuleTests {
 
     @Test
     void accountWithoutCoupleRoleCannotUseDiaries() {
-        AuthenticatedActor withoutRole = new AuthenticatedActor(3L, "guest", "游客", null, null, null, null);
+        AuthenticatedActor withoutRole = new AuthenticatedActor(3L, "guest", "游客", null, null, null, null, false);
 
         assertThatThrownBy(() -> diaryService.months(withoutRole, null))
                 .isInstanceOfSatisfying(ApplicationFailure.class,

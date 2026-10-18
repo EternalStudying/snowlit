@@ -33,9 +33,9 @@ import static org.mockito.Mockito.when;
 class StoryModuleTests {
 
     private static final AuthenticatedActor MANAGER =
-            new AuthenticatedActor(1L, "owner", "Owner", null, null, null, null);
+            new AuthenticatedActor(1L, "owner", "Owner", null, null, null, null, true);
     private static final AuthenticatedActor OTHER =
-            new AuthenticatedActor(3L, "guest", "Guest", null, null, null, null);
+            new AuthenticatedActor(3L, "guest", "Guest", null, null, null, null, false);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-21T10:00:00Z"), ZoneId.of("Asia/Singapore"));
 

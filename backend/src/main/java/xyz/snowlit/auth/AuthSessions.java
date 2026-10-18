@@ -61,7 +61,8 @@ public class AuthSessions {
                 user.getAvatarUrl(),
                 user.getBio(),
                 user.getMood(),
-                user.validCoupleRole()
+                user.validCoupleRole(),
+                user.isManager()
         );
     }
 }

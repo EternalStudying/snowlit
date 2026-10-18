@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 public class User {
 
     private static final Set<String> COUPLE_ROLES = Set.of("boyfriend", "girlfriend");
+    // Managers are fixed for the single couple this deployment serves.
+    private static final Set<Long> MANAGER_IDS = Set.of(1L, 2L);
 
     private Long id;
     private String username;
@@ -110,6 +112,10 @@ public class User {
      */
     public String validCoupleRole() {
         return coupleRole != null && COUPLE_ROLES.contains(coupleRole) ? coupleRole : null;
+    }
+
+    public boolean isManager() {
+        return MANAGER_IDS.contains(id);
     }
 
     public String getCoupleRole() {

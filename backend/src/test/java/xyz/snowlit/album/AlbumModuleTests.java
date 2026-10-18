@@ -46,9 +46,9 @@ import static org.mockito.Mockito.doAnswer;
 class AlbumModuleTests {
 
     private static final AuthenticatedActor MANAGER =
-            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, null);
+            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, null, true);
     private static final AuthenticatedActor GUEST =
-            new AuthenticatedActor(3L, "guest", "游客", null, null, null, null);
+            new AuthenticatedActor(3L, "guest", "游客", null, null, null, null, false);
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-05-16T12:00:00Z"), ZoneId.of("Asia/Singapore"));
 

@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 class HomeModuleTests {
 
     private static final AuthenticatedActor ACTOR =
-            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend");
+            new AuthenticatedActor(1L, "demo_a", "伴侣 B", null, null, null, "girlfriend", true);
     private final HomeMapper homeMapper = mock(HomeMapper.class);
     private HomeModule home;
 
