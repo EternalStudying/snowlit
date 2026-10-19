@@ -1,5 +1,6 @@
 const { ROUTES, routePath, withQuery } = require('../../constants/routes');
 const { getMoments } = require('../../services/story');
+const { beginRequest } = require('../../utils/request-guard');
 const { showInfo } = require('../../utils/notify');
 const {
   buildStoryQuery,
@@ -564,6 +565,7 @@ Page({
   loadMoments(options) {
     const shouldRefreshYears = (!options || options.refreshYears !== false) && this.data.activeYear === 'all';
     const previousYearValues = this.getYearValues();
+    const isCurrent = beginRequest(this, 'moments');
 
     this.setData({
       loading: true,
@@ -572,6 +574,9 @@ Page({
 
     return getMoments(buildStoryQuery(this.data.activeFilter, this.data.activeYear))
       .then((response) => {
+        if (!isCurrent()) {
+          return;
+        }
         const page = mapStoryPage(response, this.data.selectedMomentId, this.data.activeYear);
         this.setData({
           ...page,
@@ -582,6 +587,9 @@ Page({
         });
       })
       .catch((error) => {
+        if (!isCurrent()) {
+          return;
+        }
         this.setData({
           canManage: false,
           markers: [],
@@ -596,7 +604,9 @@ Page({
         });
       })
       .then(() => {
-        this.setData({ loading: false });
+        if (isCurrent()) {
+          this.setData({ loading: false });
+        }
       });
   }
 });

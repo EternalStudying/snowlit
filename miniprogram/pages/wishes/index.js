@@ -7,6 +7,7 @@ const {
 } = require('../../services/wish');
 const { getToken, isLoggedIn } = require('../../utils/auth');
 const { showError, showSuccess } = require('../../utils/notify');
+const { beginRequest } = require('../../utils/request-guard');
 const { mapWishPage } = require('./wish-presenter');
 
 const PAGE_SIZE = 10;
@@ -131,12 +132,12 @@ Page({
   },
 
   loadWishSection(sectionKey, reset) {
-    const token = getToken();
     const config = SECTION_CONFIG[sectionKey];
     if (!config || this.data.pageState[sectionKey].loading) {
       return Promise.resolve();
     }
 
+    const isCurrent = beginRequest(this, sectionKey);
     const nextPage = reset ? 1 : this.data.pageState[sectionKey].page + 1;
     this.setData({
       [`pageState.${sectionKey}.loading`]: true,
@@ -149,7 +150,7 @@ Page({
       size: PAGE_SIZE
     })
       .then((response) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         const mapped = mapWishPage(response, config.type);
@@ -166,7 +167,7 @@ Page({
         });
       })
       .catch((error) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({

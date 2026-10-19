@@ -9,6 +9,7 @@ const { getToken, isLoggedIn, redirectToLogin } = require('../../utils/auth');
 const { showConfirm } = require('../../utils/dialog');
 const { showInfo } = require('../../utils/notify');
 const { authorizePrivacy } = require('../../utils/privacy');
+const { beginRequest } = require('../../utils/request-guard');
 const { setActiveTabBar } = require('../../utils/tabbar');
 const {
   buildHomeLocationPayload,
@@ -131,6 +132,7 @@ Page({
 
   loadHomeData() {
     const token = getToken();
+    const isCurrent = beginRequest(this, 'home');
     const weatherRevision = this.weatherUpdateRevision || 0;
     if (!isLoggedIn()) {
       this.setData(mapHomeData());
@@ -139,7 +141,7 @@ Page({
 
     return getHomeData()
       .then((response) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         const home = mapHomeData(response);
@@ -154,6 +156,7 @@ Page({
   },
 
   loadStoryMoments() {
+    const isCurrent = beginRequest(this, 'storyMoments');
     this.setData({
       momentsLoading: true,
       momentsError: ''
@@ -161,12 +164,18 @@ Page({
 
     return getMoments()
       .then((response) => {
+        if (!isCurrent()) {
+          return;
+        }
         this.setData({
           moments: mapStoryMoments(response),
           momentsLoading: false
         });
       })
       .catch((error) => {
+        if (!isCurrent()) {
+          return;
+        }
         this.setData({
           momentsLoading: false,
           momentsError: error && error.message ? error.message : '点滴加载失败'
@@ -175,7 +184,7 @@ Page({
   },
 
   loadAlbums() {
-    const token = getToken();
+    const isCurrent = beginRequest(this, 'albums');
     if (!isLoggedIn()) {
       this.setData({
         albums: [],
@@ -192,7 +201,7 @@ Page({
 
     return getAlbums({ page: 1, size: 2, previewLimit: 1 })
       .then((response) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         const albums = mapAlbums(response);
@@ -203,7 +212,7 @@ Page({
         });
       })
       .catch((error) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({
@@ -215,7 +224,7 @@ Page({
   },
 
   loadUpdateNotice() {
-    const token = getToken();
+    const isCurrent = beginRequest(this, 'updateNotice');
     if (!isLoggedIn()) {
       this.setData({ updateNotice: null });
       return Promise.resolve();
@@ -223,13 +232,13 @@ Page({
 
     return getUpdateNotice()
       .then((response) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({ updateNotice: mapUpdateNotice(response) });
       })
       .catch(() => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({ updateNotice: null });
@@ -237,7 +246,7 @@ Page({
   },
 
   loadWishStats() {
-    const token = getToken();
+    const isCurrent = beginRequest(this, 'wishStats');
     if (!isLoggedIn()) {
       this.setData({
         wishes: [],
@@ -254,7 +263,7 @@ Page({
 
     return getWishSummary()
       .then((response) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({
@@ -264,7 +273,7 @@ Page({
         });
       })
       .catch((error) => {
-        if (getToken() !== token) {
+        if (!isCurrent()) {
           return;
         }
         this.setData({
