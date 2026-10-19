@@ -1,3 +1,4 @@
+import { prefersReducedMotion, useReducedMotion } from '../motion';
 import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
@@ -36,10 +37,18 @@ const NAIVE_MODAL_CONTENT_PREVENT_SELECTOR = '[data-smooth-scroll-prevent], [rol
 
 let smoothScrollInstance: Lenis | null = null;
 let smoothScrollTicker: ((time: number) => void) | null = null;
-let motionQuery: MediaQueryList | null = null;
 let refreshFrame: number | null = null;
 
 export function useSmoothScroll(routePath?: SmoothScrollRouteGetter) {
+  useReducedMotion((reduced) => {
+    if (reduced) {
+      destroySmoothScrollInstance();
+      return;
+    }
+    startSmoothScroll();
+    scheduleSmoothScrollRefresh();
+  });
+
   onMounted(() => {
     startSmoothScroll();
     scheduleSmoothScrollRefresh();
@@ -99,8 +108,7 @@ function startSmoothScroll() {
     return null;
   }
 
-  ensureMotionListener();
-  if (motionQuery?.matches) {
+  if (prefersReducedMotion()) {
     destroySmoothScrollInstance();
     return null;
   }
@@ -132,8 +140,6 @@ function destroySmoothScroll() {
     window.cancelAnimationFrame(refreshFrame);
     refreshFrame = null;
   }
-  motionQuery?.removeEventListener?.('change', handleMotionPreferenceChange);
-  motionQuery = null;
 }
 
 function destroySmoothScrollInstance() {
@@ -143,25 +149,6 @@ function destroySmoothScrollInstance() {
   }
   smoothScrollInstance?.destroy();
   smoothScrollInstance = null;
-}
-
-function ensureMotionListener() {
-  if (motionQuery || typeof window.matchMedia !== 'function') {
-    return;
-  }
-
-  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  motionQuery.addEventListener?.('change', handleMotionPreferenceChange);
-}
-
-function handleMotionPreferenceChange(event: MediaQueryListEvent) {
-  if (event.matches) {
-    destroySmoothScrollInstance();
-    return;
-  }
-
-  startSmoothScroll();
-  scheduleSmoothScrollRefresh();
 }
 
 function scheduleSmoothScrollRefresh() {

@@ -134,4 +134,21 @@ describe('album upload queue', () => {
     );
     expect(queue.error.value).toBe('只支持 jpg、png、webp、gif，单张不超过 10MB');
   });
+
+  it('queues the good images of a mixed selection and names the rule for the rest', () => {
+    const queue = createAlbumUploadQueue({
+      generatePreview: vi.fn(),
+      now: () => new Date('2026-07-25T08:00:00.000Z')
+    });
+
+    expect(
+      queue.addFiles([
+        new File(['x'], 'beach.jpg', { type: 'image/jpeg' }),
+        new File(['text'], 'notes.txt', { type: 'text/plain' }),
+        new File(['x'], 'sunset.png', { type: 'image/png' })
+      ])
+    ).toBe(true);
+    expect(queue.items.value.map((item) => item.file.name)).toEqual(['beach.jpg', 'sunset.png']);
+    expect(queue.error.value).toBe('只支持 jpg、png、webp、gif，单张不超过 10MB');
+  });
 });

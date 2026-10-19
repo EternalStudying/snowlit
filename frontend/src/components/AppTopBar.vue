@@ -111,8 +111,10 @@ function enterStory(event: MouseEvent | KeyboardEvent) {
     <NModal v-model:show="locationConsentVisible" preset="dialog" title="自动更新位置与天气"
       positive-text="同意并开启" negative-text="暂不开启" :mask-closable="false"
       @positive-click="autoWeather.acceptConsent" @negative-click="autoWeather.declineConsent" @close="autoWeather.declineConsent">
-      <p>开启后，页面打开时自动定位，前台每 20 分钟更新，后台暂停。可随时在“天气”中暂停。</p>
-      <p>后端会把经纬度四舍五入到小数点后 2 位，再发给 Geoapify（城市解析）和 Open-Meteo（模型天气）。仅发送模糊坐标，不发送账号和内容；服务商可能保留请求日志。位置信息用于首页城市和伴侣距离显示。</p>
+      <div>
+        <p>开启后，页面打开时自动定位，前台每 20 分钟更新，后台暂停。可随时在“天气”中暂停。</p>
+        <p>后端会把经纬度四舍五入到小数点后 2 位，再发给 Geoapify（城市解析）和 Open-Meteo（模型天气）。仅发送模糊坐标，不发送账号和内容；服务商可能保留请求日志。位置信息用于首页城市和伴侣距离显示。</p>
+      </div>
     </NModal>
   </header>
 </template>

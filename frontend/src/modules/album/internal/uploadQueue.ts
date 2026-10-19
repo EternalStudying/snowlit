@@ -3,7 +3,7 @@ import type { AlbumPhotoData, AlbumPhotoUploadMetadata } from '../model';
 import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
 import type { AlbumPreviewGenerator } from './ports';
 import { errorMessage } from '../../../display';
-import { IMAGE_RULE_MESSAGE, isAcceptedImage } from '../../../imageFiles';
+import { pickImages } from '../../../imageFiles';
 
 export type AlbumUploadStatus = 'waiting' | 'generating' | 'uploading' | 'success' | 'failed';
 
@@ -43,17 +43,17 @@ export function createAlbumUploadQueue({
   const successCount = computed(() => items.value.filter((item) => item.status === 'success').length);
   const blockingCount = computed(() => items.value.filter((item) => item.status !== 'success').length);
 
+  /** Queues the acceptable images; files that break the image rule are left out and named in `error`. */
   function addFiles(files: File[] | FileList) {
-    const selected = Array.from(files);
-    error.value = '';
+    const { accepted: selected, rejection } = pickImages(files);
+    error.value = rejection;
 
     if (selected.length + items.value.length > MAX_FILES) {
       error.value = '最多选择 300 张照片';
       return false;
     }
 
-    if (!selected.every(isAcceptedImage)) {
-      error.value = IMAGE_RULE_MESSAGE;
+    if (!selected.length) {
       return false;
     }
 
