@@ -81,6 +81,7 @@ function createPhoto(path, file) {
     width: Number(file.width) || 0,
     height: Number(file.height) || 0,
     size: Number(file.size) || 0,
+    takenAt: '',
     status: 'local',
     progress: 0,
     message: '',
@@ -106,7 +107,7 @@ function createAlbumPhotoMetadata(photo, index, form) {
   const albumForm = form || {};
   return {
     caption: clean(albumForm.title) || '未命名照片',
-    takenAt: clean(albumForm.eventDate),
+    takenAt: clean(source.takenAt) || clean(albumForm.eventDate),
     location: clean(albumForm.location) || '地球',
     width: positiveNumber(source.width, 1),
     height: positiveNumber(source.height, 1),

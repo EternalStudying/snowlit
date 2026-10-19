@@ -23,6 +23,7 @@ function createPage(pagePath, options = {}) {
     getStorageSync: () => 'test-token',
     showToast: ({ title }) => toasts.push(title),
     chooseMedia: (value) => picks.push(value),
+    compressImage: ({ src, success }) => success({ tempFilePath: src.replace('.jpg', '.compressed.jpg') }),
     uploadFile: (value) => {
       uploads.push(value);
       return { onProgressUpdate() {} };
@@ -82,7 +83,8 @@ test('album keeps the selected upload batch stable while its first photo is uplo
   uploads[0].success({ statusCode: 200, data: JSON.stringify({ previewUrl: 'https://media.test/a.jpg' }) });
   await flush();
   assert.equal(uploads.length, 2);
-  assert.equal(uploads[1].filePath, 'wxfile://tmp/b.jpg');
+  assert.equal(uploads[0].filePath, 'wxfile://tmp/a.compressed.jpg');
+  assert.equal(uploads[1].filePath, 'wxfile://tmp/b.compressed.jpg');
   assert.equal(page.data.photos[0].url, 'https://media.test/a.jpg');
 });
 

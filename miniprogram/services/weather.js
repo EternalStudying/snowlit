@@ -34,7 +34,32 @@ function getBrowserAtmosphere(location) {
   });
 }
 
+function placeText(value) {
+  const text = String(value || '').trim();
+  return /^(unknown|未知)$/i.test(text) ? '' : text;
+}
+
+/**
+ * The place a photo was taken, as "城市，国家", from its GPS position. The backend rounds the
+ * coordinates before asking Geoapify. Resolves '' when no place is known or the lookup fails.
+ */
+function getPhotoPlaceName(position) {
+  return request({
+    url: `/api/weather/atmosphere/browser${buildQuery({
+      latitude: position && position.latitude,
+      longitude: position && position.longitude
+    })}`,
+    method: 'GET',
+    silent: true
+  }).then((atmosphere) => {
+    const local = ['city', 'district', 'province'].map((key) => placeText(atmosphere && atmosphere[key])).find(Boolean) || '';
+    const country = placeText(atmosphere && atmosphere.country);
+    return [local, country === local ? '' : country].filter(Boolean).join('，');
+  }).catch(() => '');
+}
+
 module.exports = {
   getBrowserAtmosphere,
+  getPhotoPlaceName,
   hasLocation
 };

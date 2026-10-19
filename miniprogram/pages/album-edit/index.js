@@ -1,8 +1,10 @@
 const { ROUTES, routePath } = require('../../constants/routes');
 const { cancelAlbumDraft, createAlbumDraft, getCurrentAlbumDraft, publishAlbumDraft, uploadAlbumDraftPhoto } = require('../../services/album');
+const { getPhotoPlaceName } = require('../../services/weather');
 const { showConfirm } = require('../../utils/dialog');
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { pickImages } = require('../../utils/image-picker');
+const { readPhotoMetadata, summarizePhotoMetadata } = require('../../utils/photo-metadata');
 const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const {
   MAX_ALBUM_PHOTOS,
@@ -13,6 +15,24 @@ const {
   createInitialAlbumForm,
   formatAlbumDateText
 } = require('./album-edit-presenter');
+
+const NO_PHOTO_DETAILS_HINT = '照片里没有拍摄时间和地点，可以手动填写';
+
+// Originals are picked so their EXIF can be read; what gets uploaded is re-encoded without it.
+function compressForUpload(path) {
+  return new Promise((resolve, reject) => {
+    if (typeof wx.compressImage !== 'function') {
+      reject(new Error('照片处理失败，请重试'));
+      return;
+    }
+    wx.compressImage({
+      src: path,
+      quality: 80,
+      success: (result) => resolve(result.tempFilePath),
+      fail: () => reject(new Error('照片处理失败，请重试'))
+    });
+  });
+}
 
 Page({
   data: {
@@ -39,6 +59,9 @@ Page({
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
+    }
+    if (field === 'location') {
+      this.settleField('location');
     }
     this.setData({
       [`form.${field}`]: event.detail.value,
@@ -93,6 +116,7 @@ Page({
 
   confirmDateFromSheet(event) {
     const value = event.detail && event.detail.value ? event.detail.value : createInitialAlbumForm().eventDate;
+    this.settleField('eventDate');
     this.setData({
       'form.eventDate': value,
       'form.eventDateText': formatAlbumDateText(value),
@@ -113,18 +137,70 @@ Page({
     pickImages({
       count: MAX_ALBUM_PHOTOS - this.data.photos.length,
       title: '选择照片',
-      message: '需要读取你选中的照片，用于添加相册照片。',
+      message: '需要读取你选中的照片及其中的拍摄时间和地点，用于添加相册照片并自动填写日期和地点。',
       noun: '照片',
+      sizeType: ['original'],
       isBlocked: () => this.data.submitting
     }).then((files) => {
       if (!files.length) {
         return;
       }
+      const before = this.data.photos.length;
       const result = appendSelectedAlbumPhotos(this.data.photos, files);
       this.updatePhotos(result.photos);
       if (result.reachedLimit) {
         showInfo(`最多 ${MAX_ALBUM_PHOTOS} 张`);
       }
+      return this.fillFromPhotos(result.photos.slice(before));
+    });
+  },
+
+  /** A field the person set, or one already filled from photos, is never filled again. */
+  settleField(field) {
+    this.settledFields = { ...(this.settledFields || {}), [field]: true };
+  },
+
+  isSettled(field) {
+    return Boolean(this.settledFields && this.settledFields[field]);
+  },
+
+  /**
+   * Reads the new photos' EXIF: each photo keeps its own shooting date, and untouched album fields
+   * take the earliest date and the place of the first photo with GPS.
+   */
+  fillFromPhotos(photos) {
+    return photos.reduce((chain, photo) => chain.then((found) => (
+      readPhotoMetadata(photo.path).then((metadata) => found.concat({ id: photo.id, ...metadata }))
+    )), Promise.resolve([])).then((found) => {
+      const dated = found.filter((item) => item.takenAt);
+      if (dated.length) {
+        this.updatePhotos(this.data.photos.map((photo) => {
+          const match = dated.find((item) => item.id === photo.id);
+          return match ? { ...photo, takenAt: match.takenAt } : photo;
+        }));
+      }
+
+      const summary = summarizePhotoMetadata(found);
+      if (!summary.takenAt && !summary.position) {
+        showInfo(NO_PHOTO_DETAILS_HINT);
+        return undefined;
+      }
+      if (summary.takenAt && !this.isSettled('eventDate') && !this.data.submitting) {
+        this.settleField('eventDate');
+        this.setData({
+          'form.eventDate': summary.takenAt,
+          'form.eventDateText': formatAlbumDateText(summary.takenAt)
+        });
+      }
+      if (!summary.position || this.isSettled('location')) {
+        return undefined;
+      }
+      return getPhotoPlaceName(summary.position).then((place) => {
+        if (place && !this.isSettled('location') && !this.data.submitting) {
+          this.settleField('location');
+          this.setData({ 'form.location': place });
+        }
+      });
     });
   },
 
@@ -202,12 +278,12 @@ Page({
           height: photo.height || size.height
         };
         this.patchPhoto(index, { width: resolvedPhoto.width, height: resolvedPhoto.height });
-        return uploadAlbumDraftPhoto(
+        return compressForUpload(resolvedPhoto.path).then((uploadPath) => uploadAlbumDraftPhoto(
           albumId,
-          resolvedPhoto.path,
+          uploadPath,
           createAlbumPhotoMetadata(resolvedPhoto, index, this.data.form),
           onProgress
-        );
+        ));
       })
     });
   },

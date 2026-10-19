@@ -2,7 +2,7 @@
 
 ## Goal
 
-Refactor the backend and Web architecture: deepen shallow modules found in the 2026-10-18 architecture review and remove overly defensive code, without changing client-visible contracts beyond the decisions recorded in [findings](findings.md).
+Current: mini-program album creation fills its date and place from the picked photos' EXIF (2026-10-19). Earlier: the backend, Web and mini-program architecture refactors below.
 
 ## Current Phase
 
@@ -28,6 +28,9 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 
 ### Phase 7: Mini-program targeted refactor
 - **Status:** complete; fast-forwarded into local main from `refactor/miniprogram-deepening` (not pushed). No rework of the native architecture: one shared image picker, one upload queue (`refactor/miniprogram-upload-queue`), a latest-request guard (fixes the Story filter race), and Home weather in its own module — see [technical specification](miniprogram/technical-spec.md)
+
+### Phase 8: Album date and place from photos (mini program)
+- **Status:** complete; fast-forwarded into local main from `feature/album-photo-metadata` (not pushed). Decisions: album creation only; earliest date and first GPS photo; never overwrite set fields; place via the existing backend lookup; upload compressed copies; per-photo takenAt; one hint when nothing is found — see [technical specification](miniprogram/technical-spec.md). Not verified on devices or in the simulator.
 
 ## Context Entry Points
 

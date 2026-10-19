@@ -57,7 +57,7 @@ Guests can browse moments, filter by category/year, and adjust the native map/li
 
 Signed-in users browse published albums with pagination, private locks, pinning, and photo/view/like statistics. Private access tokens expire and require unlocking again. Prefer preview images while retaining an optional original URL. There is no dedicated original-download or save-image flow. Likes and views use the backend's UTC calendar day.
 
-Managers can create an album with up to nine photos: create a temporary album, upload, then publish. An existing draft triggers a choice to discard and recreate; this is not draft recovery. Failures retain input and attempt cleanup, without guaranteeing that cleanup succeeded.
+Managers can create an album with up to nine photos: create a temporary album, upload, then publish. An existing draft triggers a choice to discard and recreate; this is not draft recovery. Failures retain input and attempt cleanup, without guaranteeing that cleanup succeeded. When picked photos carry a shooting date or GPS, the album date (earliest shot) and place (city and country of the first photo with GPS) fill in automatically unless the manager already set them, and each photo keeps its own date; photos without these details leave the fields for manual entry with a short hint.
 
 ### Wishes, Profile, and Feedback
 
