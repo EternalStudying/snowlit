@@ -2,14 +2,14 @@ import {
   nextTick,
   onBeforeUnmount,
   onMounted,
-  watch,
   type Ref
 } from 'vue';
 
-export function useMotionReveal(
-  shellRef: Ref<HTMLElement | null>,
-  enabled: Readonly<Ref<boolean>>
-) {
+/**
+ * Reveals each `[data-motion-module]` inside the shell once it is fully in view (the CSS plays the reveal when
+ * `data-motion-visible` is set). New modules are picked up as routes render them.
+ */
+export function useMotionReveal(shellRef: Ref<HTMLElement | null>) {
   let revealFrame: number | undefined;
   let revealObserver: IntersectionObserver | undefined;
   let mutationObserver: MutationObserver | undefined;
@@ -35,7 +35,7 @@ export function useMotionReveal(
   function refreshModules() {
     const shell = shellRef.value;
 
-    if (!shell || !enabled.value) {
+    if (!shell) {
       return;
     }
 
@@ -108,7 +108,7 @@ export function useMotionReveal(
 
     const shell = shellRef.value;
 
-    if (!shell || !enabled.value) {
+    if (!shell) {
       return;
     }
 
@@ -155,10 +155,6 @@ export function useMotionReveal(
   });
 
   onBeforeUnmount(stop);
-
-  watch(enabled, () => {
-    nextTick(start);
-  });
 
   return { requestRevealCheck };
 }

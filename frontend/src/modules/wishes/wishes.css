@@ -401,7 +401,7 @@
   outline-offset: 5px;
 }
 
-.home-cozy-shell[data-hero-immersive="true"] .wish-create-fab {
+.journal-shell[data-hero-immersive="true"] .wish-create-fab {
   opacity: 0;
   pointer-events: none;
   filter: blur(2px) drop-shadow(0 8px 14px rgba(109, 68, 46, 0.08));

@@ -6,7 +6,8 @@ import heartSticker from './assets/heart-sticker.webp';
 import navPaperPill from './assets/nav-paper-pill.webp';
 import SiteRecordLink from '../components/SiteRecordLink.vue';
 import TopbarTooltip from '../components/TopbarTooltip.vue';
-import { useHomeLifecycle, useHomeMotion } from '../modules/home';
+import { useHomeLifecycle } from '../modules/home';
+import './journal-shell.css';
 import { useJournalHero } from './useJournalHero';
 import { useJournalNavFusion } from './useJournalNavFusion';
 import { useMotionReveal } from './useMotionReveal';
@@ -18,12 +19,22 @@ interface CozyNavItem {
 }
 
 const { overview: home } = useHomeLifecycle().state;
-const {
-  enabled: homeMotionEnabled,
-  rootAttrs: motionRootAttrs,
-  rootStyle: motionRootStyle,
-  moduleEnabledAttr: motionModuleEnabledAttr
-} = useHomeMotion();
+// The warm-journal reveal: the shell and every module marked data-motion-enabled play it (see journal-shell.css).
+const motionRootAttrs = {
+  'data-home-motion': 'warm-journal',
+  'data-motion-image-drift': 'true',
+  'data-motion-paper-float': 'true',
+  'data-motion-count-up': 'true',
+  'data-motion-sticker-pop': 'true',
+  'data-motion-paper-lift': 'true'
+};
+const motionRootStyle = {
+  '--motion-duration-scale': '1.087',
+  '--motion-stagger': '105ms',
+  '--motion-softness': '0.82',
+  '--motion-float-intensity': '0.32',
+  '--motion-scale-intensity': '0.28'
+};
 const {
   slides: heroSlides,
   activeSlide,
@@ -48,7 +59,7 @@ const {
 } = useJournalHero();
 const shellRef = ref<HTMLElement | null>(null);
 const { requestRevealCheck: requestMotionRevealCheck } =
-  useMotionReveal(shellRef, homeMotionEnabled);
+  useMotionReveal(shellRef);
 const {
   navAnchorRef,
   navRef,
@@ -68,7 +79,7 @@ const {
 });
 
 const shellStyle = computed(() => ({
-  ...motionRootStyle.value,
+  ...motionRootStyle,
   ...heroExpansionStyle.value,
   ...navFusionStyle.value
 }));
@@ -109,29 +120,29 @@ const coupleStatusCards = computed(() => [
 <template>
   <div
     ref="shellRef"
-    class="home-cozy-shell"
+    class="journal-shell"
     v-bind="motionRootAttrs"
     :style="shellStyle"
     :data-hero-immersive="heroImmersiveAttr"
     :data-hero-expanded="heroExpandedAttr"
   >
-    <section class="home-cozy-stage" aria-label="我们的日常封面">
+    <section class="journal-stage" aria-label="我们的日常封面">
       <section
-        class="home-hero-carousel"
-        :class="`home-hero-carousel--${activeSlide.tone}`"
+        class="journal-hero-carousel"
+        :class="`journal-hero-carousel--${activeSlide.tone}`"
         :data-hero-immersive="heroImmersiveAttr"
         aria-label="情侣纪念册插画封面"
         data-motion-module="hero"
-        :data-motion-enabled="motionModuleEnabledAttr('hero')"
+        data-motion-enabled="true"
         @mouseenter="heroPaused = true"
         @mouseleave="heroPaused = false"
       >
-        <div class="home-hero-slides" aria-hidden="true">
+        <div class="journal-hero-slides" aria-hidden="true">
           <figure
             v-for="(slide, index) in heroSlides"
             :key="slide.image"
-            class="home-hero-slide"
-            :class="[`home-hero-slide--${slide.tone}`, { 'is-active': index === activeSlideIndex }]"
+            class="journal-hero-slide"
+            :class="[`journal-hero-slide--${slide.tone}`, { 'is-active': index === activeSlideIndex }]"
           >
             <img
               v-if="shouldRenderHeroSlideImage(index)"
@@ -144,7 +155,7 @@ const coupleStatusCards = computed(() => [
           </figure>
         </div>
 
-        <div class="home-hero-content">
+        <div class="journal-hero-content">
           <div
             class="hero-sticker-cluster"
             :data-heart-target="activeHeroStickerSide ?? 'none'"
@@ -224,29 +235,29 @@ const coupleStatusCards = computed(() => [
 
         <button
           type="button"
-          class="home-hero-arrow home-hero-arrow--prev"
+          class="journal-hero-arrow journal-hero-arrow--prev"
           aria-label="上一张首屏图片"
           :disabled="!isHeroExpanded"
           @click="showPreviousHeroSlide"
         >
-          <span class="home-hero-arrow__glyph" aria-hidden="true"></span>
+          <span class="journal-hero-arrow__glyph" aria-hidden="true"></span>
         </button>
         <button
           type="button"
-          class="home-hero-arrow home-hero-arrow--next"
+          class="journal-hero-arrow journal-hero-arrow--next"
           aria-label="下一张首屏图片"
           :disabled="!isHeroExpanded"
           @click="showNextHeroSlide"
         >
-          <span class="home-hero-arrow__glyph" aria-hidden="true"></span>
+          <span class="journal-hero-arrow__glyph" aria-hidden="true"></span>
         </button>
 
-        <div class="home-hero-dots" aria-label="首页封面轮播">
+        <div class="journal-hero-dots" aria-label="首页封面轮播">
           <button
             v-for="(slide, index) in heroSlides"
             :key="slide.title"
             type="button"
-            class="home-hero-dot"
+            class="journal-hero-dot"
             :aria-label="`切换到${slide.title}`"
             :aria-current="index === activeSlideIndex ? 'true' : undefined"
             @click="showHeroSlide(index)"
@@ -256,10 +267,10 @@ const coupleStatusCards = computed(() => [
         </div>
       </section>
 
-      <div ref="navAnchorRef" class="home-cozy-nav-anchor">
+      <div ref="navAnchorRef" class="journal-nav-anchor">
         <nav
           ref="navRef"
-          class="home-cozy-nav paper-nav-shell"
+          class="journal-nav paper-nav-shell"
           :data-nav-fusion="navFusionState"
           :data-nav-labels="navLabelState"
           :data-nav-density="navDensityState"
@@ -280,20 +291,20 @@ const coupleStatusCards = computed(() => [
             draggable="false"
           />
           <div ref="navContentRef" class="paper-nav-shell__content">
-            <span class="home-cozy-nav__active-track" aria-hidden="true"></span>
+            <span class="journal-nav__active-track" aria-hidden="true"></span>
             <template v-for="item in cozyNavItems" :key="item.label">
               <TopbarTooltip
                 :label="item.label"
                 :enabled="navFusionState === 'docked'"
               >
                 <RouterLink
-                  class="home-cozy-nav__link"
-                  exact-active-class="home-cozy-nav__link--home"
+                  class="journal-nav__link"
+                  exact-active-class="journal-nav__link--home"
                   :to="item.to"
                   :data-label="item.label"
                 >
-                  <span class="home-cozy-nav__icon" aria-hidden="true" v-html="item.icon"></span>
-                  <span class="home-cozy-nav__label">{{ item.label }}</span>
+                  <span class="journal-nav__icon" aria-hidden="true" v-html="item.icon"></span>
+                  <span class="journal-nav__label">{{ item.label }}</span>
                 </RouterLink>
               </TopbarTooltip>
             </template>
@@ -301,7 +312,7 @@ const coupleStatusCards = computed(() => [
         </nav>
       </div>
 
-      <div class="home-route-content">
+      <div class="journal-route-content">
         <slot />
       </div>
 

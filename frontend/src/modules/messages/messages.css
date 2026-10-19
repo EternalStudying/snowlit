@@ -21,7 +21,7 @@
   background-size: var(--page-bg-root-size);
 }
 
-.home-route-content > .messages-page {
+.journal-route-content > .messages-page {
   overflow: hidden;
 }
 

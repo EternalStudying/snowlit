@@ -25,35 +25,6 @@
   min-width: 0;
 }
 
-.paper-nav-shell {
-  position: relative;
-  isolation: isolate;
-}
-
-.paper-nav-shell__texture {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 12px 18px rgba(95, 55, 34, 0.13));
-}
-
-.paper-nav-shell__content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(8px, 1.2vw, 18px);
-  width: 100%;
-  min-height: var(--cozy-nav-height);
-  padding: 14px clamp(24px, 4vw, 52px);
-}
-
 .paper-asset {
   --paper-asset-shadow: drop-shadow(0 14px 20px rgba(111, 58, 35, 0.16));
   position: relative;

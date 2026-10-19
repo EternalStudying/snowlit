@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import './home-paper.css';
 import './home.css';
+import './home-motion.css';
 import './home-responsive.css';
 import { computed, ref } from 'vue';
+import { prefersReducedMotion } from '../../motion';
 import MotionCountUp from '../../components/motion/MotionCountUp.vue';
 import PageLoader from '../../components/PageLoader.vue';
 import partnerAAvatar from '../../assets/couple-avatars/partner-a.webp';
@@ -25,14 +27,10 @@ import statIconGift from './assets/paper/stat-icon-gift.webp';
 import statIconMessage from './assets/paper/stat-icon-message.webp';
 import statIconPhoto from './assets/paper/stat-icon-photo.webp';
 import { useHomeLifecycle } from './internal/useHomeLifecycle';
-import { useHomeMotion } from './internal/useHomeMotion';
 import { useHomePaperIntro } from './internal/useHomePaperIntro';
 
 const { overview: home } = useHomeLifecycle().state;
-const {
-  moduleEnabledAttr: motionModuleEnabledAttr,
-  isCountUpEnabled
-} = useHomeMotion();
+const isCountUpEnabled = !prefersReducedMotion();
 const { paperIntroRef } = useHomePaperIntro(home);
 
 const paperAssets = {
@@ -177,7 +175,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
             class="home-memory-card paper-image-shell memory-ledger-shell"
             aria-label="纪念日信息"
             data-motion-module="memoryCard"
-            :data-motion-enabled="motionModuleEnabledAttr('memoryCard')"
+            data-motion-enabled="true"
           >
             <img
               class="paper-image-shell__texture"
@@ -241,7 +239,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
             class="daily-note-block"
             aria-labelledby="daily-note-title"
             data-motion-module="dailyNote"
-            :data-motion-enabled="motionModuleEnabledAttr('dailyNote')"
+            data-motion-enabled="true"
           >
             <div class="dashboard-section-heading">
               <h2 id="daily-note-title">今日小纸条</h2>
@@ -266,7 +264,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
             class="couple-status-panel"
             aria-labelledby="couple-status-title"
             data-motion-module="statusCards"
-            :data-motion-enabled="motionModuleEnabledAttr('statusCards')"
+            data-motion-enabled="true"
           >
             <div class="dashboard-section-heading">
               <h2 id="couple-status-title">我们的今日状态</h2>
@@ -310,7 +308,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
           class="progress-ledger-section"
           aria-labelledby="progress-ledger-title"
           data-motion-module="progressLedger"
-          :data-motion-enabled="motionModuleEnabledAttr('progressLedger')"
+          data-motion-enabled="true"
           @animationend="handleProgressLedgerRevealEnd"
         >
           <div class="dashboard-section-heading">
@@ -372,7 +370,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
           class="recent-moments"
           aria-labelledby="recent-moments-title"
           data-motion-module="recentCards"
-          :data-motion-enabled="motionModuleEnabledAttr('recentCards')"
+          data-motion-enabled="true"
         >
           <div class="dashboard-section-heading dashboard-section-heading--wide">
             <h2 id="recent-moments-title">最近发生的小事</h2>
@@ -461,7 +459,7 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
           class="next-plan-section"
           aria-labelledby="next-plan-title"
           data-motion-module="nextPlan"
-          :data-motion-enabled="motionModuleEnabledAttr('nextPlan')"
+          data-motion-enabled="true"
         >
           <div class="dashboard-section-heading dashboard-section-heading--wide">
             <h2 id="next-plan-title">下一件想一起完成的事</h2>

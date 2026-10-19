@@ -123,7 +123,7 @@ describe('首页首屏雪坡扩散', () => {
     expect(event.defaultPrevented).toBe(true);
     expect(wrapper.attributes('data-hero-immersive')).toBe('true');
     expect(wrapper.attributes('data-hero-expanded')).toBe('true');
-    expect(wrapper.get('.home-cozy-nav').classes()).toContain('is-hero-hidden');
+    expect(wrapper.get('.journal-nav').classes()).toContain('is-hero-hidden');
     expect(wrapper.attributes('style')).toContain('--hero-expansion-progress: 1.0000');
     expect(wrapper.attributes('style')).toContain('--hero-snow-opacity: 0.0000');
   });
@@ -139,7 +139,7 @@ describe('首页首屏雪坡扩散', () => {
     expect(exitEvent.defaultPrevented).toBe(true);
     expect(wrapper.attributes('data-hero-immersive')).toBe('true');
     expect(wrapper.attributes('data-hero-expanded')).toBe('false');
-    expect(wrapper.get('.home-cozy-nav').classes()).toContain('is-hero-hidden');
+    expect(wrapper.get('.journal-nav').classes()).toContain('is-hero-hidden');
     expect(wrapper.attributes('style')).toContain('--hero-expansion-progress: 0.0000');
     expect(wrapper.attributes('style')).toContain('--hero-snow-opacity: 1.0000');
 
@@ -151,7 +151,7 @@ describe('首页首屏雪坡扩散', () => {
     vi.advanceTimersByTime(560);
     await wrapper.vm.$nextTick();
     expect(wrapper.attributes('data-hero-immersive')).toBe('false');
-    expect(wrapper.get('.home-cozy-nav').classes()).not.toContain('is-hero-hidden');
+    expect(wrapper.get('.journal-nav').classes()).not.toContain('is-hero-hidden');
 
     const releasedEvent = wheel(180);
     await wrapper.vm.$nextTick();
@@ -175,23 +175,23 @@ describe('首页首屏雪坡扩散', () => {
     wheel(-900);
     await wrapper.vm.$nextTick();
 
-    const firstActiveSrc = wrapper.get('.home-hero-slide.is-active img').attributes('src');
+    const firstActiveSrc = wrapper.get('.journal-hero-slide.is-active img').attributes('src');
 
-    await wrapper.get('.home-hero-arrow--next').trigger('click');
+    await wrapper.get('.journal-hero-arrow--next').trigger('click');
     await wrapper.vm.$nextTick();
-    const nextActiveSrc = wrapper.get('.home-hero-slide.is-active img').attributes('src');
+    const nextActiveSrc = wrapper.get('.journal-hero-slide.is-active img').attributes('src');
     expect(nextActiveSrc).not.toBe(firstActiveSrc);
 
-    await wrapper.get('.home-hero-arrow--prev').trigger('click');
+    await wrapper.get('.journal-hero-arrow--prev').trigger('click');
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('.home-hero-slide.is-active img').attributes('src')).toBe(firstActiveSrc);
+    expect(wrapper.get('.journal-hero-slide.is-active img').attributes('src')).toBe(firstActiveSrc);
 
-    const dots = wrapper.findAll('.home-hero-dot');
+    const dots = wrapper.findAll('.journal-hero-dot');
     expect(dots.length).toBeGreaterThan(1);
     await dots[1].trigger('click');
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('.home-hero-slide.is-active img').attributes('src')).toBe(nextActiveSrc);
-    expect(wrapper.get('.home-hero-arrow--next .home-hero-arrow__glyph').text()).toBe('');
+    expect(wrapper.get('.journal-hero-slide.is-active img').attributes('src')).toBe(nextActiveSrc);
+    expect(wrapper.get('.journal-hero-arrow--next .journal-hero-arrow__glyph').text()).toBe('');
   });
 
   it('全屏驻留态暂停自动轮播', async () => {
@@ -199,11 +199,11 @@ describe('首页首屏雪坡扩散', () => {
     wheel(-900);
     await wrapper.vm.$nextTick();
 
-    const activeBeforeTimer = wrapper.get('.home-hero-slide.is-active img').attributes('src');
+    const activeBeforeTimer = wrapper.get('.journal-hero-slide.is-active img').attributes('src');
     vi.advanceTimersByTime(5100);
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.get('.home-hero-slide.is-active img').attributes('src')).toBe(activeBeforeTimer);
+    expect(wrapper.get('.journal-hero-slide.is-active img').attributes('src')).toBe(activeBeforeTimer);
   });
 
   it('普通态不启用头像与爱心互动', async () => {

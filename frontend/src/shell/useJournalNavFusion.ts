@@ -216,7 +216,7 @@ export function useJournalNavFusion({
     }
 
     const link = target.closest<HTMLAnchorElement>(
-      '.home-cozy-nav__link[href]'
+      '.journal-nav__link[href]'
     );
     if (!link || !navRef.value?.contains(link)) {
       return;
@@ -236,7 +236,7 @@ export function useJournalNavFusion({
   function updateNavActiveTrack() {
     const content = navContentRef.value;
     const activeLink = content?.querySelector<HTMLElement>(
-      '.home-cozy-nav__link--home'
+      '.journal-nav__link--home'
     );
     if (!content || !activeLink) {
       navActiveOpacity.value = 0;
@@ -247,7 +247,7 @@ export function useJournalNavFusion({
     const activeTarget =
       navFusionCompactAttr.value === 'true'
         ? activeLink.querySelector<HTMLElement>(
-            '.home-cozy-nav__icon'
+            '.journal-nav__icon'
           ) ?? activeLink
         : activeLink;
     const activeRect = activeTarget.getBoundingClientRect();

@@ -189,7 +189,7 @@ describe('SupportCenter integration', () => {
 
     const { wrapper } = await mountApp();
 
-    expect(wrapper.find('.home-hero-carousel').exists()).toBe(true);
+    expect(wrapper.find('.journal-hero-carousel').exists()).toBe(true);
     expect(document.body.querySelector('[data-testid="update-notice-dialog"]')).toBeNull();
   });
 

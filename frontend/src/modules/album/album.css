@@ -229,7 +229,7 @@
   outline-offset: 5px;
 }
 
-.home-cozy-shell[data-hero-immersive="true"] .album-create-fab {
+.journal-shell[data-hero-immersive="true"] .album-create-fab {
   opacity: 0;
   pointer-events: none;
   filter: blur(2px) drop-shadow(0 8px 14px rgba(109, 68, 46, 0.08));
@@ -625,7 +625,7 @@ body.is-album-immersive {
   overflow: hidden;
 }
 
-body.is-album-immersive .home-cozy-nav,
+body.is-album-immersive .journal-nav,
 body.is-album-immersive .app-topbar {
   opacity: 0;
   pointer-events: none;

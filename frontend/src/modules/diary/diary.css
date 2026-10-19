@@ -647,7 +647,7 @@
   outline-offset: 5px;
 }
 
-.home-cozy-shell[data-hero-immersive="true"] .diary-compose-fab {
+.journal-shell[data-hero-immersive="true"] .diary-compose-fab {
   opacity: 0;
   pointer-events: none;
   filter: blur(2px) drop-shadow(0 8px 14px rgba(78, 52, 35, 0.08));

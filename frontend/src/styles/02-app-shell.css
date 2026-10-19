@@ -266,28 +266,28 @@
   font-size: 0.69rem;
 }
 
-body:has(.home-cozy-nav[data-nav-fusion="docked"]) .app-topbar__dock-motion {
+body:has(.journal-nav[data-nav-fusion="docked"]) .app-topbar__dock-motion {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: translateY(-50%) scale(1);
 }
 
-body:has(.home-cozy-nav[data-nav-restoring="true"]) .app-topbar__dock-motion {
+body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__dock-motion {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transform: translateY(calc(-50% - 4px)) scale(0.96);
 }
 
-body:has(.home-cozy-nav[data-nav-fusion="docked"]) .app-topbar__brand {
+body:has(.journal-nav[data-nav-fusion="docked"]) .app-topbar__brand {
   opacity: 0;
   pointer-events: none;
   filter: blur(2px);
   transform: translateY(-4px) scale(0.98);
 }
 
-body:has(.home-cozy-nav[data-nav-restoring="true"]) .app-topbar__brand {
+body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
   opacity: 1;
   pointer-events: auto;
   filter: none;

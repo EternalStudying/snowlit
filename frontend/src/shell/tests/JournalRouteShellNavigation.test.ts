@@ -136,7 +136,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    expect(wrapper.find('.home-cozy-nav__active-track').exists()).toBe(true);
+    expect(wrapper.find('.journal-nav__active-track').exists()).toBe(true);
 
     const navContent = wrapper.get('.paper-nav-shell__content').element as HTMLElement;
     vi.spyOn(navContent, 'getBoundingClientRect').mockReturnValue(
@@ -151,7 +151,7 @@ describe('首页导航点击定位', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    const style = wrapper.get('.home-cozy-shell').attributes('style');
+    const style = wrapper.get('.journal-shell').attributes('style');
     expect(style).toContain('--nav-active-x: 256.00px;');
     expect(style).toContain('--nav-active-width: 90.00px;');
     expect(style).toContain('--nav-active-opacity: 1;');
@@ -184,7 +184,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     const navAnchorRect = vi
       .spyOn(navAnchor, 'getBoundingClientRect')
       .mockReturnValue(rect({ top: 220, bottom: 290, left: 40, right: 950, width: 910, height: 70 }));
@@ -196,7 +196,7 @@ describe('首页导航点击定位', () => {
     vi.spyOn(albumLink, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 8, bottom: 46, left: 356, right: 446, width: 90, height: 38 })
     );
-    const albumIcon = albumLink.querySelector<HTMLElement>('.home-cozy-nav__icon');
+    const albumIcon = albumLink.querySelector<HTMLElement>('.journal-nav__icon');
     expect(albumIcon).not.toBeNull();
     vi.spyOn(albumIcon!, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 18, bottom: 36, left: 392, right: 410, width: 18, height: 18 })
@@ -209,7 +209,7 @@ describe('首页导航点击定位', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    let style = wrapper.get('.home-cozy-shell').attributes('style');
+    let style = wrapper.get('.journal-shell').attributes('style');
     expect(style).toContain('--nav-active-x: 256.00px;');
     expect(style).toContain('--nav-active-width: 90.00px;');
 
@@ -222,8 +222,8 @@ describe('首页导航点击定位', () => {
     vi.advanceTimersByTime(200);
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.get('.home-cozy-nav').attributes('data-nav-compact')).toBe('true');
-    style = wrapper.get('.home-cozy-shell').attributes('style');
+    expect(wrapper.get('.journal-nav').attributes('data-nav-compact')).toBe('true');
+    style = wrapper.get('.journal-shell').attributes('style');
     expect(style).toContain('--nav-active-x: 292.00px;');
     expect(style).toContain('--nav-active-width: 18.00px;');
 
@@ -262,7 +262,7 @@ describe('首页导航点击定位', () => {
     animationFrames.forEach((callback) => callback(16));
     await wrapper.vm.$nextTick();
 
-    const style = wrapper.get('.home-cozy-shell').attributes('style');
+    const style = wrapper.get('.journal-shell').attributes('style');
     expect(style).toContain('--nav-active-x: 256.00px;');
     expect(style).toContain('--nav-active-width: 80.00px;');
     expect(style).toContain('--nav-active-opacity: 1;');
@@ -289,10 +289,10 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const nav = wrapper.get('.home-cozy-nav');
-    const messagesEntry = wrapper.get('.home-cozy-nav a[href="/messages"][data-label="留言"]');
+    const nav = wrapper.get('.journal-nav');
+    const messagesEntry = wrapper.get('.journal-nav a[href="/messages"][data-label="留言"]');
     expect(messagesEntry.element.tagName).toBe('A');
-    expect(wrapper.find('.home-cozy-nav__link--locked[data-label="留言"]').exists()).toBe(false);
+    expect(wrapper.find('.journal-nav__link--locked[data-label="留言"]').exists()).toBe(false);
     await messagesEntry.trigger('click');
     expect(nav.attributes('data-nav-switching')).toBe('true');
 
@@ -323,10 +323,10 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    expect(shell.find('.home-cozy-nav a[href="/story"]').exists()).toBe(false);
-    expect(shell.find('.home-cozy-nav a[href="/about"]').exists()).toBe(false);
-    expect(shell.findAll('.home-cozy-nav__link').map((item) => item.text())).not.toContain('点滴');
-    expect(shell.findAll('.home-cozy-nav__link').map((item) => item.text())).not.toContain('关于');
+    expect(shell.find('.journal-nav a[href="/story"]').exists()).toBe(false);
+    expect(shell.find('.journal-nav a[href="/about"]').exists()).toBe(false);
+    expect(shell.findAll('.journal-nav__link').map((item) => item.text())).not.toContain('点滴');
+    expect(shell.findAll('.journal-nav__link').map((item) => item.text())).not.toContain('关于');
 
     const topbar = mount(AppTopBar, {
       global: { plugins: [router] }
@@ -375,7 +375,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     const navAnchorRect = vi
       .spyOn(navAnchor, 'getBoundingClientRect')
       .mockReturnValue(rect({ top: 220, bottom: 290, left: 40, right: 950, width: 910, height: 70 }));
@@ -392,7 +392,7 @@ describe('首页导航点击定位', () => {
     window.dispatchEvent(new Event('scroll'));
     animationFrames.splice(0).forEach((callback) => callback(32));
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('.home-cozy-nav').attributes('data-nav-fusion')).toBe('docked');
+    expect(wrapper.get('.journal-nav').attributes('data-nav-fusion')).toBe('docked');
 
     await albumTrigger.trigger('mouseenter');
     await vi.advanceTimersByTimeAsync(0);
@@ -539,11 +539,11 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 220, bottom: 284, left: 40, right: 950, width: 910, height: 64 })
     );
-    const routeContent = wrapper.get('.home-route-content').element as HTMLElement;
+    const routeContent = wrapper.get('.journal-route-content').element as HTMLElement;
     vi.spyOn(routeContent, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 332, bottom: 860, left: 0, right: 1000, width: 1000, height: 528 })
     );
@@ -577,11 +577,11 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 260, bottom: 324, left: 40, right: 950, width: 910, height: 64 })
     );
-    const routeContent = wrapper.get('.home-route-content').element as HTMLElement;
+    const routeContent = wrapper.get('.journal-route-content').element as HTMLElement;
     vi.spyOn(routeContent, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 350, bottom: 900, left: 0, right: 1000, width: 1000, height: 550 })
     );
@@ -640,7 +640,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: -3, bottom: 61, left: 40, right: 950, width: 910, height: 64 })
     );
@@ -694,11 +694,11 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 220, bottom: 284, left: 40, right: 950, width: 910, height: 64 })
     );
-    const routeContent = wrapper.get('.home-route-content').element as HTMLElement;
+    const routeContent = wrapper.get('.journal-route-content').element as HTMLElement;
     vi.spyOn(routeContent, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 300, bottom: 900, left: 0, right: 1000, width: 1000, height: 600 })
     );
@@ -746,7 +746,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: -6, bottom: 64, left: 40, right: 950, width: 910, height: 70 })
     );
@@ -755,7 +755,7 @@ describe('首页导航点击定位', () => {
     animationFrames.splice(0).forEach((callback) => callback(16));
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.get('.home-cozy-nav').attributes('data-nav-fusion')).toBe('docked');
+    expect(wrapper.get('.journal-nav').attributes('data-nav-fusion')).toBe('docked');
 
     await wrapper.get('a[href="/diary"]').trigger('click');
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
@@ -797,7 +797,7 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
     const navAnchorRect = vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: 260, bottom: 324, left: 40, right: 950, width: 910, height: 64 })
     );
@@ -807,7 +807,7 @@ describe('首页导航点击定位', () => {
     await wrapper.vm.$nextTick();
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 383, behavior: 'smooth' });
-    expect(wrapper.get('.home-cozy-nav').attributes('data-nav-fusion')).toBe('idle');
+    expect(wrapper.get('.journal-nav').attributes('data-nav-fusion')).toBe('idle');
 
     scrollTo.mockClear();
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 383 });
@@ -850,9 +850,9 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
-    const shell = wrapper.get('.home-cozy-shell');
-    const nav = wrapper.get('.home-cozy-nav');
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
+    const shell = wrapper.get('.journal-shell');
+    const nav = wrapper.get('.journal-nav');
     const navAnchorRect = vi
       .spyOn(navAnchor, 'getBoundingClientRect')
       .mockReturnValue(rect({ top: 0, bottom: 70, left: 40, right: 950, width: 910, height: 70 }));
@@ -903,8 +903,8 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
-    const nav = wrapper.get('.home-cozy-nav');
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
+    const nav = wrapper.get('.journal-nav');
     vi.spyOn(navAnchor, 'getBoundingClientRect').mockReturnValue(
       rect({ top: -6, bottom: 64, left: 40, right: 950, width: 910, height: 70 })
     );
@@ -961,8 +961,8 @@ describe('首页导航点击定位', () => {
     });
     await flushPromises();
 
-    const navAnchor = wrapper.get('.home-cozy-nav-anchor').element as HTMLElement;
-    const nav = wrapper.get('.home-cozy-nav');
+    const navAnchor = wrapper.get('.journal-nav-anchor').element as HTMLElement;
+    const nav = wrapper.get('.journal-nav');
     const navAnchorRect = vi
       .spyOn(navAnchor, 'getBoundingClientRect')
       .mockReturnValue(rect({ top: -6, bottom: 64, left: 40, right: 950, width: 910, height: 70 }));
@@ -1006,20 +1006,20 @@ describe('首页导航点击定位', () => {
     expect(nav.attributes('data-nav-restoring')).toBe('true');
     expect(nav.attributes('data-nav-compact')).toBeUndefined();
     expect(nav.attributes('data-nav-labels')).toBe('visible');
-    expect(wrapper.get('.home-cozy-shell').attributes('style')).toContain('--nav-restore-y: 0.00px;');
+    expect(wrapper.get('.journal-shell').attributes('style')).toContain('--nav-restore-y: 0.00px;');
     animationFrames.splice(0).forEach((callback) => callback(64));
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.get('.home-cozy-shell').attributes('style')).toContain('--nav-restore-y: 132.00px;');
+    expect(wrapper.get('.journal-shell').attributes('style')).toContain('--nav-restore-y: 132.00px;');
 
     vi.advanceTimersByTime(260);
     await wrapper.vm.$nextTick();
 
     expect(nav.attributes('data-nav-restoring')).toBeUndefined();
-    expect(wrapper.get('.home-cozy-shell').attributes('style')).toContain('--nav-restore-y: 0.00px;');
-    expect(wrapper.get('.home-cozy-shell').attributes('style')).toContain('--nav-fusion-left: 40.00px;');
-    expect(wrapper.get('.home-cozy-shell').attributes('style')).toContain('--nav-fusion-width: 910.00px;');
-    expect(wrapper.get('a[href="/album"]').classes()).toContain('home-cozy-nav__link--home');
+    expect(wrapper.get('.journal-shell').attributes('style')).toContain('--nav-restore-y: 0.00px;');
+    expect(wrapper.get('.journal-shell').attributes('style')).toContain('--nav-fusion-left: 40.00px;');
+    expect(wrapper.get('.journal-shell').attributes('style')).toContain('--nav-fusion-width: 910.00px;');
+    expect(wrapper.get('a[href="/album"]').classes()).toContain('journal-nav__link--home');
     expect(scrollTo).not.toHaveBeenCalled();
   });
 });
