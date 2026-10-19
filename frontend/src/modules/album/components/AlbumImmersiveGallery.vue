@@ -32,6 +32,9 @@ const ACTIVE_PHOTO_VISIBLE_WINDOW = {
   fadeDuration: 0.16
 } as const;
 
+// Matches the album's mobile breakpoint in album.css.
+const STACKED_LAYOUT_QUERY = '(max-width: 760px)';
+
 const NEAR_SCREEN_FADE = {
   startOffset: 1.02,
   duration: 0.06,
@@ -53,8 +56,12 @@ const rootRef = ref<HTMLElement | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
 const scrollTrackRef = ref<HTMLElement | null>(null);
 const stageRef = ref<HTMLElement | null>(null);
-const isReducedMotion = useReducedMotion(() => applyMotionPreference());
+const isReducedMotion = useReducedMotion(() => applyLayout());
+const isNarrowScreen = ref(window.matchMedia?.(STACKED_LAYOUT_QUERY).matches ?? false);
+// Reduced motion and narrow screens get a plain scrolling list instead of the 3D scroll timeline.
+const isStacked = computed(() => isReducedMotion.value || isNarrowScreen.value);
 const galleryReady = ref(false);
+let narrowScreenQuery: MediaQueryList | undefined;
 let context: gsap.Context | undefined;
 let scrollTrigger: ScrollTrigger | undefined;
 let galleryChromeIntroTimeline: gsap.core.Timeline | undefined;
@@ -66,8 +73,8 @@ const scrollTrackStyle = computed(() => ({
   minHeight: `${scrollDistance.value}px`
 }));
 
-function applyMotionPreference() {
-  if (isReducedMotion.value) {
+function applyLayout() {
+  if (isStacked.value) {
     cleanupGallery();
     galleryReady.value = true;
     return;
@@ -77,7 +84,7 @@ function applyMotionPreference() {
 }
 
 function handlePointerMove(event: PointerEvent) {
-  if (!stageRef.value || isReducedMotion.value) {
+  if (!stageRef.value || isStacked.value) {
     return;
   }
 
@@ -96,7 +103,7 @@ function handleResize() {
 }
 
 function handleGalleryWheel(event: WheelEvent) {
-  if (isReducedMotion.value || !scrollRef.value) {
+  if (isStacked.value || !scrollRef.value) {
     return;
   }
 
@@ -116,7 +123,7 @@ function getCodePenImageOffset(index: number) {
 
 function setupGalleryTimeline() {
   const root = rootRef.value;
-  if (!root || !scrollRef.value || !scrollTrackRef.value || isReducedMotion.value || scrollTrigger) {
+  if (!root || !scrollRef.value || !scrollTrackRef.value || isStacked.value || scrollTrigger) {
     galleryReady.value = true;
     return;
   }
@@ -306,13 +313,21 @@ function cleanupGallery() {
   }
 }
 
+function syncNarrowScreen() {
+  isNarrowScreen.value = Boolean(narrowScreenQuery?.matches);
+  applyLayout();
+}
+
 function closeGallery() {
   cleanupGallery();
   emit('close');
 }
 
 onMounted(async () => {
-  applyMotionPreference();
+  narrowScreenQuery = window.matchMedia?.(STACKED_LAYOUT_QUERY);
+  isNarrowScreen.value = Boolean(narrowScreenQuery?.matches);
+  narrowScreenQuery?.addEventListener('change', syncNarrowScreen);
+  applyLayout();
   window.addEventListener('pointermove', handlePointerMove, { passive: true });
   window.addEventListener('resize', handleResize, { passive: true });
   await nextTick();
@@ -321,6 +336,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cleanupGallery();
+  narrowScreenQuery?.removeEventListener('change', syncNarrowScreen);
   window.removeEventListener('pointermove', handlePointerMove);
   window.removeEventListener('resize', handleResize);
 });
@@ -332,7 +348,7 @@ onBeforeUnmount(() => {
       ref="rootRef"
       class="album-immersive-gallery"
       :class="{ 'album-immersive-gallery--ready': galleryReady }"
-      :data-reduced-motion="isReducedMotion ? 'true' : 'false'"
+      :data-layout="isStacked ? 'stacked' : 'timeline'"
       role="dialog"
       aria-modal="true"
       :aria-label="`${collection.title}沉浸式照片走廊`"

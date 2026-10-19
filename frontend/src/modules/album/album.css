@@ -1502,17 +1502,6 @@ body.is-album-immersive .album-photo-preview__backdrop {
     min-height: 238px;
   }
 
-  .album-immersive-gallery {
-    overflow-y: auto;
-    perspective: none;
-    scrollbar-width: none;
-  }
-
-  .album-immersive-gallery__scroll,
-  .album-immersive-gallery__scroll-text {
-    display: none;
-  }
-
   .album-immersive-gallery__header {
     display: grid;
     top: 16px;
@@ -1523,25 +1512,6 @@ body.is-album-immersive .album-photo-preview__backdrop {
   .album-immersive-gallery__title {
     max-width: 100%;
     text-align: left;
-  }
-
-  .album-immersive-gallery__stage {
-    position: relative;
-    inset: auto;
-    display: grid;
-    gap: 16px;
-    width: calc(100% - 32px);
-    margin: 154px auto 82px;
-    transform: none !important;
-  }
-
-  .album-immersive-gallery__photo {
-    position: static;
-    width: 100%;
-    min-width: 0;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: none !important;
   }
 
   .album-immersive-gallery__paper img {
@@ -1692,19 +1662,24 @@ body.is-album-immersive .album-photo-preview__backdrop {
   }
 }
 
-.album-immersive-gallery[data-reduced-motion="true"] {
+.album-immersive-gallery[data-layout="stacked"] {
   overflow-y: auto;
   overscroll-behavior: contain;
   perspective: none;
   scrollbar-width: none;
 }
 
-.album-immersive-gallery[data-reduced-motion="true"] .album-immersive-gallery__scroll,
-.album-immersive-gallery[data-reduced-motion="true"] .album-immersive-gallery__scroll-text {
+/* The list scrolls under the header otherwise; let the title scroll away with the photos. */
+.album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__header {
+  position: absolute;
+}
+
+.album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__scroll,
+.album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__scroll-text {
   display: none;
 }
 
-.album-immersive-gallery[data-reduced-motion="true"] .album-immersive-gallery__stage {
+.album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__stage {
   position: relative;
   inset: auto;
   display: grid;
@@ -1716,7 +1691,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
   transform: none !important;
 }
 
-.album-immersive-gallery[data-reduced-motion="true"] .album-immersive-gallery__photo {
+.album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__photo {
   position: static;
   width: 100%;
   min-width: 0;
@@ -2343,10 +2318,11 @@ body.is-album-immersive .album-photo-preview__backdrop {
 }
 
 @media (max-width: 760px) {
-  .album-immersive-gallery[data-reduced-motion="true"] .album-immersive-gallery__stage {
+  .album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__stage {
     grid-template-columns: 1fr;
+    gap: 16px;
     width: calc(100% - 32px);
-    margin-top: 154px;
+    margin: 154px auto 82px;
   }
 
   .album-create-dialog {
