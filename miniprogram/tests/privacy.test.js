@@ -104,15 +104,15 @@ function runMountingTest() {
 }
 
 function runPageUsageTest() {
-  const indexJs = fs.readFileSync(path.join(__dirname, '../pages/index/index.js'), 'utf8');
+  const homeWeatherJs = fs.readFileSync(path.join(__dirname, '../pages/index/home-weather.js'), 'utf8');
   const storyEditJs = fs.readFileSync(path.join(__dirname, '../pages/story-edit/index.js'), 'utf8');
   const diaryEditJs = fs.readFileSync(path.join(__dirname, '../pages/diary-edit/index.js'), 'utf8');
   const albumEditJs = fs.readFileSync(path.join(__dirname, '../pages/album-edit/index.js'), 'utf8');
   const feedbackJs = fs.readFileSync(path.join(__dirname, '../pages/feedback/index.js'), 'utf8');
   const wishCompletionJs = fs.readFileSync(path.join(__dirname, '../components/wish-completion-sheet/index.js'), 'utf8');
 
-  assert.equal(indexJs.includes("require('../../utils/privacy')"), true);
-  assert.match(indexJs, /authorizePrivacy\([\s\S]*updateCurrentLocation/);
+  assert.equal(homeWeatherJs.includes("require('../../utils/privacy')"), true);
+  assert.match(homeWeatherJs, /authorizePrivacy\([\s\S]*wx\.getLocation/);
   const pickerJs = fs.readFileSync(path.join(__dirname, '../utils/image-picker.js'), 'utf8');
   assert.match(pickerJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
   [storyEditJs, diaryEditJs, albumEditJs, wishCompletionJs, feedbackJs].forEach((source) => {

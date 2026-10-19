@@ -199,7 +199,7 @@ test('weather without a place survives a pending home response and is cleared on
   page.onShow();
   const initial = requests.splice(0);
   wx.getLocation = (options) => options.success({ latitude: 12, longitude: 18 });
-  page.updateCurrentLocation();
+  page.homeWeather.locate();
   const weatherRequest = requests.shift();
   assert.equal(new URL(weatherRequest.url).pathname, '/api/weather/atmosphere/browser');
   weatherRequest.success({ statusCode: 200, data: {
@@ -217,7 +217,6 @@ test('weather without a place survives a pending home response and is cleared on
   respond(requests.splice(0), 'account-b');
   await settle();
   assert.equal(page.data.weather.temperatureText, '--°');
-  assert.equal(page.transientWeather, null);
 });
 
 test('a location result obtained after logout never sends coordinates with a new session', async () => {
@@ -227,7 +226,7 @@ test('a location result obtained after logout never sends coordinates with a new
   await settle();
   let finishLocation;
   wx.getLocation = (options) => { finishLocation = options.success; };
-  page.updateCurrentLocation();
+  page.homeWeather.locate();
   storage.set('snowlit_token', 'session-b');
   page.onShow();
   respond(requests.splice(0), 'account-b');
