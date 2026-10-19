@@ -3,7 +3,7 @@ import { errorMessage } from '../../../display';
 import { IMAGE_ACCEPT, pickImages } from '../../../imageFiles';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { gsap } from 'gsap';
-import { isInstantMotion, prefersReducedMotion, shouldSkipMotion } from '../../../motion';
+import { isInstantMotion, prefersReducedMotion, shouldSkipMotion, useMotionSlots } from '../../../motion';
 import { CalendarDays, Coffee, Gift, Heart, ImagePlus, Loader2, Luggage, MapPin, Pencil, Star, Trash2 } from 'lucide-vue-next';
 import { NAlert, NButton, NDatePicker, NInput, NUpload, type UploadFileInfo } from 'naive-ui';
 import {
@@ -62,6 +62,7 @@ let locationSearchTimer: ReturnType<typeof window.setTimeout> | null = null;
 let editorContext: gsap.Context | undefined;
 let editorOpenTl: gsap.core.Timeline | undefined;
 let editorCloseTl: gsap.core.Timeline | undefined;
+const slots = useMotionSlots<'editorContext' | 'editorOpenTl' | 'editorCloseTl'>();
 
 const categoryOptions = computed(() =>
   STORY_CATEGORY_OPTIONS.filter((option): option is { key: StoryCategory; label: string } => option.key !== 'all')
@@ -127,9 +128,6 @@ onBeforeUnmount(() => {
   if (locationSearchTimer) {
     window.clearTimeout(locationSearchTimer);
   }
-  editorOpenTl?.kill();
-  editorCloseTl?.kill();
-  editorContext?.revert();
 });
 
 function resetForm() {
@@ -352,12 +350,12 @@ function playEditorOpen() {
   if (!editorRoot.value) {
     return;
   }
-  editorOpenTl?.kill();
-  editorCloseTl?.kill();
-  editorContext?.revert();
+  slots.stop('editorOpenTl');
+  slots.stop('editorCloseTl');
+  slots.stop('editorContext');
 
   const root = editorRoot.value;
-  editorContext = gsap.context(() => {
+  editorContext = slots.hold('editorContext', gsap.context(() => {
     const fields = Array.from(root.querySelectorAll<HTMLElement>('.moment-editor__motion-field'));
     const photos = Array.from(root.querySelectorAll<HTMLElement>('.moment-editor__photo-slot'));
 
@@ -367,7 +365,7 @@ function playEditorOpen() {
     }
 
     const isMobile = window.matchMedia?.('(max-width: 767px)').matches;
-    editorOpenTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
+    editorOpenTl = slots.hold('editorOpenTl', gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } }));
     editorOpenTl
       .addLabel('paperIn', 0)
       .fromTo(
@@ -403,18 +401,18 @@ function playEditorOpen() {
         },
         'photosIn'
       );
-  }, root);
+  }, root));
 }
 
 function playEditorClose() {
-  editorOpenTl?.kill();
-  editorCloseTl?.kill();
+  slots.stop('editorOpenTl');
+  slots.stop('editorCloseTl');
   if (!isEditorRendered.value) {
     return;
   }
   if (isInstantMotion() || !editorRoot.value) {
     isEditorRendered.value = false;
-    editorContext?.revert();
+    slots.stop('editorContext');
     return;
   }
 
@@ -422,16 +420,16 @@ function playEditorClose() {
   const fields = Array.from(root.querySelectorAll<HTMLElement>('.moment-editor__motion-field'));
   const finish = () => {
     isEditorRendered.value = false;
-    editorContext?.revert();
+    slots.stop('editorContext');
   };
 
   if (prefersReducedMotion()) {
-    editorCloseTl = gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish });
+    editorCloseTl = slots.hold('editorCloseTl', gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish }));
     editorCloseTl.to(root, { autoAlpha: 0, duration: 0.08 }, 0);
     return;
   }
 
-  editorCloseTl = gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish });
+  editorCloseTl = slots.hold('editorCloseTl', gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish }));
   editorCloseTl
     .to(fields, { autoAlpha: 0, y: -2, duration: 0.08 }, 0)
     .to(root, { autoAlpha: 0, scale: 0.975, y: 4, duration: 0.14, clearProps: 'transform,visibility' }, 0.02);

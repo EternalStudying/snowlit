@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useReducedMotion } from '../../../motion';
+import { useMotionSlots, useReducedMotion } from '../../../motion';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -65,6 +65,7 @@ let narrowScreenQuery: MediaQueryList | undefined;
 let context: gsap.Context | undefined;
 let scrollTrigger: ScrollTrigger | undefined;
 let galleryChromeIntroTimeline: gsap.core.Timeline | undefined;
+const slots = useMotionSlots<'context' | 'galleryChromeIntroTimeline'>();
 let refreshTimer: number | undefined;
 
 const galleryPhotos = computed(() => (props.photos.length > 0 ? props.photos : props.collection.previewPhotos));
@@ -128,7 +129,7 @@ function setupGalleryTimeline() {
     return;
   }
 
-  context = gsap.context(() => {
+  context = slots.hold('context', gsap.context(() => {
     const cards = gsap.utils.toArray<HTMLElement>('.album-immersive-gallery__photo', root);
     const imagePapers = gsap.utils.toArray<HTMLElement>('.album-immersive-gallery__paper', root);
     const introText = root.querySelector<HTMLElement>('.album-immersive-gallery__scroll-text--intro');
@@ -201,7 +202,7 @@ function setupGalleryTimeline() {
       scrub: 1,
       invalidateOnRefresh: true
     });
-  }, root);
+  }, root));
 
   galleryReady.value = true;
   refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 80);
@@ -226,13 +227,13 @@ function playGalleryChromeIntro() {
     )
   );
 
-  galleryChromeIntroTimeline?.kill();
-  galleryChromeIntroTimeline = gsap.timeline({
+  slots.stop('galleryChromeIntroTimeline');
+  galleryChromeIntroTimeline = slots.hold('galleryChromeIntroTimeline', gsap.timeline({
     defaults: {
       ease: 'power3.out',
       overwrite: 'auto'
     }
-  });
+  }));
 
   galleryChromeIntroTimeline
     .fromTo(
@@ -303,14 +304,12 @@ function cleanupGallery() {
     refreshTimer = undefined;
   }
 
-  galleryChromeIntroTimeline?.kill();
+  slots.stop('galleryChromeIntroTimeline');
   galleryChromeIntroTimeline = undefined;
   scrollTrigger?.kill();
   scrollTrigger = undefined;
-  if (context) {
-    context.revert();
-    context = undefined;
-  }
+  slots.stop('context');
+  context = undefined;
 }
 
 function syncNarrowScreen() {

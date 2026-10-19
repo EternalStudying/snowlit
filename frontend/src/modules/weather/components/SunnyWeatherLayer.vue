@@ -40,7 +40,7 @@ import {
   watch
 } from 'vue';
 import gsap from 'gsap';
-import { useReducedMotion } from '../../../motion';
+import { useMotionSlots, useReducedMotion } from '../../../motion';
 
 interface Props {
   active?: boolean
@@ -60,6 +60,7 @@ const isStatic = computed(
   () => props.static || prefersReducedMotion.value
 );
 let gsapContext: gsap.Context | undefined;
+const slots = useMotionSlots<'gsapContext'>();
 
 const dustParticles = Array.from({ length: 24 }).map((_, index) => {
   return {
@@ -77,7 +78,7 @@ const dustParticles = Array.from({ length: 24 }).map((_, index) => {
 });
 
 function stopAnimations() {
-  gsapContext?.revert();
+  slots.stop('gsapContext');
   gsapContext = undefined;
 }
 
@@ -87,7 +88,7 @@ function initAnimations() {
     return;
   }
 
-  gsapContext = gsap.context(() => {
+  gsapContext = slots.hold('gsapContext', gsap.context(() => {
     if (isStatic.value) {
       return;
     }
@@ -134,7 +135,7 @@ function initAnimations() {
       yoyo: true,
       repeat: -1
     });
-  }, layerRef.value);
+  }, layerRef.value));
 }
 
 async function syncAnimations() {

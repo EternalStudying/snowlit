@@ -2,7 +2,7 @@
 import { formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
-import { isInstantMotion, prefersReducedMotion, shouldSkipMotion } from '../../../motion';
+import { isInstantMotion, prefersReducedMotion, shouldSkipMotion, useMotionSlots } from '../../../motion';
 import { CalendarDays, ChevronLeft, ChevronRight, Edit3, MapPin, Tag, Trash2, X } from 'lucide-vue-next';
 import { STORY_CATEGORY_LABELS, type StoryMoment } from '../model';
 
@@ -24,6 +24,7 @@ const brokenViewerImages = ref<Record<string, boolean>>({});
 let detailContext: gsap.Context | undefined;
 let detailOpenTl: gsap.core.Timeline | undefined;
 let detailCloseTl: gsap.core.Timeline | undefined;
+const slots = useMotionSlots<'detailContext' | 'detailOpenTl' | 'detailCloseTl'>();
 let hasHandledMomentChange = false;
 
 const viewerImages = computed(() => (renderedMoment.value?.images ?? []).slice(0, 3));
@@ -45,7 +46,7 @@ watch(
       if (shouldPlayOpen) {
         playDetailOpen();
       } else {
-        detailCloseTl?.kill();
+        slots.stop('detailCloseTl');
       }
       return;
     }
@@ -62,21 +63,18 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleViewerKeydown, { capture: true });
-  detailOpenTl?.kill();
-  detailCloseTl?.kill();
-  detailContext?.revert();
 });
 
 function playDetailOpen() {
   if (!detailRoot.value) {
     return;
   }
-  detailOpenTl?.kill();
-  detailCloseTl?.kill();
-  detailContext?.revert();
+  slots.stop('detailOpenTl');
+  slots.stop('detailCloseTl');
+  slots.stop('detailContext');
 
   const root = detailRoot.value;
-  detailContext = gsap.context(() => {
+  detailContext = slots.hold('detailContext', gsap.context(() => {
     const softTargets = Array.from(
       root.querySelectorAll<HTMLElement>('.moment-detail__paper-content > *, .moment-detail__scroll > *, .moment-detail__actions button')
     );
@@ -85,7 +83,7 @@ function playDetailOpen() {
       return;
     }
     const isMobile = window.matchMedia?.('(max-width: 767px)').matches;
-    detailOpenTl = gsap.timeline({ defaults: { ease: 'power2.out', overwrite: 'auto' } });
+    detailOpenTl = slots.hold('detailOpenTl', gsap.timeline({ defaults: { ease: 'power2.out', overwrite: 'auto' } }));
     detailOpenTl
       .fromTo(
         root,
@@ -99,27 +97,27 @@ function playDetailOpen() {
         { autoAlpha: 1, y: 0, duration: 0.16, stagger: { each: 0.025, from: 'start' }, clearProps: 'transform,visibility' },
         0.08
       );
-  }, root);
+  }, root));
 }
 
 function playDetailClose() {
-  detailOpenTl?.kill();
-  detailCloseTl?.kill();
+  slots.stop('detailOpenTl');
+  slots.stop('detailCloseTl');
   if (!renderedMoment.value) {
     return;
   }
   if (isInstantMotion() || !detailRoot.value) {
     renderedMoment.value = null;
-    detailContext?.revert();
+    slots.stop('detailContext');
     return;
   }
   const root = detailRoot.value;
   const finish = () => {
     renderedMoment.value = null;
     closeImageViewer();
-    detailContext?.revert();
+    slots.stop('detailContext');
   };
-  detailCloseTl = gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish });
+  detailCloseTl = slots.hold('detailCloseTl', gsap.timeline({ defaults: { ease: 'power1.out', overwrite: 'auto' }, onComplete: finish }));
   if (prefersReducedMotion()) {
     detailCloseTl.to(root, { autoAlpha: 0, duration: 0.08 }, 0);
     return;

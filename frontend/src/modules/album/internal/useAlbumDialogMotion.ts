@@ -6,6 +6,7 @@ import {
   type Ref
 } from 'vue';
 import { gsap } from 'gsap';
+import { useMotionSlots } from '../../../motion';
 
 type AlbumDialogMotionOptions = {
   isCreateDialogOpen: Ref<boolean>;
@@ -28,6 +29,7 @@ export function useAlbumDialogMotion({
   let photoPreviewMotionContext: ReturnType<typeof gsap.context> | undefined;
   let photoPreviewEnterTimeline: gsap.core.Timeline | undefined;
   let photoPreviewLeaveTimeline: gsap.core.Timeline | undefined;
+  const slots = useMotionSlots<'createDialogOpenTimeline' | 'createDialogCloseTimeline' | 'photoPreviewEnterTimeline' | 'photoPreviewLeaveTimeline'>();
 
   watch(
     isCreateDialogOpen,
@@ -43,8 +45,8 @@ export function useAlbumDialogMotion({
   );
 
   function stopCreateDialogMotion() {
-    createDialogOpenTimeline?.kill();
-    createDialogCloseTimeline?.kill();
+    slots.stop('createDialogOpenTimeline');
+    slots.stop('createDialogCloseTimeline');
     createDialogOpenTimeline = undefined;
     createDialogCloseTimeline = undefined;
     createDialogMotionContext?.revert();
@@ -81,12 +83,12 @@ export function useAlbumDialogMotion({
           '.album-create-dialog__notice'
         )
       );
-      createDialogOpenTimeline = gsap.timeline({
+      createDialogOpenTimeline = slots.hold('createDialogOpenTimeline', gsap.timeline({
         defaults: {
           ease: 'power3.out',
           overwrite: 'auto'
         }
-      });
+      }));
 
       createDialogOpenTimeline
         .fromTo(
@@ -273,13 +275,13 @@ export function useAlbumDialogMotion({
 
     stopCreateDialogMotion();
     createDialogMotionContext = gsap.context(() => {
-      createDialogCloseTimeline = gsap.timeline({
+      createDialogCloseTimeline = slots.hold('createDialogCloseTimeline', gsap.timeline({
         defaults: {
           ease: 'power1.in',
           overwrite: 'auto'
         },
         onComplete: finishCreateDialogClose
-      });
+      }));
 
       createDialogCloseTimeline
         .to(
@@ -332,8 +334,8 @@ export function useAlbumDialogMotion({
   }
 
   function stopPhotoPreviewMotion() {
-    photoPreviewEnterTimeline?.kill();
-    photoPreviewLeaveTimeline?.kill();
+    slots.stop('photoPreviewEnterTimeline');
+    slots.stop('photoPreviewLeaveTimeline');
     photoPreviewEnterTimeline = undefined;
     photoPreviewLeaveTimeline = undefined;
     photoPreviewMotionContext?.revert();
@@ -376,7 +378,7 @@ export function useAlbumDialogMotion({
         )
       );
 
-      photoPreviewEnterTimeline = gsap.timeline({
+      photoPreviewEnterTimeline = slots.hold('photoPreviewEnterTimeline', gsap.timeline({
         defaults: {
           ease: 'power3.out',
           overwrite: 'auto'
@@ -385,7 +387,7 @@ export function useAlbumDialogMotion({
           photoPreviewEnterTimeline = undefined;
           done();
         }
-      });
+      }));
 
       photoPreviewEnterTimeline.fromTo(
         backdrop,
@@ -507,7 +509,7 @@ export function useAlbumDialogMotion({
         )
       );
 
-      photoPreviewLeaveTimeline = gsap.timeline({
+      photoPreviewLeaveTimeline = slots.hold('photoPreviewLeaveTimeline', gsap.timeline({
         defaults: {
           ease: 'power1.in',
           overwrite: 'auto'
@@ -516,7 +518,7 @@ export function useAlbumDialogMotion({
           done();
           stopPhotoPreviewMotion();
         }
-      });
+      }));
 
       if (previewControls.length > 0) {
         photoPreviewLeaveTimeline.to(previewControls, {

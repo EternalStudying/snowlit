@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
-import { isInstantMotion } from '../../../motion';
+import { isInstantMotion, useMotionSlots } from '../../../motion';
 import loaderTitleArt from '../assets/story-loader-title.webp';
 
 const props = defineProps<{
@@ -24,19 +24,13 @@ let introTl: gsap.core.Timeline | undefined;
 let progressTween: gsap.core.Tween | undefined;
 let leaveTl: gsap.core.Timeline | undefined;
 let ctx: gsap.Context | undefined;
+const slots = useMotionSlots<'introTl' | 'progressTween' | 'leaveTl' | 'ctx'>();
 let hasStartedProgress = false;
 
 const safeProgress = computed(() => Math.min(100, Math.max(0, Math.round(props.progress))));
 
 onMounted(() => {
   nextTick(playIntro);
-});
-
-onBeforeUnmount(() => {
-  introTl?.kill();
-  progressTween?.kill();
-  leaveTl?.kill();
-  ctx?.revert();
 });
 
 watch(
@@ -70,8 +64,8 @@ function playIntro() {
     return;
   }
 
-  introTl?.kill();
-  ctx?.revert();
+  slots.stop('introTl');
+  slots.stop('ctx');
 
   if (props.reducedMotion || isInstantMotion()) {
     gsap.set(root.value, { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 0%)' });
@@ -80,7 +74,7 @@ function playIntro() {
     return;
   }
 
-  ctx = gsap.context(() => {
+  ctx = slots.hold('ctx', gsap.context(() => {
     const loaderContent = root.value?.querySelector<HTMLElement>('.story-map-loader__content');
     const title = root.value?.querySelector<HTMLElement>('.story-map-loader__paper');
     const text = root.value?.querySelector<HTMLElement>('.story-map-loader__text');
@@ -91,7 +85,7 @@ function playIntro() {
     const titleTarget = title ? [title] : [];
     const textTarget = text ? [text] : [];
 
-    introTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
+    introTl = slots.hold('introTl', gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } }));
     gsap.set(routeFill.value, { scaleX: 0, transformOrigin: 'left center' });
     introTl
       .set(root.value, { autoAlpha: 1, clipPath: 'inset(0% 0% 0% 0%)' })
@@ -102,7 +96,7 @@ function playIntro() {
     if (nodes.length) {
       introTl.fromTo(nodes, { autoAlpha: 0.34, xPercent: -50, yPercent: -50, scale: 0.72 }, { autoAlpha: 1, xPercent: -50, yPercent: -50, scale: 1, duration: 0.22, stagger: { each: 0.055, from: 'start' } }, 0.56);
     }
-  }, root.value);
+  }, root.value));
   animateProgress();
 }
 
@@ -110,20 +104,20 @@ function animateProgress() {
   if (!routeFill.value) {
     return;
   }
-  progressTween?.kill();
+  slots.stop('progressTween');
   if (props.reducedMotion || isInstantMotion()) {
     gsap.set(routeFill.value, { scaleX: progressScale(), transformOrigin: 'left center' });
     return;
   }
   const duration = hasStartedProgress ? 0.34 : 0.62;
   hasStartedProgress = true;
-  progressTween = gsap.to(routeFill.value, {
+  progressTween = slots.hold('progressTween', gsap.to(routeFill.value, {
     scaleX: progressScale(),
     transformOrigin: 'left center',
     duration,
     ease: 'power2.out',
     overwrite: 'auto'
-  });
+  }));
 }
 
 function playLeave() {
@@ -132,9 +126,9 @@ function playLeave() {
     return;
   }
 
-  introTl?.kill();
-  progressTween?.kill();
-  leaveTl?.kill();
+  slots.stop('introTl');
+  slots.stop('progressTween');
+  slots.stop('leaveTl');
 
   if (props.reducedMotion || isInstantMotion()) {
     gsap.to(root.value, {
@@ -145,10 +139,10 @@ function playLeave() {
     return;
   }
 
-  leaveTl = gsap.timeline({
+  leaveTl = slots.hold('leaveTl', gsap.timeline({
     defaults: { ease: 'power3.inOut', overwrite: 'auto' },
     onComplete: () => emit('after-leave')
-  });
+  }));
   leaveTl
     .to(routeFill.value, { scaleX: 1, transformOrigin: 'left center', duration: 0.18, ease: 'power2.out' }, 0)
     .to(root.value, { clipPath: 'inset(0% 0% 0% 100%)', autoAlpha: 0, duration: 0.56 }, 0.12);

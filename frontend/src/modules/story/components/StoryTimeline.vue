@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { formatDottedDate } from '../../../display';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
+import { useMotionSlots } from '../../../motion';
 import { STORY_CATEGORY_LABELS, type StoryMoment } from '../model';
 
 const props = defineProps<{
@@ -26,16 +27,11 @@ const playedNodeIds = new Set<number>();
 let timelineContext: gsap.Context | undefined;
 let drawTl: gsap.core.Timeline | undefined;
 let feedbackTl: gsap.core.Timeline | undefined;
+const slots = useMotionSlots<'timelineContext' | 'drawTl' | 'feedbackTl'>();
 let hasPlayedInitial = false;
 
 onMounted(() => {
   nextTick(playTimelineMotion);
-});
-
-onBeforeUnmount(() => {
-  drawTl?.kill();
-  feedbackTl?.kill();
-  timelineContext?.revert();
 });
 
 watch(
@@ -65,16 +61,16 @@ function playTimelineMotion() {
     return;
   }
 
-  drawTl?.kill();
-  timelineContext?.revert();
-  timelineContext = gsap.context(() => {
+  slots.stop('drawTl');
+  slots.stop('timelineContext');
+  timelineContext = slots.hold('timelineContext', gsap.context(() => {
     if (props.reducedMotion) {
       gsap.set([line, ...nodes], { autoAlpha: 1, scale: 1, scaleX: 1, y: 0, clearProps: 'transform,visibility' });
       return;
     }
 
     if (!hasPlayedInitial) {
-      drawTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
+      drawTl = slots.hold('drawTl', gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } }));
       drawTl.addLabel('timelineDraw', 0).fromTo(line, { scaleX: 0, transformOrigin: 'left center' }, { scaleX: 1, duration: 0.52, ease: 'power2.inOut' }, 'timelineDraw');
       if (nodes.length) {
         drawTl.fromTo(
@@ -102,19 +98,19 @@ function playTimelineMotion() {
       return;
     }
     newNodes.forEach((node) => playedNodeIds.add(Number(node.dataset.storyMotionId)));
-    drawTl = gsap
+    drawTl = slots.hold('drawTl', gsap
       .timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } })
-      .fromTo(newNodes, { autoAlpha: 0, scale: 0.55, y: 4 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.26, stagger: { each: 0.035, from: 'start' }, clearProps: 'transform,visibility' });
-  }, root);
+      .fromTo(newNodes, { autoAlpha: 0, scale: 0.55, y: 4 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.26, stagger: { each: 0.035, from: 'start' }, clearProps: 'transform,visibility' }));
+  }, root));
 }
 
 function playNodeFeedback() {
-  feedbackTl?.kill();
+  slots.stop('feedbackTl');
   if (props.reducedMotion || !timelineRoot.value) {
     return;
   }
   const root = timelineRoot.value;
-  feedbackTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
+  feedbackTl = slots.hold('feedbackTl', gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } }));
 
   if (props.removingMotionId) {
     const removing = root.querySelector<HTMLElement>(`.story-timeline__node[data-story-motion-id="${props.removingMotionId}"]`);
