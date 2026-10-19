@@ -11,6 +11,13 @@
 - Passed: login; update notice; location consent prompt, decline, settings dialog and re-prompt; Home hero, nav fusion, scroll reveal and count-up; Wishes board entry, create dialog submit and close, detail dialog, completion with image (stamp after the 200 response), lane move to done, image preview open and Escape close, reopen back to its lane; Story placeholder map, moment detail, editor open/cancel and image rejection; Album draft resume, PNG upload into the draft, desktop immersive gallery scroll; Diary timeline and editor image rejection; Messages bubbles and a post with an image; About; feedback dialog image rejection.
 - Pre-existing issues found are listed under Current Limits in [findings](findings.md); none were changed.
 
+## Follow-up Fixes (branch `fix/frontend-diary-location-mobile-gallery`)
+
+- Diary no longer pre-fills the weather fallback's "unknown" location or its default weather label, and does not save a snapshot from the fallback alone; the shared helpers live in the weather module.
+- The immersive album gallery uses the stacked list at 760px or narrower; the header scrolls away with the list.
+- Checks: `npx vitest run` passed (67 files, 437 tests); the new diary and gallery tests fail against the old code. `npx vue-tsc -b` is clean and `npm run build` passes.
+- Browser check at 375px against throwaway MySQL 8.4 (13306) and Redis 7.4 (16379), seeded with SQL_INIT_MODE=always, plus the packaged jar on 18080 with local-disk uploads. Passed: three photos stacked and visible with transform none; the gallery scrolls; photo preview opens and Escape closes it. Widening to 1280px switches live to the timeline, and scrolling it reveals photos. A new diary with the fallback active (top bar "位置待更新 · 天气待更新") had empty location and weather fields. Containers were removed afterwards.
+
 ## Not Verified
 
 Real maps (AMap), real geolocation and weather providers, mobile widths beyond the checks above, logout and switching members in the browser (covered by unit tests only), album publish, and the mini program.
