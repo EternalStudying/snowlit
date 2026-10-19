@@ -2,7 +2,7 @@
 
 ## Current State
 
-2026-10-18: frontend architecture refactor complete on branch `refactor/frontend-deepening` (not merged, not pushed). Commits, in order: weather contract tests read WeatherCondition.java; shared display helpers and trusted API types; behaviour tests instead of source-text tests; weather pipeline pruned to LazyLayers; one image-picking rule; session epoch and request guards; one motion module; Wishes board motion split from state; journal shell to src/shell and weather scheduling into the weather module.
+2026-10-18: frontend architecture refactor complete and fast-forwarded into local main from `refactor/frontend-deepening` (not pushed). Commits, in order: weather contract tests read WeatherCondition.java; shared display helpers and trusted API types; behaviour tests instead of source-text tests; weather pipeline pruned to LazyLayers; one image-picking rule; session epoch and request guards; one motion module; Wishes board motion split from state; journal shell to src/shell and weather scheduling into the weather module.
 
 ## Verification in This Task
 

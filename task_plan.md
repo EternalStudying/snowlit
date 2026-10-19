@@ -6,7 +6,7 @@ Refactor the backend and Web architecture: deepen shallow modules found in the 2
 
 ## Current Phase
 
-Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor complete on `refactor/frontend-deepening` (not merged, not pushed). Mini-program architecture work has not started.
+Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor complete and fast-forwarded into local main from `refactor/frontend-deepening` (not pushed). Mini-program architecture work has not started.
 
 ### Phase 1: Architecture review and design decisions
 - **Status:** complete
@@ -21,7 +21,7 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 - **Status:** complete; fast-forwarded into local main from `refactor/backend-deepening-2` (not pushed); migrations and real-database tests excluded by user decision
 
 ### Phase 5: Frontend refactor (eight candidates)
-- **Status:** complete on `refactor/frontend-deepening` — see [Web plan](frontend/task_plan.md) and [Web progress](frontend/progress.md)
+- **Status:** complete; fast-forwarded into local main from `refactor/frontend-deepening` (not pushed) — see [Web plan](frontend/task_plan.md) and [Web progress](frontend/progress.md)
 
 ## Context Entry Points
 

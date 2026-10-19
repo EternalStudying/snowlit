@@ -2,7 +2,7 @@
 
 ## Current Task
 
-Frontend architecture refactor from the 2026-10-18 review: complete on `refactor/frontend-deepening`, awaiting the user's decision to merge.
+Frontend architecture refactor from the 2026-10-18 review: complete and fast-forwarded into local main (not pushed).
 
 | Candidate | Status |
 |---|---|

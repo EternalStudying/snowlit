@@ -16,7 +16,7 @@ This task updates Markdown only. It does not rerun business tests, start or stop
 
 ## Frontend Refactor (2026-10-18)
 
-On `refactor/frontend-deepening` (not merged): Web 66 files / 431 tests passing, vue-tsc clean and production build passing after every commit; a live browser check of every page and the main dialogs and uploads ran against throwaway MySQL/Redis and the packaged backend jar (details in [Web progress](frontend/progress.md)). Backend and mini-program code did not change.
+Merged into local main from `refactor/frontend-deepening` (not pushed): Web 66 files / 431 tests passing, vue-tsc clean and production build passing after every commit; a live browser check of every page and the main dialogs and uploads ran against throwaway MySQL/Redis and the packaged backend jar (details in [Web progress](frontend/progress.md)). Backend and mini-program code did not change.
 
 ## Second Backend Pass (2026-10-18)
 
