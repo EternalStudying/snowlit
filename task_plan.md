@@ -20,6 +20,9 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 ### Phase 4: Second backend pass (review items 3–7)
 - **Status:** complete; fast-forwarded into local main from `refactor/backend-deepening-2` (not pushed); migrations and real-database tests excluded by user decision
 
+### Phase 6: Frontend second pass (target architecture)
+- **Status:** complete; fast-forwarded into local main from `refactor/frontend-ideal` (not pushed)
+
 ### Phase 5: Frontend refactor (eight candidates)
 - **Status:** complete; fast-forwarded into local main from `refactor/frontend-deepening` (not pushed) — see [Web plan](frontend/task_plan.md) and [Web progress](frontend/progress.md)
 

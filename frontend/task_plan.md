@@ -2,7 +2,7 @@
 
 ## Current Task
 
-Frontend architecture refactor from the 2026-10-18 review: complete and fast-forwarded into local main (not pushed).
+Frontend architecture refactor from the 2026-10-18 review, plus a second pass to the target architecture: complete and fast-forwarded into local main (not pushed).
 
 | Candidate | Status |
 |---|---|
@@ -15,6 +15,8 @@ Frontend architecture refactor from the 2026-10-18 review: complete and fast-for
 | Wishes data split from choreography | complete |
 | Journal shell to src/shell; weather owns its schedule | complete |
 | Browser check against throwaway services | complete |
+| Second pass: Story motion and map split, motion slots everywhere, shell styles, tidy-ups | complete (`refactor/frontend-ideal`) |
+| Computed-style comparison against main | complete |
 
 ## Entry Points
 

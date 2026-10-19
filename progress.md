@@ -14,6 +14,10 @@
 
 This task updates Markdown only. It does not rerun business tests, start or stop services, access business data, change credentials, or commit to Git.
 
+## Frontend Second Pass (2026-10-18)
+
+Merged into local main from `refactor/frontend-ideal` (not pushed): Story choreography and map camera/marker motion as modules, motion slots in every component, the shell's own stylesheet and class names, album partial acceptance. Web 69 files / 445 tests passing, vue-tsc clean and build passing after every commit; a computed-style comparison against main matched on every page apart from timing and randomness (details in [Web progress](frontend/progress.md)).
+
 ## Frontend Refactor (2026-10-18)
 
 Merged into local main from `refactor/frontend-deepening` (not pushed): Web 66 files / 431 tests passing, vue-tsc clean and production build passing after every commit; a live browser check of every page and the main dialogs and uploads ran against throwaway MySQL/Redis and the packaged backend jar (details in [Web progress](frontend/progress.md)). Backend and mini-program code did not change.

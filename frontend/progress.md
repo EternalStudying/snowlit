@@ -18,6 +18,15 @@
 - Checks: `npx vitest run` passed (67 files, 437 tests); the new diary and gallery tests fail against the old code. `npx vue-tsc -b` is clean and `npm run build` passes.
 - Browser check at 375px against throwaway MySQL 8.4 (13306) and Redis 7.4 (16379), seeded with SQL_INIT_MODE=always, plus the packaged jar on 18080 with local-disk uploads. Passed: three photos stacked and visible with transform none; the gallery scrolls; photo preview opens and Escape closes it. Widening to 1280px switches live to the timeline, and scrolling it reveals photos. A new diary with the fallback active (top bar "位置待更新 · 天气待更新") had empty location and weather fields. Containers were removed afterwards.
 
+## Second Pass (2026-10-18, branch `refactor/frontend-ideal`)
+
+Commits: Story choreography out of StoryView into useStoryMotion, with useMotionSlots added to the motion module; the Story map canvas split into the canvas, useStoryMapCamera and useStoryMarkerMotion (1,294 → 817 lines); every remaining component on motion slots; the shell's styles moved to src/shell/journal-shell.css with journal-* class names and useHomeMotion deleted (all its flags were constant); album partial acceptance and smooth scroll on the shared reduced-motion listener; two misfiled style rules fixed.
+
+- After every commit: strict check script (vitest exit code, no unhandled errors, `npx vue-tsc -b`, `npm run build`). Final: 69 files, 445 tests passing. New tests cover motion slots and close-once, Story camera wheel batching/unmount/fly-in, and album partial acceptance.
+- Computed-style comparison against main: both builds served side by side (main from a temporary worktree) against throwaway MySQL 8.4 / Redis 7.4 and the packaged jar, each page settled, scrolled through and frozen, then ~35 computed properties hashed per element in document order. Home, Story, Wishes, Album, Diary, Messages, About and the logged-out login page matched element for element except for timing or randomness (hero autoplay, nav restore, JS idle floats, random diary card art, random login lamp hue). The comparison found two real differences, both fixed: the journal stage bottom padding on non-Home pages and the login `.eyebrow` style.
+- Functional checks on the branch: Wishes create/close, completion (stamp after the 200 response, lane move, no ghost left), Story detail/editor/Escape and delete (confirm, fade, removal), Album draft upload with a mixed selection (good file uploaded, rule shown), dialog close, desktop immersive gallery scroll and Escape. Story save was not exercised: it needs a map location, which needs an AMap key.
+- Note for future browser checks: the built-in browser pauses animation frames whenever its pane is hidden, which freezes GSAP, reveals and nav fusion; confirm `requestAnimationFrame` runs before trusting a result.
+
 ## Not Verified
 
-Real maps (AMap), real geolocation and weather providers, mobile widths beyond the checks above, logout and switching members in the browser (covered by unit tests only), album publish, and the mini program.
+Real maps (AMap) and Story save with a location, real geolocation and weather providers, mobile widths beyond the checks above, logout and switching members in the browser (covered by unit tests only), album publish, and the mini program.
