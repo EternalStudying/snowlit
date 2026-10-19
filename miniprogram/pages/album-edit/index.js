@@ -2,7 +2,7 @@ const { ROUTES, routePath } = require('../../constants/routes');
 const { cancelAlbumDraft, createAlbumDraft, getCurrentAlbumDraft, publishAlbumDraft, uploadAlbumDraftPhoto } = require('../../services/album');
 const { showConfirm } = require('../../utils/dialog');
 const { showInfo, showSuccess } = require('../../utils/notify');
-const { authorizePrivacy } = require('../../utils/privacy');
+const { pickImages } = require('../../utils/image-picker');
 const {
   MAX_ALBUM_PHOTOS,
   VISIBILITY_OPTIONS,
@@ -109,40 +109,21 @@ Page({
       return;
     }
 
-    authorizePrivacy({
+    pickImages({
+      count: MAX_ALBUM_PHOTOS - this.data.photos.length,
       title: '选择照片',
-      message: '需要读取你选中的照片，用于添加相册照片。'
-    }).then((agreed) => {
-      if (!agreed) {
-        showInfo('同意隐私指引后才能选择照片');
+      message: '需要读取你选中的照片，用于添加相册照片。',
+      noun: '照片',
+      isBlocked: () => this.data.submitting
+    }).then((files) => {
+      if (!files.length) {
         return;
       }
-      if (this.data.submitting) {
-        return;
+      const result = appendSelectedAlbumPhotos(this.data.photos, files);
+      this.updatePhotos(result.photos);
+      if (result.reachedLimit) {
+        showInfo(`最多 ${MAX_ALBUM_PHOTOS} 张`);
       }
-
-      wx.chooseMedia({
-        count: MAX_ALBUM_PHOTOS - this.data.photos.length,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        success: (response) => {
-          if (this.data.submitting) {
-            return;
-          }
-          const selected = Array.isArray(response.tempFiles) ? response.tempFiles : [];
-          const result = appendSelectedAlbumPhotos(this.data.photos, selected);
-          this.updatePhotos(result.photos);
-          if (result.reachedLimit) {
-            showInfo(`最多 ${MAX_ALBUM_PHOTOS} 张`);
-          }
-        },
-        fail: (error) => {
-          if (!/cancel/i.test((error && error.errMsg) || '')) {
-            showInfo('选择照片失败，请检查权限后重试');
-          }
-        }
-      });
     });
   },
 

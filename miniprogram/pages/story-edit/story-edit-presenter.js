@@ -1,3 +1,5 @@
+const { appendPickedImages } = require('../../utils/image-list');
+
 const MAX_STORY_IMAGES = 3;
 
 const STORY_CATEGORIES = [
@@ -200,37 +202,13 @@ function mapStoryEditForm(response) {
 }
 
 function appendSelectedImages(currentImages, selectedFiles) {
-  const current = Array.isArray(currentImages) ? currentImages.slice(0, MAX_STORY_IMAGES) : [];
-  const selected = Array.isArray(selectedFiles) ? selectedFiles : [];
-  const result = current.slice();
-  const freeSlots = Math.max(0, MAX_STORY_IMAGES - result.length);
-  const reachedLimit = selected.length > freeSlots || current.length >= MAX_STORY_IMAGES;
-
-  selected.slice(0, freeSlots).forEach((file) => {
-    const imagePath = clean(file && (file.tempFilePath || file.path || file));
-    if (imagePath) {
-      result.push(createLocalImage(imagePath));
-    }
-  });
-
-  return {
-    images: result,
-    reachedLimit
-  };
-}
-
-function collectUploadedImageUrls(images) {
-  return (Array.isArray(images) ? images : [])
-    .filter((item) => item && item.status === 'uploaded')
-    .map((item) => clean(item.url))
-    .filter(Boolean);
+  return appendPickedImages(currentImages, selectedFiles, MAX_STORY_IMAGES, createLocalImage);
 }
 
 module.exports = {
   MAX_STORY_IMAGES,
   appendSelectedImages,
   buildStoryPayload,
-  collectUploadedImageUrls,
   createInitialStoryForm,
   mapStoryEditForm,
   mapStoryEditCategories

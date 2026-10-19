@@ -6,7 +6,6 @@ const {
   MAX_FEEDBACK_IMAGES,
   appendSelectedFeedbackImages,
   buildFeedbackPayload,
-  collectUploadedFeedbackImageUrls,
   createInitialFeedbackForm,
   createFeedbackImageSlots,
   mapFeedbackTypes
@@ -91,19 +90,6 @@ function runScreenshotSelectionTest() {
   assert.equal(result.images[2].path, 'c.jpg');
 }
 
-function runUploadedUrlTest() {
-  const urls = collectUploadedFeedbackImageUrls([
-    { status: 'uploaded', url: 'https://cdn.example.com/feedback/one.webp' },
-    { status: 'local', path: 'local.jpg', url: '' },
-    { status: 'uploaded', url: '  https://cdn.example.com/feedback/two.webp  ' }
-  ]);
-
-  assert.deepEqual(urls, [
-    'https://cdn.example.com/feedback/one.webp',
-    'https://cdn.example.com/feedback/two.webp'
-  ]);
-}
-
 function runTypesAndSlotsTest() {
   assert.deepEqual(mapFeedbackTypes('bug').map((item) => ({ value: item.value, active: item.active })), [
     { value: 'bug', active: true },
@@ -173,7 +159,6 @@ runInitialFormTest();
 runPayloadMappingTest();
 runValidationTest();
 runScreenshotSelectionTest();
-runUploadedUrlTest();
 runTypesAndSlotsTest();
 runTemplateBindingTest();
 runSystemCardStyleTest();

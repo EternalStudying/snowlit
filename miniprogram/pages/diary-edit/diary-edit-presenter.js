@@ -1,3 +1,5 @@
+const { appendPickedImages } = require('../../utils/image-list');
+
 const MAX_DIARY_IMAGES = 20;
 
 const DIARY_MOODS = [
@@ -207,30 +209,7 @@ function createLocalImage(path) {
 }
 
 function appendSelectedDiaryImages(currentImages, selectedFiles) {
-  const current = Array.isArray(currentImages) ? currentImages.slice(0, MAX_DIARY_IMAGES) : [];
-  const selected = Array.isArray(selectedFiles) ? selectedFiles : [];
-  const result = current.slice();
-  const freeSlots = Math.max(0, MAX_DIARY_IMAGES - result.length);
-  const reachedLimit = selected.length > freeSlots || current.length >= MAX_DIARY_IMAGES;
-
-  selected.slice(0, freeSlots).forEach((file) => {
-    const imagePath = clean(file && (file.tempFilePath || file.path || file));
-    if (imagePath) {
-      result.push(createLocalImage(imagePath));
-    }
-  });
-
-  return {
-    images: result,
-    reachedLimit
-  };
-}
-
-function collectUploadedDiaryImageUrls(images) {
-  return (Array.isArray(images) ? images : [])
-    .filter((item) => item && item.status === 'uploaded')
-    .map((item) => clean(item.url))
-    .filter(Boolean);
+  return appendPickedImages(currentImages, selectedFiles, MAX_DIARY_IMAGES, createLocalImage);
 }
 
 function clampCursor(value, content) {
@@ -295,7 +274,6 @@ module.exports = {
   appendSelectedDiaryImages,
   buildDiaryCreatePayload,
   buildDiaryUpdatePayload,
-  collectUploadedDiaryImageUrls,
   createInitialDiaryForm,
   formatDiaryDateText,
   insertBlockMarkdown,

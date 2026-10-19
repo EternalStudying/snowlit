@@ -144,7 +144,7 @@ function runStructureTest() {
   assert.match(completionWxml, /完成照片/);
   assert.match(completionWxml, /添加图片/);
   assert.match(completionWxml, /确认完成/);
-  assert.match(completionJs, /chooseMedia/);
+  assert.match(completionJs, /pickImages\(/);
   assert.match(completionJs, /triggerEvent\('confirm'/);
   assert.match(rule(completionCss, '.completion-photo-box'), /border:\s*1rpx dashed #cfcfcf;/);
 }

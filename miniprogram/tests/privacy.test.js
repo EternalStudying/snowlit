@@ -113,11 +113,12 @@ function runPageUsageTest() {
 
   assert.equal(indexJs.includes("require('../../utils/privacy')"), true);
   assert.match(indexJs, /authorizePrivacy\([\s\S]*updateCurrentLocation/);
-  assert.match(storyEditJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
-  assert.match(diaryEditJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
-  assert.match(albumEditJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
-  assert.match(wishCompletionJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
-  assert.match(feedbackJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
+  const pickerJs = fs.readFileSync(path.join(__dirname, '../utils/image-picker.js'), 'utf8');
+  assert.match(pickerJs, /authorizePrivacy\([\s\S]*wx\.chooseMedia/);
+  [storyEditJs, diaryEditJs, albumEditJs, wishCompletionJs, feedbackJs].forEach((source) => {
+    assert.equal(source.includes('wx.chooseMedia'), false);
+    assert.match(source, /pickImages\(/);
+  });
 }
 
 Promise.resolve()

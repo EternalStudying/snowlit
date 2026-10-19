@@ -1,3 +1,5 @@
+const { appendPickedImages } = require('../../utils/image-list');
+
 const MAX_FEEDBACK_IMAGES = 3;
 
 const FEEDBACK_TYPES = [
@@ -67,49 +69,19 @@ function buildFeedbackPayload(form, imageUrls, context) {
   };
 }
 
-function readTempFilePath(file) {
-  if (!file) {
-    return '';
-  }
-  return clean(file.tempFilePath || file.path);
-}
-
-function appendSelectedFeedbackImages(currentImages, selectedFiles) {
-  const current = Array.isArray(currentImages) ? currentImages : [];
-  const next = current.slice(0, MAX_FEEDBACK_IMAGES);
-  const files = Array.isArray(selectedFiles) ? selectedFiles : [];
-  let reachedLimit = false;
-
-  files.forEach((file) => {
-    if (next.length >= MAX_FEEDBACK_IMAGES) {
-      reachedLimit = true;
-      return;
-    }
-    const path = readTempFilePath(file);
-    if (!path) {
-      return;
-    }
-    next.push({
-      id: path,
-      path,
-      url: '',
-      status: 'local',
-      progress: 0,
-      message: ''
-    });
-  });
-
+function createLocalScreenshot(path) {
   return {
-    images: next,
-    reachedLimit: reachedLimit || files.length > next.length - current.length
+    id: path,
+    path,
+    url: '',
+    status: 'local',
+    progress: 0,
+    message: ''
   };
 }
 
-function collectUploadedFeedbackImageUrls(images) {
-  return (images || [])
-    .filter((item) => item && item.status === 'uploaded')
-    .map((item) => clean(item.url))
-    .filter(Boolean);
+function appendSelectedFeedbackImages(currentImages, selectedFiles) {
+  return appendPickedImages(currentImages, selectedFiles, MAX_FEEDBACK_IMAGES, createLocalScreenshot);
 }
 
 function createFeedbackImageSlots(images) {
@@ -144,7 +116,6 @@ module.exports = {
   appendSelectedFeedbackImages,
   buildFeedbackPayload,
   buildSystemRows,
-  collectUploadedFeedbackImageUrls,
   createInitialFeedbackForm,
   createFeedbackImageSlots,
   mapFeedbackTypes

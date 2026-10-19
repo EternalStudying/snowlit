@@ -1,5 +1,6 @@
 const { showInfo } = require('../../utils/notify');
-const { authorizePrivacy } = require('../../utils/privacy');
+const { readPickedPath } = require('../../utils/image-list');
+const { pickImages } = require('../../utils/image-picker');
 
 Component({
   properties: {
@@ -45,39 +46,17 @@ Component({
         return;
       }
 
-      authorizePrivacy({
+      pickImages({
+        count: 1,
         title: '选择完成照片',
-        message: '需要读取你选中的照片，用于记录清单完成瞬间。'
-      }).then((agreed) => {
-        if (!agreed) {
-          showInfo('同意隐私指引后才能选择照片');
-          return;
+        message: '需要读取你选中的照片，用于记录清单完成瞬间。',
+        noun: '照片',
+        isBlocked: () => this.data.submitting || this.data.visible === false
+      }).then((files) => {
+        const imagePath = readPickedPath(files[0]);
+        if (imagePath) {
+          this.setData({ imagePath });
         }
-        if (this.data.submitting) {
-          return;
-        }
-
-        wx.chooseMedia({
-          count: 1,
-          mediaType: ['image'],
-          sourceType: ['album', 'camera'],
-          sizeType: ['compressed'],
-          success: (result) => {
-            if (this.data.submitting || this.data.visible === false) {
-              return;
-            }
-            const files = Array.isArray(result.tempFiles) ? result.tempFiles : [];
-            const imagePath = files[0] && files[0].tempFilePath ? files[0].tempFilePath : '';
-            if (imagePath) {
-              this.setData({ imagePath });
-            }
-          },
-          fail: (error) => {
-            if (!/cancel/i.test((error && error.errMsg) || '')) {
-              showInfo('选择照片失败，请检查权限后重试');
-            }
-          }
-        });
       });
     },
 

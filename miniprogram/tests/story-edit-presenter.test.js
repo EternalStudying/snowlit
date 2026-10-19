@@ -5,7 +5,6 @@ const path = require('node:path');
 const {
   appendSelectedImages,
   buildStoryPayload,
-  collectUploadedImageUrls,
   mapStoryEditForm,
   mapStoryEditCategories
 } = require('../pages/story-edit/story-edit-presenter');
@@ -98,19 +97,6 @@ function runImageSelectionTest() {
     message: ''
   });
   assert.equal(result.images[2].path, 'c.jpg');
-}
-
-function runUploadedUrlTest() {
-  const urls = collectUploadedImageUrls([
-    { status: 'uploaded', url: 'https://cdn.example.com/story/one.webp' },
-    { status: 'local', path: 'local.jpg', url: '' },
-    { status: 'uploaded', url: '  https://cdn.example.com/story/two.webp  ' }
-  ]);
-
-  assert.deepEqual(urls, [
-    'https://cdn.example.com/story/one.webp',
-    'https://cdn.example.com/story/two.webp'
-  ]);
 }
 
 function runCategoryMappingTest() {
@@ -218,7 +204,6 @@ runPayloadMappingTest();
 runOptionalEndTimeTest();
 runValidationTest();
 runImageSelectionTest();
-runUploadedUrlTest();
 runCategoryMappingTest();
 runEditFormMappingTest();
 runTemplateBindingTest();

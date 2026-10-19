@@ -1,14 +1,14 @@
 const { createFeedback, uploadFeedbackImage } = require('../../services/feedback');
 const { isLoggedIn, redirectToLogin } = require('../../utils/auth');
 const { showInfo, showSuccess } = require('../../utils/notify');
-const { authorizePrivacy } = require('../../utils/privacy');
+const { collectUploadedUrls } = require('../../utils/image-list');
+const { pickImages } = require('../../utils/image-picker');
 const { ROUTES, routePath } = require('../../constants/routes');
 const {
   MAX_FEEDBACK_IMAGES,
   appendSelectedFeedbackImages,
   buildFeedbackPayload,
   buildSystemRows,
-  collectUploadedFeedbackImageUrls,
   createInitialFeedbackForm,
   createFeedbackImageSlots,
   mapFeedbackTypes
@@ -86,39 +86,21 @@ Page({
       return;
     }
 
-    authorizePrivacy({
+    pickImages({
+      count: MAX_FEEDBACK_IMAGES - this.data.screenshots.length,
       title: '选择截图',
-      message: '需要读取你选中的照片，用于提交反馈截图。'
-    }).then((agreed) => {
-      if (!agreed) {
-        showInfo('同意隐私指引后才能选择截图');
+      message: '需要读取你选中的照片，用于提交反馈截图。',
+      noun: '截图',
+      isBlocked: () => this.data.submitting
+    }).then((files) => {
+      if (!files.length) {
         return;
       }
-      if (this.data.submitting) {
-        return;
+      const result = appendSelectedFeedbackImages(this.data.screenshots, files);
+      this.updateScreenshots(result.images);
+      if (result.reachedLimit) {
+        showInfo(`最多 ${MAX_FEEDBACK_IMAGES} 张`);
       }
-
-      wx.chooseMedia({
-        count: MAX_FEEDBACK_IMAGES - this.data.screenshots.length,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        success: (response) => {
-          if (this.data.submitting) {
-            return;
-          }
-          const result = appendSelectedFeedbackImages(this.data.screenshots, response.tempFiles);
-          this.updateScreenshots(result.images);
-          if (result.reachedLimit) {
-            showInfo(`最多 ${MAX_FEEDBACK_IMAGES} 张`);
-          }
-        },
-        fail: (error) => {
-          if (!/cancel/i.test((error && error.errMsg) || '')) {
-            showInfo('选择截图失败，请检查权限后重试');
-          }
-        }
-      });
     });
   },
 
@@ -154,7 +136,7 @@ Page({
 
     const payloadResult = buildFeedbackPayload(
       this.data.form,
-      collectUploadedFeedbackImageUrls(this.data.screenshots),
+      collectUploadedUrls(this.data.screenshots),
       this.buildSubmitContext()
     );
     if (!payloadResult.valid) {
@@ -171,7 +153,7 @@ Page({
       .then(() => {
         const latestPayload = buildFeedbackPayload(
           this.data.form,
-          collectUploadedFeedbackImageUrls(this.data.screenshots),
+          collectUploadedUrls(this.data.screenshots),
           this.buildSubmitContext()
         );
         if (!latestPayload.valid) {

@@ -5,7 +5,6 @@ const {
   appendSelectedDiaryImages,
   buildDiaryCreatePayload,
   buildDiaryUpdatePayload,
-  collectUploadedDiaryImageUrls,
   createInitialDiaryForm,
   insertDiaryImageMarkdown,
   insertInlineMarkdown,
@@ -128,19 +127,6 @@ function runImageSelectionTest() {
   });
 }
 
-function runUploadedUrlTest() {
-  const urls = collectUploadedDiaryImageUrls([
-    { status: 'uploaded', url: 'https://cdn.example.com/diary/one.webp' },
-    { status: 'failed', url: 'https://cdn.example.com/diary/two.webp' },
-    { status: 'uploaded', url: '  https://cdn.example.com/diary/three.webp  ' }
-  ]);
-
-  assert.deepEqual(urls, [
-    'https://cdn.example.com/diary/one.webp',
-    'https://cdn.example.com/diary/three.webp'
-  ]);
-}
-
 function runMarkdownInsertTest() {
   assert.deepEqual(insertInlineMarkdown('今天很好', '**', '**', '重点', 2, 4), {
     content: '今天**很好**',
@@ -161,7 +147,6 @@ runExistingHeadingPayloadTest();
 runEditFormMappingTest();
 runValidationTest();
 runImageSelectionTest();
-runUploadedUrlTest();
 runMarkdownInsertTest();
 
 console.log('diary-edit-presenter tests passed');

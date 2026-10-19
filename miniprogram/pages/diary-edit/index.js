@@ -2,7 +2,7 @@ const { ROUTES, routePath } = require('../../constants/routes');
 const { createDiary, getDiaryDetail, updateDiary, uploadDiaryImage } = require('../../services/diary');
 const { parseDiaryMarkdown } = require('../../utils/diary-markdown');
 const { showInfo, showSuccess } = require('../../utils/notify');
-const { authorizePrivacy } = require('../../utils/privacy');
+const { pickImages } = require('../../utils/image-picker');
 const {
   MAX_DIARY_IMAGES,
   appendSelectedDiaryImages,
@@ -215,42 +215,24 @@ Page({
       return;
     }
 
-    authorizePrivacy({
+    const isBlocked = () => this.data.submitting || this.data.loadingDiary || this.hasPendingImageUploads();
+    pickImages({
+      count: MAX_DIARY_IMAGES - this.data.images.length,
       title: '选择图片',
-      message: '需要读取你选中的照片，用于插入日记图片。'
-    }).then((agreed) => {
-      if (!agreed) {
-        showInfo('同意隐私指引后才能选择图片');
+      message: '需要读取你选中的照片，用于插入日记图片。',
+      isBlocked
+    }).then((files) => {
+      if (!files.length) {
         return;
       }
-      if (this.data.submitting || this.data.loadingDiary || this.hasPendingImageUploads()) {
-        return;
+      const startIndex = this.data.images.length;
+      const result = appendSelectedDiaryImages(this.data.images, files);
+      this.updateImages(result.images);
+      if (result.reachedLimit) {
+        showInfo(`最多 ${MAX_DIARY_IMAGES} 张`);
       }
-
-      wx.chooseMedia({
-        count: MAX_DIARY_IMAGES - this.data.images.length,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        success: (response) => {
-          if (this.data.submitting || this.data.loadingDiary || this.hasPendingImageUploads()) {
-            return;
-          }
-          const startIndex = this.data.images.length;
-          const result = appendSelectedDiaryImages(this.data.images, response.tempFiles);
-          this.updateImages(result.images);
-          if (result.reachedLimit) {
-            showInfo(`最多 ${MAX_DIARY_IMAGES} 张`);
-          }
-          this.uploadImagesFrom(startIndex).catch((error) => {
-            this.showMessage((error && error.message) || '有图片没上传成功');
-          });
-        },
-        fail: (error) => {
-          if (!/cancel/i.test((error && error.errMsg) || '')) {
-            showInfo('选择图片失败，请检查权限后重试');
-          }
-        }
+      this.uploadImagesFrom(startIndex).catch((error) => {
+        this.showMessage((error && error.message) || '有图片没上传成功');
       });
     });
   },

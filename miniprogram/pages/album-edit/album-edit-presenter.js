@@ -1,3 +1,5 @@
+const { appendPickedImages } = require('../../utils/image-list');
+
 const MAX_ALBUM_PHOTOS = 9;
 const VISIBILITY_OPTIONS = [
   { value: 'public', label: '公开' },
@@ -72,11 +74,7 @@ function buildAlbumDraftPayload(form) {
   };
 }
 
-function createPhoto(file) {
-  const path = file && (file.tempFilePath || file.path || file);
-  if (!path) {
-    return null;
-  }
+function createPhoto(path, file) {
   return {
     id: `${path}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     path,
@@ -91,15 +89,10 @@ function createPhoto(file) {
 }
 
 function appendSelectedAlbumPhotos(existing, selected) {
-  const base = Array.isArray(existing) ? existing.slice(0, MAX_ALBUM_PHOTOS) : [];
-  const freeSlots = MAX_ALBUM_PHOTOS - base.length;
-  const added = (Array.isArray(selected) ? selected : [])
-    .map(createPhoto)
-    .filter(Boolean)
-    .slice(0, freeSlots);
+  const result = appendPickedImages(existing, selected, MAX_ALBUM_PHOTOS, createPhoto);
   return {
-    photos: base.concat(added),
-    reachedLimit: added.length < (Array.isArray(selected) ? selected.length : 0)
+    photos: result.images,
+    reachedLimit: result.reachedLimit
   };
 }
 

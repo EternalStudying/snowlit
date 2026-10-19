@@ -1,12 +1,12 @@
 const { ROUTES, routePath } = require('../../constants/routes');
 const { createMoment, getMomentDetail, updateMoment, uploadMomentImage } = require('../../services/story');
 const { showInfo, showSuccess } = require('../../utils/notify');
-const { authorizePrivacy } = require('../../utils/privacy');
+const { collectUploadedUrls } = require('../../utils/image-list');
+const { pickImages } = require('../../utils/image-picker');
 const {
   MAX_STORY_IMAGES,
   appendSelectedImages,
   buildStoryPayload,
-  collectUploadedImageUrls,
   createInitialStoryForm,
   mapStoryEditForm,
   mapStoryEditCategories
@@ -187,39 +187,20 @@ Page({
       return;
     }
 
-    authorizePrivacy({
+    pickImages({
+      count: MAX_STORY_IMAGES - this.data.images.length,
       title: '选择图片',
-      message: '需要读取你选中的照片，用于添加点滴图片。'
-    }).then((agreed) => {
-      if (!agreed) {
-        showInfo('同意隐私指引后才能选择图片');
+      message: '需要读取你选中的照片，用于添加点滴图片。',
+      isBlocked: () => this.data.submitting || this.data.loadingMoment
+    }).then((files) => {
+      if (!files.length) {
         return;
       }
-      if (this.data.submitting || this.data.loadingMoment) {
-        return;
+      const result = appendSelectedImages(this.data.images, files);
+      this.updateImages(result.images);
+      if (result.reachedLimit) {
+        showInfo(`最多 ${MAX_STORY_IMAGES} 张`);
       }
-
-      wx.chooseMedia({
-        count: MAX_STORY_IMAGES - this.data.images.length,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        success: (response) => {
-          if (this.data.submitting || this.data.loadingMoment) {
-            return;
-          }
-          const result = appendSelectedImages(this.data.images, response.tempFiles);
-          this.updateImages(result.images);
-          if (result.reachedLimit) {
-            showInfo(`最多 ${MAX_STORY_IMAGES} 张`);
-          }
-        },
-        fail: (error) => {
-          if (!/cancel/i.test((error && error.errMsg) || '')) {
-            showInfo('选择图片失败，请检查权限后重试');
-          }
-        }
-      });
     });
   },
 
@@ -254,7 +235,7 @@ Page({
       return;
     }
 
-    const validation = buildStoryPayload(this.data.form, collectUploadedImageUrls(this.data.images));
+    const validation = buildStoryPayload(this.data.form, collectUploadedUrls(this.data.images));
     if (!validation.valid) {
       this.showMessage(validation.message);
       return;
@@ -271,7 +252,7 @@ Page({
 
     this.uploadImages()
       .then(() => {
-        const payloadResult = buildStoryPayload(this.data.form, collectUploadedImageUrls(this.data.images));
+        const payloadResult = buildStoryPayload(this.data.form, collectUploadedUrls(this.data.images));
         if (!payloadResult.valid) {
           throw new Error(payloadResult.message);
         }
