@@ -3,8 +3,11 @@ import './weather.css';
 export { default } from './WeatherAtmosphere.vue';
 export {
   formatTopbarWeatherSummary,
+  knownWeatherPlace,
   startWeatherUpdates,
-  useWeatherAtmosphereData
+  useWeatherAtmosphereData,
+  weatherConditionLabel,
+  weatherLocationName
 } from './internal/useWeatherAtmosphereData';
 export { useAutomaticWeather } from './internal/useAutomaticWeather';
 export type {

@@ -227,8 +227,8 @@ export function formatTopbarWeatherSummary(data: WeatherAtmosphereData | null | 
     return null;
   }
 
-  const location = [data.district, data.city, data.province, data.country].find((value) => value && value.toLowerCase() !== 'unknown') || '位置待更新';
-  const weatherLabel = resolveWeatherLabel(data);
+  const location = weatherLocationName(data) || '位置待更新';
+  const weatherLabel = weatherConditionLabel(data) || '天气待更新';
   const temperature = formatTemperature(data.temperature);
   const wind = formatWind(data.windDirection, data.windPower);
   const humidity = formatHumidity(data.humidity);
@@ -246,14 +246,35 @@ export function formatTopbarWeatherSummary(data: WeatherAtmosphereData | null | 
   };
 }
 
-function resolveWeatherLabel(data: WeatherAtmosphereData) {
-  if (data.weatherVariant === 'unknown' && !data.rawWeather) return '天气待更新';
-  return (
-    data.rawWeather ||
-    weatherVariantLabels[data.weatherVariant] ||
-    weatherStateLabels[data.weatherState] ||
-    '天气'
-  );
+function isKnownPlace(value: string) {
+  return value.toLowerCase() !== 'unknown';
+}
+
+/** Place names with the local fallback's 'unknown' sentinel blanked out. */
+export function knownWeatherPlace(data: WeatherAtmosphereData) {
+  return {
+    district: isKnownPlace(data.district) ? data.district : '',
+    city: isKnownPlace(data.city) ? data.city : '',
+    province: isKnownPlace(data.province) ? data.province : '',
+    country: isKnownPlace(data.country) ? data.country : ''
+  };
+}
+
+/** The most specific known place name, or '' when the location is unknown. */
+export function weatherLocationName(data: WeatherAtmosphereData | null | undefined): string {
+  if (!data) {
+    return '';
+  }
+  const place = knownWeatherPlace(data);
+  return place.district || place.city || place.province || place.country;
+}
+
+/** A readable weather condition, or '' when the weather is unknown (as in the local fallback). */
+export function weatherConditionLabel(data: WeatherAtmosphereData | null | undefined): string {
+  if (!data || (data.weatherVariant === 'unknown' && !data.rawWeather)) {
+    return '';
+  }
+  return data.rawWeather || weatherVariantLabels[data.weatherVariant] || weatherStateLabels[data.weatherState];
 }
 
 function formatTemperature(temperature: number | null) {

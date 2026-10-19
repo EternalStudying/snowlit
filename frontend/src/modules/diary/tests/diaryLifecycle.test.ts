@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createLocalFallbackWeather } from '../../weather/internal/useWeatherAtmosphereData';
 import { useDiaryLifecycle } from '../internal/useDiaryLifecycle';
 import type {
   DiaryArchiveDto,
@@ -197,6 +198,58 @@ describe('useDiaryLifecycle', () => {
       '只能修改自己的日记'
     );
     expect(updateEntry).not.toHaveBeenCalled();
+  });
+
+  it('新增日记不把本地兜底天气的未知位置和天气预填进编辑器', () => {
+    const lifecycle = useDiaryLifecycle({ gateway: createMemoryDiaryGateway() });
+
+    const value = lifecycle.createEditorValue(null, {
+      weather: createLocalFallbackWeather(),
+      coordinates: null
+    });
+
+    expect(value.location).toBe('');
+    expect(value.weather).toBe('');
+  });
+
+  it('新增日记预填已知的位置和天气', () => {
+    const lifecycle = useDiaryLifecycle({ gateway: createMemoryDiaryGateway() });
+
+    const value = lifecycle.createEditorValue(null, {
+      weather: {
+        ...createLocalFallbackWeather(),
+        city: '示例城市 A',
+        weatherState: 'rain',
+        weatherVariant: 'lightRain'
+      },
+      coordinates: null
+    });
+
+    expect(value.location).toBe('示例城市 A');
+    expect(value.weather).toBe('小雨');
+  });
+
+  it('只有本地兜底天气时保存的日记不带天气快照', async () => {
+    const gateway = createMemoryDiaryGateway({
+      role: 'girlfriend',
+      now: () => '2026-06-02T12:00:00'
+    });
+    const createEntry = vi.fn(gateway.createEntry);
+    gateway.createEntry = createEntry;
+    const lifecycle = useDiaryLifecycle({
+      gateway,
+      today: () => '2026-05-20'
+    });
+    await lifecycle.loadInitial();
+
+    await lifecycle.saveEntry(editorValue('2026-06-02'), null, {
+      weather: createLocalFallbackWeather(),
+      coordinates: null
+    });
+
+    expect(createEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ weatherSnapshot: undefined })
+    );
   });
 
   it('创建时组合当前天气定位快照并更新月份与归档', async () => {
