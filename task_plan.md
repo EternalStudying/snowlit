@@ -6,7 +6,7 @@ Refactor the backend and Web architecture: deepen shallow modules found in the 2
 
 ## Current Phase
 
-Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor and its second pass complete and fast-forwarded into local main (not pushed). Mini-program architecture work has not started.
+Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor and its second pass complete and fast-forwarded into local main (not pushed). Mini-program targeted refactor complete and fast-forwarded into local main (not pushed).
 
 ### Phase 1: Architecture review and design decisions
 - **Status:** complete
@@ -25,6 +25,9 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 
 ### Phase 6: Frontend second pass (target architecture)
 - **Status:** complete; fast-forwarded into local main from `refactor/frontend-ideal` (not pushed)
+
+### Phase 7: Mini-program targeted refactor
+- **Status:** complete; fast-forwarded into local main from `refactor/miniprogram-deepening` (not pushed). No rework of the native architecture: one shared image picker, a latest-request guard (fixes the Story filter race), and Home weather in its own module — see [technical specification](miniprogram/technical-spec.md)
 
 ## Context Entry Points
 

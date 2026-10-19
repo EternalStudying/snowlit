@@ -12,12 +12,14 @@ Use native WXML/WXSS/JavaScript in `miniprogram/`, sharing the Spring Boot/MyBat
 | [constants/config.js](constants/config.js), [constants/routes.js](constants/routes.js) | Environments, timeouts, and navigation; use `switchTab` for tabs and `redirectTo` for ordinary return routes |
 | [services](services) | Ten business services wrapping APIs and upload protocols |
 | [utils/request.js](utils/request.js), [utils/upload.js](utils/upload.js) | Authorization, failure mapping, business tokens, and single-file uploads |
+| [utils/image-picker.js](utils/image-picker.js), [utils/image-list.js](utils/image-list.js) | The one image picker (privacy consent, `chooseMedia`, busy re-check, quiet cancel) and the pure list rules (append within a limit, uploaded URLs) |
+| [utils/request-guard.js](utils/request-guard.js) | `beginRequest(page, key)`: only the latest request per piece of page state, in the same session, may apply its response |
 | [utils/auth.js](utils/auth.js), [utils/storage.js](utils/storage.js), [utils/permission.js](utils/permission.js) | Sessions, necessary caches, and entry visibility |
 | [utils/date.js](utils/date.js), [utils/diary-markdown.js](utils/diary-markdown.js) | Calendar dates and diary rendering |
-| [pages](pages), [components](components), [custom-tab-bar](custom-tab-bar) | Seventeen pages, shared components, and five tabs; pure mapping/validation belongs in `*-presenter.js` |
+| [pages](pages), [components](components), [custom-tab-bar](custom-tab-bar) | Seventeen pages, shared components, and five tabs; pure mapping/validation belongs in `*-presenter.js`; Home's automatic location/weather lives in [home-weather.js](pages/index/home-weather.js) |
 | [tests](tests) | Node assertions and service/presenter/page behavior tests |
 
-Add `services/<domain>.js` before page integration. Pages own interaction/state; uploads use the shared wrapper. Extract components when reused, without introducing a global store/event bus prematurely. Keep page files and registered routes consistent.
+Add `services/<domain>.js` before page integration. Pages own interaction/state; uploads use the shared wrapper, image selection uses `pickImages`, and page loads whose responses can race (filters, pagination, session changes) use `beginRequest`. Extract components when reused, without introducing a global store/event bus prematurely. Keep page files and registered routes consistent.
 
 `CURRENT_ENV=dev` uses `http://localhost:8080` for APIs/uploads; prod is configured as `https://snowlit.xyz`. Request/upload timeouts are 15/30 seconds. `fontFace=null` disables remote font requests. Localhost refers to the requesting device; physical devices need a reachable address that meets platform requirements.
 Import `miniprogram/` with `miniprogramRoot=./`. AppID must match the backend and WeChat settings. Public `project.config.json` enables `urlCheck`, but local private settings can override it; physical-device/release validation must not depend on disabled checks.
@@ -107,7 +109,7 @@ TZ=UTC node --test miniprogram/tests/*.test.js
 
 `tests/date.test.js` launches three timezone subprocesses covering calendar boundaries, leap years, date-only values, and instants. Singapore represents UTC+08; tests do not alter runtime configuration. Geographic fixtures use overseas/generic places and synthetic clustering coordinates.
 
-Previous validation baseline: Node **80/80**, **112 JS** syntax checks, and **32 WXML/35 WXSS** compilations passed. **This documentation initialization did not rerun them.** Previous simulator coverage included WeChat login, main read/write flows, five upload flows, and global location/weather. Injected picker results do not establish native photo/camera or physical-device behavior. Simulator album publication used a prepared test draft, so it does not establish an end-to-end creation run.
+Validation baseline (2026-10-18, after the shared picker, request guard and Home weather module): Node **92/92** in the default, Los Angeles, Singapore and UTC timezones, and **118 JS** syntax checks passed. WXML/WXSS were not changed and not recompiled; the simulator was not rerun for this refactor. Previous simulator coverage included WeChat login, main read/write flows, five upload flows, and global location/weather. Injected picker results do not establish native photo/camera or physical-device behavior. Simulator album publication used a prepared test draft, so it does not establish an end-to-end creation run.
 
 Unverified external boundaries are iOS/Android devices, native picking, production domains/TLS, WeChat backend privacy settings, and review/release. Local/simulator success does not establish those states. Existing backend databases require `SQL_INIT_MODE=never`; do not rerun initialization SQL.
 Update the product specification for scope changes and this document for interfaces, architecture, platform capabilities, or privacy contracts, synchronizing the affected backend/Web context.
