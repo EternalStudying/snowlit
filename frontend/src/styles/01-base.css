@@ -184,3 +184,12 @@ button:disabled {
   cursor: wait;
   opacity: 0.7;
 }
+
+.eyebrow,
+.section-heading p {
+  margin: 0 0 10px;
+  color: var(--ink-green);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}

@@ -590,6 +590,14 @@
   overflow: visible;
 }
 
+/* The journal pages other than Home end flush with the footer. */
+.journal-stage:has(> .journal-route-content > .album-page),
+.journal-stage:has(> .journal-route-content > .diary-page),
+.journal-stage:has(> .journal-route-content > .list-page),
+.journal-stage:has(> .journal-route-content > .messages-page) {
+  padding-bottom: 0;
+}
+
 .journal-stage::before {
   content: "";
   position: absolute;
