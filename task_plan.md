@@ -27,7 +27,7 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 - **Status:** complete; fast-forwarded into local main from `refactor/frontend-ideal` (not pushed)
 
 ### Phase 7: Mini-program targeted refactor
-- **Status:** complete; fast-forwarded into local main from `refactor/miniprogram-deepening` (not pushed). No rework of the native architecture: one shared image picker, a latest-request guard (fixes the Story filter race), and Home weather in its own module — see [technical specification](miniprogram/technical-spec.md)
+- **Status:** complete; fast-forwarded into local main from `refactor/miniprogram-deepening` (not pushed). No rework of the native architecture: one shared image picker, one upload queue (`refactor/miniprogram-upload-queue`), a latest-request guard (fixes the Story filter race), and Home weather in its own module — see [technical specification](miniprogram/technical-spec.md)
 
 ## Context Entry Points
 

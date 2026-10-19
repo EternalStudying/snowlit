@@ -3,6 +3,7 @@ const { cancelAlbumDraft, createAlbumDraft, getCurrentAlbumDraft, publishAlbumDr
 const { showConfirm } = require('../../utils/dialog');
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { pickImages } = require('../../utils/image-picker');
+const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const {
   MAX_ALBUM_PHOTOS,
   VISIBILITY_OPTIONS,
@@ -160,15 +161,7 @@ Page({
   },
 
   patchPhoto(index, patch) {
-    const photos = this.data.photos.slice();
-    if (!photos[index]) {
-      return;
-    }
-    photos[index] = {
-      ...photos[index],
-      ...(patch || {})
-    };
-    this.updatePhotos(photos);
+    this.updatePhotos(patchItem(this.data.photos, index, patch));
   },
 
   resolvePhotoSize(photo) {
@@ -197,61 +190,26 @@ Page({
     });
   },
 
-  uploadPhoto(albumId, photo, index) {
-    if (photo.status === 'uploaded' && photo.url) {
-      return Promise.resolve(photo);
-    }
-
-    return this.resolvePhotoSize(photo).then((size) => {
-      const resolvedPhoto = {
-        ...photo,
-        width: photo.width || size.width,
-        height: photo.height || size.height
-      };
-      this.patchPhoto(index, {
-        width: resolvedPhoto.width,
-        height: resolvedPhoto.height,
-        status: 'uploading',
-        progress: 0,
-        message: '上传中'
-      });
-
-      return uploadAlbumDraftPhoto(
-        albumId,
-        resolvedPhoto.path,
-        createAlbumPhotoMetadata(resolvedPhoto, index, this.data.form),
-        (progress) => {
-          const value = Math.max(0, Math.min(100, Number(progress && progress.progress) || 0));
-          this.patchPhoto(index, {
-            progress: value,
-            message: value ? `上传中 ${value}%` : '上传中'
-          });
-        }
-      );
-    }).then((uploaded) => {
-      if (!uploaded || !uploaded.url) {
-        throw new Error('有照片没有上传成功，请稍后再试');
-      }
-      this.patchPhoto(index, {
-        status: 'uploaded',
-        progress: 100,
-        message: '已上传',
-        url: uploaded.url
-      });
-      return uploaded;
-    }).catch((error) => {
-      this.patchPhoto(index, {
-        status: 'failed',
-        message: '上传失败'
-      });
-      throw error;
-    });
-  },
-
   uploadPhotos(albumId) {
-    return this.data.photos.reduce((task, photo, index) => {
-      return task.then(() => this.uploadPhoto(albumId, photo, index));
-    }, Promise.resolve());
+    return uploadQueue({
+      read: () => this.data.photos,
+      patch: (index, patch) => this.patchPhoto(index, patch),
+      failureMessage: '有照片没有上传成功，请稍后再试',
+      upload: (photo, index, onProgress) => this.resolvePhotoSize(photo).then((size) => {
+        const resolvedPhoto = {
+          ...photo,
+          width: photo.width || size.width,
+          height: photo.height || size.height
+        };
+        this.patchPhoto(index, { width: resolvedPhoto.width, height: resolvedPhoto.height });
+        return uploadAlbumDraftPhoto(
+          albumId,
+          resolvedPhoto.path,
+          createAlbumPhotoMetadata(resolvedPhoto, index, this.data.form),
+          onProgress
+        );
+      })
+    });
   },
 
   resetUploadedPhotoState() {

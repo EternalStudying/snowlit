@@ -3,6 +3,7 @@ const { createDiary, getDiaryDetail, updateDiary, uploadDiaryImage } = require('
 const { parseDiaryMarkdown } = require('../../utils/diary-markdown');
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { pickImages } = require('../../utils/image-picker');
+const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const {
   MAX_DIARY_IMAGES,
   appendSelectedDiaryImages,
@@ -257,72 +258,25 @@ Page({
   },
 
   uploadImagesFrom(startIndex) {
-    let hasFailed = false;
-    let firstError = null;
-    const indexes = this.data.images
-      .map((item, index) => index)
-      .filter((index) => index >= startIndex);
-
-    return indexes.reduce((promise, index) => (
-      promise.then(() => this.uploadImageAt(index).catch((error) => {
-        hasFailed = true;
-        if (!firstError) {
-          firstError = error;
-        }
-      }))
-    ), Promise.resolve()).then(() => {
-      if (hasFailed) {
-        this.updateImages(this.data.images.filter((item) => item.status !== 'failed'));
-        throw firstError || new Error('有图片没上传成功');
+    return uploadQueue({
+      read: () => this.data.images,
+      patch: (index, patch) => this.patchImage(index, patch),
+      from: startIndex,
+      continueOnFailure: true,
+      uploadedMessage: '已插入',
+      upload: (image, index, onProgress) => uploadDiaryImage(image.path, onProgress),
+      onUploaded: (response, index) => {
+        this.patchImage(index, { preview: response.url });
+        this.applyMarkdownInsertion(insertDiaryImageMarkdown(this.data.form.content, response.url, this.data.cursor));
       }
-    });
-  },
-
-  uploadImageAt(index) {
-    const image = this.data.images[index];
-    if (!image || !image.path || image.status === 'uploaded') {
-      return Promise.resolve();
-    }
-
-    this.patchImage(index, {
-      status: 'uploading',
-      progress: 0,
-      message: '上传中 0%'
-    });
-
-    return uploadDiaryImage(image.path, (progress) => {
-      const percent = progress && Number.isFinite(progress.progress) ? progress.progress : 0;
-      this.patchImage(index, {
-        progress: percent,
-        message: `上传中 ${percent}%`
-      });
-    }).then((response) => {
-      if (!response || !response.url) {
-        throw new Error('图片上传失败');
-      }
-      this.patchImage(index, {
-        url: response.url,
-        preview: response.url,
-        status: 'uploaded',
-        progress: 100,
-        message: '已插入'
-      });
-      this.applyMarkdownInsertion(insertDiaryImageMarkdown(this.data.form.content, response.url, this.data.cursor));
     }).catch((error) => {
-      this.patchImage(index, {
-        status: 'failed',
-        progress: 0,
-        message: '上传失败'
-      });
-      throw error;
+      this.updateImages(this.data.images.filter((item) => item.status !== 'failed'));
+      throw error || new Error('有图片没上传成功');
     });
   },
 
   patchImage(index, patch) {
-    const images = this.data.images.map((item, itemIndex) => (
-      itemIndex === index ? { ...item, ...patch } : item
-    ));
-    this.updateImages(images);
+    this.updateImages(patchItem(this.data.images, index, patch));
   },
 
   updateImages(images) {

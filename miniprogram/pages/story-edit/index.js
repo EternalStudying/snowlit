@@ -3,6 +3,7 @@ const { createMoment, getMomentDetail, updateMoment, uploadMomentImage } = requi
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { collectUploadedUrls } = require('../../utils/image-list');
 const { pickImages } = require('../../utils/image-picker');
+const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const {
   MAX_STORY_IMAGES,
   appendSelectedImages,
@@ -273,61 +274,11 @@ Page({
   },
 
   uploadImages() {
-    return this.data.images.reduce((promise, item, index) => {
-      return promise.then(() => {
-        if (item.status === 'uploaded' && item.url) {
-          return Promise.resolve();
-        }
-        return this.uploadImageAt(index);
-      });
-    }, Promise.resolve());
-  },
-
-  uploadImageAt(index) {
-    const image = this.data.images[index];
-    if (!image || !image.path) {
-      return Promise.resolve();
-    }
-
-    this.patchImage(index, {
-      status: 'uploading',
-      progress: 0,
-      message: '上传中 0%'
+    return uploadQueue({
+      read: () => this.data.images,
+      patch: (index, patch) => this.updateImages(patchItem(this.data.images, index, patch)),
+      upload: (image, index, onProgress) => uploadMomentImage(image.path, onProgress)
     });
-
-    return uploadMomentImage(image.path, (progress) => {
-      const percent = progress && Number.isFinite(progress.progress) ? progress.progress : 0;
-      this.patchImage(index, {
-        progress: percent,
-        message: `上传中 ${percent}%`
-      });
-    })
-      .then((response) => {
-        if (!response || !response.url) {
-          throw new Error('图片上传失败');
-        }
-        this.patchImage(index, {
-          url: response.url,
-          status: 'uploaded',
-          progress: 100,
-          message: '已上传'
-        });
-      })
-      .catch((error) => {
-        this.patchImage(index, {
-          status: 'failed',
-          progress: 0,
-          message: '上传失败'
-        });
-        throw error;
-      });
-  },
-
-  patchImage(index, patch) {
-    const images = this.data.images.map((item, itemIndex) => (
-      itemIndex === index ? { ...item, ...patch } : item
-    ));
-    this.updateImages(images);
   },
 
   updateImages(images) {

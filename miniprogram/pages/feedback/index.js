@@ -3,6 +3,7 @@ const { isLoggedIn, redirectToLogin } = require('../../utils/auth');
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { collectUploadedUrls } = require('../../utils/image-list');
 const { pickImages } = require('../../utils/image-picker');
+const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const { ROUTES, routePath } = require('../../constants/routes');
 const {
   MAX_FEEDBACK_IMAGES,
@@ -178,61 +179,12 @@ Page({
   },
 
   uploadScreenshots() {
-    return this.data.screenshots.reduce((promise, item, index) => {
-      return promise.then(() => {
-        if (item.status === 'uploaded' && item.url) {
-          return Promise.resolve();
-        }
-        return this.uploadScreenshotAt(index);
-      });
-    }, Promise.resolve());
-  },
-
-  uploadScreenshotAt(index) {
-    const screenshot = this.data.screenshots[index];
-    if (!screenshot || !screenshot.path) {
-      return Promise.resolve();
-    }
-
-    this.patchScreenshot(index, {
-      status: 'uploading',
-      progress: 0,
-      message: '上传中 0%'
+    return uploadQueue({
+      read: () => this.data.screenshots,
+      patch: (index, patch) => this.updateScreenshots(patchItem(this.data.screenshots, index, patch)),
+      failureMessage: '截图上传失败',
+      upload: (screenshot, index, onProgress) => uploadFeedbackImage(screenshot.path, onProgress)
     });
-
-    return uploadFeedbackImage(screenshot.path, (progress) => {
-      const percent = progress && Number.isFinite(progress.progress) ? progress.progress : 0;
-      this.patchScreenshot(index, {
-        progress: percent,
-        message: `上传中 ${percent}%`
-      });
-    })
-      .then((response) => {
-        if (!response || !response.url) {
-          throw new Error('截图上传失败');
-        }
-        this.patchScreenshot(index, {
-          url: response.url,
-          status: 'uploaded',
-          progress: 100,
-          message: '已上传'
-        });
-      })
-      .catch((error) => {
-        this.patchScreenshot(index, {
-          status: 'failed',
-          progress: 0,
-          message: '上传失败'
-        });
-        throw error;
-      });
-  },
-
-  patchScreenshot(index, patch) {
-    const screenshots = this.data.screenshots.map((item, itemIndex) => (
-      itemIndex === index ? { ...item, ...patch } : item
-    ));
-    this.updateScreenshots(screenshots);
   },
 
   updateScreenshots(screenshots) {
