@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { errorMessage, formatDottedDate } from '../../../display';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { gsap } from 'gsap';
 import { type StoryDraftLocation, type StoryEditorAnchor, type StoryMapLoadingState, type StoryMoment } from '../model';
 import {
   loadAmapSdk,
@@ -25,6 +24,8 @@ import {
   type StoryMapTarget as EntryTarget,
   type StoryMarkerItem
 } from '../internal/storyMapModel';
+import { useStoryMapCamera } from '../internal/useStoryMapCamera';
+import { useStoryMarkerMotion, type MarkerRevealOptions } from '../internal/useStoryMarkerMotion';
 
 type MarkerRecord = {
   key: string;
@@ -38,11 +39,6 @@ type GroupPopoverPosition = {
   top: number;
 };
 
-const SMOOTH_WHEEL_ZOOM_STEP = 0.22;
-const SMOOTH_WHEEL_ZOOM_MIN = 3;
-const SMOOTH_WHEEL_ZOOM_MAX = 18;
-const SMOOTH_WHEEL_ZOOM_MAX_DELTA = 0.72;
-const SMOOTH_WHEEL_ZOOM_DURATION = 120;
 const props = defineProps<{
   moments: StoryMoment[];
   selectedId: number | null;
@@ -72,29 +68,24 @@ let map: AMapMapInstance | null = null;
 let amapSdk: AMapSdk | null = null;
 let markers: MarkerRecord[] = [];
 let draftMarker: AMapMarkerInstance | null = null;
-let markerContext: gsap.Context | undefined;
-let markerEnterTl: gsap.core.Timeline | undefined;
-let selectedPulseTl: gsap.core.Timeline | undefined;
-let draftTween: gsap.core.Tween | undefined;
-let rippleTween: gsap.core.Tween | undefined;
-let rippleElement: HTMLSpanElement | null = null;
-let entryCameraTimer: ReturnType<typeof window.setTimeout> | null = null;
 let labelsPreloadTimer: ReturnType<typeof window.setTimeout> | null = null;
 let labelsPreloadSerial = 0;
-let forceRevealVisibleOnNextRender = false;
 let lastVisibleIds = new Set<number>();
-let activeRevealRoots: HTMLElement[] = [];
-let smoothWheelElement: HTMLElement | null = null;
-let smoothWheelRaf: number | null = null;
-let pendingSmoothWheelZoomDelta = 0;
-let smoothWheelTargetZoom: number | null = null;
 let currentLoadingState: StoryMapLoadingState = {
   sdkSettled: false,
   instanceReady: false,
   markersReady: false,
   labelsReady: false
 };
-const playedMarkerIds = new Set<number>();
+const camera = useStoryMapCamera({
+  reducedMotion: () => props.reducedMotion,
+  mapReady: () => mapStatus.value === 'ready'
+});
+const markerMotion = useStoryMarkerMotion({
+  surface: mapElement,
+  reducedMotion: () => props.reducedMotion,
+  selectedId: () => props.selectedId
+});
 const activeGroupKey = ref<string | null>(null);
 const groupPopoverPosition = ref<GroupPopoverPosition | null>(null);
 
@@ -106,11 +97,6 @@ type FitVisibleOptions = {
   duration?: number;
   isMobile?: boolean;
   fallback?: EntryTarget;
-};
-type MarkerRevealOptions = {
-  ids?: number[];
-  replayVisible?: boolean;
-  isMobile?: boolean;
 };
 
 const visibleMoments = computed(() => props.moments.filter(hasCoordinates));
@@ -124,8 +110,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  cleanupSmoothWheelZoom();
-  cleanupMapMotion();
+  markerMotion.dispose();
+  cancelLabelsPreload();
   clearMarkers();
   if (draftMarker) {
     draftMarker.setMap(null);
@@ -140,7 +126,7 @@ watch(
   () => [props.moments.map((moment) => `${moment.id}:${moment.longitude}:${moment.latitude}:${moment.category}`).join('|'), props.listReady] as const,
   () => {
     const nextVisibleIds = new Set(getVisibleMoments().map((moment) => moment.id));
-    forceRevealVisibleOnNextRender = shouldReplayVisibleMarkers(nextVisibleIds);
+    markerMotion.requestReplay(shouldReplayVisibleMarkers(nextVisibleIds));
     lastVisibleIds = nextVisibleIds;
     preparedEntryTarget = null;
     emitMapLoadingState({ markersReady: false, labelsReady: props.preloaderActive ? false : currentLoadingState.labelsReady });
@@ -160,7 +146,7 @@ watch(
   () => props.draftLocation,
   () => {
     renderDraftMarker();
-    nextTick(playDraftMarker);
+    nextTick(markerMotion.popDraft);
   },
   { deep: true }
 );
@@ -169,7 +155,7 @@ watch(
   () => [props.selectedId, props.motionFeedbackId, props.removingMotionId, props.reducedMotion] as const,
   () => {
     applyMarkerState();
-    nextTick(playSelectedMarkerPulse);
+    nextTick(markerMotion.pulseSelected);
   },
   { flush: 'post' }
 );
@@ -233,7 +219,7 @@ async function initMap() {
     });
     map.on('click', handleAmapClick);
     map.on('rightclick', handleAmapRightClick);
-    bindSmoothWheelZoom();
+    camera.attach(map, mapElement.value);
     mapStatus.value = 'ready';
     emitMapLoadingState({ instanceReady: true });
     sdkMessage.value = '';
@@ -260,7 +246,7 @@ function shouldReplayVisibleMarkers(nextVisibleIds: Set<number>) {
   if (
     !nextVisibleIds.size ||
     !lastVisibleIds.size ||
-    !playedMarkerIds.size ||
+    !markerMotion.hasRevealedAny() ||
     props.preloaderActive ||
     props.entryLocked ||
     props.motionFeedbackId ||
@@ -284,8 +270,7 @@ function setsEqual(left: Set<number>, right: Set<number>) {
 }
 
 function clearMarkers() {
-  stopMarkerReveal();
-  selectedPulseTl?.kill();
+  markerMotion.stopMarkers();
   markers.forEach(({ marker }) => marker.setMap(null));
   markers = [];
 }
@@ -299,10 +284,8 @@ function renderMarkers() {
   clearMarkers();
   const visible = getVisibleMoments();
   const markerItems = getVisibleMarkerItems();
-  const pendingIds = new Set(
-    visible.filter((moment) => forceRevealVisibleOnNextRender || !playedMarkerIds.has(moment.id)).map((moment) => moment.id)
-  );
-  forceRevealVisibleOnNextRender = false;
+  const pendingIds = new Set(visible.filter((moment) => markerMotion.isPending([moment.id])).map((moment) => moment.id));
+  markerMotion.consumeReplay();
   markerItems.forEach((item, index) => {
     const element = createMarkerElement(item, index, markerItems, item.moments.some((moment) => pendingIds.has(moment.id)));
     const marker = new Marker({
@@ -421,13 +404,13 @@ function fitVisible(options: FitVisibleOptions = {}) {
   const visibleMarkers = props.moments.filter(hasCoordinates);
   if (!visibleMarkers.length) {
     const target = { center: DEFAULT_CENTER, zoom: 3 };
-    applyMapCenterZoom(target.zoom, target.center, immediate, immediate ? undefined : duration);
+    camera.setCenterZoom(target.zoom, target.center, immediate, immediate ? undefined : duration);
     return target;
   }
   if (visibleMarkers.length === 1) {
     const moment = visibleMarkers[0];
     const target = { center: { longitude: moment.longitude, latitude: moment.latitude }, zoom: 12 };
-    applyMapCenterZoom(target.zoom, target.center, immediate, immediate ? undefined : duration);
+    camera.setCenterZoom(target.zoom, target.center, immediate, immediate ? undefined : duration);
     return target;
   }
   if (markers.length) {
@@ -437,7 +420,7 @@ function fitVisible(options: FitVisibleOptions = {}) {
       [160, 180, 190, 280],
       14
     );
-    return readCurrentEntryTarget(fallback);
+    return camera.readTarget(fallback);
   }
   return fallback;
 }
@@ -469,10 +452,7 @@ function preloadEntryLabels() {
 
   const isMobile = Boolean(window.matchMedia?.('(max-width: 767px)').matches);
   preparedEntryTarget = fitVisible({ immediate: true, isMobile }) ?? getEstimatedEntryTarget(isMobile);
-  const camera = getEntryCamera(isMobile);
-  applyMapPitch(camera.targetPitch, true);
-  applyMapRotation(camera.targetRotation, true);
-  applyMapCenterZoom(camera.targetZoom, camera.center, true);
+  camera.showEnd(entryTarget(isMobile), isMobile);
 
   labelsPreloadTimer = window.setTimeout(() => {
     if (serial !== labelsPreloadSerial || !map) {
@@ -484,197 +464,25 @@ function preloadEntryLabels() {
 }
 
 function prepareEntryCamera(options: EntryCameraOptions) {
-  if (!map) {
-    return false;
-  }
-  const camera = getEntryCamera(options.isMobile);
-  applyMapPitch(camera.startPitch, true);
-  applyMapRotation(camera.startRotation, true);
-  applyMapCenterZoom(camera.startZoom, camera.center, true);
-  return true;
+  return camera.prepareEntry(entryTarget(options.isMobile), options.isMobile);
 }
 
 function playEntryCamera(options: EntryCameraOptions) {
-  if (!map) {
-    return Promise.resolve(false);
-  }
-
-  if (entryCameraTimer) {
-    window.clearTimeout(entryCameraTimer);
-    entryCameraTimer = null;
-  }
-
-  const camera = getEntryCamera(options.isMobile);
-  if (props.reducedMotion) {
-    applyMapPitch(camera.targetPitch, true);
-    applyMapRotation(camera.targetRotation, true);
-    applyMapCenterZoom(camera.targetZoom, camera.center, true);
+  return camera.flyIn(entryTarget(options.isMobile), options.isMobile, () => {
     fitVisible({ immediate: true, isMobile: options.isMobile });
-    return Promise.resolve(true);
-  }
-
-  const duration = options.isMobile ? 1550 : 2120;
-  applyMapPitch(camera.startPitch, true);
-  applyMapRotation(camera.startRotation, true);
-  applyMapCenterZoom(camera.startZoom, camera.center, true);
-
-  window.requestAnimationFrame(() => {
-    applyMapPitch(camera.targetPitch, false, duration);
-    applyMapRotation(camera.targetRotation, false, duration);
-    applyMapCenterZoom(camera.targetZoom, camera.center, false, duration);
-  });
-
-  return new Promise<boolean>((resolve) => {
-    entryCameraTimer = window.setTimeout(() => {
-      entryCameraTimer = null;
-      applyMapPitch(camera.targetPitch, true);
-      applyMapRotation(camera.targetRotation, true);
-      applyMapCenterZoom(camera.targetZoom, camera.center, true);
-      fitVisible({ immediate: true, isMobile: options.isMobile });
-      resolve(true);
-    }, duration + 120);
   });
 }
 
-function getEntryCamera(isMobile: boolean) {
-  const target = preparedEntryTarget ?? getEstimatedEntryTarget(isMobile);
-  const startZoom = Math.max(isMobile ? 5.8 : 4.8, target.zoom - (isMobile ? 2.1 : 3));
-
-  return {
-    center: target.center,
-    startZoom,
-    targetZoom: target.zoom,
-    startPitch: canTiltMap() ? (isMobile ? 7 : 20) : 0,
-    targetPitch: canTiltMap() ? (isMobile ? 0 : 8) : 0,
-    startRotation: canRotateMap() ? (isMobile ? 0 : -4) : 0,
-    targetRotation: 0
-  };
+function entryTarget(isMobile: boolean): EntryTarget {
+  return preparedEntryTarget ?? getEstimatedEntryTarget(isMobile);
 }
 
 function getEstimatedEntryTarget(isMobile: boolean): EntryTarget {
   return getStoryMapTarget(props.moments, isMobile);
 }
 
-function readCurrentEntryTarget(fallback: EntryTarget): EntryTarget {
-  if (!map) {
-    return fallback;
-  }
-
-  return {
-    center: readAmapCoordinate(map.getCenter()) ?? fallback.center,
-    zoom: map.getZoom()
-  };
-}
-
-function applyMapCenterZoom(zoom: number, center: { longitude: number; latitude: number }, immediate: boolean, duration?: number) {
-  smoothWheelTargetZoom = null;
-  map?.setZoomAndCenter(zoom, [center.longitude, center.latitude], immediate, duration);
-}
-
-function applyMapPitch(value: number, immediate: boolean, duration?: number) {
-  if (canTiltMap()) {
-    map?.setPitch(value, immediate, duration);
-  }
-}
-
-function applyMapRotation(value: number, immediate: boolean, duration?: number) {
-  if (canRotateMap()) {
-    map?.setRotation(value, immediate, duration);
-  }
-}
-
-function canTiltMap() {
-  return typeof map?.setPitch === 'function';
-}
-
-function canRotateMap() {
-  return typeof map?.setRotation === 'function';
-}
-
-function clampZoom(value: number, min: number, max: number) {
+function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
-}
-
-function bindSmoothWheelZoom() {
-  const element = mapElement.value;
-  if (!element || smoothWheelElement === element) {
-    return;
-  }
-  cleanupSmoothWheelZoom();
-  element.addEventListener('wheel', handleSmoothWheel, { passive: false });
-  smoothWheelElement = element;
-}
-
-function cleanupSmoothWheelZoom() {
-  if (smoothWheelElement) {
-    smoothWheelElement.removeEventListener('wheel', handleSmoothWheel);
-    smoothWheelElement = null;
-  }
-  if (smoothWheelRaf !== null) {
-    window.cancelAnimationFrame(smoothWheelRaf);
-    smoothWheelRaf = null;
-  }
-  pendingSmoothWheelZoomDelta = 0;
-  smoothWheelTargetZoom = null;
-}
-
-function handleSmoothWheel(event: WheelEvent) {
-  if (!map || mapStatus.value !== 'ready') {
-    return;
-  }
-  event.preventDefault();
-
-  pendingSmoothWheelZoomDelta = clampZoom(
-    pendingSmoothWheelZoomDelta + getWheelZoomDelta(event),
-    -SMOOTH_WHEEL_ZOOM_MAX_DELTA,
-    SMOOTH_WHEEL_ZOOM_MAX_DELTA
-  );
-
-  if (smoothWheelRaf !== null) {
-    return;
-  }
-  smoothWheelRaf = window.requestAnimationFrame(flushSmoothWheelZoom);
-}
-
-function getWheelZoomDelta(event: WheelEvent) {
-  const modeScale = event.deltaMode === 1 ? 36 : event.deltaMode === 2 ? 240 : 1;
-  const delta = event.deltaY * modeScale;
-  const direction = delta > 0 ? -1 : 1;
-  const magnitude = clampZoom(Math.abs(delta) / 100, 0.72, 1.18);
-  return direction * SMOOTH_WHEEL_ZOOM_STEP * magnitude;
-}
-
-function flushSmoothWheelZoom() {
-  smoothWheelRaf = null;
-  if (!map || Math.abs(pendingSmoothWheelZoomDelta) < 0.001) {
-    pendingSmoothWheelZoomDelta = 0;
-    return;
-  }
-
-  const baseZoom = smoothWheelTargetZoom ?? readCurrentZoom();
-  const limits = getSmoothWheelZoomLimits();
-  const targetZoom = clampZoom(baseZoom + pendingSmoothWheelZoomDelta, limits.min, limits.max);
-  pendingSmoothWheelZoomDelta = 0;
-  smoothWheelTargetZoom = targetZoom;
-  applySmoothWheelZoom(targetZoom);
-}
-
-function readCurrentZoom() {
-  return map ? map.getZoom(2) : 8;
-}
-
-function getSmoothWheelZoomLimits() {
-  if (!map) {
-    return { min: SMOOTH_WHEEL_ZOOM_MIN, max: SMOOTH_WHEEL_ZOOM_MAX };
-  }
-  const [min, max] = map.getZooms();
-  return { min, max };
-}
-
-function applySmoothWheelZoom(zoom: number) {
-  const immediate = props.reducedMotion;
-  const duration = props.reducedMotion ? 0 : SMOOTH_WHEEL_ZOOM_DURATION;
-  map?.setZoom(zoom, immediate, duration);
 }
 
 async function handleAmapClick(event: AMapMouseEvent) {
@@ -684,7 +492,7 @@ async function handleAmapClick(event: AMapMouseEvent) {
     return;
   }
   const anchor = getAmapClickAnchor(event);
-  showClickRipple(anchor);
+  markerMotion.showRipple(anchor);
   emit(
     'create-at',
     await resolveLocation(coordinate.longitude, coordinate.latitude),
@@ -802,8 +610,8 @@ function getGroupPopoverPosition(anchor?: HTMLElement): GroupPopoverPosition {
   }
 
   return {
-    left: clampZoom(anchorRect.left + anchorRect.width / 2 - surface.left + 18, 12, Math.max(12, surface.width - 248)),
-    top: clampZoom(anchorRect.top - surface.top - 16, 12, Math.max(12, surface.height - 210))
+    left: clamp(anchorRect.left + anchorRect.width / 2 - surface.left + 18, 12, Math.max(12, surface.width - 248)),
+    top: clamp(anchorRect.top - surface.top - 16, 12, Math.max(12, surface.height - 210))
   };
 }
 
@@ -870,7 +678,7 @@ function shouldBreathe(_total: number) {
 }
 
 function isMarkerRevealPending(item: StoryMarkerItem) {
-  return !props.reducedMotion && (forceRevealVisibleOnNextRender || item.moments.some((moment) => !playedMarkerIds.has(moment.id)));
+  return !props.reducedMotion && markerMotion.isPending(item.moments.map((moment) => moment.id));
 }
 
 function getLatestVisibleMomentId() {
@@ -908,301 +716,16 @@ function playPendingMarkerReveal(options: MarkerRevealOptions = {}) {
 }
 
 function playMarkerReveal(options: MarkerRevealOptions = {}) {
-  const scope = mapElement.value;
-  if (!scope) {
-    return Promise.resolve();
-  }
-
-  const visible = getVisibleMoments();
-  if (!visible.length) {
-    return Promise.resolve();
-  }
-
-  const idFilter = options.ids ? new Set(options.ids) : undefined;
-  const revealItems = getMarkerRevealItems(visible, idFilter).filter((item) => {
-    if (options.replayVisible || idFilter) {
-      return true;
-    }
-    return item.root.classList.contains('is-reveal-pending') || !playedMarkerIds.has(item.id);
-  });
-  forceRevealVisibleOnNextRender = false;
-
-  if (!revealItems.length) {
-    return Promise.resolve();
-  }
-
-  stopMarkerReveal();
-  revealItems.forEach((item) => {
-    item.ids.forEach((id) => playedMarkerIds.add(id));
-    item.root.classList.remove('is-reveal-pending');
-    item.root.classList.add('is-animating');
-  });
-  activeRevealRoots = revealItems.map((item) => item.root);
-
-  const isMobile = options.isMobile ?? Boolean(window.matchMedia?.('(max-width: 767px)').matches);
-
-  return new Promise<void>((resolve) => {
-    markerContext = gsap.context(() => {
-      if (props.reducedMotion) {
-        gsap.set(
-          revealItems.flatMap((item) => [item.visual, item.glint, item.pulse].filter((element): element is HTMLElement => Boolean(element))),
-          { autoAlpha: 1, scale: 1, y: 0, rotation: 0, clearProps: 'transform,visibility' }
-        );
-        gsap.set(
-          revealItems.flatMap((item) => [item.glint, item.pulse].filter((element): element is HTMLElement => Boolean(element))),
-          { autoAlpha: 0 }
-        );
-        cleanupRevealItems(revealItems);
-        resolve();
-        return;
-      }
-
-      const fullRevealLimit = getFullRevealLimit(revealItems.length, isMobile);
-      const fullItems = revealItems.slice(0, fullRevealLimit);
-      const fadeItems = revealItems.slice(fullRevealLimit);
-      const fullVisuals = fullItems.map((item) => item.visual);
-      const fullGlints = fullItems.map((item) => item.glint).filter((element): element is HTMLElement => Boolean(element));
-      const fullPulses = fullItems.map((item) => item.pulse).filter((element): element is HTMLElement => Boolean(element));
-      const fadeVisuals = fadeItems.map((item) => item.visual);
-      const each = getRevealStagger(revealItems.length, isMobile);
-      const visualY = isMobile ? 4 : 8;
-      const visualRotation = isMobile ? -0.6 : -1.8;
-
-      markerEnterTl = gsap.timeline({
-        defaults: { ease: 'power3.out', overwrite: 'auto' },
-        onComplete: () => {
-          gsap.set([...fullVisuals, ...fadeVisuals], { clearProps: 'transform,visibility' });
-          gsap.set([...fullGlints, ...fullPulses], { autoAlpha: 0, clearProps: 'transform,visibility' });
-          cleanupRevealItems(revealItems);
-          activeRevealRoots = [];
-          resolve();
-        }
-      });
-
-      if (fullGlints.length) {
-        markerEnterTl
-          .fromTo(fullGlints, { autoAlpha: 0, scale: 0.35 }, { autoAlpha: 0.75, scale: 1, duration: isMobile ? 0.08 : 0.12, stagger: { each } }, 0)
-          .to(fullGlints, { autoAlpha: 0, duration: isMobile ? 0.08 : 0.14, stagger: { each } }, isMobile ? 0.1 : 0.15);
-      }
-
-      if (fullPulses.length) {
-        markerEnterTl.fromTo(
-          fullPulses,
-          { autoAlpha: isMobile ? 0.22 : 0.32, scale: 0.65 },
-          { autoAlpha: 0, scale: isMobile ? 1.62 : 2.05, duration: isMobile ? 0.22 : 0.34, stagger: { each } },
-          isMobile ? 0.04 : 0.06
-        );
-      }
-
-      if (fullVisuals.length) {
-        markerEnterTl
-          .fromTo(
-            fullVisuals,
-            { autoAlpha: 0, scale: 0.4, y: visualY, rotation: visualRotation },
-            {
-              autoAlpha: 1,
-              scale: isMobile ? 1.04 : 1.08,
-              y: isMobile ? 0 : -1,
-              rotation: isMobile ? 0.45 : 0.8,
-              duration: isMobile ? 0.18 : 0.24,
-              ease: 'back.out(1.18)',
-              stagger: { each }
-            },
-            isMobile ? 0.06 : 0.1
-          )
-          .to(
-            fullVisuals,
-            {
-              scale: 1,
-              y: 0,
-              rotation: 0,
-              duration: isMobile ? 0.12 : 0.18,
-              ease: 'power2.inOut',
-              stagger: { each }
-            },
-            isMobile ? 0.24 : 0.36
-          );
-      }
-
-      if (fadeVisuals.length) {
-        markerEnterTl.fromTo(
-          fadeVisuals,
-          { autoAlpha: 0, scale: 0.88 },
-          { autoAlpha: 1, scale: 1, duration: isMobile ? 0.12 : 0.18, stagger: { each: isMobile ? 0.01 : 0.018 } },
-          fullVisuals.length ? (isMobile ? 0.18 : 0.26) : 0
-        );
-      }
-
-      if (!markerEnterTl.getChildren(false, true, true).length) {
-        cleanupRevealItems(revealItems);
-        resolve();
-      }
-    }, scope);
-  });
+  return markerMotion.reveal(getVisibleMoments(), getVisibleMarkerItems(), options);
 }
 
-function getMarkerRevealItems(visible: StoryMoment[], idFilter?: Set<number>) {
-  const momentById = new Map(visible.map((moment) => [moment.id, moment]));
-  const markerItemByKey = new Map(getVisibleMarkerItems().map((item) => [item.key, item]));
-  const roots = Array.from(mapElement.value?.querySelectorAll<HTMLElement>('.story-marker:not(.story-marker--draft)') ?? []);
-  const items = roots
-    .map((root) => {
-      const markerItem = root.dataset.storyMarkerKey ? markerItemByKey.get(root.dataset.storyMarkerKey) : null;
-      const ids = markerItem?.moments.map((moment) => moment.id) ?? String(root.dataset.storyGroupIds ?? root.dataset.storyMotionId ?? '')
-        .split(/\s+/)
-        .map((value) => Number(value))
-        .filter(Number.isFinite);
-      const id = markerItem?.id ?? ids[0];
-      const moment = markerItem?.representative ?? momentById.get(id);
-      const visual = root.querySelector<HTMLElement>('.story-marker__visual');
-      if (!moment || !visual || !Number.isFinite(id) || (idFilter && !ids.some((value) => idFilter.has(value)))) {
-        return null;
-      }
-      return {
-        id,
-        ids,
-        moment,
-        root,
-        visual,
-        glint: root.querySelector<HTMLElement>('.story-marker__glint'),
-        pulse: root.querySelector<HTMLElement>('.story-marker__pulse')
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
-  const order = sortStoryMomentsForReveal(
-    visible,
-    props.selectedId,
-    idFilter
-  );
-  const rank = new Map(order.map((moment, index) => [moment.id, index]));
-  return items.sort((a, b) => Math.min(...a.ids.map((id) => rank.get(id) ?? 999)) - Math.min(...b.ids.map((id) => rank.get(id) ?? 999)));
-}
-
-function getFullRevealLimit(total: number, isMobile: boolean) {
-  if (props.reducedMotion) {
-    return 0;
-  }
-  if (isMobile) {
-    return Math.min(total, total > 18 ? 8 : total);
-  }
-  if (total <= 12) {
-    return total;
-  }
-  if (total <= 40) {
-    return Math.min(total, 12);
-  }
-  return Math.min(total, 8);
-}
-
-function getRevealStagger(total: number, isMobile: boolean) {
-  if (isMobile) {
-    return total > 18 ? 0.018 : 0.035;
-  }
-  if (total <= 12) {
-    return 0.06;
-  }
-  if (total <= 24) {
-    return 0.045;
-  }
-  return 0.04;
-}
-
-function cleanupRevealItems(items: Array<{ root: HTMLElement }>) {
-  items.forEach(({ root }) => {
-    root.classList.remove('is-animating', 'is-reveal-pending');
-  });
-}
-
-function stopMarkerReveal() {
-  markerEnterTl?.kill();
-  if (activeRevealRoots.length) {
-    cleanupRevealItems(activeRevealRoots.map((root) => ({ root })));
-    activeRevealRoots = [];
-  }
-}
-
-function playSelectedMarkerPulse() {
-  selectedPulseTl?.kill();
-  if (props.reducedMotion || !mapElement.value || !props.selectedId) {
-    return;
-  }
-  const pulse = mapElement.value.querySelector<HTMLElement>(`[data-story-motion-id="${props.selectedId}"] .story-marker__pulse`);
-  const visual = mapElement.value.querySelector<HTMLElement>(`[data-story-motion-id="${props.selectedId}"] .story-marker__visual`);
-  if (!pulse) {
-    return;
-  }
-  selectedPulseTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
-  if (visual) {
-    selectedPulseTl.fromTo(visual, { scale: 1 }, { scale: 1.08, duration: 0.16, yoyo: true, repeat: 1, clearProps: 'transform' }, 0);
-  }
-  selectedPulseTl.fromTo(pulse, { autoAlpha: 0.38, scale: 0.75 }, { autoAlpha: 0, scale: 2.25, duration: 0.55, clearProps: 'transform,visibility' }, 0.04);
-}
-
-function playDraftMarker() {
-  draftTween?.kill();
-  if (props.reducedMotion || !mapElement.value) {
-    return;
-  }
-  const draft = mapElement.value.querySelector<HTMLElement>('.story-marker--draft .story-marker__visual');
-  if (!draft) {
-    return;
-  }
-  draftTween = gsap.fromTo(draft, { autoAlpha: 0, scale: 0.5 }, { autoAlpha: 1, scale: 1, duration: 0.18, ease: 'power2.out', clearProps: 'transform,visibility' });
-}
-
-function showClickRipple(anchor?: StoryEditorAnchor) {
-  if (props.reducedMotion || !props.canCreate || !mapElement.value || !anchor) {
-    return;
-  }
-
-  rippleTween?.kill();
-  rippleElement?.remove();
-
-  const rect = mapElement.value.getBoundingClientRect();
-  const ripple = document.createElement('span');
-  ripple.className = 'story-map-ripple story-map-click-ripple';
-  ripple.setAttribute('aria-hidden', 'true');
-  ripple.style.left = `${anchor.x - rect.left}px`;
-  ripple.style.top = `${anchor.y - rect.top}px`;
-  mapElement.value.appendChild(ripple);
-  rippleElement = ripple;
-
-  rippleTween = gsap.fromTo(
-    ripple,
-    { autoAlpha: 0.42, scale: 0.28 },
-    {
-      autoAlpha: 0,
-      scale: 2.4,
-      duration: 0.46,
-      ease: 'power3.out',
-      onComplete: () => {
-        ripple.remove();
-        if (rippleElement === ripple) {
-          rippleElement = null;
-        }
-      }
-    }
-  );
-}
-
-function cleanupMapMotion() {
-  stopMarkerReveal();
-  selectedPulseTl?.kill();
-  draftTween?.kill();
-  rippleTween?.kill();
-  if (entryCameraTimer) {
-    window.clearTimeout(entryCameraTimer);
-    entryCameraTimer = null;
-  }
+function cancelLabelsPreload() {
   if (labelsPreloadTimer) {
     window.clearTimeout(labelsPreloadTimer);
     labelsPreloadTimer = null;
   }
   labelsPreloadSerial += 1;
   preparedEntryTarget = null;
-  rippleElement?.remove();
-  rippleElement = null;
-  markerContext?.revert();
 }
 
 function fallbackStyle(item: StoryMarkerItem) {
