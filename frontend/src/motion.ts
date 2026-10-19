@@ -1,4 +1,5 @@
-import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
+import { gsap } from 'gsap';
+import { getCurrentInstance, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -46,6 +47,50 @@ export function useReducedMotion(onChange?: (reduced: boolean) => void): Ref<boo
   onBeforeUnmount(() => query?.removeEventListener('change', sync));
 
   return reduced;
+}
+
+type HeldMotion = gsap.core.Animation | gsap.Context | gsap.MatchMedia;
+
+function stopMotion(motion: HeldMotion) {
+  // A running tween or timeline is cut where it is; a context or media scope also undoes its inline styles.
+  if (motion instanceof gsap.core.Animation) {
+    motion.kill();
+  } else {
+    motion.revert();
+  }
+}
+
+/**
+ * Named slots for the animations a component is running. Holding a new animation in a slot stops the one it
+ * replaces; every slot is stopped when the owning component unmounts, so callers never write that cleanup.
+ */
+export function useMotionSlots<Slot extends string>() {
+  const held = new Map<Slot, HeldMotion>();
+
+  function hold<T extends HeldMotion>(slot: Slot, motion: T): T {
+    stop(slot);
+    held.set(slot, motion);
+    return motion;
+  }
+
+  function stop(slot: Slot) {
+    const motion = held.get(slot);
+    if (motion) {
+      held.delete(slot);
+      stopMotion(motion);
+    }
+  }
+
+  function stopAll() {
+    held.forEach(stopMotion);
+    held.clear();
+  }
+
+  if (getCurrentInstance()) {
+    onBeforeUnmount(stopAll);
+  }
+
+  return { hold, stop, stopAll };
 }
 
 /**

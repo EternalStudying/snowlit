@@ -5,7 +5,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Clock3, MapPin, Maximize2, RotateCcw } from 'lucide-vue-next';
 import { NButton } from 'naive-ui';
-import { gsap } from 'gsap';
 import MomentDetailPopover from './components/MomentDetailPopover.vue';
 import MomentEditorDialog from './components/MomentEditorDialog.vue';
 import StoryFilterPanel from './components/StoryFilterPanel.vue';
@@ -13,9 +12,9 @@ import StoryMapLoadingOverlay from './components/StoryMapLoadingOverlay.vue';
 import StoryMapCanvas from './components/StoryMapCanvas.vue';
 import StoryTimeline from './components/StoryTimeline.vue';
 import { useHomeLifecycle } from '../home';
-import { isInstantMotion, useReducedMotion } from '../../motion';
 import { playStoryExitTransition } from './internal/storyRouteTransition';
 import { useStoryLifecycle } from './internal/useStoryLifecycle';
+import { useStoryMotion } from './internal/useStoryMotion';
 import addMomentButtonArt from './assets/add-moment-button.webp';
 import type {
   StoryCategoryFilter,
@@ -60,30 +59,9 @@ const editingMoment = ref<StoryMoment | null>(null);
 const draftLocation = ref<StoryDraftLocation | null>(null);
 
 const deleteTarget = ref<StoryMoment | null>(null);
-const isMotionReady = ref(false);
-const hasEnteredMotion = ref(false);
-const isMapEntering = ref(false);
 const isExitingStory = ref(false);
-const isReducedMotion = useReducedMotion();
-const hasPreloaderRevealed = ref(false);
-const isPreloaderLeaving = ref(false);
-const motionFeedbackId = ref<number | null>(null);
 const removingMotionId = ref<number | null>(null);
 const mapResetSignal = ref(0);
-
-let motionFeedbackTimer: ReturnType<typeof window.setTimeout> | null = null;
-let motionContext: gsap.Context | undefined;
-let selectionMotionContext: gsap.Context | undefined;
-let deleteMotionContext: gsap.Context | undefined;
-let deleteConfirmMotionContext: gsap.Context | undefined;
-let storyMatchMedia: gsap.MatchMedia | undefined;
-let pageEnterTl: gsap.core.Timeline | undefined;
-let selectTl: gsap.core.Timeline | undefined;
-let saveSuccessTl: gsap.core.Timeline | undefined;
-let deleteTl: gsap.core.Timeline | undefined;
-let deleteConfirmTl: gsap.core.Tween | undefined;
-let hasPreparedMapEntry = false;
-let hasPlayedPageEnter = false;
 
 const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
 const distanceText = computed(() => {
@@ -136,36 +114,41 @@ const loadingStageLabel = computed(() => {
   return '准备揭开地图';
 });
 
+const storyMotion = useStoryMotion({
+  root: storyRoot,
+  map: mapCanvasRef,
+  canManage,
+  bootReady: storyBootReady,
+  loading: isLoading,
+  loadError: errorMessage,
+  editorOpen: isEditorOpen
+});
+const {
+  reducedMotion: isReducedMotion,
+  motionReady: isMotionReady,
+  entered: hasEnteredMotion,
+  mapEntering: isMapEntering,
+  entryLocked: isStoryEntryLocked,
+  preloaderRevealed: hasPreloaderRevealed,
+  preloaderLeaving: isPreloaderLeaving,
+  feedbackId: motionFeedbackId,
+  completePreloaderReveal
+} = storyMotion;
 const showLoadingOverlay = computed(() => !hasPreloaderRevealed.value);
-const isStoryEntryLocked = computed(
-  () => isMapEntering.value || (!hasEnteredMotion.value && !isReducedMotion.value && !isInstantMotion())
-);
 
 onMounted(() => {
-  isMotionReady.value = true;
   loadMoments();
   window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
-  storyMatchMedia?.revert();
-  clearMotionFeedback();
-  pageEnterTl?.kill();
-  selectTl?.kill();
-  saveSuccessTl?.kill();
-  deleteTl?.kill();
-  deleteConfirmTl?.kill();
-  motionContext?.revert();
-  selectionMotionContext?.revert();
-  deleteMotionContext?.revert();
-  deleteConfirmMotionContext?.revert();
 });
 
 watch(
   () => [isLoading.value, errorMessage.value, isEditorOpen.value, sortedMoments.value.length, canManage.value] as const,
   () => {
-    nextTick(playPageEnterMotion);
+    nextTick(storyMotion.playPageEnter);
   },
   { flush: 'post' }
 );
@@ -174,7 +157,7 @@ watch(
   () => [storyBootReady.value, errorMessage.value] as const,
   () => {
     if (storyBootReady.value || errorMessage.value) {
-      startPreloaderExit();
+      storyMotion.startPreloaderExit();
     }
   },
   { flush: 'post' }
@@ -183,7 +166,7 @@ watch(
 watch(
   () => deleteTarget.value?.id ?? null,
   () => {
-    nextTick(playDeleteConfirmOpen);
+    nextTick(storyMotion.playDeleteConfirmOpen);
   },
   { flush: 'post' }
 );
@@ -194,7 +177,7 @@ async function selectMoment(id: number) {
   }
   const selection = storyLifecycle.selectMoment(id);
   await nextTick();
-  playSelectionFeedback(id);
+  storyMotion.playSelection(id);
   await selection;
 }
 
@@ -249,7 +232,7 @@ function resetStoryState() {
   draftLocation.value = null;
   storyLifecycle.clearActionError();
   closeEditor();
-  clearMotionFeedback();
+  storyMotion.clearFeedback();
   mapResetSignal.value += 1;
   void storyLifecycle.resetBrowsing();
 }
@@ -310,11 +293,11 @@ async function saveMoment(input: StoryMomentInput) {
     return;
   }
 
-  motionFeedbackId.value = saved.id;
+  storyMotion.markSaved(saved.id);
   closeEditor();
   await loadMoments();
   await selectMoment(saved.id);
-  playMomentFeedback(saved.id);
+  storyMotion.playSaved(saved.id);
 }
 
 function closeEditor() {
@@ -341,7 +324,7 @@ async function confirmDelete() {
 
   removingMotionId.value = target.id;
   await nextTick();
-  await playDeleteFeedback(target.id);
+  await storyMotion.playDelete(target.id);
   deleteTarget.value = null;
   if (selectedId.value === target.id) {
     storyLifecycle.clearSelection();
@@ -381,397 +364,6 @@ function exitStory(event?: Event) {
 
 function formatKilometers(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
-
-function completePageEnterMotion(cleanupTargets?: {
-  filter?: Element[];
-  transform?: Element[];
-  visibility?: Element[];
-}) {
-  hasEnteredMotion.value = true;
-  isMapEntering.value = false;
-  if (!cleanupTargets) {
-    return;
-  }
-
-  nextTick(() => {
-    window.requestAnimationFrame(() => {
-      if (!storyRoot.value) {
-        return;
-      }
-      if (cleanupTargets.filter?.length) {
-        gsap.set(cleanupTargets.filter, { clearProps: 'filter' });
-      }
-      if (cleanupTargets.transform?.length) {
-        gsap.set(cleanupTargets.transform, { clearProps: 'transform' });
-      }
-      if (cleanupTargets.visibility?.length) {
-        gsap.set(cleanupTargets.visibility, { clearProps: 'visibility' });
-      }
-    });
-  });
-}
-
-function prepareMapEntryCamera() {
-  if (hasPreparedMapEntry || !storyBootReady.value || isReducedMotion.value || isInstantMotion()) {
-    return;
-  }
-
-  hasPreparedMapEntry = true;
-  const isMobile = Boolean(window.matchMedia?.('(max-width: 767px)').matches);
-  mapCanvasRef.value?.prepareEntryCamera({ isMobile });
-}
-
-function playPageEnterMotion() {
-  if (hasPlayedPageEnter || !hasPreloaderRevealed.value || isLoading.value || errorMessage.value || isEditorOpen.value || !storyRoot.value) {
-    return;
-  }
-
-  hasPlayedPageEnter = true;
-  isMapEntering.value = true;
-  prepareMapEntryCamera();
-  if (isInstantMotion()) {
-    completePageEnterMotion();
-    return;
-  }
-
-  pageEnterTl?.kill();
-  storyMatchMedia?.revert();
-
-  const root = storyRoot.value;
-  const q = gsap.utils.selector(root);
-
-  if (isReducedMotion.value) {
-    gsap.set(
-      [
-        ...q('.story-map-canvas__surface'),
-        ...q('.story-map-page__tone'),
-        ...q('.story-status-badge'),
-        ...q('.story-memory-entry'),
-        ...q('.story-home-link'),
-        ...q('.story-filter-panel'),
-        ...q('.story-add-button'),
-        ...q('.story-timeline'),
-        ...q('.story-timeline__line'),
-        ...q('.story-timeline__node'),
-        ...q('.story-marker__visual')
-      ],
-      { autoAlpha: 1, x: 0, y: 0, scale: 1, scaleX: 1, rotation: 0, clearProps: 'transform,visibility,filter' }
-    );
-    gsap.set(q('.story-map-entry-veil'), { autoAlpha: 0 });
-    completePageEnterMotion();
-    return;
-  }
-
-  storyMatchMedia = gsap.matchMedia();
-  storyMatchMedia.add(
-    '(min-width: 0px)',
-    () => {
-      const reduceMotion = isReducedMotion.value;
-      if (reduceMotion) {
-        gsap.set(
-          [
-            root,
-            ...q('.story-map-canvas__surface'),
-            ...q('.story-map-page__tone'),
-            ...q('.story-status-badge'),
-            ...q('.story-memory-entry'),
-            ...q('.story-home-link'),
-            ...q('.story-filter-panel'),
-            ...q('.story-filter-trigger'),
-            ...q('.story-add-button'),
-            ...q('.story-timeline'),
-            ...q('.story-timeline__line'),
-            ...q('.story-timeline__node'),
-            ...q('.story-marker__visual')
-          ],
-          { autoAlpha: 1, x: 0, y: 0, scale: 1, scaleX: 1, rotation: 0, clearProps: 'transform,visibility,filter' }
-        );
-        gsap.set(q('.story-map-entry-veil'), { autoAlpha: 0 });
-        completePageEnterMotion();
-        return;
-      }
-
-      const isMobile = Boolean(window.matchMedia?.('(max-width: 767px)').matches);
-      const mapSurface = q('.story-map-canvas__surface');
-      const entryVeil = q('.story-map-entry-veil');
-      const toneLayer = q('.story-map-page__tone');
-      const statusBadge = q('.story-status-badge');
-      const memoryEntryButton = q('.story-memory-entry');
-      const homeLink = q('.story-home-link');
-      const addButton = canManage.value ? q('.story-add-button') : [];
-      const filterChrome = isMobile ? q('.story-filter-trigger') : q('.story-filter-panel');
-      const timeline = q('.story-timeline');
-      const timelineLine = q('.story-timeline__line');
-      const timelineNodes = q('.story-timeline__node');
-      const visibilityCleanupTargets = [
-        ...mapSurface,
-        ...entryVeil,
-        ...toneLayer,
-        ...statusBadge,
-        ...memoryEntryButton,
-        ...homeLink,
-        ...filterChrome,
-        ...addButton,
-        ...timeline,
-        ...timelineNodes
-      ];
-      const transformCleanupTargets = [
-        ...statusBadge,
-        ...memoryEntryButton,
-        ...homeLink,
-        ...filterChrome,
-        ...addButton,
-        ...timeline,
-        ...timelineLine,
-        ...timelineNodes
-      ];
-
-      pageEnterTl = gsap.timeline({
-        defaults: { ease: 'power3.out', overwrite: 'auto' },
-        onComplete: () => {
-          completePageEnterMotion({
-            filter: mapSurface,
-            transform: transformCleanupTargets,
-            visibility: visibilityCleanupTargets
-          });
-        }
-      });
-      const mapRevealDuration = isMobile ? 0.28 : 0.42;
-      const cameraInAt = isMobile ? 0.16 : 0.2;
-      const chromeInAt = isMobile ? 1.88 : 2.65;
-      const timelineInAt = isMobile ? 2.05 : 2.95;
-      const veilFadeAt = isMobile ? 2.02 : 2.82;
-      const veilFadeDuration = isMobile ? 0.42 : 0.68;
-      const markerRevealGap = isMobile ? 0.06 : 0.12;
-      const entryCompleteHold = isMobile ? 0.12 : 0.16;
-
-      pageEnterTl
-        .addLabel('loaderOut', 0)
-        .addLabel('mapFarReveal', isMobile ? 0.06 : 0.12)
-        .fromTo(mapSurface, { autoAlpha: 0.18, filter: 'brightness(.72)' }, { autoAlpha: 1, filter: 'brightness(1)', duration: mapRevealDuration }, 'mapFarReveal')
-        .fromTo(entryVeil, { autoAlpha: isMobile ? 0.42 : 0.54 }, { autoAlpha: isMobile ? 0.38 : 0.5, duration: mapRevealDuration, ease: 'power2.out' }, 'mapFarReveal')
-        .fromTo(toneLayer, { autoAlpha: 0 }, { autoAlpha: 1, duration: isMobile ? 0.24 : 0.36, ease: 'power2.out' }, 'mapFarReveal+=0.06')
-        .addLabel('cameraIn', cameraInAt)
-        .call(() => {
-          void mapCanvasRef.value?.playEntryCamera({ isMobile });
-        }, [], 'cameraIn')
-        .addLabel('mapVeilOut', veilFadeAt)
-        .to(entryVeil, { autoAlpha: 0, duration: veilFadeDuration, ease: 'power2.out' }, 'mapVeilOut')
-        .addLabel('chromeIn', chromeInAt)
-        .fromTo(statusBadge, { autoAlpha: 0, y: isMobile ? -4 : -10, scale: 0.985 }, { autoAlpha: 1, y: 0, scale: 1, duration: isMobile ? 0.22 : 0.28 }, 'chromeIn')
-        .fromTo(memoryEntryButton, { autoAlpha: 0, y: isMobile ? -2 : -6, scale: 0.96 }, { autoAlpha: 1, y: 0, scale: 1, duration: isMobile ? 0.18 : 0.24 }, 'chromeIn+=0.04')
-        .fromTo(homeLink, { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: isMobile ? 0.18 : 0.22, ease: 'power2.out' }, 'chromeIn+=0.06')
-        .fromTo(
-          filterChrome,
-          { autoAlpha: 0, x: isMobile ? 0 : -16, y: isMobile ? 10 : 0, rotation: isMobile ? 0 : -1 },
-          { autoAlpha: 1, x: 0, y: 0, rotation: 0, duration: isMobile ? 0.22 : 0.34 },
-          'chromeIn+=0.08'
-        );
-
-      if (addButton.length) {
-        pageEnterTl.fromTo(
-          addButton,
-          { autoAlpha: 0, scale: 0.86, rotation: isMobile ? 0 : 2.2 },
-          { autoAlpha: 1, scale: 1, rotation: 0, duration: isMobile ? 0.22 : 0.28, ease: 'back.out(1.25)' },
-          isMobile ? 'chromeIn+=0.12' : 'chromeIn+=0.2'
-        );
-      }
-
-      pageEnterTl
-        .addLabel('timelineDraw', timelineInAt)
-        .fromTo(timeline, { autoAlpha: 0, y: isMobile ? 12 : 18 }, { autoAlpha: 1, y: 0, duration: isMobile ? 0.24 : 0.32 }, 'timelineDraw')
-        .fromTo(
-          timelineLine,
-          { scaleX: 0, transformOrigin: 'left center' },
-          { scaleX: 1, duration: isMobile ? 0.38 : 0.52, ease: 'power2.inOut' },
-          'timelineDraw+=0.12'
-        )
-        .fromTo(
-          timelineNodes,
-          { autoAlpha: 0, scale: 0.72, y: 6 },
-          { autoAlpha: 1, scale: 1, y: 0, duration: 0.18, stagger: { each: isMobile ? 0.012 : 0.035, from: 'start' } },
-          'timelineDraw+=0.18'
-        )
-        .addLabel('markerReveal', `+=${markerRevealGap}`)
-        .call(() => {
-          void mapCanvasRef.value?.playMarkerReveal({ replayVisible: true, isMobile });
-        }, [], 'markerReveal');
-
-      pageEnterTl.addLabel('entryComplete', `markerReveal+=${entryCompleteHold}`).to({}, { duration: 0.01 }, 'entryComplete');
-
-      if (!pageEnterTl.getChildren(false, true, true).length) {
-        completePageEnterMotion();
-      }
-    },
-    root
-  );
-}
-
-function startPreloaderExit() {
-  if (hasPreloaderRevealed.value || isPreloaderLeaving.value) {
-    return;
-  }
-
-  if (storyBootReady.value) {
-    isMapEntering.value = !isReducedMotion.value && !isInstantMotion();
-    prepareMapEntryCamera();
-  }
-
-  if (isInstantMotion()) {
-    completePreloaderReveal();
-    return;
-  }
-
-  isPreloaderLeaving.value = true;
-}
-
-function completePreloaderReveal() {
-  hasPreloaderRevealed.value = true;
-  isPreloaderLeaving.value = false;
-  if (errorMessage.value) {
-    isMapEntering.value = false;
-    return;
-  }
-  nextTick(playPageEnterMotion);
-}
-
-function markerDescendantSelector(id: number, descendant: string) {
-  return `[data-story-motion-id="${id}"] ${descendant}, [data-story-group-ids~="${id}"] ${descendant}`;
-}
-
-function playSelectionFeedback(id: number) {
-  selectTl?.kill();
-  selectionMotionContext?.revert();
-  if (isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
-    return;
-  }
-
-  const root = storyRoot.value;
-  selectionMotionContext = gsap.context(() => {
-    const pulse = root.querySelector<HTMLElement>(markerDescendantSelector(id, '.story-marker__pulse'));
-    const markerVisual = root.querySelector<HTMLElement>(markerDescendantSelector(id, '.story-marker__visual'));
-    const node = root.querySelector<HTMLElement>(`.story-timeline__node[data-story-motion-id="${id}"]`);
-    const dot = node?.querySelector<HTMLElement>('.story-timeline__dot');
-
-    selectTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } });
-    if (markerVisual) {
-      selectTl.fromTo(markerVisual, { scale: 1 }, { scale: 1.08, duration: 0.12, yoyo: true, repeat: 1, clearProps: 'transform' }, 0);
-    }
-    if (node) {
-      selectTl.fromTo(node, { scale: 1 }, { scale: 1.05, duration: 0.12, yoyo: true, repeat: 1, clearProps: 'transform' }, 0);
-    }
-    if (dot) {
-      selectTl.fromTo(dot, { scale: 0.9 }, { scale: 1.14, duration: 0.18, yoyo: true, repeat: 1, clearProps: 'transform' }, 0);
-    }
-    if (pulse) {
-      selectTl.fromTo(pulse, { autoAlpha: 0.38, scale: 0.8 }, { autoAlpha: 0, scale: 2.25, duration: 0.55, clearProps: 'transform,visibility' }, 0.04);
-    }
-  }, root);
-}
-
-function playDeleteConfirmOpen() {
-  deleteConfirmTl?.kill();
-  deleteConfirmMotionContext?.revert();
-  if (!deleteTarget.value || isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
-    return;
-  }
-  const root = storyRoot.value;
-  deleteConfirmMotionContext = gsap.context(() => {
-    deleteConfirmTl = gsap.fromTo('.story-delete-confirm', { autoAlpha: 0, scale: 0.96, y: 6 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.18, ease: 'power2.out', clearProps: 'transform,visibility' });
-  }, root);
-}
-
-function playDeleteFeedback(id: number) {
-  deleteTl?.kill();
-  selectTl?.kill();
-  deleteMotionContext?.revert();
-
-  if (isReducedMotion.value || isInstantMotion() || !storyRoot.value) {
-    return Promise.resolve();
-  }
-
-  const root = storyRoot.value;
-  return new Promise<void>((resolve) => {
-    deleteMotionContext = gsap.context(() => {
-      const confirm = root.querySelector<HTMLElement>('.story-delete-confirm');
-      const markerVisual = root.querySelector<HTMLElement>(markerDescendantSelector(id, '.story-marker__visual'));
-      const node = root.querySelector<HTMLElement>(`.story-timeline__node[data-story-motion-id="${id}"]`);
-      const detail = root.querySelector<HTMLElement>('.moment-detail');
-
-      if (!confirm && !markerVisual && !node && !detail) {
-        resolve();
-        return;
-      }
-
-      deleteTl = gsap.timeline({ defaults: { ease: 'power2.inOut', overwrite: 'auto' }, onComplete: resolve });
-      if (confirm) {
-        deleteTl.to(confirm, { autoAlpha: 0, scale: 0.985, duration: 0.1, ease: 'power1.out' }, 0);
-      }
-      if (markerVisual) {
-        deleteTl.to(markerVisual, { autoAlpha: 0, scale: 0.62, rotation: -3, duration: 0.22, clearProps: 'transform,visibility' }, 0.04);
-      }
-      if (node) {
-        deleteTl.to(node, { autoAlpha: 0, scale: 0.72, y: 4, duration: 0.2, clearProps: 'transform,visibility' }, 0.08);
-      }
-      if (detail) {
-        deleteTl.to(detail, { autoAlpha: 0, scale: 0.985, y: 4, duration: 0.12, ease: 'power1.out', clearProps: 'transform,visibility' }, 0.04);
-      }
-    }, root);
-  });
-}
-
-function playMomentFeedback(id: number) {
-  clearMotionFeedback();
-  motionFeedbackId.value = id;
-
-  if (!isReducedMotion.value && !isInstantMotion()) {
-    nextTick(() => {
-      if (!storyRoot.value) {
-        return;
-      }
-      saveSuccessTl?.kill();
-      motionContext?.revert();
-      motionContext = gsap.context(() => {
-        const markerPulse = storyRoot.value?.querySelector<HTMLElement>(markerDescendantSelector(id, '.story-marker__pulse'));
-        const timelineNode = storyRoot.value?.querySelector<HTMLElement>(`.story-timeline__node[data-story-motion-id="${id}"]`);
-        const timelineDot = timelineNode?.querySelector<HTMLElement>('.story-timeline__dot');
-
-        saveSuccessTl = gsap.timeline({ defaults: { ease: 'power3.out', overwrite: 'auto' } }).addLabel('markerIn', 0);
-        void mapCanvasRef.value?.playMarkerReveal({
-          ids: [id],
-          replayVisible: true,
-          isMobile: Boolean(window.matchMedia?.('(max-width: 767px)').matches)
-        });
-        if (markerPulse) {
-          saveSuccessTl.fromTo(markerPulse, { autoAlpha: 0.34, scale: 0.85 }, { autoAlpha: 0, scale: 2.2, duration: 0.46, clearProps: 'transform,visibility' }, 'markerIn+=0.36');
-        }
-        if (timelineNode) {
-          saveSuccessTl.fromTo(timelineNode, { autoAlpha: 0.72, scale: 0.86, y: 4 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.26, clearProps: 'transform,visibility' }, 'markerIn+=0.14');
-        }
-        if (timelineDot) {
-          saveSuccessTl.fromTo(timelineDot, { scale: 0.8 }, { scale: 1.18, duration: 0.2, yoyo: true, repeat: 1, clearProps: 'transform' }, 'markerIn+=0.18');
-        }
-      }, storyRoot.value);
-    });
-  }
-
-  motionFeedbackTimer = window.setTimeout(() => {
-    motionFeedbackId.value = null;
-    motionFeedbackTimer = null;
-    saveSuccessTl?.kill();
-    motionContext?.revert();
-    motionContext = undefined;
-  }, isReducedMotion.value ? 120 : 860);
-}
-
-function clearMotionFeedback() {
-  if (motionFeedbackTimer) {
-    window.clearTimeout(motionFeedbackTimer);
-    motionFeedbackTimer = null;
-  }
-  motionFeedbackId.value = null;
-  saveSuccessTl?.kill();
 }
 
 </script>

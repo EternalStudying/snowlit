@@ -1,6 +1,6 @@
 import { nextTick, onBeforeUnmount, ref, type Ref } from 'vue';
 import { gsap } from 'gsap';
-import { shouldSkipMotion } from '../../../motion';
+import { shouldSkipMotion, useMotionSlots } from '../../../motion';
 import type { WishLaneKey, WishLaneTransition } from '../model';
 
 export interface WishBoardElements {
@@ -39,9 +39,9 @@ export function useWishBoardMotion(elements: WishBoardElements) {
     createWishDialogRef
   } = elements;
   const skip = shouldSkipMotion();
+  const slots = useMotionSlots<'enter' | 'detail' | 'create' | 'preview' | 'stamp' | 'laneMove'>();
   const detailAnimating = ref(false);
   const imagePreviewAnimating = ref(false);
-  let wishBoardEnterCleanup: (() => void) | undefined;
   let wishDetailTimeline: gsap.core.Timeline | undefined;
   let createWishTimeline: gsap.core.Timeline | undefined;
   let imagePreviewTimeline: gsap.core.Timeline | undefined;
@@ -61,8 +61,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return;
     }
 
-    wishBoardEnterCleanup?.();
-    wishBoardEnterCleanup = undefined;
+    slots.stop('enter');
 
     if (!wishPageRef.value) {
       return;
@@ -75,7 +74,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
 
     hasPlayedWishBoardEnter = true;
 
-    const ctx = gsap.context(() => {
+    slots.hold('enter', gsap.context(() => {
       const find = gsap.utils.selector(wishPageRef.value);
       const heroSheet = find('.list-hero__sheet');
       const heroBanner = find('.list-hero__banner');
@@ -271,9 +270,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           0.62
         );
       }
-    }, wishPageRef.value);
-
-    wishBoardEnterCleanup = () => ctx.revert();
+    }, wishPageRef.value));
   }
 
   function getWishLaneItem(wishId: number) {
@@ -437,7 +434,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return Promise.resolve();
     }
 
-    wishDetailTimeline?.kill();
+    slots.stop('detail');
 
     if (skip) {
       gsap.set(backdrop, { autoAlpha: 1, clearProps: 'transform' });
@@ -452,7 +449,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         detailAnimating.value = false;
         resolve();
       };
-      wishDetailTimeline = gsap
+      wishDetailTimeline = slots.hold('detail', gsap
         .timeline({
           onComplete: finish,
           onInterrupt: finish
@@ -460,7 +457,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         .set(backdrop, { autoAlpha: 0 })
         .set(dialog, { autoAlpha: 0, y: 20, scale: 0.94, rotate: -0.7, transformOrigin: '50% 56%' })
         .to(backdrop, { autoAlpha: 1, duration: 0.24, ease: 'power2.out' }, 0)
-        .to(dialog, { autoAlpha: 1, y: 0, scale: 1, rotate: 0, duration: 0.32, ease: 'back.out(1.55)' }, 0.02);
+        .to(dialog, { autoAlpha: 1, y: 0, scale: 1, rotate: 0, duration: 0.32, ease: 'back.out(1.55)' }, 0.02));
     });
   }
 
@@ -472,13 +469,13 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return Promise.resolve();
     }
 
-    wishDetailTimeline?.kill();
+    slots.stop('detail');
 
     return new Promise<void>((resolve) => {
-      wishDetailTimeline = gsap
+      wishDetailTimeline = slots.hold('detail', gsap
         .timeline({ onComplete: resolve, onInterrupt: resolve })
         .to(dialog, { autoAlpha: 0, y: 16, scale: 0.96, rotate: 0.4, duration: 0.26, ease: 'power2.inOut' }, 0)
-        .to(backdrop, { autoAlpha: 0, duration: 0.26, ease: 'power2.inOut' }, 0);
+        .to(backdrop, { autoAlpha: 0, duration: 0.26, ease: 'power2.inOut' }, 0));
     });
   }
 
@@ -497,7 +494,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
     const divider = Array.from(dialog.querySelectorAll<HTMLElement>('.wish-create-dialog__divider'));
     const actions = Array.from(dialog.querySelectorAll<HTMLElement>('.wish-create-dialog__actions button'));
     const animatedTargets = [dialog, ...background, ...content, ...fields, ...categoryButtons, ...divider, ...actions];
-    createWishTimeline?.kill();
+    slots.stop('create');
 
     if (skip) {
       gsap.set(backdrop, { autoAlpha: 1, clearProps: 'transform' });
@@ -512,7 +509,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         gsap.set(animatedTargets, { clearProps: 'willChange' });
         resolve();
       };
-      createWishTimeline = gsap
+      createWishTimeline = slots.hold('create', gsap
         .timeline({
           defaults: { ease: 'power2.out' },
           onComplete: finish,
@@ -548,7 +545,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           actions,
           { autoAlpha: 1, y: 0, scale: 1, duration: 0.25, stagger: { each: 0.03, from: 'start' }, ease: 'power2.out' },
           0.34
-        );
+        ));
     });
   }
 
@@ -560,7 +557,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return Promise.resolve();
     }
 
-    createWishTimeline?.kill();
+    slots.stop('create');
     const closingItems = Array.from(
       dialog.querySelectorAll<HTMLElement>('.wish-create-field, .wish-create-dialog__category button, .wish-create-dialog__actions button')
     );
@@ -571,7 +568,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         gsap.set([backdrop, dialog, ...closingItems], { clearProps: 'willChange' });
         resolve();
       };
-      createWishTimeline = gsap
+      createWishTimeline = slots.hold('create', gsap
         .timeline({
           onComplete: finish,
           onInterrupt: finish
@@ -583,7 +580,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           0
         )
         .to(dialog, { autoAlpha: 0, y: -14, scale: 0.982, rotate: 0.35, duration: 0.22, ease: 'power2.inOut' }, 0.04)
-        .to(backdrop, { autoAlpha: 0, duration: 0.22, ease: 'power2.inOut' }, 0);
+        .to(backdrop, { autoAlpha: 0, duration: 0.22, ease: 'power2.inOut' }, 0));
     });
   }
 
@@ -595,7 +592,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return Promise.resolve();
     }
 
-    imagePreviewTimeline?.kill();
+    slots.stop('preview');
 
     if (skip) {
       gsap.set(preview, { autoAlpha: 1 });
@@ -617,7 +614,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         imagePreviewAnimating.value = false;
         resolve();
       };
-      imagePreviewTimeline = gsap
+      imagePreviewTimeline = slots.hold('preview', gsap
         .timeline({
           onComplete: finish,
           onInterrupt: finish
@@ -632,7 +629,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           transformOrigin: 'top left'
         })
         .to(preview, { autoAlpha: 1, duration: 0.2, ease: 'power2.out' }, 0)
-        .to(image, { autoAlpha: 1, x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.42, ease: 'power3.out' }, 0.03);
+        .to(image, { autoAlpha: 1, x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.42, ease: 'power3.out' }, 0.03));
     });
   }
 
@@ -644,7 +641,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return Promise.resolve();
     }
 
-    imagePreviewTimeline?.kill();
+    slots.stop('preview');
     const sourceRect = wishDetailImageRef.value?.getBoundingClientRect() ?? null;
     const targetRect = image.getBoundingClientRect();
     const hasSourceRect = Boolean(sourceRect && targetRect.width > 0 && targetRect.height > 0);
@@ -660,7 +657,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         imagePreviewAnimating.value = false;
         resolve();
       };
-      imagePreviewTimeline = gsap
+      imagePreviewTimeline = slots.hold('preview', gsap
         .timeline({
           onComplete: finish,
           onInterrupt: finish
@@ -678,7 +675,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           },
           0
         )
-        .to(preview, { autoAlpha: 0, duration: 0.24, ease: 'power2.inOut' }, 0.04);
+        .to(preview, { autoAlpha: 0, duration: 0.24, ease: 'power2.inOut' }, 0.04));
     });
   }
 
@@ -706,13 +703,12 @@ export function useWishBoardMotion(elements: WishBoardElements) {
     });
 
     return new Promise<void>((resolve) => {
-      const timeline = gsap.timeline({
-        onComplete: () => {
-          wave.remove();
-          particles.forEach((particle) => particle.remove());
-          resolve();
-        }
-      });
+      const finish = () => {
+        wave.remove();
+        particles.forEach((particle) => particle.remove());
+        resolve();
+      };
+      const timeline = slots.hold('stamp', gsap.timeline({ onComplete: finish, onInterrupt: finish }));
 
       timeline
         .to(badge, { y: 9, scale: 0.82, rotate: -10, duration: 0.08, ease: 'power2.in' }, 0)
@@ -761,7 +757,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
     const sourceFollowerSnapshots = snapshotRows(sourceRows.slice(sourceIndex + 1));
     const targetSnapshots = snapshotRows(targetRows);
 
-    wishLaneMoveTimeline?.kill();
+    slots.stop('laneMove');
     const ghostMove = sourceRow ? createWishLaneMoveGhost(sourceRow) : null;
 
     if (sourceRow) {
@@ -809,14 +805,14 @@ export function useWishBoardMotion(elements: WishBoardElements) {
         }
       };
 
-      wishLaneMoveTimeline = gsap.timeline({
+      wishLaneMoveTimeline = slots.hold('laneMove', gsap.timeline({
         defaults: wishLaneMoveTweenDefaults,
         onComplete: () => {
           revealMovedRow();
           clearWishLaneMoveStyles(animatedRows);
           scheduleWishLaneMoveGhostRemoval(resolve);
         }
-      });
+      }));
 
       const rowsToSettle = [...updatedSourceRows, ...shiftedTargetRows];
       let hasTween = false;
@@ -863,33 +859,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
   onBeforeUnmount(() => {
     wishLaneMoveCleanupFrames.forEach((frame) => cancelAnimationFrame(frame));
     wishLaneMoveCleanupFrames = [];
-    wishBoardEnterCleanup?.();
-    wishDetailTimeline?.kill();
-    createWishTimeline?.kill();
-    imagePreviewTimeline?.kill();
-    wishLaneMoveTimeline?.kill();
     removeWishLaneMoveGhost();
-    gsap.killTweensOf('.list-hero__sheet');
-    gsap.killTweensOf('.list-hero__banner');
-    gsap.killTweensOf('.list-hero__label');
-    gsap.killTweensOf('.list-hero__title');
-    gsap.killTweensOf('.list-hero__subtitle');
-    gsap.killTweensOf('.list-note-card');
-    gsap.killTweensOf('.list-note-card__asset');
-    gsap.killTweensOf('.list-note-card__copy');
-    gsap.killTweensOf('.wish-board');
-    gsap.killTweensOf('.wish-board__asset');
-    gsap.killTweensOf('.wish-board__content');
-    gsap.killTweensOf('.wish-lane-item');
-    gsap.killTweensOf('.list-legend span');
-    gsap.killTweensOf('.wish-create-fab');
-    gsap.killTweensOf(wishDetailDialogRef.value);
-    gsap.killTweensOf(wishDetailBackdropRef.value);
-    gsap.killTweensOf(createWishDialogRef.value);
-    gsap.killTweensOf(createWishBackdropRef.value);
-    gsap.killTweensOf(imagePreviewRef.value);
-    gsap.killTweensOf(imagePreviewImageRef.value);
-    gsap.killTweensOf(completionBadgeRef.value);
   });
 
   return {
