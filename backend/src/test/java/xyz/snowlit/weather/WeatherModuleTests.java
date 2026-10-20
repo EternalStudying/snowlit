@@ -14,6 +14,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -163,17 +164,26 @@ class WeatherModuleTests {
     }
 
     @Test
-    void sharesCacheByRoundedCoordinateAndKeepsProviderDaylight() {
-        var point = new WeatherGateway.Coordinates(52.52, 13.41);
+    void sharesCacheByExactCoordinateAndKeepsProviderDaylight() {
+        var point = new WeatherGateway.Coordinates(52.52048, 13.40572);
         when(weatherGateway.reverseGeocode(point)).thenReturn(Optional.of(new WeatherGateway.Location("Berlin", "", "", "Germany")));
         when(weatherGateway.weather(point)).thenReturn(Optional.of(new WeatherGateway.LiveWeather(WeatherCondition.CLEAR, 18.0, "", "", "", "2026-06-21T20:30", "day")));
         var first = weather.getBrowserAtmosphere("52.52048", "13.40572");
-        var second = weather.getBrowserAtmosphere("52.52123", "13.40621");
+        var second = weather.getBrowserAtmosphere("52.52048", "13.40572");
         assertThat(second).isSameAs(first);
         assertThat(first.daylightHint()).isEqualTo("day");
         assertThat(first.observedAt()).isEqualTo(LocalDateTime.of(2026, 6, 21, 20, 30));
         verify(weatherGateway, times(1)).reverseGeocode(point);
         verify(weatherGateway, times(1)).weather(point);
+    }
+
+    @Test
+    void nearbyExactCoordinatesDoNotShareACachedLocation() {
+        var first = weather.getBrowserAtmosphere("52.52048", "13.40572");
+        var second = weather.getBrowserAtmosphere("52.52123", "13.40621");
+        assertThat(second).isNotSameAs(first);
+        verify(weatherGateway, times(2)).reverseGeocode(any(WeatherGateway.Coordinates.class));
+        verify(weatherGateway, times(2)).weather(any(WeatherGateway.Coordinates.class));
     }
 
     @Test

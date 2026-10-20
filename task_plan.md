@@ -2,11 +2,50 @@
 
 ## Goal
 
-Current: mini-program album creation fills its date and place from the picked photos' EXIF (2026-10-19). Earlier: the backend, Web and mini-program architecture refactors below.
+Current: format automatically resolved album photo places using the local district and city when available (2026-10-20), with useful missing-field fallbacks and no hardcoded country/city. Also forward original coordinates as explicitly requested, synchronizing both clients' privacy text and the exact-coordinate cache contract.
 
 ## Current Phase
 
-Backend refactor complete and fast-forwarded into local main (not pushed). Frontend refactor and its second pass complete and fast-forwarded into local main (not pushed). Mini-program targeted refactor complete and fast-forwarded into local main (not pushed).
+Photo place display and original-coordinate forwarding are complete. Actual provider responses exposed a missing parent-city level; optional administrative point lookup repairs it. The provided photo now resolves to the requested district/city label. Mini-program 124 tests, backend 263 tests, relevant Web 11 tests and the Web build passed. The backend was restarted with retained configuration and SQL initialization disabled; live read-only verification left current page data unchanged.
+
+### Current: Photo place display
+- [x] Verify the current formatter and actual returned address fields.
+- [x] Update the format and exercise administrative-level fallbacks.
+- [x] Verify the actual photo result and update English specifications.
+
+### Current: Original JPEG compatibility
+- [x] Inspect the original bytes and distinguish absent metadata from unsupported encoding.
+- [x] Reproduce signed GPS rejection with generic fixtures and apply the minimal parser repair.
+- [x] Verify the supplied original and mini-program regressions without restarting services.
+- [x] Update English context without saving real coordinates or the private source image.
+
+### Current: Photo shooting date and place
+- [x] Capture the actual selection/metadata state and reproduce the fallback.
+- [x] Add failing regression coverage for confirmed defects and implement the smallest repair.
+- [x] Verify original metadata reading, async form filling and save readiness in the simulator.
+- [x] Update context with the verified result and remaining platform limits.
+
+### Current: Four-domain MinIO upload checks
+- [x] Record baselines and inspect the four upload contracts and cleanup paths.
+- [x] Exercise each upload in the simulator and confirm actual MinIO object content.
+- [x] Repair reproduced failures and run relevant regression checks (no upload defect reproduced; 18 relevant tests pass).
+- [x] Clean temporary data, verify retained baselines and update context.
+
+### Current: MinIO setup and media migration
+- [x] Inventory the existing MinIO bucket, local files and database references.
+- [x] Back up retained data/configuration and migrate verified objects and references.
+- [x] Restart using MinIO and verify migrated photos plus a new mini-program upload.
+- [x] Clean up only temporary test resources and update context.
+
+### Current: Album photo upload
+- [x] Capture and reproduce the failed album upload.
+- [x] Fix the cause and add a regression check at the affected boundary.
+- [x] Verify the simulator flow and update context.
+
+### Current: Mini-program login diagnosis
+- [x] Reproduce the simulator failure and capture a safe error summary.
+- [x] Identify and fix the failing boundary without reinitializing retained data.
+- [x] Repeat the original login flow and update the relevant context.
 
 ### Phase 1: Architecture review and design decisions
 - **Status:** complete
@@ -30,7 +69,7 @@ Backend refactor complete and fast-forwarded into local main (not pushed). Front
 - **Status:** complete; fast-forwarded into local main from `refactor/miniprogram-deepening` (not pushed). No rework of the native architecture: one shared image picker, one upload queue (`refactor/miniprogram-upload-queue`), a latest-request guard (fixes the Story filter race), and Home weather in its own module — see [technical specification](miniprogram/technical-spec.md)
 
 ### Phase 8: Album date and place from photos (mini program)
-- **Status:** complete; fast-forwarded into local main from `feature/album-photo-metadata` (not pushed). Decisions: album creation only; earliest date and first GPS photo; never overwrite set fields; place via the existing backend lookup; upload compressed copies; per-photo takenAt; one hint when nothing is found — see [technical specification](miniprogram/technical-spec.md). Not verified on devices or in the simulator.
+- **Status:** complete; fast-forwarded into local main from `feature/album-photo-metadata` (not pushed). Decisions: album creation only; earliest date and first GPS photo; never overwrite set fields; place via the existing backend lookup; upload compressed copies; per-photo takenAt; one hint when nothing is found — see [technical specification](miniprogram/technical-spec.md). Simulator acceptance and async-state repairs completed on 2026-10-19; physical devices and native picking remain unverified.
 
 ## Context Entry Points
 

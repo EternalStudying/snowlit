@@ -10,15 +10,6 @@ function clean(value) {
   return value == null ? '' : String(value).trim();
 }
 
-function pad(value) {
-  return String(value).padStart(2, '0');
-}
-
-function today() {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
-
 function formatAlbumDateText(value) {
   return clean(value).replace(/-/g, '.');
 }
@@ -29,7 +20,7 @@ function visibilityLabel(value) {
 }
 
 function createInitialAlbumForm(date) {
-  const eventDate = date || today();
+  const eventDate = date || '';
   return {
     title: '',
     visibility: 'public',
@@ -37,7 +28,7 @@ function createInitialAlbumForm(date) {
     privatePassword: '',
     pinned: false,
     eventDate,
-    eventDateText: formatAlbumDateText(eventDate),
+    eventDateText: eventDate ? formatAlbumDateText(eventDate) : '从照片读取或手动选择',
     location: '',
     description: ''
   };
@@ -66,7 +57,7 @@ function buildAlbumDraftPayload(form) {
       title,
       description: clean(source.description),
       eventDate,
-      location: clean(source.location) || '地球',
+      location: clean(source.location),
       visibility,
       privatePassword: visibility === 'private' ? privatePassword : '',
       pinned: Boolean(source.pinned)
@@ -108,7 +99,7 @@ function createAlbumPhotoMetadata(photo, index, form) {
   return {
     caption: clean(albumForm.title) || '未命名照片',
     takenAt: clean(source.takenAt) || clean(albumForm.eventDate),
-    location: clean(albumForm.location) || '地球',
+    location: clean(albumForm.location),
     width: positiveNumber(source.width, 1),
     height: positiveNumber(source.height, 1),
     sortOrder: index + 1

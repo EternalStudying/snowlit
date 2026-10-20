@@ -29,7 +29,7 @@ Ten modules live under src/modules: home, album, wishes, diary, story, messages,
 
 - Home names and regions come from backend data. Unknown location remains unavailable. Stories without coordinates do not produce markers; an empty global map does not imply a user position at 0/0.
 - Web maps use AMap. Missing VITE_AMAP_KEY keeps the fallback; do not fabricate coordinates.
-- Weather requires initial disclosure/permission, then updates every 20 minutes in the foreground. Hiding pauses updates; refusal suppresses repeated automatic prompts; manual recovery remains available.
+- Weather forwards original WGS84 coordinates through the backend to Geoapify/Open-Meteo (user decision, 2026-10-20); the top-bar disclosure describes that precision. Weather requires initial disclosure/permission, then updates every 20 minutes in the foreground. Hiding pauses updates; refusal suppresses repeated automatic prompts; manual recovery remains available.
 - Late responses cannot cross sessions. Location and weather fail independently; unresolved location must not overwrite stored position. Attribution UI is hidden, while privacy disclosure remains accurate.
 - [calendarDate](src/calendarDate.ts) generates local calendar dates. Reopening a diary editor refreshes its default date. Timestamps retain instant semantics.
 - Upload queues preserve retries and submission guards. Album original/preview uploads and the mini-program single-file protocol remain separate contracts.

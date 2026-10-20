@@ -21,9 +21,9 @@ class GlobalWeatherGatewayTests {
     private final GlobalWeatherGateway gateway = new GlobalWeatherGateway(builder.build(), "test-key", "");
 
     @Test
-    void roundsCoordinatesBeforeAnyProviderReceivesThem() {
-        assertThat(point).isEqualTo(new Coordinates(52.52, 13.41));
-        assertThat(new Coordinates(-33.865, -151.205)).isEqualTo(new Coordinates(-33.87, -151.21));
+    void preservesOriginalCoordinatesAndRejectsInvalidValues() {
+        assertThat(point).isEqualTo(new Coordinates(52.52048, 13.40572));
+        assertThat(new Coordinates(-33.865, -151.205)).isEqualTo(new Coordinates(-33.865, -151.205));
         assertThatThrownBy(() -> new Coordinates(Double.NaN, 0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Coordinates(0, Double.POSITIVE_INFINITY)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Coordinates(90.1, 0)).isInstanceOf(IllegalArgumentException.class);
@@ -31,8 +31,8 @@ class GlobalWeatherGatewayTests {
     }
 
     @Test
-    void requestsOnlyCityLevelAddressWithCoarseCoordinates() {
-        server.expect(requestTo("https://api.geoapify.com/v1/geocode/reverse?lat=52.52&lon=13.41&type=city&format=json&lang=zh&apiKey=test-key"))
+    void requestsOnlyCityLevelAddressWithOriginalCoordinates() {
+        server.expect(requestTo("https://api.geoapify.com/v1/geocode/reverse?lat=52.52048&lon=13.40572&type=city&format=json&lang=zh&apiKey=test-key"))
                 .andExpect(headerDoesNotExist("Authorization"))
                 .andExpect(headerDoesNotExist("X-Forwarded-For"))
                 .andRespond(withSuccess("""
@@ -42,6 +42,57 @@ class GlobalWeatherGatewayTests {
         assertThat(location.city()).isEqualTo("Berlin");
         assertThat(location.country()).isEqualTo("Germany");
         assertThat(location.district()).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void resolvesParentCityWhenReverseGeocodingLabelsACountyAsTheCity() {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.geoapify.com/v1/geocode/reverse?")))
+                .andRespond(withSuccess("""
+                    {"results":[{"city":"Example Borough","suburb":"Example Quarter","state":"Example Region",
+                     "country":"Example Country","result_type":"suburb"}]}
+                    """, MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://api.geoapify.com/v1/boundaries/part-of?lat=52.52048&lon=13.40572&boundaries=administrative&geometry=point&lang=zh&apiKey=test-key"))
+                .andExpect(headerDoesNotExist("Authorization"))
+                .andExpect(headerDoesNotExist("X-Forwarded-For"))
+                .andRespond(withSuccess("""
+                    {"features":[
+                      {"properties":{"name":"Example Quarter","city":"Example Borough"}},
+                      {"properties":{"name":"Example Borough","county":"Example Borough","city":"Example City"}},
+                      {"properties":{"name":"Example City","city":"Example City"}}
+                    ]}
+                    """, MediaType.APPLICATION_JSON));
+
+        var location = gateway.reverseGeocode(point).orElseThrow();
+        assertThat(location.city()).isEqualTo("Example City");
+        assertThat(location.district()).isEqualTo("Example Borough");
+        assertThat(location.province()).isEqualTo("Example Region");
+        assertThat(location.country()).isEqualTo("Example Country");
+        server.verify();
+    }
+
+    @Test
+    void failedBoundaryEnrichmentPreservesTheResolvedLocation() {
+        server.expect(anything()).andRespond(withSuccess("""
+            {"results":[{"city":"Example City","suburb":"Example Quarter","country":"Example Country","result_type":"suburb"}]}
+            """, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.geoapify.com/v1/boundaries/part-of?")))
+                .andRespond(withServerError());
+        var location = gateway.reverseGeocode(point).orElseThrow();
+        assertThat(location.city()).isEqualTo("Example City");
+        assertThat(location.district()).isEqualTo("Example Quarter");
+        assertThat(location.country()).isEqualTo("Example Country");
+        server.verify();
+    }
+
+    @Test
+    void cityResultsPreferTheDistrictOverTheSmallerSuburbWithoutEnrichment() {
+        server.expect(anything()).andRespond(withSuccess("""
+            {"results":[{"city":"Example City","district":"Example District","suburb":"Example Quarter","result_type":"city"}]}
+            """, MediaType.APPLICATION_JSON));
+        var location = gateway.reverseGeocode(point).orElseThrow();
+        assertThat(location.city()).isEqualTo("Example City");
+        assertThat(location.district()).isEqualTo("Example District");
         server.verify();
     }
 
@@ -143,8 +194,8 @@ class GlobalWeatherGatewayTests {
 
     private void expectWeather(String current) {
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/v1/forecast?")))
-                .andExpect(queryParam("latitude", "52.52"))
-                .andExpect(queryParam("longitude", "13.41"))
+                .andExpect(queryParam("latitude", "52.52048"))
+                .andExpect(queryParam("longitude", "13.40572"))
                 .andExpect(queryParam("wind_speed_unit", "ms"))
                 .andExpect(queryParam("timezone", "auto"))
                 .andExpect(headerDoesNotExist("Authorization"))

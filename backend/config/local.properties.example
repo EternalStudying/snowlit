@@ -1,5 +1,19 @@
-# Copy to local.properties and fill in this mini program's credentials.
+# Copy to local.properties and fill in this computer's credentials.
 # Loaded automatically in the dev profile; environment variables take precedence.
+
+# Required when the local MySQL root account has a password.
+LOCAL_DB_PASSWORD=
+# Preserve an existing database; initialize disposable databases explicitly.
+SQL_INIT_MODE=never
+
+# Set all five fields to use the existing local MinIO service.
+# Keep the real access/secret keys in ignored local.properties only.
+LOCAL_MINIO_ENDPOINT=http://127.0.0.1:9000
+LOCAL_MINIO_ACCESS_KEY=
+LOCAL_MINIO_SECRET_KEY=
+LOCAL_MINIO_BUCKET=snowlit-dev
+LOCAL_MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000/snowlit-dev
+
 WECHAT_MINIPROGRAM_APP_ID=
 WECHAT_MINIPROGRAM_APP_SECRET=
 

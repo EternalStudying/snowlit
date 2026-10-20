@@ -1,5 +1,6 @@
 const { request, buildQuery } = require('../utils/request');
 const { uploadFile } = require('../utils/upload');
+const { resolveMediaUrl } = require('../utils/media');
 const { saveAlbumPrivateToken, getAlbumPrivateToken, clearAlbumPrivateToken } = require('../utils/auth');
 
 const TOKEN_ERROR_CODES = ['PRIVATE_ALBUM_TOKEN_EXPIRED', 'PRIVATE_ALBUM_TOKEN_INVALID'];
@@ -106,7 +107,9 @@ function uploadAlbumDraftPhoto(albumId, filePath, metadata, onProgress) {
   }).then((response) => ({
     ...(response || {}),
     // UI-local field for existing upload state. Backend contract is previewUrl/originalUrl.
-    url: response && response.previewUrl ? response.previewUrl : ''
+    url: resolveMediaUrl(response && response.previewUrl),
+    previewUrl: resolveMediaUrl(response && response.previewUrl),
+    originalUrl: resolveMediaUrl(response && response.originalUrl)
   }));
 }
 

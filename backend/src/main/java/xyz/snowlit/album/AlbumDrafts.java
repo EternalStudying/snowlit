@@ -77,7 +77,7 @@ public class AlbumDrafts {
         album.setAuthorName(actor.displayName());
         album.setCreatedAt(LocalDateTime.now(clock));
         album.setEventDate(request.eventDate());
-        album.setLocation(Albums.locationOrEarth(request.location()));
+        album.setLocation(Text.trim(request.location()));
         album.setViewCount(0);
         album.setLikeCount(0);
         album.setVisibility(Text.trim(request.visibility()));
@@ -174,7 +174,7 @@ public class AlbumDrafts {
         photo.setCaption(captionOrUntitled(metadata.caption()));
         photo.setDescription("");
         photo.setTakenAt(metadata.takenAt());
-        photo.setLocation(Albums.locationOrEarth(metadata.location()));
+        photo.setLocation(Text.trim(metadata.location()));
         photo.setSortOrder(metadata.sortOrder() == null ? 100 : metadata.sortOrder());
         photo.setWidth(metadata.width());
         photo.setHeight(metadata.height());

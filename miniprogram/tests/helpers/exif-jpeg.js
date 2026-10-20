@@ -1,5 +1,5 @@
 // Builds a minimal JPEG: SOI, APP1 Exif (IFD0 -> Exif IFD + GPS IFD), then SOS.
-function buildJpeg({ little = false, dateTimeOriginal, dateTime, gps } = {}) {
+function buildJpeg({ little = false, dateTimeOriginal, dateTime, gps, gpsType = 5 } = {}) {
   const tiff = [];
   const u16 = (value) => (little ? [value & 0xff, value >> 8] : [value >> 8, value & 0xff]);
   const u32 = (value) => {
@@ -17,9 +17,9 @@ function buildJpeg({ little = false, dateTimeOriginal, dateTime, gps } = {}) {
   const exifTags = dateTimeOriginal ? [{ tag: 0x9003, type: 2, data: ascii(dateTimeOriginal) }] : [];
   const gpsTags = gps ? [
     { tag: 0x0001, type: 2, data: ascii(gps.latRef) },
-    { tag: 0x0002, type: 5, data: rational3(gps.lat), count: 3 },
+    { tag: 0x0002, type: gpsType, data: rational3(gps.lat), count: 3 },
     { tag: 0x0003, type: 2, data: ascii(gps.lonRef) },
-    { tag: 0x0004, type: 5, data: rational3(gps.lon), count: 3 }
+    { tag: 0x0004, type: gpsType, data: rational3(gps.lon), count: 3 }
   ] : [];
 
   const ifdSize = (tags) => 2 + tags.length * 12 + 4;

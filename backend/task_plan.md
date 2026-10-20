@@ -2,7 +2,19 @@
 
 ## Current Task
 
-Backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18 review). All phases complete; merged into local main (not pushed).
+2026-10-20 city hierarchy and original coordinates: complete. Optional Geoapify administrative point lookup corrects a lower-level reverse result mislabeled as a city; failures retain the base result. Original valid WGS84 coordinates now pass unchanged to both providers and key the cache, as requested. Full suite: 263 tests passed; restarted the previously running service with SQL_INIT_MODE=never and verified the requested district/city result for the supplied photo. Existing records, schema and images were not modified.
+
+2026-10-19 album metadata repair: complete. Preserve an unknown album/photo location as an empty string instead of inventing Earth. Regression tests failed before the repair; the complete backend suite now passes (259 tests). Restarted with SQL_INIT_MODE=never and existing MinIO settings; actual simulator unpublished-draft uploads verified date/place persistence and blank-location preservation. Test resources were removed and retained data/object baselines matched. No schema or existing-record changes.
+
+2026-10-19 four-domain upload acceptance: complete. All four simulator upload flows produced MinIO objects with fixture-matching SHA-256 and image/jpeg HTTP reads. Diary/feedback metadata and wish completion state matched. No upload defect reproduced; 18 relevant client checks passed. All temporary rows/objects/state were cleaned; retained table counts/checksums and object inventory match the baseline. No application code changed.
+
+2026-10-19 MinIO setup and media migration: complete. Under explicit user authorization, configured the existing service, backed up data/configuration/files, hash-verified two copied objects, updated three URL fields transactionally, retired active disk files, and restarted with SQL_INIT_MODE=never. Actual mini-program compression/upload/read passed and the temporary unpublished draft/objects were cleaned. Retained table counts and account/binding checksum matched. Recovery material stays in ignored codex-work/minio-migration-20261019/.
+
+2026-10-19 album photo diagnosis: complete. Uploads reached local storage successfully; root-relative media URLs were not resolved by the mini-program. The client fix passed regression checks and actual simulator list/detail image loads. No backend code or schema change required.
+
+2026-10-19 local mini-program login repair: complete. Reproduced HTTP 500 with a real WeChat code, found missing MySQL authentication, saved the existing password in ignored local configuration, restarted with SQL initialization disabled, and verified actual simulator login plus authenticated `/api/auth/me` (200). No application code or schema changes.
+
+Earlier: backend architecture refactor (deepening opportunities 1–6 from the 2026-10-18 review). All phases complete; merged into local main (not pushed).
 
 ### Phase 1: Defensive-code sweep and diary transactions
 - **Status:** complete
@@ -41,4 +53,4 @@ Read root AGENTS.md and task_plan.md, then [findings](findings.md), [progress](p
 
 ## Known Items, Not Scheduled
 
-MinIO adapter live check, client regression runs against the refactored backend, real devices, production domains/TLS, and WeChat privacy settings require acceptance. Public content and image-metadata boundaries are implementation facts, not authorization to change product behavior.
+The local MinIO adapter was exercised through a real mini-program mobile album upload on 2026-10-19. Complete client regression runs, real devices, production domains/TLS, and WeChat privacy settings still require acceptance. Public content and image-metadata boundaries are implementation facts, not authorization to change product behavior.

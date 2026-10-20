@@ -40,8 +40,8 @@ function placeText(value) {
 }
 
 /**
- * The place a photo was taken, as "城市，国家", from its GPS position. The backend rounds the
- * coordinates before asking Geoapify. Resolves '' when no place is known or the lookup fails.
+ * The place a photo was taken, preferring district and city, from its GPS position. The backend uses
+ * the supplied coordinates when asking Geoapify. Resolves '' when no place is known or the lookup fails.
  */
 function getPhotoPlaceName(position) {
   return request({
@@ -52,9 +52,17 @@ function getPhotoPlaceName(position) {
     method: 'GET',
     silent: true
   }).then((atmosphere) => {
-    const local = ['city', 'district', 'province'].map((key) => placeText(atmosphere && atmosphere[key])).find(Boolean) || '';
-    const country = placeText(atmosphere && atmosphere.country);
-    return [local, country === local ? '' : country].filter(Boolean).join('，');
+    const parts = [];
+    const seen = new Set();
+    for (const field of ['district', 'city', 'province', 'country']) {
+      const value = placeText(atmosphere && atmosphere[field]);
+      const name = value.replace(/市$/, '');
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      parts.push(field === 'city' ? name : value);
+      if (parts.length === 2) break;
+    }
+    return parts.join('，');
   }).catch(() => '');
 }
 

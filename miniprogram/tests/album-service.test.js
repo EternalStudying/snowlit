@@ -4,6 +4,12 @@ const { config } = require('../constants/config');
 const storage = {};
 const calls = [];
 const uploadCalls = [];
+let uploadResponse = {
+  id: 10,
+  albumId: 7,
+  previewUrl: 'https://cdn.example.com/album/preview.jpg',
+  originalUrl: 'https://cdn.example.com/album/original.jpg'
+};
 
 global.wx = {
   getStorageSync(key) {
@@ -46,12 +52,7 @@ global.wx = {
     uploadCalls.push(options);
     options.success({
       statusCode: 200,
-      data: JSON.stringify({
-        id: 10,
-        albumId: 7,
-        previewUrl: 'https://cdn.example.com/album/preview.jpg',
-        originalUrl: 'https://cdn.example.com/album/original.jpg'
-      })
+      data: JSON.stringify(uploadResponse)
     });
     return {
       onProgressUpdate(handler) {
@@ -180,6 +181,39 @@ async function runPublishDraftTest() {
   assert.equal(call.header.Authorization, 'Bearer jwt-token');
 }
 
+async function runRelativeUploadMediaTest() {
+  const previousMediaBaseUrl = config.mediaBaseUrl;
+  const previousUploadResponse = uploadResponse;
+  try {
+    for (const mediaBaseUrl of ['', 'https://media.example.com/']) {
+      config.mediaBaseUrl = mediaBaseUrl;
+      const base = (config.mediaBaseUrl || config.apiBaseUrl).replace(/\/$/, '');
+      uploadResponse = {
+        id: 11,
+        albumId: 7,
+        previewUrl: '/uploads/album/preview.jpg',
+        originalUrl: '/uploads/album/original.jpg'
+      };
+      const result = await uploadAlbumDraftPhoto(7, 'wxfile://tmp.jpg', {});
+      assert.equal(result.url, `${base}/uploads/album/preview.jpg`);
+      assert.equal(result.previewUrl, `${base}/uploads/album/preview.jpg`);
+      assert.equal(result.originalUrl, `${base}/uploads/album/original.jpg`);
+    }
+
+    uploadResponse = { previewUrl: '', originalUrl: '' };
+    const empty = await uploadAlbumDraftPhoto(7, 'wxfile://tmp.jpg', {});
+    assert.equal(empty.url, '');
+    assert.equal(empty.previewUrl, '');
+    assert.equal(empty.originalUrl, '');
+
+    uploadResponse = previousUploadResponse;
+    await runUploadDraftPhotoTest();
+  } finally {
+    config.mediaBaseUrl = previousMediaBaseUrl;
+    uploadResponse = previousUploadResponse;
+  }
+}
+
 async function runCancelDraftTest() {
   await cancelAlbumDraft(7);
   const call = calls[calls.length - 1];
@@ -195,6 +229,7 @@ async function run() {
   await runCreateDraftTest();
   await runGetCurrentDraftTest();
   await runUploadDraftPhotoTest();
+  await runRelativeUploadMediaTest();
   await runPublishDraftTest();
   await runCancelDraftTest();
   console.log('album-service tests passed');

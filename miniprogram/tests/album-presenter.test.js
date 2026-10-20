@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { config } = require('../constants/config');
 
 const {
   mapAlbumDetail,
@@ -165,6 +166,59 @@ function runCountUpdateTests() {
   assert.equal(unliked.likedToday, false);
 }
 
+function assertRelativeAlbumMedia(baseUrl) {
+  const base = baseUrl.replace(/\/$/, '');
+  const page = mapAlbumPage({
+    items: [
+      { id: 1, coverPhotoUrl: '/uploads/album/cover.jpg' },
+      { id: 2, previewPhotos: [{ previewUrl: '/uploads/album/preview.jpg' }] },
+      { id: 3, coverPhotoUrl: '', previewPhotos: [] }
+    ]
+  });
+  assert.equal(page.items[0].cover, `${base}/uploads/album/cover.jpg`);
+  assert.equal(page.items[1].cover, `${base}/uploads/album/preview.jpg`);
+  assert.equal(page.items[2].cover, '');
+
+  const detail = mapAlbumDetail({
+    album: { id: 1, coverPhotoUrl: '/uploads/album/cover.jpg' },
+    photos: [
+      {
+        id: 10,
+        previewUrl: '/uploads/album/preview.jpg',
+        originalUrl: '/uploads/album/original.jpg'
+      },
+      { id: 11, previewUrl: '', originalUrl: '' }
+    ]
+  });
+  assert.equal(detail.cover, `${base}/uploads/album/cover.jpg`);
+  assert.equal(detail.photos[0].url, `${base}/uploads/album/preview.jpg`);
+  assert.equal(detail.photos[0].previewUrl, `${base}/uploads/album/preview.jpg`);
+  assert.equal(detail.photos[0].originalUrl, `${base}/uploads/album/original.jpg`);
+  assert.equal(detail.photos[1].url, '');
+  assert.equal(detail.photos[1].previewUrl, '');
+  assert.equal(detail.photos[1].originalUrl, '');
+
+  const fallbackCover = mapAlbumDetail({
+    album: { id: 2, coverPhotoUrl: '' },
+    photos: [{ id: 12, previewUrl: '/uploads/album/fallback.jpg' }]
+  });
+  assert.equal(fallbackCover.cover, `${base}/uploads/album/fallback.jpg`);
+}
+
+function runRelativeAlbumMediaTest() {
+  const previousMediaBaseUrl = config.mediaBaseUrl;
+  try {
+    config.mediaBaseUrl = '';
+    assertRelativeAlbumMedia(config.apiBaseUrl);
+    config.mediaBaseUrl = 'https://media.example.com/';
+    assertRelativeAlbumMedia(config.mediaBaseUrl);
+    runAlbumPageMappingTest();
+    runAlbumDetailMappingTest();
+  } finally {
+    config.mediaBaseUrl = previousMediaBaseUrl;
+  }
+}
+
 function runAlbumLikeActiveTemplateTest() {
   const listWxml = fs.readFileSync(path.join(__dirname, '../pages/albums/index.wxml'), 'utf8');
   const listWxss = fs.readFileSync(path.join(__dirname, '../pages/albums/index.wxss'), 'utf8');
@@ -236,6 +290,7 @@ function runPrivateAlbumHeaderTemplateTest() {
 runAlbumPageMappingTest();
 runAlbumDetailMappingTest();
 runCountUpdateTests();
+runRelativeAlbumMediaTest();
 runAlbumDetailPhotoRatioStyleTest();
 runAlbumDetailCoverTemplateTest();
 runAlbumLikeActiveTemplateTest();

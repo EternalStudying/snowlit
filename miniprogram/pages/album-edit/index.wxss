@@ -6,7 +6,7 @@
   overflow-x: hidden;
   color: #1d2433;
   background: #f3f6fa;
-  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
 }
 
 .album-edit-top {
@@ -345,4 +345,11 @@
 
 .save-button[disabled] {
   opacity: 0.55;
+}
+
+.metadata-hint {
+  margin-top: 18rpx;
+  color: #6b7385;
+  font-size: 23rpx;
+  line-height: 1.6;
 }

@@ -17,6 +17,32 @@ test('reads little-endian files and falls back to the IFD0 date', () => {
   assert.deepEqual(result, { takenAt: '2025-12-31', latitude: null, longitude: null });
 });
 
+test('reads signed-rational GPS components in both byte orders', () => {
+  for (const little of [false, true]) {
+    const result = parseExif(buildJpeg({ little, gps: pacific, gpsType: 10 }));
+    assert.ok(Math.abs(result.latitude - -(33 + 52 / 60 + 0.5 / 3600)) < 1e-9);
+    assert.ok(Math.abs(result.longitude - -(151 + 12 / 60 + 36 / 3600)) < 1e-9);
+  }
+});
+
+test('signed-rational GPS reads negative numerators and denominators as signed integers', () => {
+  const signed = {
+    ...pacific,
+    lat: pacific.lat.map(([numerator, denominator]) => [-numerator, -denominator]),
+    lon: pacific.lon.map(([numerator, denominator]) => [-numerator, -denominator])
+  };
+  const result = parseExif(buildJpeg({ gps: signed, gpsType: 10 }));
+  assert.ok(Math.abs(result.latitude - -(33 + 52 / 60 + 0.5 / 3600)) < 1e-9);
+  assert.ok(Math.abs(result.longitude - -(151 + 12 / 60 + 36 / 3600)) < 1e-9);
+});
+
+test('signed-rational GPS with a zero denominator remains unknown', () => {
+  const gps = { ...pacific, lat: [[33, 0], [52, 1], [1, 2]] };
+  const result = parseExif(buildJpeg({ gps, gpsType: 10 }));
+  assert.equal(result.latitude, null);
+  assert.equal(result.longitude, null);
+});
+
 test('the original date wins over the modification date', () => {
   const result = parseExif(buildJpeg({ dateTimeOriginal: '2024:02:29 08:00:00', dateTime: '2026:01:01 00:00:00' }));
   assert.equal(result.takenAt, '2024-02-29');

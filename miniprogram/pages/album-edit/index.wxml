@@ -114,6 +114,7 @@
         <view class="photo-status" wx:if="{{item.message}}">{{item.message}}</view>
       </view>
     </view>
+    <view class="metadata-hint" wx:if="{{metadataHint}}">{{metadataHint}}</view>
   </view>
 
   <view class="edit-message" wx:if="{{message}}">{{message}}</view>
@@ -122,7 +123,7 @@
 
   <view class="album-edit-footer">
     <view class="cancel-button" bindtap="goBack">取消</view>
-    <button class="save-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="saveAlbum">保存相册</button>
+    <button class="save-button" loading="{{submitting || metadataReading}}" disabled="{{submitting || metadataReading}}" bindtap="saveAlbum">{{metadataReading ? '读取照片信息中' : (submitting ? '保存中' : '保存相册')}}</button>
   </view>
 </view>
 

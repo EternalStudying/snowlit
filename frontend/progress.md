@@ -2,6 +2,8 @@
 
 ## Current State
 
+2026-10-20: synchronized the weather consent text with original-coordinate provider queries. Relevant weather HTTP/refresh tests: 2 files, 11 passed. `npm run build` (vue-tsc and Vite) passed. No browser or live Web geolocation check; the mini-program/backend live check is recorded at the root.
+
 2026-10-18: frontend architecture refactor complete and fast-forwarded into local main from `refactor/frontend-deepening` (not pushed). Commits, in order: weather contract tests read WeatherCondition.java; shared display helpers and trusted API types; behaviour tests instead of source-text tests; weather pipeline pruned to LazyLayers; one image-picking rule; session epoch and request guards; one motion module; Wishes board motion split from state; journal shell to src/shell and weather scheduling into the weather module.
 
 ## Verification in This Task

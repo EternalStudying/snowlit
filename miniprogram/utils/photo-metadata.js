@@ -76,16 +76,20 @@ function readAscii(view, tiff, entry, little) {
 }
 
 function readCoordinate(view, tiff, entry, little) {
-  if (!entry || entry.type !== 5 || entry.count < 3) {
+  if (!entry || (entry.type !== 5 && entry.type !== 10) || entry.count < 3) {
     return NaN;
   }
   const at = tiff + view.getUint32(entry.valueAt, little);
   if (at + 24 > view.byteLength) {
     return NaN;
   }
+  // Camera GPS can use either RATIONAL (5) or SRATIONAL (10) components.
+  const readInteger = (offset) => (entry.type === 10
+    ? view.getInt32(offset, little)
+    : view.getUint32(offset, little));
   const parts = [0, 1, 2].map((index) => {
-    const denominator = view.getUint32(at + index * 8 + 4, little);
-    return denominator ? view.getUint32(at + index * 8, little) / denominator : NaN;
+    const denominator = readInteger(at + index * 8 + 4);
+    return denominator ? readInteger(at + index * 8) / denominator : NaN;
   });
   return parts[0] + parts[1] / 60 + parts[2] / 3600;
 }

@@ -192,14 +192,14 @@ test('weather without a resolved place updates only the page and survives a home
   assert.equal(page.data.locationUpdating, false);
 });
 
-test('location confirmation discloses the two providers and approximate-coordinate sharing before GPS', async () => {
+test('location confirmation discloses the two providers and original-coordinate sharing before GPS', async () => {
   const { page, locations, requests, dialogs } = createHome({ confirm: false });
   page.handleLocationTap();
   await settle();
   assert.equal(dialogs.length, 1);
   assert.match(dialogs[0].content, /Geoapify/);
   assert.match(dialogs[0].content, /Open-Meteo/);
-  assert.match(dialogs[0].content, /小数点后 2 位/);
+  assert.match(dialogs[0].content, /原始经纬度/);
   assert.match(dialogs[0].content, /日志/);
   assert.equal(locations.length, 0);
   assert.equal(requests.length, 0);

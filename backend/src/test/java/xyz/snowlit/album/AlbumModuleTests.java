@@ -133,7 +133,7 @@ class AlbumModuleTests {
         AlbumDraftVo draft = drafts.createDraft(MANAGER, request);
 
         assertThat(draft.album().title()).isEqualTo("私密小册");
-        assertThat(draft.album().location()).isEqualTo("地球");
+        assertThat(draft.album().location()).isEmpty();
         assertThat(draft.album().visibility()).isEqualTo("private");
         verify(albumMapper).insertAlbum(argThat(album -> {
             capturedAlbum = new CapturedAlbum(album.getPrivatePasswordHash());
@@ -243,6 +243,27 @@ class AlbumModuleTests {
                         && "花".equals(photo.getCaption())
                         && "集市".equals(photo.getLocation())
         ));
+    }
+
+    @Test
+    void mobileUploadDoesNotInventLocationWhenMetadataHasNone() {
+        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum());
+        when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0);
+        doAnswer(invocation -> {
+            AlbumPhoto photo = invocation.getArgument(0);
+            photo.setId(901L);
+            return 1;
+        }).when(albumMapper).insertPhoto(any());
+        when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
+
+        drafts.uploadMobilePhoto(
+                MANAGER,
+                9L,
+                TestImages.jpeg("file", "photo.jpg"),
+                new AlbumPhotoMetadataDto("Photo", LocalDate.of(2024, 2, 29), " ", 32, 32, 1)
+        );
+
+        verify(albumMapper).insertPhoto(argThat(photo -> photo.getLocation().isEmpty()));
     }
 
     @Test

@@ -43,8 +43,14 @@ Page({
     draftId: '',
     visibilitySheetVisible: false,
     dateSheetVisible: false,
+    metadataReading: false,
+    metadataHint: '',
     submitting: false,
     message: ''
+  },
+
+  onUnload() {
+    this.metadataDisposed = true;
   },
 
   goBack() {
@@ -115,7 +121,10 @@ Page({
   },
 
   confirmDateFromSheet(event) {
-    const value = event.detail && event.detail.value ? event.detail.value : createInitialAlbumForm().eventDate;
+    const value = event.detail && event.detail.value;
+    if (!value) {
+      return;
+    }
     this.settleField('eventDate');
     this.setData({
       'form.eventDate': value,
@@ -126,7 +135,7 @@ Page({
   },
 
   choosePhotos() {
-    if (this.data.submitting) {
+    if (this.data.submitting || this.queuedSave) {
       return;
     }
     if (!this.data.canAddPhoto) {
@@ -134,13 +143,13 @@ Page({
       return;
     }
 
-    pickImages({
+    return pickImages({
       count: MAX_ALBUM_PHOTOS - this.data.photos.length,
       title: '选择照片',
       message: '需要读取你选中的照片及其中的拍摄时间和地点，用于添加相册照片并自动填写日期和地点。',
       noun: '照片',
       sizeType: ['original'],
-      isBlocked: () => this.data.submitting
+      isBlocked: () => this.data.submitting || Boolean(this.queuedSave)
     }).then((files) => {
       if (!files.length) {
         return;
@@ -169,10 +178,31 @@ Page({
    * take the earliest date and the place of the first photo with GPS.
    */
   fillFromPhotos(photos) {
-    return photos.reduce((chain, photo) => chain.then((found) => (
-      readPhotoMetadata(photo.path).then((metadata) => found.concat({ id: photo.id, ...metadata }))
+    const active = () => !this.metadataDisposed;
+    const retained = (id) => active() && this.data.photos.some((photo) => photo.id === id);
+    const updateHint = () => {
+      if (!active()) return;
+      const missingDate = !this.data.form.eventDate;
+      const missingPlace = !this.data.form.location;
+      let hint = '照片信息处理完成';
+      if (!this.data.photos.length) hint = '';
+      else if (missingDate && missingPlace) hint = '未读取到拍摄时间和地点，请手动填写';
+      else if (missingDate) hint = '未读取到拍摄时间，请手动选择日期';
+      else if (missingPlace) hint = '未读取到拍摄地点，可手动填写';
+      if (this.metadataPending > 1) hint = '正在读取照片拍摄信息…';
+      this.setData({ metadataHint: hint });
+    };
+    this.metadataPending = (this.metadataPending || 0) + 1;
+    this.setData({ metadataReading: true, metadataHint: '正在读取照片拍摄信息…' });
+
+    const task = photos.reduce((chain, photo) => chain.then((found) => (
+      retained(photo.id)
+        ? readPhotoMetadata(photo.path).then((metadata) => found.concat({ id: photo.id, ...metadata }))
+        : found
     )), Promise.resolve([])).then((found) => {
-      const dated = found.filter((item) => item.takenAt);
+      if (!active()) return;
+      const current = found.filter((item) => retained(item.id));
+      const dated = current.filter((item) => item.takenAt);
       if (dated.length) {
         this.updatePhotos(this.data.photos.map((photo) => {
           const match = dated.find((item) => item.id === photo.id);
@@ -180,9 +210,10 @@ Page({
         }));
       }
 
-      const summary = summarizePhotoMetadata(found);
+      const summary = summarizePhotoMetadata(current);
       if (!summary.takenAt && !summary.position) {
-        showInfo(NO_PHOTO_DETAILS_HINT);
+        if (current.length) showInfo(NO_PHOTO_DETAILS_HINT);
+        updateHint();
         return undefined;
       }
       if (summary.takenAt && !this.isSettled('eventDate') && !this.data.submitting) {
@@ -193,15 +224,26 @@ Page({
         });
       }
       if (!summary.position || this.isSettled('location')) {
+        updateHint();
         return undefined;
       }
+      const source = current.find((item) => item.latitude !== null && item.longitude !== null);
       return getPhotoPlaceName(summary.position).then((place) => {
-        if (place && !this.isSettled('location') && !this.data.submitting) {
+        if (!active()) return;
+        if (place && retained(source.id) && !this.isSettled('location') && !this.data.submitting) {
           this.settleField('location');
           this.setData({ 'form.location': place });
         }
+        updateHint();
       });
+    }).catch(() => {
+      if (active()) this.setData({ metadataHint: '未能读取照片拍摄信息，请手动填写' });
+    }).finally(() => {
+      this.metadataPending -= 1;
+      if (active() && this.metadataPending === 0) this.setData({ metadataReading: false });
     });
+    this.metadataTask = Promise.all([this.metadataTask || Promise.resolve(), task]).then(() => undefined);
+    return task;
   },
 
   previewPhoto(event) {
@@ -358,8 +400,18 @@ Page({
   },
 
   saveAlbum() {
-    if (this.data.submitting) {
+    if (this.data.submitting || this.metadataDisposed) {
       return;
+    }
+    if (this.data.metadataReading) {
+      if (!this.queuedSave) {
+        this.queuedSave = this.metadataTask.then(() => {
+          this.queuedSave = null;
+          if (!this.metadataDisposed) return this.saveAlbum();
+          return undefined;
+        });
+      }
+      return this.queuedSave;
     }
 
     const validation = buildAlbumDraftPayload(this.data.form);
@@ -385,7 +437,7 @@ Page({
       : createAlbumDraft(validation.payload, { silent: true })
         .catch((error) => this.handleDraftExists(error, validation.payload));
 
-    draftTask
+    return draftTask
       .then((draft) => {
         albumId = albumId || (draft && draft.album && draft.album.id);
         if (!albumId) {

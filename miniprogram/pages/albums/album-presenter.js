@@ -1,4 +1,5 @@
 const { formatDate, formatMonthDay } = require('../../utils/date');
+const { resolveMediaUrl } = require('../../utils/media');
 
 const STAT_ICONS = {
   photos: '../../assets/icons/home/image.svg',
@@ -18,7 +19,7 @@ function photoUrl(photo) {
   if (!photo) {
     return '';
   }
-  return photo.previewUrl || '';
+  return resolveMediaUrl(photo.previewUrl);
 }
 
 function mapStats(album) {
@@ -40,7 +41,7 @@ function mapAlbumRow(album) {
     .filter(Boolean);
   const locked = Boolean(album.locked || album.visibility === 'private');
   const layout = locked ? 'locked' : 'cover';
-  const cover = album.coverPhotoUrl || previewPhotos[0] || '';
+  const cover = resolveMediaUrl(album.coverPhotoUrl) || previewPhotos[0] || '';
 
   return {
     id: album.id,
@@ -82,9 +83,9 @@ function mapPhoto(photo) {
   return {
     id: photo.id,
     // UI-local field: pages still preview with `url`, mapped from backend `previewUrl`.
-    url: photo.previewUrl || '',
-    previewUrl: photo.previewUrl || '',
-    originalUrl: photo.originalUrl || '',
+    url: resolveMediaUrl(photo.previewUrl),
+    previewUrl: resolveMediaUrl(photo.previewUrl),
+    originalUrl: resolveMediaUrl(photo.originalUrl),
     caption: photo.caption || '未命名照片',
     meta
   };
@@ -97,7 +98,7 @@ function mapAlbumDetail(response) {
     .map(photoUrl)
     .filter(Boolean)
     .slice(0, 3);
-  const cover = album.coverPhotoUrl || coverPhotos[0] || '';
+  const cover = resolveMediaUrl(album.coverPhotoUrl) || coverPhotos[0] || '';
   const badges = [album.visibility === 'private' || album.locked ? '私密' : '公开'];
   if (album.pinned) {
     badges.push('置顶');

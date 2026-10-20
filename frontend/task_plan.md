@@ -2,6 +2,8 @@
 
 ## Current Task
 
+2026-10-20 precision disclosure: complete. The top bar now explains that original coordinates reach Geoapify/Open-Meteo, matching the backend change requested by the user. Weather HTTP/refresh checks (11 tests) and the Web production build passed. No Web geolocation/browser interaction was rerun.
+
 Frontend architecture refactor from the 2026-10-18 review, plus a second pass to the target architecture: complete and fast-forwarded into local main (not pushed).
 
 | Candidate | Status |

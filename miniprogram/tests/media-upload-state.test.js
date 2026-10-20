@@ -71,6 +71,7 @@ function image(name) {
 test('album keeps the selected upload batch stable while its first photo is uploading', async () => {
   const { page, uploads, picks } = createPage('pages/album-edit/index.js');
   page.data.form.title = 'Upload test';
+  page.confirmDateFromSheet({ detail: { value: '2026-05-20' } });
   page.updatePhotos([image('a.jpg'), image('b.jpg')]);
   page.saveAlbum();
   await flush();

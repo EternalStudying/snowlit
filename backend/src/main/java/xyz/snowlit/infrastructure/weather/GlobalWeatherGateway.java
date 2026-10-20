@@ -63,17 +63,54 @@ public final class GlobalWeatherGateway implements WeatherGateway {
             Location location = new Location(
                     firstText(address, "city", "town", "village", "municipality"),
                     firstText(address, "state"),
-                    firstText(address, "suburb", "district", "county"),
+                    firstText(address, "city_district", "district", "county", "suburb"),
                     firstText(address, "country"));
             if (location.city().isBlank() && location.province().isBlank()
                     && location.district().isBlank() && location.country().isBlank()) {
                 return Optional.empty();
             }
-            return Optional.of(location);
+            return Optional.of(switch (text(address, "result_type")) {
+                case "suburb", "district", "county" -> withParentCity(coordinates, location);
+                default -> location;
+            });
         } catch (RuntimeException ex) {
             // Provider errors may include URLs with credentials; never log the exception or URL.
             return Optional.empty();
         }
+    }
+
+    private Location withParentCity(Coordinates coordinates, Location location) {
+        if (location.city().isBlank()) {
+            return location;
+        }
+        try {
+            JsonNode response = client.get()
+                    .uri("https://api.geoapify.com/v1/boundaries/part-of?lat={lat}&lon={lon}&boundaries=administrative&geometry=point&lang=zh&apiKey={key}",
+                            coordinates.latitude(), coordinates.longitude(), geoapifyKey)
+                    .retrieve().body(JsonNode.class);
+            JsonNode features = response == null ? null : response.get("features");
+            if (features == null || !features.isArray()) {
+                return location;
+            }
+            for (JsonNode feature : features) {
+                JsonNode boundary = feature.get("properties");
+                if (boundary == null || !boundary.isObject()
+                        || !location.city().equals(firstText(boundary, "name"))) {
+                    continue;
+                }
+                String city = firstText(boundary, "city", "town", "municipality");
+                if (city.isBlank() || city.equals(location.city())) {
+                    continue;
+                }
+                String province = firstText(boundary, "state");
+                String country = firstText(boundary, "country");
+                return new Location(city, province.isBlank() ? location.province() : province,
+                        location.city(), country.isBlank() ? location.country() : country);
+            }
+        } catch (RuntimeException ex) {
+            // Optional hierarchy lookup must not discard an already resolved place or expose the key.
+        }
+        return location;
     }
 
     @Override

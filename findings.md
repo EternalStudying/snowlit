@@ -16,7 +16,7 @@ Web requests share SessionRequest and drop responses from an earlier session; th
 
 ## Confirmed User Decisions
 
-- Write all project context and maintenance documents in English; reply to the user in English.
+- Write all project context and maintenance documents in English; reply to the user in Chinese.
 - Backend refactor decisions (2026-10-18): images are recognised by content for every flow and GIF is allowed everywhere; per-domain image error codes stay; oversized feedback screenshots answer 413; local disk is the object store whenever MinIO is not fully configured; session tokens are opaque (no JWT); `@CurrentActor` is the only login rule; overly defensive code is removed. Domain vocabulary lives in GLOSSARY.md (CONTEXT.md retired).
 - Frontend refactor decisions (2026-10-18): a session change discards in-flight responses and clears cached feature state; one image rule (JPEG/PNG/WebP/GIF by type or extension, ≤10MB, message "只支持 jpg、png、webp、gif，单张不超过 10MB"); legacy weather scenes removed; a shared motion module with a test-only instant mode replaces test-runner checks and animations must look the same; the wish completion stamp plays only after the server confirms; the journal shell lives in src/shell and weather owns its consent and schedule; source-text tests are replaced by behaviour tests except seam audits and cross-client contract checks; the 390px Home overflow stays out of scope.
 - Preserve the public ICP component and its current record number.
@@ -28,10 +28,14 @@ Web requests share SessionRequest and drop responses from an earlier session; th
 ## Data, Time, and Configuration
 
 - MySQL and Redis are runtime dependencies; MinIO is used when fully configured, otherwise uploads go to a served local directory. Retained databases require SQL_INIT_MODE=never; dev defaults to always and can recreate/reseed tables.
-- Local WeChat and Geoapify credentials are read from backend/config/local.properties: ignored by Git, mode 600, outside application resources. Environment variables take precedence; prod does not import this file.
+- Local database, WeChat and Geoapify credentials are read from backend/config/local.properties: ignored by Git, mode 600, outside application resources. The retained local database also uses SQL_INIT_MODE=never. Environment variables take precedence; prod does not import this file.
+- The retained local MinIO service is fully configured through the same file (all five LOCAL_MINIO_* values). Disk album media and three URL references were migrated on 2026-10-19 with private recovery copies and content verification; new uploads use MinIO. The existing bucket access policy was preserved.
+- Local-disk media URLs are server-relative (`/uploads/...`). Native mini-program image APIs need an absolute origin; album upload responses, list covers and detail photos use `utils/media.js` with mediaBaseUrl or the API origin. Existing absolute CDN URLs are preserved.
+- JPEG GPS can be encoded as unsigned RATIONAL (TIFF type 5) or signed SRATIONAL (type 10). The mini-program parser supports both; an unsupported-type result from the earlier parser was not proof that a photo had no GPS. Supplied original bytes confirmed this compatibility defect on 2026-10-20; regressions use only generic synthetic coordinates.
+- New mini-program albums start with no date or place. JPEG EXIF and optional place lookup must finish before saving; late results from removed photos are ignored. Missing shooting dates require a manual album date; missing places remain empty through the backend rather than being persisted as Earth. Existing records are not rewritten.
 - Album likes and views use UTC calendar days. The development JDBC default is UTC; existing activity dates are not migrated.
 - Plain YYYY-MM-DD values retain calendar-date semantics. Timestamps retain instant semantics and use client-local presentation.
-- Geoapify location and Open-Meteo weather can succeed or fail independently. Provider requests receive coordinates rounded to two decimal places; this is not a promise of anonymity or zero retention.
+- Geoapify location and Open-Meteo weather can succeed or fail independently. By user decision on 2026-10-20, provider requests use the original validated WGS84 coordinates without rounding; this is not a promise of anonymity or zero retention. Geoapify administrative point lookups can repair a reverse-geocoded district mislabeled as a city. Album place text prefers district/city, then region/country, with duplicate labels removed.
 - Git uses main and a cleaned initial baseline. Do not commit or rebuild history without explicit user authorization.
 
 ## Current Product Boundaries

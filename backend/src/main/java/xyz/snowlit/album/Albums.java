@@ -35,11 +35,6 @@ final class Albums {
         return "private".equals(album.getVisibility());
     }
 
-    static String locationOrEarth(String value) {
-        String cleaned = Text.trim(value);
-        return cleaned.isBlank() ? "地球" : cleaned;
-    }
-
     static AlbumVo toAlbumVo(Album album, boolean locked, List<AlbumPhotoVo> previewPhotos, boolean likedToday) {
         if (locked) {
             return new AlbumVo(

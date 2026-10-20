@@ -72,7 +72,7 @@ Plain YYYY-MM-DD values preserve calendar dates across timezones. Default diary/
 ## Global Weather
 
 - GET /api/weather/atmosphere/browser returns semantic weather fields; Web visual rendering parameters remain client-side.
-- Geoapify provides location and Open-Meteo provides model weather. Both use backend-rounded WGS84 coordinates and independent fallback behavior.
+- Geoapify provides location and Open-Meteo provides model weather. Both use original validated WGS84 coordinates and independent fallback behavior; the backend does not round them.
 - Initial disclosure/permission precedes automatic updates. Web visibility and the mini-program Home lifecycle control foreground refresh every 20 minutes; background refresh pauses. Refusal does not trigger repeated prompts.
 - Unknown location is not saved. Weather-only success can still be displayed. Old sessions and late callbacks cannot overwrite the current account.
 - Provider requests do not forward business identity or content. Providers can retain logs. Attribution UI is hidden by request; privacy disclosures still describe actual processing.

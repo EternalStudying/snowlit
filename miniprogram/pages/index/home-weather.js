@@ -106,7 +106,7 @@ function createHomeWeather(view) {
   function askConsent(automatic, canContinue) {
     const consent = hasWeatherConsent() ? Promise.resolve({ confirm: true }) : showConfirm({
       title: '自动更新位置',
-      content: '同意后，首页打开或登录后自动定位，前台每 20 分钟更新，离开首页或切到后台即暂停。坐标用于天气、城市和距离，后端取小数点后 2 位发给 Geoapify 和 Open-Meteo，服务商可能保留查询日志。',
+      content: '同意后，首页打开或登录后自动定位，前台每 20 分钟更新，离开首页或切到后台即暂停。坐标用于天气、城市和距离，后端将原始经纬度发给 Geoapify 和 Open-Meteo，服务商可能保留查询日志。',
       confirmText: '同意并开启'
     });
     return consent.then((result) => {
@@ -117,7 +117,7 @@ function createHomeWeather(view) {
       if (!canContinue()) return false;
       return authorizePrivacy({
         title: '使用位置',
-        message: '首页打开或登录后及前台每 20 分钟获取位置，离开首页或后台暂停；后端向 Geoapify 和 Open-Meteo 发送模糊坐标，服务商可能保留日志。'
+        message: '首页打开或登录后及前台每 20 分钟获取位置，离开首页或后台暂停；后端向 Geoapify 和 Open-Meteo 发送原始经纬度，服务商可能保留日志。'
       }).then((agreed) => {
         if (!agreed) {
           automaticWeatherSuppressed = true;

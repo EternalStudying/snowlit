@@ -60,22 +60,34 @@ Configure a suitable MySQL database, Redis, and object storage before starting t
 
 Use [application-dev.yml](../backend/src/main/resources/application-dev.yml) and [application-prod.yml](../backend/src/main/resources/application-prod.yml) as the authoritative configuration. Production uses DB_*, REDIS_*, and MINIO_* variables; SQL initialization defaults to never.
 
-### Local WeChat and Weather Credentials
+### Local Database, WeChat and Weather Credentials
 
 On a new checkout, copy backend/config/local.properties.example to backend/config/local.properties and fill the required values. Do not overwrite an existing credential file during context or documentation initialization.
 
 ```properties
+LOCAL_DB_PASSWORD=
+SQL_INIT_MODE=never
 WECHAT_MINIPROGRAM_APP_ID=
 WECHAT_MINIPROGRAM_APP_SECRET=
 GEOAPIFY_KEY=
 OPEN_METEO_API_KEY=
 ```
 
-The real file is ignored by Git, mode 600, and outside Maven resources. Dev supports project-root or backend working directories; environment variables take precedence. Prod does not import the local file. Database/Redis/MinIO connection configuration is still required separately.
+The real file is ignored by Git, mode 600, and outside Maven resources. Dev supports project-root or backend working directories; environment variables take precedence. Prod does not import the local file. Set LOCAL_DB_PASSWORD to the existing local MySQL password; configure the other LOCAL_* connection settings when their defaults do not match this computer. Redis/MinIO authentication is still required separately when enabled.
+
+With SQL initialization disabled, the server can start listening on 8080 before it first connects to MySQL. A missing or wrong database password therefore causes HTTP 500 on login and public database-backed reads even though startup succeeded. Verify a database-backed endpoint, not just the listening port. Do not enable SQL initialization to diagnose a connection problem.
 
 Geoapify credentials can be created through [MyProjects](https://myprojects.geoapify.com/). Weather and reverse geocoding are independent. Licensing and provider-account terms must be checked for the intended deployment; local code does not establish subscription or commercial-use eligibility. The Web map key is independent of backend weather credentials.
 
-### Safe Startup and Initialization
+### Local MinIO Configuration
+
+For local object storage, put all five `LOCAL_MINIO_*` values in ignored `backend/config/local.properties`: endpoint, access key, secret key, bucket, and public base URL. Use credentials belonging to the running MinIO service, not a new unrelated password. The public base URL must resolve to that bucket and be reachable by the client; a phone cannot use the development computer's loopback address. The client needs read access to the returned object URLs under the deployment's intended access policy.
+
+The retained local development setup was configured on 2026-10-19 with the existing MinIO service and bucket. Disk-stored album objects were copied without changing their names, verified by SHA-256 and HTTP reads, then their database URL fields were updated. Configuration alone does not migrate old files or references. Migration recovery copies and a targeted rollback script are kept privately under ignored codex-work/minio-migration-20261019/; real credentials and database backups must remain outside source control.
+
+With all five fields set, new uploads use MinIO. When any field is blank, `StorageConfig` selects local disk instead. A successful backend start does not verify a MinIO write; test a real upload and confirm the returned URL and object exist.
+
+### Startup with Retained Data
 
 For an existing database, from the project root:
 
@@ -105,15 +117,15 @@ Mini-program Node tests, developer-tool import, and native template checks are d
 - Existing accounts and WeChat bindings are retained. New seed data uses demo_a/demo_b, generic partner labels, blank positions, and an initial sample password of 123456.
 - Album likes/views deduplicate by user, album, and UTC date. Existing activity dates are not migrated. Calendar dates and timestamps have distinct client semantics.
 - After initial disclosure and platform permission, location/weather update every 20 minutes while visible and pause in the background. Refusal suppresses repeated automatic prompts; manual recovery remains available.
-- Weather uses WGS84. Story-map GCJ-02 behavior is a separate contract. Geoapify and Open-Meteo receive rounded two-decimal coordinates, not business tokens or content. Provider requests originate from the backend; this does not mean anonymous or unlogged processing.
-- Location and weather fail independently. Unresolved locations remain unknown and do not overwrite stored position. Cache expiry uses Instant: 20 minutes for complete results, 2 minutes for partial/failure results, with bounded grid entries and request coalescing.
+- Weather uses WGS84. Story-map GCJ-02 behavior is a separate contract. Geoapify and Open-Meteo receive original validated coordinates, not business tokens or content. Optional Geoapify administrative point lookups use the same coordinates to recover parent cities. Provider requests originate from the backend; this does not mean anonymous or unlogged processing.
+- Location and weather fail independently. Unresolved locations remain unknown and do not overwrite stored position. Cache expiry uses Instant: 20 minutes for complete results, 2 minutes for partial/failure results, with bounded exact-coordinate entries and request coalescing.
 - Weather attribution UI remains hidden by user request. Actual privacy disclosures and platform permission requirements remain applicable.
 - Public stories expose record-supplied location fields. Uploads currently preserve supplied image bytes without centralized GPS/EXIF removal. These facts are not automatic requests to change the product.
 - Preserve the ICP display. Chinese language, holidays, fonts, maps, and npm mirror choices may remain; they do not directly establish the user's physical location.
 
 ## Working Conventions and Acceptance Limits
 
-Follow [AGENTS.md](../AGENTS.md) and the relevant planning files. Maintain context in English; reply to the user in English. Do not commit unless explicitly requested. Never copy real secrets or personal coordinates into context, reports, screenshots, or command output.
+Follow [AGENTS.md](../AGENTS.md) and the relevant planning files. Maintain context in English; reply to the user in Chinese. Do not commit unless explicitly requested. Never copy real secrets or personal coordinates into context, reports, screenshots, or command output.
 
 Browser artifacts belong in codex-work. Use the application-bundled rg path required by AGENTS.md; if unavailable, use Python rather than PATH rg. Use available browser capabilities and state the verification limit when a preferred tool is unavailable.
 

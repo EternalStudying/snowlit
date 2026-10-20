@@ -44,6 +44,7 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - `User.isManager` currently grants management to user IDs 1 and 2. Complete multi-couple tenant isolation is not implemented; it would need couple-owned records and a schema change, which was deliberately left out.
 - Private diaries are author-readable; updates/deletes check authorship. Messages can be deleted only by their author. Album draft operations check ownership. Wish complete/reopen requires authentication. Client visibility cannot replace backend authorization.
 - WeChat login/binding reuses users and Redis sessions. Business tokens are returned; openid, session_key, and AppSecret are not returned to clients.
+- Album draft creation and photo metadata preserve missing location as an empty string. They do not substitute Earth. Date remains required by the API; the mini-program waits for EXIF/place work and otherwise requires a manually selected date. Existing records and the locked-private-album presentation mask are unchanged.
 - Current fields include originalUrl/previewUrl, diary entryDate with date on creation, and feedback imageUrls. Contract changes require checking both clients.
 - Story lists/details are public and include record-supplied address/coordinates. Home is authenticated. Image storage keeps uploaded bytes without centralized EXIF removal.
 - Diary create, update, and delete each run in one transaction; album likes and views run in one transaction each.
@@ -54,6 +55,7 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - Policies keep per-domain error codes: `<DOMAIN>_IMAGE_TYPE_INVALID` (400), `<DOMAIN>_IMAGE_TOO_LARGE` (413), `<DOMAIN>_IMAGE_UPLOAD_FAILED` (502). Feedback uses `FEEDBACK_SCREENSHOT_REQUIRED/_TYPE_NOT_ALLOWED/_TOO_LARGE/_UPLOAD_FAILED`; album previews must be WebP (`ALBUM_PREVIEW_TYPE_INVALID`). Limit is 10MB per image.
 - Object keys: `<prefix>[/yyyy/MM]/<path…>/<uuid>.<ext>`. Prefixes are fixed in code (album, diary/tmp, story, wish, messages, feedback); the former `minio.*-prefix` settings are gone.
 - `StorageConfig` uses MinIO when endpoint, access key, secret key, bucket, and public base URL are all set; otherwise it logs a warning and uses `LocalDiskObjectStore` (`storage.local.directory`, default `target/local-uploads`), served at `storage.local.public-path` (default `/uploads/**`).
+- The retained local setup now supplies all five LOCAL_MINIO_* settings in ignored local.properties (2026-10-19). Existing disk album objects and URL references were migrated with backups and SHA-256 verification. The local bucket's existing read policy was reused unchanged. A restart with configuration alone never migrates existing media.
 - Album likes: one insert-or-flip statement per request, then the matching counter change. Views count when the request creates today's activity row or marks a like-only row as viewed.
 
 ## Configuration and Runtime
@@ -62,14 +64,15 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - Dev SQL initialization defaults to always and can recreate/reseed tables. Prod defaults to never. Explicitly use never for retained data and perform migrations separately.
 - The [local configuration example](config/local.properties.example) corresponds to ignored local.properties: mode 600, outside resources, imported only by dev from root/backend working directories. Environment variables take precedence.
 - Database, Redis, and storage credentials use LOCAL_* or production variables. Never copy real keys into source, documentation, reports, or client bundles.
+- When SQL initialization is disabled, a listening port does not establish MySQL authentication: the pool can connect lazily on the first query. The local credential file also supports LOCAL_DB_PASSWORD and SQL_INIT_MODE=never. Check a database-backed endpoint when verifying startup.
 - Album likes/views use UTC calendar days; dev JDBC defaults to UTC. Existing activity dates are not recalculated. Other time fields retain their contracts.
 - After `git` removes source files, run `mvn clean` before packaging; stale classes in `target/` can break startup.
 
 ## Global Location and Weather
 
-Geoapify and Open-Meteo receive WGS84 coordinates only after WeatherGateway.Coordinates rounds them to two decimal places. Location is requested at city level. Missing country/city stays unknown; location and weather fail independently.
+Geoapify and Open-Meteo receive the original WGS84 coordinates after finite/range validation; rounding was removed by user request on 2026-10-20. Geoapify is requested at city level. If it returns a suburb/district/county, an optional administrative point lookup can identify the parent city for a mislabeled city field. Its failure preserves the already resolved location. District fields prefer administrative districts/counties over suburbs. No names or countries are hardcoded. Missing country/city stays unknown; location and weather fail independently.
 
-Complete results cache for 20 minutes, partial/failure results for 2 minutes, with about 2048 grid entries and same-grid request coalescing. Expiry uses Instant. Geoapify credentials remain backend-only; an Open-Meteo commercial key is optional.
+Complete results cache for 20 minutes, partial/failure results for 2 minutes, with about 2048 exact-coordinate entries and same-coordinate request coalescing. Expiry uses Instant. Geoapify credentials remain backend-only; an Open-Meteo commercial key is optional.
 
 HomeVo contains couple, dailyNote, personStatuses, distance, latest, and stats. Seed accounts are demo_a/demo_b with blank location; existing accounts, bindings, and actual content remain preserved.
 

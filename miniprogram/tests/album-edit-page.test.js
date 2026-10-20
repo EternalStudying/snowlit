@@ -79,7 +79,7 @@ function runStructureTest() {
   assert.match(wxml, />添加照片</);
   assert.match(wxml, /class="album-edit-footer"/);
   assert.match(wxml, />取消</);
-  assert.match(wxml, />保存相册</);
+  assert.match(wxml, /保存相册/);
   assert.match(wxml, /<snowlit-date-sheet/);
   assert.match(wxml, /<snowlit-option-sheet/);
   assert.match(wxml, /snowlit-privacy/);
