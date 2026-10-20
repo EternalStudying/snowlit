@@ -5,7 +5,8 @@ import type {
   AlbumDraftData,
   AlbumLikeData,
   AlbumPageData,
-  AlbumPhotoData,
+  AlbumDraftImage,
+  AlbumDraftFields,
   AlbumPhotoUploadMetadata,
   AlbumPrivateToken,
   AlbumUnlockData,
@@ -27,13 +28,13 @@ export interface AlbumGateway {
   fetchCurrentDraft(): Promise<AlbumCurrentDraftData>;
   createDraft(payload: AlbumCreatePayload): Promise<AlbumDraftData>;
   uploadDraftPhoto(
-    albumId: number,
     original: File,
     preview: File,
     metadata: AlbumPhotoUploadMetadata
-  ): Promise<AlbumPhotoData>;
-  publishDraft(albumId: number): Promise<AlbumDraftData>;
-  cancelDraft(albumId: number): Promise<void>;
+  ): Promise<AlbumDraftImage>;
+  publishDraft(fields: AlbumDraftFields, privatePassword?: string): Promise<AlbumDetailData>;
+  cancelDraft(): Promise<void>;
+  removeDraftPhoto(imageId: string): Promise<void>;
   fetchDetail(albumId: number, privateAccessToken?: string): Promise<AlbumDetailData>;
   unlock(albumId: number, password: string): Promise<AlbumUnlockData>;
   like(albumId: number): Promise<AlbumLikeData>;

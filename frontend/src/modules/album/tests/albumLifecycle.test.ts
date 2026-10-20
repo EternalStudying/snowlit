@@ -65,7 +65,7 @@ describe('useAlbumLifecycle catalog behavior', () => {
       if (url === '/api/albums?page=1&size=5&previewLimit=9') {
         return jsonResponse(firstPage);
       }
-      if (url === '/api/albums/drafts/current' && requestMethod(init) === 'GET') {
+      if (url === '/api/drafts/album' && requestMethod(init) === 'GET') {
         return jsonResponse({ draft: currentDraft });
       }
       if (url === '/api/albums?page=2&size=5&previewLimit=9') {
@@ -126,7 +126,7 @@ describe('useAlbumLifecycle catalog behavior', () => {
     expect(lifecycle.state.currentDraft.value).toBeNull();
     expect(
       (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls.some(
-        ([input]) => String(input) === '/api/albums/drafts/current'
+        ([input]) => String(input) === '/api/drafts/album'
       )
     ).toBe(false);
   });
@@ -447,379 +447,128 @@ describe('useAlbumLifecycle open and like behavior', () => {
 });
 
 describe('useAlbumLifecycle draft behavior', () => {
-  it('restores the current draft and its already uploaded photos', async () => {
-    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+  async function restored(draft = currentDraft, actions?: (url: string, init?: RequestInit) => Response | Promise<Response>) {
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        return jsonResponse(firstPage);
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: currentDraft });
-      }
+      if (url === '/api/albums?page=1&size=5&previewLimit=9') return jsonResponse(firstPage);
+      if (url === '/api/drafts/album' && requestMethod(init) === 'GET') return jsonResponse({ draft });
+      if (actions) return actions(url, init);
       throw new Error(`Unexpected request: ${url}`);
-    }) as unknown as typeof fetch;
+    });
     const lifecycle = useAlbumLifecycle({ adapter: fetcher });
-    await lifecycle.loadInitialCatalog();
-    await flushPromises();
+    await lifecycle.loadInitialCatalog(); await flushPromises(); lifecycle.resumeCurrentDraft();
+    return { lifecycle, fetcher };
+  }
 
-    const restored = lifecycle.resumeCurrentDraft();
-
-    expect(restored).toEqual(currentDraft);
+  it('restores fields and uploaded images without re-uploading', async () => {
+    const { lifecycle, fetcher } = await restored();
     expect(lifecycle.state.workingDraft.value).toEqual(currentDraft);
-    expect(lifecycle.state.draftPhotos.value).toEqual(currentDraft.photos);
+    expect(lifecycle.state.draftPhotos.value).toEqual(currentDraft.images);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it('uses injected preview and time ports while saving and uploading a new draft', async () => {
-    const original = new File(['original'], 'summer-trip.jpg', { type: 'image/jpeg' });
-    const preview = new File(['preview'], 'summer-trip.webp', { type: 'image/webp' });
-    const now = () => new Date('2026-07-25T08:09:10.000Z');
-    const generatePreview = vi.fn().mockResolvedValue({
-      file: preview,
-      width: 1200,
-      height: 800
-    });
-    const createdDraft = {
-      album: {
-        ...firstPage.items[0],
-        id: 9,
-        title: '新相册',
-        previewPhotos: []
-      },
-      photos: []
-    };
-    const uploadedPhoto = {
-      ...publicPhoto,
-      id: 902,
-      albumId: 9,
-      previewUrl: '/uploads/summer-trip.webp'
-    };
+  it('saves only fields then uploads original, WebP and metadata', async () => {
+    const original = new File(['original'], 'summer.jpg', { type: 'image/jpeg' });
+    const preview = new File(['preview'], 'summer.webp', { type: 'image/webp' });
+    const uploaded = { id: 'opaque-new', url: '/uploads/summer.webp', caption: 'summer' };
+    const empty = { ...currentDraft, images: [] };
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = requestMethod(init);
-      if (url === '/api/albums' && method === 'POST') {
-        return jsonResponse(createdDraft);
-      }
-      if (url === '/api/albums/9/photos' && method === 'POST') {
-        return jsonResponse(uploadedPhoto);
-      }
-      throw new Error(`Unexpected request: ${url}; ${method}`);
-    }) as unknown as typeof fetch;
-    const lifecycle = useAlbumLifecycle({
-      adapter: fetcher,
-      now,
-      generatePreview,
-      isMobileUpload: () => false
+      if (String(input) === '/api/drafts/album' && init?.method === 'PUT') return jsonResponse(empty);
+      if (String(input) === '/api/drafts/album/images') return jsonResponse(uploaded);
+      throw new Error(`Unexpected request: ${input}`);
     });
-    const payload: AlbumCreatePayload = {
-      title: '新相册',
-      description: '',
-      eventDate: '2026-07-25',
-      location: '',
-      visibility: 'public'
-    };
-
-    expect(lifecycle.queueFiles([original])).toBe(true);
-    await lifecycle.saveAndUpload(payload);
-
-    expect(generatePreview).toHaveBeenCalledWith(original);
-    expect(lifecycle.state.workingDraft.value).toEqual(createdDraft);
-    expect(lifecycle.state.draftPhotos.value).toEqual([uploadedPhoto]);
-    expect(lifecycle.state.uploadItems.value[0]).toMatchObject({
-      status: 'success',
-      progress: 100,
-      metadata: {
-        caption: 'summer-trip',
-        takenAt: '2026-07-25',
-        location: '地球',
-        width: 1200,
-        height: 800,
-        sortOrder: 1
-      }
-    });
-
-    const uploadCall = (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([input]) => String(input) === '/api/albums/9/photos'
-    );
-    const form = uploadCall?.[1]?.body as FormData;
-    expect(form.get('original')).toBe(original);
-    expect(form.get('preview')).toBe(preview);
-    expect(JSON.parse(String(form.get('metadata')))).toEqual({
-      caption: 'summer-trip',
-      takenAt: '2026-07-25',
-      location: '地球',
-      width: 1200,
-      height: 800,
-      sortOrder: 1
-    });
-  });
-
-  it('keeps an upload batch bound to the draft that started it', async () => {
-    const original = new File(['original'], 'slow-preview.jpg', {
-      type: 'image/jpeg'
-    });
-    const preview = new File(['preview'], 'slow-preview.webp', {
-      type: 'image/webp'
-    });
-    const previewResult = deferred<{ file: File; width: number; height: number }>();
-    const generatePreview = vi.fn(() => previewResult.promise);
-    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = requestMethod(init);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        return jsonResponse(firstPage);
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: currentDraft });
-      }
-      if (url === '/api/albums/9/photos' && method === 'POST') {
-        return jsonResponse({
-          ...publicPhoto,
-          id: 904,
-          albumId: 9,
-          previewUrl: '/uploads/slow-preview.webp'
-        });
-      }
-      throw new Error(`Unexpected request: ${url}; ${method}`);
-    }) as unknown as typeof fetch;
-    const lifecycle = useAlbumLifecycle({
-      adapter: fetcher,
-      generatePreview,
-      now: () => new Date('2026-07-25T08:00:00.000Z')
-    });
-    await lifecycle.loadInitialCatalog();
-    await flushPromises();
-    lifecycle.resumeCurrentDraft();
+    const generatePreview = vi.fn().mockResolvedValue({ file: preview, width: 1200, height: 800 });
+    const lifecycle = useAlbumLifecycle({ adapter: fetcher, generatePreview, now: () => new Date('2026-07-25T08:00:00Z') });
     lifecycle.queueFiles([original]);
-
-    const uploadRun = lifecycle.saveAndUpload({
-      title: currentDraft.album.title,
-      description: currentDraft.album.description,
-      eventDate: currentDraft.album.eventDate,
-      location: currentDraft.album.location,
-      visibility: currentDraft.album.visibility
-    });
-    await vi.waitFor(() => {
-      expect(generatePreview).toHaveBeenCalledWith(original);
-    });
-
-    lifecycle.beginNewDraft();
-    previewResult.resolve({
-      file: preview,
-      width: 1200,
-      height: 800
-    });
-    await uploadRun;
-
-    expect(
-      (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls.some(
-        ([input]) => String(input) === '/api/albums/9/photos'
-      )
-    ).toBe(true);
+    await lifecycle.saveAndUpload({ title: 'Summer', description: '', eventDate: '2026-07-25', location: '', visibility: 'private', privatePassword: 'test-password' });
+    expect(generatePreview).toHaveBeenCalledWith(original);
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual({ fields: { title: 'Summer', description: '', eventDate: '2026-07-25', location: '', visibility: 'private' } });
+    const form = fetcher.mock.calls[1][1]?.body as FormData;
+    expect(form.get('original')).toBe(original); expect(form.get('preview')).toBe(preview);
+    expect(JSON.parse(String(form.get('metadata')))).toEqual({ caption: 'summer', takenAt: '2026-07-25', location: '地球', width: 1200, height: 800 });
+    expect(lifecycle.state.draftPhotos.value).toEqual([uploaded]);
+    expect(lifecycle.state.uploadItems.value[0]).toMatchObject({ status: 'success', progress: 100 });
+    expect(lifecycle.state.workingDraft.value?.fields).not.toHaveProperty('privatePassword');
   });
 
-  it('rejects a selection above the 300-file boundary without enqueuing it', () => {
-    const lifecycle = useAlbumLifecycle({
-      adapter: vi.fn() as unknown as typeof fetch,
-      now: () => new Date('2026-07-25T08:00:00.000Z')
-    });
-    const files = Array.from(
-      { length: 301 },
-      (_, index) => new File(['x'], `photo-${index + 1}.jpg`, { type: 'image/jpeg' })
-    );
+  it('cancels stale uploads before they can attach to a replacement draft', async () => {
+    const preview = deferred<{file: File; width: number; height: number}>();
+    const fetcher = vi.fn(async () => jsonResponse(currentDraft));
+    const generatePreview = vi.fn(() => preview.promise);
+    const lifecycle = useAlbumLifecycle({ adapter: fetcher, generatePreview });
+    lifecycle.queueFiles([new File(['x'], 'x.jpg', { type: 'image/jpeg' })]);
+    const run = lifecycle.saveAndUpload(currentDraft.fields as AlbumCreatePayload);
+    await vi.waitFor(() => expect(generatePreview).toHaveBeenCalled());
+    lifecycle.beginNewDraft();
+    preview.resolve({file: new File(['p'], 'p.webp', {type:'image/webp'}), width: 1, height: 1});
+    await run;
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(lifecycle.state.workingDraft.value).toBeNull();
+  });
 
+  it('rejects more than 300 files without enqueuing them', () => {
+    const lifecycle = useAlbumLifecycle({ adapter: vi.fn() });
+    const files = Array.from({length:301}, (_, index) => new File(['x'], `p-${index}.jpg`, { type:'image/jpeg' }));
     expect(lifecycle.queueFiles(files)).toBe(false);
     expect(lifecycle.state.uploadError.value).toBe('最多选择 300 张照片');
     expect(lifecycle.state.uploadItems.value).toHaveLength(0);
   });
 
   it('blocks publishing while queued photos are unfinished', async () => {
-    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        return jsonResponse(firstPage);
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: currentDraft });
-      }
-      throw new Error(`Unexpected request: ${url}`);
-    }) as unknown as typeof fetch;
-    const lifecycle = useAlbumLifecycle({
-      adapter: fetcher,
-      now: () => new Date('2026-07-25T08:00:00.000Z')
-    });
-    await lifecycle.loadInitialCatalog();
-    await flushPromises();
-    lifecycle.resumeCurrentDraft();
-    lifecycle.queueFiles([
-      new File(['x'], 'still-waiting.jpg', {
-        type: 'image/jpeg'
-      })
-    ]);
-
+    const { lifecycle, fetcher } = await restored();
+    lifecycle.queueFiles([new File(['x'], 'x.jpg', {type:'image/jpeg'})]);
     await expect(lifecycle.publishDraft()).resolves.toBe(false);
-    expect(lifecycle.state.draftNotice.value).toBe(
-      '还有照片未处理完成，请等待、重试或移除失败项'
-    );
-    expect(
-      (fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls.some(
-        ([input]) => String(input) === '/api/albums/9/publish'
-      )
-    ).toBe(false);
+    expect(lifecycle.state.draftNotice.value).toBe('还有照片未处理完成，请等待、重试或移除失败项');
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it('uses the refreshed masked catalog representation after publishing a private draft', async () => {
-    const privateDraft = {
-      ...currentDraft,
-      album: {
-        ...currentDraft.album,
-        title: '只有我们知道的标题',
-        visibility: 'private' as const
-      }
-    };
-    const publishedDraft = {
-      ...privateDraft,
-      album: {
-        ...privateDraft.album,
-        locked: false,
-        previewPhotos: privateDraft.photos
-      }
-    };
-    const maskedAlbum = {
-      ...publishedDraft.album,
-      title: '锁定专辑',
-      description: '已锁定',
-      coverPhotoUrl: '/album-assets/private-locked-cover.png',
-      authorName: '',
-      location: '地球',
-      locked: true,
-      previewPhotos: []
-    };
-    let catalogLoads = 0;
-    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = requestMethod(init);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        catalogLoads += 1;
-        return jsonResponse(
-          catalogLoads === 1
-            ? firstPage
-            : {
-                ...firstPage,
-                items: [maskedAlbum, ...firstPage.items],
-                total: firstPage.total + 1
-              }
-        );
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: privateDraft });
-      }
-      if (url === '/api/albums/9/publish' && method === 'POST') {
-        return jsonResponse(publishedDraft);
-      }
-      throw new Error(`Unexpected request: ${url}; ${method}`);
-    }) as unknown as typeof fetch;
-    const lifecycle = useAlbumLifecycle({ adapter: fetcher });
-    await lifecycle.loadInitialCatalog();
-    await flushPromises();
-    lifecycle.resumeCurrentDraft();
-
-    await expect(lifecycle.publishDraft()).resolves.toBe(true);
-
-    expect(lifecycle.state.collections.value[0]).toMatchObject({
-      albumId: 9,
-      title: '锁定专辑',
-      locked: true,
-      photos: [],
-      previewPhotos: []
-    });
-    expect(lifecycle.state.collections.value[0].title).not.toBe(
-      '只有我们知道的标题'
-    );
+  it('requires title and a new password for an untitled private resumed draft', async () => {
+    const draft = { ...currentDraft, fields: { ...currentDraft.fields, title: '', visibility: 'private' as const } };
+    const { lifecycle, fetcher } = await restored(draft);
+    await expect(lifecycle.publishDraft()).resolves.toBe(false);
+    expect(lifecycle.state.draftNotice.value).toBe('相册标题不能为空');
+    await expect(lifecycle.publishDraft({ ...draft.fields, title: 'Private' } as AlbumCreatePayload)).resolves.toBe(false);
+    expect(lifecycle.state.draftNotice.value).toBe('请重新输入私密相册密码');
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it('publishes and cancels restored drafts through their observable outcomes', async () => {
-    const publishedDraft = {
-      ...currentDraft,
-      album: {
-        ...currentDraft.album,
-        title: '已经发布的相册',
-        locked: false
-      }
-    };
-    const publishedCatalog = {
-      ...firstPage,
-      items: [
-        publishedDraft.album,
-        ...firstPage.items
-      ],
-      total: firstPage.total + 1
-    };
-    let publishCatalogLoads = 0;
-    const publishFetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = requestMethod(init);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        publishCatalogLoads += 1;
-        return jsonResponse(publishCatalogLoads === 1 ? firstPage : publishedCatalog);
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: currentDraft });
-      }
-      if (url === '/api/albums/9/publish' && method === 'POST') {
-        return jsonResponse(publishedDraft);
-      }
-      throw new Error(`Unexpected request: ${url}; ${method}`);
-    }) as unknown as typeof fetch;
-    const publishLifecycle = useAlbumLifecycle({
-      adapter: publishFetcher
+  it('publishes latest fields/password then refreshes the masked catalog', async () => {
+    const draft = { ...currentDraft, fields: { ...currentDraft.fields, visibility: 'private' as const } };
+    const { lifecycle, fetcher } = await restored(draft, (url, init) => {
+      if (url === '/api/drafts/album/publish' && init?.method === 'POST') return jsonResponse(privateDetail);
+      throw new Error(`Unexpected request: ${url}`);
     });
-    await publishLifecycle.loadInitialCatalog();
-    await flushPromises();
-    publishLifecycle.resumeCurrentDraft();
+    const payload = { ...draft.fields, title: 'Latest title', privatePassword: 'new-password' } as AlbumCreatePayload;
+    await expect(lifecycle.publishDraft(payload)).resolves.toBe(true);
+    const call = fetcher.mock.calls.find(([input]) => input === '/api/drafts/album/publish');
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({fields: {...draft.fields, title:'Latest title'}, privatePassword:'new-password'});
+    expect(lifecycle.state.currentDraft.value).toBeNull();
+    expect(lifecycle.state.collections.value[1]).toMatchObject({title:'锁定专辑', locked:true, photos:[]});
+  });
 
-    await expect(publishLifecycle.publishDraft()).resolves.toBe(true);
-    expect(publishLifecycle.state.currentDraft.value).toBeNull();
-    expect(publishLifecycle.state.collections.value[0]).toMatchObject({
-      albumId: 9,
-      title: '已经发布的相册'
+  it('keeps failed drafts and discards through the new root path', async () => {
+    const { lifecycle, fetcher } = await restored(currentDraft, (url, init) => {
+      if (url.endsWith('/publish')) return jsonResponse({code:'ALBUM_TITLE_REQUIRED', message:'相册标题不能为空'}, 400);
+      if (url === '/api/drafts/album' && init?.method === 'DELETE') return new Response(null, {status:204});
+      throw new Error(`Unexpected request: ${url}`);
     });
-    expect(publishCatalogLoads).toBe(2);
+    await expect(lifecycle.publishDraft()).resolves.toBe(false);
+    expect(lifecycle.state.draftNotice.value).toBe('相册标题不能为空');
+    expect(lifecycle.state.currentDraft.value).toEqual(currentDraft);
+    await expect(lifecycle.cancelDraft()).resolves.toBe(true);
+    expect(lifecycle.state.workingDraft.value).toBeNull();
+    expect(lifecycle.state.draftPhotos.value).toEqual([]);
+    expect(lifecycle.state.currentDraft.value).toBeNull();
+    expect(fetcher.mock.calls.some(([input, init]) => input === '/api/drafts/album' && init?.method === 'DELETE')).toBe(true);
+  });
 
-    const cancelFetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = requestMethod(init);
-      if (url === '/api/albums?page=1&size=5&previewLimit=9') {
-        return jsonResponse(firstPage);
-      }
-      if (url === '/api/albums/drafts/current') {
-        return jsonResponse({ draft: currentDraft });
-      }
-      if (url === '/api/albums/9/draft' && method === 'DELETE') {
-        return new Response(null, {
-          status: 204
-        });
-      }
-      throw new Error(`Unexpected request: ${url}; ${method}`);
-    }) as unknown as typeof fetch;
-    const cancelLifecycle = useAlbumLifecycle({
-      adapter: cancelFetcher
+  it('removes a restored image using its opaque id', async () => {
+    const { lifecycle, fetcher } = await restored(currentDraft, (url, init) => {
+      if (url === '/api/drafts/album/images/opaque-photo' && init?.method === 'DELETE') return new Response(null, {status:204});
+      throw new Error(`Unexpected request: ${url}`);
     });
-    await cancelLifecycle.loadInitialCatalog();
-    await flushPromises();
-    cancelLifecycle.resumeCurrentDraft();
-
-    await expect(cancelLifecycle.cancelDraft()).resolves.toBe(true);
-    expect(cancelLifecycle.state.currentDraft.value).toBeNull();
-    expect(
-      (cancelFetcher as unknown as ReturnType<typeof vi.fn>).mock.calls
-    ).toContainEqual([
-      '/api/albums/9/draft',
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: 'Bearer jwt-token'
-        }
-      }
-    ]);
+    await expect(lifecycle.removeDraftPhoto('opaque-photo')).resolves.toBe(true);
+    expect(lifecycle.state.draftPhotos.value).toEqual([]);
+    expect(fetcher.mock.calls[2][0]).toBe('/api/drafts/album/images/opaque-photo');
   });
 });

@@ -1,7 +1,7 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { createAlbumUploadQueue } from '../internal/uploadQueue';
-import { deferred, publicPhoto } from './fixtures';
+import { deferred, draftPhoto as publicPhoto } from './fixtures';
 
 describe('album upload queue', () => {
   it('exposes generating, uploading, and completed progress as observable state', async () => {
@@ -46,8 +46,8 @@ describe('album upload queue', () => {
 
     uploadResult.resolve({
       ...publicPhoto,
-      id: 903,
-      previewUrl: '/uploads/lake-day.webp'
+      id: 'opaque-903',
+      url: '/uploads/lake-day.webp'
     });
     await start;
 

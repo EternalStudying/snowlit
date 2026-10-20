@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import type { AlbumPhotoData, AlbumPhotoUploadMetadata } from '../model';
+import type { AlbumDraftImage, AlbumPhotoUploadMetadata } from '../model';
 import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
 import type { AlbumPreviewGenerator } from './ports';
 import { errorMessage } from '../../../display';
@@ -13,7 +13,7 @@ export interface AlbumUploadItem {
   status: AlbumUploadStatus;
   message: string;
   progress: number;
-  uploadedPhoto: AlbumPhotoData | null;
+  uploadedPhoto: AlbumDraftImage | null;
   previewFile: File | null;
   metadata: AlbumPhotoUploadMetadata | null;
 }
@@ -22,7 +22,7 @@ export type AlbumPhotoUploader = (
   original: File,
   preview: File,
   metadata: AlbumPhotoUploadMetadata
-) => Promise<AlbumPhotoData>;
+) => Promise<AlbumDraftImage>;
 
 type AlbumUploadQueueOptions = {
   generatePreview?: AlbumPreviewGenerator;

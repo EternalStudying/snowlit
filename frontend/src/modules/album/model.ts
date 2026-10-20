@@ -65,14 +65,28 @@ export type AlbumViewData = {
   counted: boolean;
 };
 
-export type AlbumDraftData = {
-  album: AlbumData;
-  photos: AlbumPhotoData[];
+export type AlbumDraftFields = Partial<Omit<AlbumCreatePayload, 'privatePassword'>> & { pinned?: boolean };
+
+export type AlbumDraftImage = {
+  id: string;
+  url: string;
+  originalUrl?: string;
+  width?: number;
+  height?: number;
+  takenAt?: string;
+  location?: string;
+  caption?: string;
 };
 
-export type AlbumCurrentDraftData = {
-  draft: AlbumDraftData | null;
+export type AlbumDraftData = {
+  kind: 'album';
+  fields: AlbumDraftFields;
+  images: AlbumDraftImage[];
+  createdAt: string;
+  updatedAt: string;
 };
+
+export type AlbumCurrentDraftData = { draft: AlbumDraftData | null };
 
 export type AlbumCreatePayload = {
   title: string;

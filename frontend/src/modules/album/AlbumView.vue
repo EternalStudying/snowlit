@@ -66,6 +66,7 @@ const {
   currentDraft,
   workingDraft: draftAlbum,
   draftNotice,
+  draftPhotos,
   draftSaving,
   draftPublishing,
   uploadItems: albumUploadItems,
@@ -113,7 +114,7 @@ const albumPrivatePasswordInputProps = computed(
       'data-album-private-password-input': '',
       autocomplete: 'off',
       required:
-        draftForm.value.visibility === 'private' && !draftAlbum.value
+        draftForm.value.visibility === 'private'
     }) as unknown as InputHTMLAttributes
 );
 
@@ -196,6 +197,10 @@ function resetDraftForm() {
 }
 
 function openCreateDialog() {
+  if (currentDraft.value) {
+    openDraftDialog();
+    return;
+  }
   resetDraftForm();
   showCreateDialog();
 }
@@ -207,11 +212,11 @@ function openDraftDialog() {
   }
 
   draftForm.value = {
-    title: draft.album.title,
-    description: draft.album.description,
-    eventDate: draft.album.eventDate,
-    location: draft.album.location,
-    visibility: draft.album.visibility,
+    title: draft.fields.title ?? '',
+    description: draft.fields.description ?? '',
+    eventDate: draft.fields.eventDate ?? '',
+    location: draft.fields.location ?? '',
+    visibility: draft.fields.visibility ?? 'public',
     privatePassword: ''
   };
   showCreateDialog();
@@ -244,10 +249,6 @@ function handleDraftDrop(event: DragEvent) {
 }
 
 function setDraftPrivate(value: boolean) {
-  if (draftAlbum.value) {
-    return;
-  }
-
   draftForm.value.visibility = value ? 'private' : 'public';
   if (!value) {
     draftForm.value.privatePassword = '';
@@ -263,7 +264,7 @@ async function retryUploadItem(item: { id: string }) {
 }
 
 async function publishDraftAlbum() {
-  if (await albumLifecycle.publishDraft()) {
+  if (await albumLifecycle.publishDraft(draftForm.value)) {
     closeCreateDialog();
   }
 }
@@ -306,7 +307,7 @@ onMounted(() => {
               @click="openDraftDialog"
             >
               <Upload :size="18" aria-hidden="true" />
-              继续上传未完成相册
+              继续编辑：{{ currentDraft.fields.title || '未命名草稿' }}
             </button>
           </div>
           <img class="album-hero__underline" :src="heroRedUnderline" alt="" draggable="false" />
@@ -596,7 +597,7 @@ onMounted(() => {
                       <NInput
                         v-model:value="draftForm.title"
                         maxlength="120"
-                        :disabled="Boolean(draftAlbum)"
+                        :disabled="draftSaving || draftPublishing"
                         :input-props="albumTitleInputProps"
                       />
                     </label>
@@ -608,7 +609,7 @@ onMounted(() => {
                         type="textarea"
                         maxlength="500"
                         :autosize="{ minRows: 4, maxRows: 5 }"
-                        :disabled="Boolean(draftAlbum)"
+                        :disabled="draftSaving || draftPublishing"
                       />
                     </label>
 
@@ -619,7 +620,7 @@ onMounted(() => {
                           class="album-create-switch"
                           type="button"
                           :aria-pressed="draftForm.visibility === 'private'"
-                          :disabled="Boolean(draftAlbum)"
+                          :disabled="draftSaving || draftPublishing"
                           @click="setDraftPrivate(draftForm.visibility !== 'private')"
                         >
                           <span></span>
@@ -635,7 +636,7 @@ onMounted(() => {
                             autocomplete="off"
                             show-password-on="click"
                             :input-props="albumPrivatePasswordInputProps"
-                            :disabled="Boolean(draftAlbum) || draftForm.visibility !== 'private'"
+                            :disabled="draftPublishing || draftForm.visibility !== 'private'"
                           >
                             <template #suffix>
                               <EyeOff :size="20" aria-hidden="true" />
@@ -651,6 +652,12 @@ onMounted(() => {
                   <div class="album-create-form__right">
                     <h3>上传照片 <b aria-hidden="true">*</b></h3>
 
+                    <ul v-if="draftPhotos.length" class="album-upload-list" aria-label="已上传草稿照片">
+                      <li v-for="photo in draftPhotos" :key="photo.id" class="album-upload-item">
+                        <span>{{ photo.caption || '未命名照片' }}</span>
+                        <NButton attr-type="button" quaternary aria-label="移除已上传照片" :disabled="draftSaving || albumUploading || draftPublishing" @click="albumLifecycle.removeDraftPhoto(photo.id)">移除</NButton>
+                      </li>
+                    </ul>
                     <div
                       class="album-create-upload"
                       :data-upload-has-items="albumUploadItems.length ? 'true' : undefined"
@@ -762,7 +769,7 @@ onMounted(() => {
                 </div>
 
                 <div class="album-create-dialog__actions">
-                  <NButton v-if="draftAlbum" attr-type="button" class="album-create-cancel" @click="cancelCurrentDraft">取消草稿</NButton>
+                  <NButton v-if="draftAlbum" attr-type="button" class="album-create-cancel" :disabled="draftSaving || albumUploading || draftPublishing" @click="cancelCurrentDraft">取消草稿</NButton>
                   <NButton data-album-submit-draft attr-type="submit" :loading="draftSaving || albumUploading" :disabled="draftSaving || albumUploading">
                     {{ albumUploading ? '上传中...' : draftAlbum ? '上传新照片' : '保存草稿并上传' }}
                   </NButton>

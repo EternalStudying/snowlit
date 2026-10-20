@@ -138,20 +138,16 @@ export const privateDetail: AlbumDetailData = {
   photos: [privatePhoto]
 };
 
+export const draftPhoto = {
+  id: 'opaque-photo', url: publicPhoto.previewUrl, originalUrl: publicPhoto.originalUrl ?? undefined,
+  caption: publicPhoto.caption, takenAt: publicPhoto.takenAt, location: publicPhoto.location,
+  width: publicPhoto.width, height: publicPhoto.height
+};
+
 export const currentDraft: AlbumDraftData = {
-  album: {
-    ...firstPage.items[0],
-    id: 9,
-    title: '未完成相册',
-    previewPhotos: []
-  },
-  photos: [
-    {
-      ...publicPhoto,
-      id: 901,
-      albumId: 9
-    }
-  ]
+  kind: 'album',
+  fields: { title: '未完成相册', description: '', eventDate: '2026-05-20', location: '', visibility: 'public' },
+  images: [draftPhoto], createdAt: '2026-05-20T12:00:00', updatedAt: '2026-05-20T12:01:00'
 };
 
 export function jsonResponse(body: unknown, status = 200) {

@@ -75,33 +75,19 @@ function createAlbumRequestAdapter() {
     if (url === '/api/albums?page=1&size=5&previewLimit=9') {
       return jsonResponse(firstPage);
     }
-    if (url === '/api/albums/drafts/current' && method === 'GET') {
+    if (url === '/api/drafts/album' && method === 'GET') {
       return jsonResponse({ draft: null });
     }
     if (url === '/api/albums?page=2&size=5&previewLimit=9') {
       return jsonResponse(secondPage);
     }
-    if (url === '/api/albums' && method === 'POST') {
-      return jsonResponse({
-        album: {
-          ...firstPage.items[0],
-          id: 9,
-          title: '新相册',
-          previewPhotos: []
-        },
-        photos: []
-      });
+    if (url === '/api/drafts/album' && method === 'PUT') {
+      return jsonResponse({ ...currentDraft, fields: JSON.parse(String(init?.body)).fields, images: [] });
     }
-    if (url === '/api/albums/9/photos' && method === 'POST') {
-      return jsonResponse({
-        ...publicPhoto,
-        id: 901,
-        albumId: 9,
-        previewUrl: '/uploads/preview.webp',
-        originalUrl: null
-      });
+    if (url === '/api/drafts/album/images' && method === 'POST') {
+      return jsonResponse({ id: 'uploaded-image', url: '/uploads/preview.webp', caption: 'Photo', width:32, height:24 });
     }
-    if (url === '/api/albums/9/publish' && method === 'POST') {
+    if (url === '/api/drafts/album/publish' && method === 'POST') {
       return jsonResponse({
         album: {
           ...firstPage.items[0],
@@ -301,8 +287,8 @@ describe('AlbumView DOM and interaction behavior', () => {
     const requests = createAlbumRequestAdapter();
     const payloads: Array<{ eventDate: string }> = [];
     const requestAdapter = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (String(input) === '/api/albums' && requestMethod(init) === 'POST') {
-        payloads.push(JSON.parse(String(init?.body)));
+      if (String(input) === '/api/drafts/album' && requestMethod(init) === 'PUT') {
+        payloads.push(JSON.parse(String(init?.body)).fields);
       }
       return requests(input, init);
     });
@@ -332,7 +318,7 @@ describe('AlbumView DOM and interaction behavior', () => {
       if (url === '/api/albums?page=1&size=5&previewLimit=9') {
         return initialPage.promise;
       }
-      if (url === '/api/albums/drafts/current') {
+      if (url === '/api/drafts/album') {
         return jsonResponse({ draft: null });
       }
       throw new Error(`Unexpected request: ${url}`);
@@ -541,13 +527,31 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(wrapper.find('[data-album-draft-continue]').exists()).toBe(false);
   });
 
+  it('labels an untitled private draft and allows title/password entry after resuming', async () => {
+    const requestAdapter = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/albums?')) return jsonResponse(firstPage);
+      if (String(input) === '/api/drafts/album') return jsonResponse({draft: {...currentDraft, fields: {...currentDraft.fields, title: '', visibility: 'private'}}});
+      throw new Error(`Unexpected request: ${input}`);
+    });
+    const wrapper = await mountAlbumView(requestAdapter);
+    expect(wrapper.get('[data-album-draft-continue]').text()).toContain('未命名草稿');
+    await wrapper.get('[data-album-draft-continue]').trigger('click'); await flushPromises();
+    const title = wrapper.get('[data-album-title-input]');
+    const password = wrapper.get('[data-album-private-password-input]');
+    expect(title.attributes('disabled')).toBeUndefined();
+    expect(password.attributes('disabled')).toBeUndefined();
+    expect((password.element as HTMLInputElement).value).toBe('');
+    expect(password.attributes('required')).toBeDefined();
+    await title.setValue('New title'); await password.setValue('new-password');
+  });
+
   it('restores a draft dialog and reports the 300-file selection boundary', async () => {
     const requestAdapter = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === '/api/albums?page=1&size=5&previewLimit=9') {
         return jsonResponse(firstPage);
       }
-      if (url === '/api/albums/drafts/current') {
+      if (url === '/api/drafts/album') {
         return jsonResponse({ draft: currentDraft });
       }
       throw new Error(`Unexpected request: ${url}`);
@@ -563,7 +567,7 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(dialog.text()).toContain('取消草稿');
     expect(dialog.text()).toContain('上传新照片');
     expect(dialog.text()).toContain('发布相册');
-    expect(dialog.get('[data-album-title-input]').attributes('disabled')).toBeDefined();
+    expect(dialog.get('[data-album-title-input]').attributes('disabled')).toBeUndefined();
 
     const files = Array.from(
       { length: 301 },
@@ -654,12 +658,12 @@ describe('AlbumView DOM and interaction behavior', () => {
 
     expect(
       (requestAdapter as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([input]) => String(input) === '/api/albums'
+        ([input, init]) => String(input) === '/api/drafts/album' && requestMethod(init) === 'PUT'
       )
     ).toHaveLength(1);
     expect(
       (requestAdapter as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([input]) => String(input) === '/api/albums/9/photos'
+        ([input]) => String(input) === '/api/drafts/album/images'
       )
     ).toHaveLength(7);
     expect(

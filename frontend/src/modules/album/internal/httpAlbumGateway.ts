@@ -11,7 +11,7 @@ import type {
   AlbumDraftData,
   AlbumLikeData,
   AlbumPageData,
-  AlbumPhotoData,
+  AlbumDraftImage,
   AlbumUnlockData,
   AlbumViewData
 } from '../model';
@@ -75,47 +75,56 @@ export function createHttpAlbumGateway({
 
     fetchCurrentDraft() {
       return request.json<AlbumCurrentDraftData>({
-        path: '/api/albums/drafts/current',
+        path: '/api/drafts/album',
         failure: ALBUM_FAILURE
       });
     },
 
     createDraft(payload) {
       return request.json<AlbumDraftData>({
-        path: '/api/albums',
-        method: 'POST',
-        body: { kind: 'json', value: payload },
+        path: '/api/drafts/album',
+        method: 'PUT',
+        body: { kind: 'json', value: { fields: draftFields(payload) } },
         failure: ALBUM_FAILURE
       });
     },
 
-    uploadDraftPhoto(albumId, original, preview, metadata) {
+    uploadDraftPhoto(original, preview, metadata) {
       const form = new FormData();
       form.append('original', original);
       form.append('preview', preview);
-      form.append('metadata', JSON.stringify(metadata));
+      const { sortOrder: _order, ...fields } = metadata;
+      form.append('metadata', JSON.stringify(fields));
 
-      return request.json<AlbumPhotoData>({
-        path: `/api/albums/${albumId}/photos`,
+      return request.json<AlbumDraftImage>({
+        path: '/api/drafts/album/images',
         method: 'POST',
         body: { kind: 'form', value: form },
         failure: ALBUM_FAILURE
       });
     },
 
-    publishDraft(albumId) {
-      return request.json<AlbumDraftData>({
-        path: `/api/albums/${albumId}/publish`,
+    publishDraft(fields, privatePassword) {
+      return request.json<AlbumDetailData>({
+        path: '/api/drafts/album/publish',
         method: 'POST',
+        body: { kind: 'json', value: { fields: draftFields(fields), privatePassword } },
         failure: ALBUM_FAILURE
       });
     },
 
-    cancelDraft(albumId) {
+    cancelDraft() {
       return request.noContent({
-        path: `/api/albums/${albumId}/draft`,
+        path: '/api/drafts/album',
         method: 'DELETE',
         failure: CANCEL_DRAFT_FAILURE
+      });
+    },
+
+    removeDraftPhoto(imageId) {
+      return request.noContent({
+        path: `/api/drafts/album/images/${encodeURIComponent(imageId)}`,
+        method: 'DELETE', failure: CANCEL_DRAFT_FAILURE
       });
     },
 
@@ -165,4 +174,9 @@ function privateAccessHeaders(
   return privateAccessToken
     ? { 'X-Album-Access-Token': privateAccessToken }
     : undefined;
+}
+
+function draftFields(payload: import('../model').AlbumDraftFields) {
+  const { title, description, eventDate, location, visibility, pinned } = payload;
+  return { title, description, eventDate, location, visibility, pinned };
 }

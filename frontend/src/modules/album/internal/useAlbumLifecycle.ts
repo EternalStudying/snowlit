@@ -7,6 +7,7 @@ import type {
   AlbumDraftData,
   AlbumPhoto,
   AlbumPhotoData,
+  AlbumDraftImage,
   AlbumPhotoUploadMetadata
 } from '../model';
 import { createHttpAlbumGateway } from './httpAlbumGateway';
@@ -67,7 +68,7 @@ export function useAlbumLifecycle({
 
   const currentDraft = ref<AlbumDraftData | null>(null);
   const workingDraft = ref<AlbumDraftData | null>(null);
-  const draftPhotos = ref<AlbumPhotoData[]>([]);
+  const draftPhotos = ref<AlbumDraftImage[]>([]);
   const draftNotice = ref('');
   const draftSaving = ref(false);
   const draftPublishing = ref(false);
@@ -261,7 +262,7 @@ export function useAlbumLifecycle({
       return null;
     }
     workingDraft.value = draft;
-    draftPhotos.value = [...draft.photos];
+    draftPhotos.value = [...draft.images];
     draftNotice.value = '';
     uploadQueue.clear();
     return draft;
@@ -286,18 +287,11 @@ export function useAlbumLifecycle({
 
     draftSaving.value = true;
     try {
-      if (!workingDraft.value) {
-        workingDraft.value = await gateway.createDraft({
-          ...payload,
-          description: payload.description || '',
-          location: payload.location || '地球',
-          privatePassword: payload.visibility === 'private' ? payload.privatePassword : undefined
-        });
-        currentDraft.value = workingDraft.value;
-        draftPhotos.value = [...workingDraft.value.photos];
-      }
-      const draftId = workingDraft.value.album.id;
-      await uploadQueue.start(createDraftPhotoUploader(draftId));
+      const saved = await gateway.createDraft(payload);
+      workingDraft.value = saved;
+      currentDraft.value = saved;
+      draftPhotos.value = [...saved.images];
+      await uploadQueue.start(createDraftPhotoUploader(workingDraft.value));
     } catch (error) {
       draftNotice.value = errorMessage(error, '相册草稿保存失败');
     } finally {
@@ -310,10 +304,10 @@ export function useAlbumLifecycle({
     if (!draft) {
       return;
     }
-    await uploadQueue.retry(itemId, createDraftPhotoUploader(draft.album.id));
+    await uploadQueue.retry(itemId, createDraftPhotoUploader(draft));
   }
 
-  async function publishDraft() {
+  async function publishDraft(payload?: AlbumCreatePayload) {
     const draft = workingDraft.value;
     if (!draft || draftPublishing.value) {
       return false;
@@ -328,9 +322,18 @@ export function useAlbumLifecycle({
       return false;
     }
 
+    const fields = payload ?? draft.fields;
+    if (!fields.title?.trim()) {
+      draftNotice.value = '相册标题不能为空';
+      return false;
+    }
+    if (fields.visibility === 'private' && !payload?.privatePassword?.trim()) {
+      draftNotice.value = '请重新输入私密相册密码';
+      return false;
+    }
     draftPublishing.value = true;
     try {
-      await gateway.publishDraft(draft.album.id);
+      await gateway.publishDraft(fields, payload?.privatePassword);
       currentDraft.value = null;
       await refreshCatalogAfterPublish();
       workingDraft.value = null;
@@ -353,8 +356,11 @@ export function useAlbumLifecycle({
 
     draftNotice.value = '';
     try {
-      await gateway.cancelDraft(draft.album.id);
+      await gateway.cancelDraft();
       currentDraft.value = null;
+      workingDraft.value = null;
+      draftPhotos.value = [];
+      uploadQueue.clear();
       return true;
     } catch (error) {
       draftNotice.value = errorMessage(error, '取消草稿失败');
@@ -378,18 +384,38 @@ export function useAlbumLifecycle({
     }
   }
 
-  function createDraftPhotoUploader(draftId: number) {
-    return async (
-      original: File,
-      preview: File,
-      metadata: AlbumPhotoUploadMetadata
-    ) => {
-      const uploaded = await gateway.uploadDraftPhoto(draftId, original, preview, metadata);
-      if (workingDraft.value?.album.id === draftId) {
+  function createDraftPhotoUploader(draft: AlbumDraftData) {
+    return async (original: File, preview: File, metadata: AlbumPhotoUploadMetadata) => {
+      if (workingDraft.value !== draft) throw new Error('草稿已切换，请重新选择照片');
+      const uploaded = await gateway.uploadDraftPhoto(original, preview, metadata);
+      if (workingDraft.value === draft) {
         draftPhotos.value.push(uploaded);
+        draft.images = [...draftPhotos.value];
       }
       return uploaded;
     };
+  }
+
+  async function removeDraftPhoto(imageId: string) {
+    try {
+      await gateway.removeDraftPhoto(imageId);
+      draftPhotos.value = draftPhotos.value.filter(photo => photo.id !== imageId);
+      if (workingDraft.value) workingDraft.value.images = [...draftPhotos.value];
+      for (const item of uploadQueue.items.value) {
+        if (item.uploadedPhoto?.id === imageId) uploadQueue.remove(item.id);
+      }
+      return true;
+    } catch (error) {
+      draftNotice.value = errorMessage(error, '移除照片失败');
+      return false;
+    }
+  }
+
+  async function removeUpload(itemId: string) {
+    const item = uploadQueue.items.value.find(candidate => candidate.id === itemId);
+    if (item?.uploadedPhoto) return removeDraftPhoto(item.uploadedPhoto.id);
+    uploadQueue.remove(itemId);
+    return true;
   }
 
   return {
@@ -424,7 +450,8 @@ export function useAlbumLifecycle({
     queueFiles,
     saveAndUpload,
     retryUpload,
-    removeUpload: uploadQueue.remove,
+    removeUpload,
+    removeDraftPhoto,
     publishDraft,
     cancelDraft,
     clearDraftPendingState
