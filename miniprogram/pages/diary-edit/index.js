@@ -73,11 +73,13 @@ Page({
 
   startAutosave() {
     if (this.autosave) this.autosave.stop();
-    this.autosave = createDraftAutosave({ page: this, kind: 'diary', read: () => diaryDraftFields(this.data.form),
+    this.autosave = createDraftAutosave({ page: this, kind: 'diary', read: () => this.unloadedDraftFields || diaryDraftFields(this.data.form),
       view: (draftStatus) => { if (!this.disposed) this.setData({ draftStatus }); },
       sessionChanged: () => {
+        const wasDisposed = this.disposed;
         this.disposed = true;
-        this.setData({ form: createInitialDiaryForm(), images: [], previewBlocks: [], previewEmpty: true, cursor: 0, draftStatus: '', removingImage: false, draftLocked: true, submitting: false, message: '', moodPanelOpen: false, diaryDateSheetVisible: false });
+        this.unloadedDraftFields = null;
+        if (!wasDisposed) this.setData({ form: createInitialDiaryForm(), images: [], previewBlocks: [], previewEmpty: true, cursor: 0, draftStatus: '', removingImage: false, draftLocked: true, submitting: false, message: '', moodPanelOpen: false, diaryDateSheetVisible: false });
       }
     });
   },
@@ -87,13 +89,14 @@ Page({
   },
 
   onHide() {
-    return this.autosave ? this.autosave.flush() : Promise.resolve();
+    const saving = this.autosave ? this.autosave.flush() : Promise.resolve();
+    if (!this.removalTask) return saving;
+    return Promise.all([saving, this.removalTask]).then(() => this.autosave ? this.autosave.flush() : undefined);
   },
 
   onUnload() {
     this.disposed = true;
-    if (this.autosave) return this.autosave.flush().finally(() => this.autosave.stop());
-    return Promise.resolve();
+    return this.onHide().finally(() => { if (this.autosave) this.autosave.stop(); });
   },
 
   loadDiaryForEdit(diaryId) {
@@ -358,12 +361,21 @@ Page({
     if (!Number.isInteger(index) || !image || !image.serverId) return;
     const isCurrent = beginRequest(this, 'draft-remove');
     this.setData({ removingImage: true });
-    return removeDraftImage('diary', image.serverId).then(() => {
-      if (!isCurrent() || this.disposed) return;
-      this.updateImages(this.data.images.filter((item) => item.id !== image.id));
+    this.removalTask = removeDraftImage('diary', image.serverId).then(() => {
+      if (!isCurrent()) return;
       const content = removeDiaryImageMarkdown(this.data.form.content, image.url);
+      if (this.disposed) {
+        this.unloadedDraftFields = diaryDraftFields({ ...this.data.form, content });
+        this.changed();
+        return;
+      }
+      this.updateImages(this.data.images.filter((item) => item.id !== image.id));
       this.updateContent(content, Math.min(this.data.cursor, content.length));
-    }).catch((error) => { if (isCurrent() && !this.disposed) this.showMessage(error.message || '图片删除失败'); }).finally(() => { if (isCurrent() && !this.disposed) this.setData({ removingImage: false }); });
+    }).catch((error) => { if (isCurrent() && !this.disposed) this.showMessage(error.message || '图片删除失败'); }).finally(() => {
+      this.removalTask = null;
+      if (isCurrent() && !this.disposed) this.setData({ removingImage: false });
+    });
+    return this.removalTask;
   },
 
   updateImages(images) {

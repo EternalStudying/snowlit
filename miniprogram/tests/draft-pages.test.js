@@ -364,3 +364,68 @@ for (const kind of Object.keys(routes)) {
     c.finish(deletions[0], null, 204); await remove; assert.equal(c.page.data.removingImage, false);
   });
 }
+
+test('diary exit: successful pending removal is reflected in the unload flush without touching unloaded UI', async () => {
+  const c = createPage('diary', { draft: true, waitDelete: true }); await c.page.onLoad({});
+  c.page.updateContent('Keep text\n\n![Photo](/uploads/saved.jpg)\n<img src="/uploads/saved.jpg">', 0);
+  const remove = c.page.removeImage({ currentTarget: { dataset: { index: 0 } } });
+  const originalSetData = c.page.setData;
+  let unloadedWrites = 0;
+  c.page.setData = function (patch) { if (this.disposed) unloadedWrites += 1; originalSetData.call(this, patch); };
+  const unloading = c.page.onUnload(); await settle();
+  assert.equal(c.saves().length, 1, 'dirty fields flush immediately, before deletion finishes');
+  const deletion = c.calls.find((call) => call.method === 'DELETE');
+  c.finish(deletion, null, 204); await remove; await unloading;
+  assert.equal(c.saves().at(-1).data.fields.contentMarkdown.includes('/uploads/saved.jpg'), false, 'a resumed draft must not reference the removed object');
+  assert.match(c.saves().at(-1).data.fields.contentMarkdown, /Keep text/);
+  assert.equal(unloadedWrites, 0);
+});
+
+test('diary exit: failed pending removal keeps image references in the unload flush', async () => {
+  const c = createPage('diary', { draft: true, waitDelete: true }); await c.page.onLoad({});
+  c.page.updateContent('Keep text\n\n![Photo](/uploads/saved.jpg)', 0);
+  const before = c.page.data.form.content;
+  const remove = c.page.removeImage({ currentTarget: { dataset: { index: 0 } } });
+  const originalSetData = c.page.setData;
+  let unloadedWrites = 0;
+  c.page.setData = function (patch) { if (this.disposed) unloadedWrites += 1; originalSetData.call(this, patch); };
+  const unloading = c.page.onUnload(); await settle();
+  c.finish(c.calls.find((call) => call.method === 'DELETE'), { code: 'EXAMPLE_DELETE_FAILED', message: 'Remove failed' }, 502);
+  await remove; await unloading;
+  assert.match(c.saves().at(-1).data.fields.contentMarkdown, /!\[Photo]\(\/uploads\/saved.jpg\)/);
+  assert.equal(c.page.data.form.content, before);
+  assert.equal(c.page.data.images.length, 1);
+  assert.equal(unloadedWrites, 0);
+});
+
+test('diary exit: a member change during pending removal never flushes into the new session', async () => {
+  const c = createPage('diary', { draft: true, waitDelete: true }); await c.page.onLoad({});
+  c.page.updateContent('Old member text\n\n![Photo](/uploads/saved.jpg)', 0);
+  const remove = c.page.removeImage({ currentTarget: { dataset: { index: 0 } } });
+  const originalSetData = c.page.setData;
+  let unloadedWrites = 0;
+  c.page.setData = function (patch) { if (this.disposed) unloadedWrites += 1; originalSetData.call(this, patch); };
+  const unloading = c.page.onUnload(); await settle();
+  c.setToken('member-b');
+  c.finish(c.calls.find((call) => call.method === 'DELETE'), null, 204); await remove; await unloading;
+  assert.equal(c.saves().some((call) => call.header.Authorization === 'Bearer member-b'), false);
+  assert.equal(unloadedWrites, 0);
+});
+
+test('diary exit: pending removal and an earlier field save serialize the final cleaned snapshot', async () => {
+  const c = createPage('diary', { draft: true, waitDelete: true, waitSave: true }); await c.page.onLoad({});
+  c.page.updateContent('Keep text\n\n![Photo](/uploads/saved.jpg)', 0);
+  const hiding = c.page.onHide(); await settle(); assert.equal(c.saves().length, 1);
+  const remove = c.page.removeImage({ currentTarget: { dataset: { index: 0 } } });
+  const originalSetData = c.page.setData;
+  let unloadedWrites = 0;
+  c.page.setData = function (patch) { if (this.disposed) unloadedWrites += 1; originalSetData.call(this, patch); };
+  const unloading = c.page.onUnload();
+  c.finish(c.calls.find((call) => call.method === 'DELETE'), null, 204); await remove; await settle();
+  assert.equal(c.saves().length, 1, 'the old field save remains the only request in flight');
+  c.finish(c.saves()[0], { updatedAt: '2026-05-20T21:20:00' }); await settle();
+  assert.equal(c.saves().length, 2);
+  assert.equal(c.saves()[1].data.fields.contentMarkdown.includes('/uploads/saved.jpg'), false);
+  c.finish(c.saves()[1], { updatedAt: '2026-05-20T21:21:00' }); await hiding; await unloading;
+  assert.equal(unloadedWrites, 0);
+});
