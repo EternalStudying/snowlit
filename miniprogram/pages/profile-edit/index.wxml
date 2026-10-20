@@ -17,7 +17,7 @@
   <view class="profile-divider"></view>
 
   <view class="profile-edit-section">
-    <view class="section-label">PROFILE</view>
+    <view class="section-label">资料</view>
     <view class="profile-form-card">
       <view class="form-row">
         <view class="form-label">昵称</view>

@@ -40,7 +40,7 @@ function runStructureTest() {
   assert.match(wxml, /class="wish-edit-page"/);
   assert.match(wxml, /class="wish-edit-top"/);
   assert.match(wxml, /class="wish-edit-section wish-edit-basic"/);
-  assert.match(wxml, />BASIC</);
+  assert.match(wxml, />基本信息</);
   assert.match(wxml, /class="basic-card"/);
   assert.ok(
     wxml.indexOf('>标题</') < wxml.indexOf('>类型</'),
@@ -55,10 +55,10 @@ function runStructureTest() {
   assert.match(wxml, /\{\{form\.expectedDateText\}\}/);
   assert.match(wxml, />预计地点</);
   assert.match(wxml, /placeholder="想写下预计去哪里"/);
-  assert.match(wxml, />DETAILS</);
+  assert.match(wxml, />描述</);
   assert.match(wxml, /class="details-textarea"/);
   assert.match(wxml, /placeholder="把想法轻轻写下"/);
-  assert.match(wxml, />NOTE</);
+  assert.match(wxml, />备注</);
   assert.match(wxml, /class="note-textarea"/);
   assert.match(wxml, /placeholder="写一点只有你们懂的小备注"/);
   assert.match(wxml, /class="wish-edit-footer"/);
@@ -97,7 +97,7 @@ function runStructureTest() {
   assert.match(detailJs, /ROUTES\.WISH_EDIT/);
   assert.match(rule(detailCss, '.detail-actions'), /grid-template-columns:\s*1fr 1fr 1\.4fr;/);
   assert.match(rule(detailCss, '.detail-action--delete'), /color:\s*#a05a5a;/);
-  assert.match(rule(detailCss, '.detail-action--primary'), /background:\s*#050505;/);
+  assert.match(rule(detailCss, '.detail-action--primary'), /background:\s*#1d2433;/);
 
   const wishesWxml = read('pages/wishes/index.wxml');
   const wishesJs = read('pages/wishes/index.js');
@@ -124,9 +124,9 @@ function runStructureTest() {
   assert.match(rule(wishesCss, '.wish-add'), /bottom:\s*calc\(142rpx \+ env\(safe-area-inset-bottom\)\);/);
   assert.match(rule(wishesCss, '.wish-row'), /grid-template-columns:\s*34rpx minmax\(0, 1fr\) auto 30rpx;/);
   assert.match(rule(wishesCss, '.wish-row'), /transition:\s*opacity 220ms ease, transform 220ms ease;/);
-  assert.match(rule(wishesCss, '.wish-check'), /border:\s*3rpx solid #050505;/);
+  assert.match(rule(wishesCss, '.wish-check'), /border:\s*3rpx solid #1d2433;/);
   assert.match(rule(wishesCss, '.wish-check'), /transition:\s*background 180ms ease, border-color 180ms ease;/);
-  assert.match(rule(wishesCss, '.wish-check--done'), /background:\s*#050505;/);
+  assert.match(rule(wishesCss, '.wish-check--done'), /background:\s*#1d2433;/);
   assert.match(rule(wishesCss, '.wish-row--leaving'), /opacity:\s*0;/);
   assert.match(rule(wishesCss, '.wish-date'), /text-align:\s*right;/);
   assert.match(rule(wishesCss, '.done-photo-wrap'), /width:\s*264rpx;/);
@@ -146,17 +146,17 @@ function runStructureTest() {
   assert.match(completionWxml, /确认完成/);
   assert.match(completionJs, /pickImages\(/);
   assert.match(completionJs, /triggerEvent\('confirm'/);
-  assert.match(rule(completionCss, '.completion-photo-box'), /border:\s*1rpx dashed #cfcfcf;/);
+  assert.match(rule(completionCss, '.completion-photo-box'), /border:\s*1rpx dashed #dce2ea;/);
 }
 
 function runProportionTest() {
   const css = read('pages/wish-edit/index.wxss');
 
-  assert.match(rule(css, '.wish-edit-page'), /background:\s*#fbfbfb;/);
+  assert.match(rule(css, '.wish-edit-page'), /background:\s*#f3f6fa;/);
   assert.match(rule(css, '.wish-edit-page'), /padding:\s*0 34rpx/);
   assert.match(rule(css, '.wish-edit-basic'), /padding-top:\s*183rpx;/);
-  assert.match(rule(css, '.section-label'), /font-size:\s*20rpx;/);
-  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dedede;/);
+  assert.match(rule(css, '.section-label'), /font-size:\s*24rpx;/);
+  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dce2ea;/);
   assert.match(rule(css, '.basic-card'), /border-radius:\s*8rpx;/);
   assert.match(rule(css, '.basic-row'), /min-height:\s*84rpx;/);
   assert.match(rule(css, '.basic-label'), /font-size:\s*29rpx;/);

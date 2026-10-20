@@ -198,7 +198,7 @@ function runAlbumListPrivateBadgeTemplateTest() {
   assert.equal(wxml.includes('class="album-title-row"'), true);
   assert.equal(wxml.includes('class="album-title-badges"'), true);
   assert.equal(wxml.includes('class="album-title-badge"'), true);
-  assert.match(wxml, /<view class="album-title-row">[\s\S]*<view class="album-title">\{\{item\.title\}\}<\/view>[\s\S]*<view class="album-title-badges" wx:if="\{\{item\.pinned \|\| item\.locked\}\}">[\s\S]*<view wx:if="\{\{item\.pinned\}\}" class="album-title-badge">置顶<\/view>[\s\S]*<view wx:if="\{\{item\.locked\}\}" class="album-title-badge">私密<\/view>[\s\S]*<\/view>[\s\S]*<\/view>/);
+  assert.match(wxml, /<view class="album-title-row">[\s\S]*<view class="album-title">\{\{item\.title\}\}<\/view>[\s\S]*<view class="album-title-badges" wx:if="\{\{item\.pinned \|\| item\.locked\}\}">[\s\S]*<view wx:if="\{\{item\.pinned\}\}" class="album-title-badge album-title-badge--pinned">置顶<\/view>[\s\S]*<view wx:if="\{\{item\.locked\}\}" class="album-title-badge">私密<\/view>[\s\S]*<\/view>[\s\S]*<\/view>/);
   assert.equal(wxml.includes('class="album-badges"'), false);
   assert.equal(wxml.includes('<view wx:if="{{item.pinned}}" class="album-badge">置顶</view>'), false);
   assert.equal(wxml.includes('<view wx:if="{{item.locked}}" class="album-badge">私密</view>'), false);
@@ -216,7 +216,7 @@ function runAlbumDetailHeaderTemplateTest() {
   const detailHead = wxml.match(/<view class="[^"]*album-head[^"]*"[\s\S]*?<view class="album-badges">/);
   assert.ok(detailHead, 'album detail header should exist');
   assert.equal(detailHead[0].includes('SNOWLIT'), false);
-  assert.equal(detailHead[0].includes('class="snowlit-subpage-brand">ALBUM'), true);
+  assert.equal(detailHead[0].includes('class="snowlit-subpage-brand">相册'), true);
   assert.equal(detailHead[0].includes('class="snowlit-subpage-title">{{album.title}}'), true);
   assert.equal(detailHead[0].includes('class="snowlit-subpage-subtitle">{{album.description}}'), true);
   assert.equal(detailHead[0].includes('snowlit-page-heading'), false);
@@ -227,7 +227,7 @@ function runPrivateAlbumHeaderTemplateTest() {
   const lockedBlock = wxml.match(/<view class="[^"]*album-locked[^"]*"[\s\S]*?<\/view>\s*<view class="album-state"/);
   assert.ok(lockedBlock, 'private album locked block should exist');
   assert.equal(lockedBlock[0].includes('album-brand'), false);
-  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-brand">PRIVATE ALBUM'), true);
+  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-brand">私密相册'), true);
   assert.equal(lockedBlock[0].includes('class="snowlit-subpage-title">私密相册'), true);
   assert.equal(lockedBlock[0].includes('class="snowlit-subpage-subtitle">输入密码后继续查看照片'), true);
   assert.equal(lockedBlock[0].includes('snowlit-page-heading'), false);

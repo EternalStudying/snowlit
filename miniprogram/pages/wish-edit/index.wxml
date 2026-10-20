@@ -6,7 +6,7 @@
   </view>
 
   <view class="wish-edit-section wish-edit-basic">
-    <view class="section-label">BASIC</view>
+    <view class="section-label">基本信息</view>
     <view class="basic-card">
       <view class="basic-row">
         <image class="basic-icon" src="../../assets/icons/home/clipboard-list.svg" mode="aspectFit" />
@@ -52,7 +52,7 @@
   </view>
 
   <view class="wish-edit-section wish-edit-details">
-    <view class="section-label">DETAILS</view>
+    <view class="section-label">描述</view>
     <view class="details-panel">
       <textarea
         class="details-textarea"
@@ -66,7 +66,7 @@
   </view>
 
   <view class="wish-edit-section wish-edit-note">
-    <view class="section-label">NOTE</view>
+    <view class="section-label">备注</view>
     <view class="note-panel">
       <textarea
         class="note-textarea"

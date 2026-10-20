@@ -5,36 +5,32 @@
   z-index: 20;
   width: 100vw;
   height: 116rpx;
-  background: #fbfbfb;
+  background: #f3f6fa;
   pointer-events: none;
 }
 
 .hairline {
   width: 100%;
   height: 1rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
 }
 
 .hero-line {
   margin-top: 42rpx;
 }
 
+/* The day count is the page's one large figure; everything else stays small and quiet. */
 .couple-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  height: 115rpx;
-}
-
-.days,
-.names {
-  display: flex;
-  align-items: center;
-  height: 38rpx;
+  padding: 36rpx 0 34rpx;
 }
 
 .days {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
 }
 
 .names {
@@ -43,28 +39,43 @@
   justify-content: flex-end;
   flex: 0 0 286rpx;
   width: 286rpx;
+  height: 38rpx;
+  margin-bottom: 14rpx;
 }
 
 .days__label {
-  color: #111111;
-  font-size: 25rpx;
-  font-weight: 500;
-  letter-spacing: 6rpx;
+  color: #6b7385;
+  font-size: 24rpx;
+  font-weight: 400;
+  letter-spacing: 2rpx;
   line-height: 34rpx;
 }
 
+.days__count {
+  display: flex;
+  align-items: baseline;
+  margin-top: 4rpx;
+}
+
 .days__value {
-  margin: 0 18rpx;
-  color: #050505;
-  font-size: 35rpx;
-  font-weight: 400;
-  letter-spacing: 7rpx;
-  line-height: 38rpx;
+  color: #1d2433;
+  font-size: 96rpx;
+  font-weight: 500;
+  letter-spacing: -1rpx;
+  line-height: 104rpx;
+}
+
+.days__unit {
+  margin-left: 10rpx;
+  color: #1d2433;
+  font-size: 28rpx;
+  font-weight: 500;
+  line-height: 40rpx;
 }
 
 .name {
   width: 142rpx;
-  color: #111111;
+  color: #1d2433;
   font-size: 25rpx;
   font-weight: 500;
   line-height: 34rpx;
@@ -74,7 +85,7 @@
 .name-divider {
   width: 1rpx;
   height: 30rpx;
-  background: #d5d5d5;
+  background: #dce2ea;
 }
 
 .weather-section {
@@ -94,11 +105,11 @@
 }
 
 .section-label {
-  color: #8a8a8a;
-  font-size: 18rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 8rpx;
-  line-height: 22rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
 }
 
 .weather-row {
@@ -116,7 +127,7 @@
 
 .temperature {
   flex: 0 0 118rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 43rpx;
   font-weight: 300;
   line-height: 1;
@@ -129,7 +140,7 @@
 }
 
 .weather-name {
-  color: #111111;
+  color: #1d2433;
   font-size: 24rpx;
   font-weight: 500;
   line-height: 1.2;
@@ -137,7 +148,7 @@
 
 .weather-place {
   margin-top: 8rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 21rpx;
   line-height: 1;
 }
@@ -146,7 +157,7 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 22rpx;
   line-height: 1;
 }
@@ -170,7 +181,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #111111;
+  color: #1d2433;
   font-size: 25rpx;
   font-weight: 500;
   line-height: 1;
@@ -187,7 +198,7 @@
   flex: 0 0 1rpx;
   width: 1rpx;
   height: 54rpx;
-  background: #d3d3d3;
+  background: #dce2ea;
 }
 
 .section-head {
@@ -199,7 +210,7 @@
 
 .section-title {
   margin-top: 15rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 31rpx;
   font-weight: 600;
   line-height: 36rpx;
@@ -208,7 +219,7 @@
 .view-all {
   display: flex;
   align-items: center;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 22rpx;
   line-height: 1;
 }
@@ -219,7 +230,7 @@
 
 .moment-empty {
   height: 114rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 23rpx;
   line-height: 114rpx;
 }
@@ -231,12 +242,12 @@
 }
 
 .moment-row + .moment-row {
-  border-top: 1rpx solid #eeeeee;
+  border-top: 1rpx solid #ebeff5;
 }
 
 .moment-date {
   width: 80rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 25rpx;
   font-weight: 400;
   line-height: 1;
@@ -249,7 +260,7 @@
 }
 
 .moment-title {
-  color: #050505;
+  color: #1d2433;
   font-size: 26rpx;
   font-weight: 600;
   line-height: 1.25;
@@ -259,7 +270,7 @@
   display: flex;
   align-items: center;
   margin-top: 16rpx;
-  color: #9a9a9a;
+  color: #6b7385;
   font-size: 20rpx;
   line-height: 1;
 }
@@ -292,7 +303,7 @@
 
 .album-empty {
   height: 109rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 23rpx;
   line-height: 109rpx;
 }
@@ -301,7 +312,7 @@
   display: flex;
   align-items: center;
   height: 109rpx;
-  border-bottom: 1rpx solid #e5e5e5;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .album-cover {
@@ -314,7 +325,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f0f0;
+  background: #ebeff5;
 }
 
 .lock-icon {
@@ -329,7 +340,7 @@
 }
 
 .album-title {
-  color: #050505;
+  color: #1d2433;
   font-size: 26rpx;
   font-weight: 600;
   line-height: 1.2;
@@ -337,7 +348,7 @@
 
 .album-count {
   margin-top: 13rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 23rpx;
   line-height: 1;
 }
@@ -347,9 +358,9 @@
   height: 38rpx;
   margin-right: 20rpx;
   padding: 0 18rpx;
-  border: 1rpx solid #d2d2d2;
+  border: 1rpx solid #dce2ea;
   border-radius: 22rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 22rpx;
   line-height: 36rpx;
   text-align: center;
@@ -370,7 +381,7 @@
 
 .wish-empty {
   height: 58rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 23rpx;
   line-height: 58rpx;
 }
@@ -390,7 +401,7 @@
 .wish-name {
   flex: 0 0 88rpx;
   margin-left: 24rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 600;
   line-height: 1;
@@ -402,7 +413,7 @@
   flex: 1 1 auto;
   margin-left: 24rpx;
   height: 3rpx;
-  background: #d9d9d9;
+  background: #dce2ea;
 }
 
 .wish-progress__bar {
@@ -410,13 +421,13 @@
   left: 0;
   top: 0;
   height: 3rpx;
-  background: #111111;
+  background: #1d2433;
 }
 
 .wish-count {
   flex: 0 0 62rpx;
   margin-left: 24rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 24rpx;
   line-height: 1;
   text-align: right;
@@ -451,7 +462,7 @@
 }
 
 .update-title {
-  color: #050505;
+  color: #1d2433;
   font-size: 30rpx;
   font-weight: 600;
   line-height: 1.2;
@@ -459,7 +470,7 @@
 
 .update-item {
   margin-top: 12rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 22rpx;
   line-height: 1;
 }

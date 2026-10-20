@@ -50,7 +50,7 @@ function runStructureTest() {
   assert.match(wxml, /class="album-edit-page"/);
   assert.match(wxml, /class="album-edit-top"/);
   assert.match(wxml, /class="album-edit-section album-edit-basic"/);
-  assert.match(wxml, />BASIC</);
+  assert.match(wxml, />基本信息</);
   assert.match(wxml, /class="basic-card"/);
   assert.match(wxml, />标题</);
   assert.match(wxml, /class="required-star"/);
@@ -70,10 +70,10 @@ function runStructureTest() {
   assert.match(wxml, /\{\{form\.eventDateText\}\}/);
   assert.match(wxml, />地点</);
   assert.match(wxml, /placeholder="写下拍摄地点"/);
-  assert.match(wxml, />DETAILS</);
+  assert.match(wxml, />描述</);
   assert.match(wxml, /class="details-textarea"/);
   assert.match(wxml, /placeholder="把这组照片的故事轻轻写下"/);
-  assert.match(wxml, />PHOTOS</);
+  assert.match(wxml, />照片</);
   assert.match(wxml, />最多 9 张</);
   assert.match(wxml, /bindtap="choosePhotos"/);
   assert.match(wxml, />添加照片</);
@@ -106,11 +106,11 @@ function runStructureTest() {
 function runProportionTest() {
   const css = read('pages/album-edit/index.wxss');
 
-  assert.match(rule(css, '.album-edit-page'), /background:\s*#fbfbfb;/);
+  assert.match(rule(css, '.album-edit-page'), /background:\s*#f3f6fa;/);
   assert.match(rule(css, '.album-edit-page'), /padding:\s*0 34rpx/);
   assert.match(rule(css, '.album-edit-basic'), /padding-top:\s*183rpx;/);
-  assert.match(rule(css, '.section-label'), /font-size:\s*20rpx;/);
-  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dedede;/);
+  assert.match(rule(css, '.section-label'), /font-size:\s*24rpx;/);
+  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dce2ea;/);
   assert.match(rule(css, '.basic-card'), /border-radius:\s*8rpx;/);
   assert.match(rule(css, '.basic-row'), /min-height:\s*84rpx;/);
   assert.match(rule(css, '.basic-label'), /font-size:\s*29rpx;/);

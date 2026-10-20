@@ -3,8 +3,8 @@
   box-sizing: border-box;
   padding: 0 52rpx 82rpx;
   overflow-x: hidden;
-  color: #050505;
-  background: #fbfbfb;
+  color: #1d2433;
+  background: #f3f6fa;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -40,7 +40,7 @@
 .detail-state {
   min-height: 520rpx;
   padding-top: 260rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 28rpx;
   line-height: 40rpx;
   text-align: center;
@@ -60,8 +60,8 @@
   height: 41rpx;
   margin-right: 23rpx;
   padding: 0 23rpx;
-  color: #111111;
-  border: 1rpx solid #d0d0d0;
+  color: #1d2433;
+  border: 1rpx solid #dce2ea;
   border-radius: 999rpx;
   font-size: 24rpx;
   font-weight: 400;
@@ -80,14 +80,14 @@
   margin-top: 42rpx;
   margin-bottom: 33rpx;
   overflow: hidden;
-  background: #eeeeee;
+  background: #ebeff5;
   border-radius: 11rpx;
 }
 
 .section-line {
   width: 100%;
   height: 1rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
 }
 
 .meta-row {
@@ -102,7 +102,7 @@
 }
 
 .meta-label {
-  color: #777777;
+  color: #6b7385;
   font-size: 21rpx;
   font-weight: 400;
   line-height: 27rpx;
@@ -110,7 +110,7 @@
 
 .meta-value {
   margin-top: 16rpx;
-  color: #111111;
+  color: #1d2433;
   font-size: 31rpx;
   font-weight: 400;
   line-height: 38rpx;
@@ -123,7 +123,7 @@
 
 .coordinate-value {
   margin-top: 17rpx;
-  color: #6f6f6f;
+  color: #555e70;
   font-size: 30rpx;
   font-weight: 400;
   line-height: 38rpx;
@@ -134,16 +134,16 @@
 }
 
 .section-label {
-  color: #050505;
-  font-size: 22rpx;
+  color: #1d2433;
+  font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 14rpx;
-  line-height: 28rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
 }
 
 .note-content {
   margin-top: 29rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 30rpx;
   font-weight: 400;
   line-height: 42rpx;
@@ -176,9 +176,9 @@
   height: 19rpx;
   margin-top: 5rpx;
   margin-left: 3rpx;
-  border: 4rpx solid #d6d6d6;
+  border: 4rpx solid #dce2ea;
   border-radius: 999rpx;
-  background: #555555;
+  background: #555e70;
 }
 
 .timeline-stem {
@@ -187,7 +187,7 @@
   left: 12rpx;
   width: 1rpx;
   height: 82rpx;
-  background: #cfcfcf;
+  background: #dce2ea;
 }
 
 .timeline-content {
@@ -197,7 +197,7 @@
 }
 
 .timeline-name {
-  color: #777777;
+  color: #6b7385;
   font-size: 27rpx;
   font-weight: 400;
   line-height: 34rpx;
@@ -205,7 +205,7 @@
 
 .timeline-time {
   margin-top: 17rpx;
-  color: #6f6f6f;
+  color: #555e70;
   font-size: 30rpx;
   font-weight: 400;
   line-height: 38rpx;
@@ -218,12 +218,12 @@
   align-items: center;
   margin-top: 46rpx;
   padding-top: 32rpx;
-  border-top: 1rpx solid #dedede;
+  border-top: 1rpx solid #dce2ea;
 }
 
 .detail-action {
   height: 76rpx;
-  color: #222222;
+  color: #1d2433;
   font-size: 28rpx;
   font-weight: 400;
   line-height: 76rpx;
@@ -236,6 +236,6 @@
 
 .detail-action--primary {
   color: #ffffff;
-  background: #050505;
+  background: #1d2433;
   border-radius: 999rpx;
 }

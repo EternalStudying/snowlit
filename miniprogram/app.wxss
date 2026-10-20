@@ -1,9 +1,18 @@
 @import "./assets/fonts/snowlit-sans.wxss";
 
+/*
+ * Snowlit mini program palette: a lit window in the snow.
+ *   snow     #f3f6fa  page ground          ink      #1d2433  text, primary buttons
+ *   surface  #ffffff  grouped rows, cards  muted    #6b7385  secondary text
+ *   line     #dce2ea  hairlines            fill     #ebeff5  pressed / placeholder fills
+ *   lamp     #e8a23a  the one accent: "lit" marks only (current tab, wordmark dot, pinned,
+ *                     the day count); never body text. lamp-text #a8661a when amber must be read.
+ */
+
 page {
   min-height: 100%;
-  background: #f7f7f7;
-  color: #111111;
+  background: #ebeff5;
+  color: #1d2433;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
   font-size: 28rpx;
   letter-spacing: 0;
@@ -33,7 +42,7 @@ button::after {
 .page-shell {
   min-height: 100vh;
   padding: 96rpx 48rpx 132rpx;
-  background: #f7f7f7;
+  background: #ebeff5;
 }
 
 .snowlit-tab-page {
@@ -41,82 +50,107 @@ button::after {
   box-sizing: border-box;
   padding: 153rpx 44rpx 162rpx;
   overflow-x: hidden;
-  color: #050505;
-  background: #fbfbfb;
+  color: #1d2433;
+  background: #f3f6fa;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
 .snowlit-page-heading {
-  color: #050505;
+  color: #1d2433;
 }
 
 .snowlit-page-brand {
-  color: #050505;
-  font-size: 21rpx;
-  font-weight: 400;
-  letter-spacing: 16rpx;
-  line-height: 26rpx;
+  display: flex;
+  align-items: center;
+  color: #1d2433;
+  font-size: 26rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  line-height: 30rpx;
+  text-transform: lowercase;
+}
+
+.snowlit-page-brand::after {
+  content: "";
+  width: 10rpx;
+  height: 10rpx;
+  margin-left: 8rpx;
+  border-radius: 50%;
+  background: #e8a23a;
+  box-shadow: 0 0 12rpx rgba(232, 162, 58, 0.55);
 }
 
 .snowlit-page-title {
-  margin-top: 31rpx;
-  color: #050505;
-  font-size: 57rpx;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 69rpx;
+  margin-top: 26rpx;
+  color: #1d2433;
+  font-size: 60rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  line-height: 72rpx;
 }
 
 .snowlit-page-subtitle {
-  margin-top: 19rpx;
-  color: #777777;
+  margin-top: 14rpx;
+  color: #6b7385;
   font-size: 28rpx;
   font-weight: 400;
-  letter-spacing: 4rpx;
-  line-height: 38rpx;
+  letter-spacing: 1rpx;
+  line-height: 40rpx;
 }
 
 .snowlit-subpage-heading {
-  color: #050505;
+  color: #1d2433;
 }
 
 .snowlit-subpage-brand {
-  color: #050505;
-  font-size: 21rpx;
-  font-weight: 400;
-  letter-spacing: 16rpx;
-  line-height: 26rpx;
+  display: flex;
+  align-items: center;
+  color: #1d2433;
+  font-size: 26rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  line-height: 30rpx;
+  text-transform: lowercase;
+}
+
+.snowlit-subpage-brand::after {
+  content: "";
+  width: 10rpx;
+  height: 10rpx;
+  margin-left: 8rpx;
+  border-radius: 50%;
+  background: #e8a23a;
+  box-shadow: 0 0 12rpx rgba(232, 162, 58, 0.55);
 }
 
 .snowlit-subpage-title {
-  margin-top: 31rpx;
-  color: #050505;
-  font-size: 57rpx;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 69rpx;
+  margin-top: 26rpx;
+  color: #1d2433;
+  font-size: 60rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  line-height: 72rpx;
 }
 
 .snowlit-subpage-subtitle {
-  margin-top: 19rpx;
-  color: #777777;
+  margin-top: 14rpx;
+  color: #6b7385;
   font-size: 28rpx;
   font-weight: 400;
-  letter-spacing: 4rpx;
-  line-height: 38rpx;
+  letter-spacing: 1rpx;
+  line-height: 40rpx;
 }
 
 .page-eyebrow {
-  color: #8a8a8a;
-  font-size: 22rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 600;
-  letter-spacing: 8rpx;
-  text-transform: uppercase;
+  letter-spacing: 2rpx;
 }
 
 .page-title {
   margin-top: 28rpx;
-  color: #111111;
+  color: #1d2433;
   font-size: 48rpx;
   font-weight: 500;
   line-height: 1.2;
@@ -126,11 +160,11 @@ button::after {
   width: 100%;
   height: 1rpx;
   margin: 40rpx 0;
-  background: #dedede;
+  background: #dce2ea;
 }
 
 .page-description {
-  color: #6f6f6f;
+  color: #555e70;
   font-size: 28rpx;
   line-height: 1.75;
 }
@@ -139,7 +173,7 @@ button::after {
   min-height: 88rpx;
   padding: 0 36rpx;
   color: #ffffff;
-  background: #111111;
+  background: #1d2433;
   border-radius: 999rpx;
   font-size: 28rpx;
   font-weight: 500;
@@ -148,18 +182,18 @@ button::after {
 }
 
 .minimal-button--ghost {
-  color: #111111;
+  color: #1d2433;
   background: transparent;
-  border: 1rpx solid #111111;
+  border: 1rpx solid #1d2433;
 }
 
 .minimal-input {
   width: 100%;
   min-height: 88rpx;
   padding: 0;
-  color: #111111;
+  color: #1d2433;
   background: transparent;
-  border-bottom: 1rpx solid #d6d6d6;
+  border-bottom: 1rpx solid #dce2ea;
   font-size: 30rpx;
 }
 
@@ -167,16 +201,16 @@ button::after {
   width: 100%;
   min-height: 220rpx;
   padding: 24rpx 0;
-  color: #111111;
+  color: #1d2433;
   background: transparent;
-  border-bottom: 1rpx solid #d6d6d6;
+  border-bottom: 1rpx solid #dce2ea;
   font-size: 30rpx;
   line-height: 1.65;
 }
 
 .snowlit-end-tip {
   margin-top: 48rpx;
-  color: #9a9a9a;
+  color: #6b7385;
   font-size: 24rpx;
   font-weight: 400;
   line-height: 34rpx;

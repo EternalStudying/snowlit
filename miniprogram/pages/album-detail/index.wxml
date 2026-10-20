@@ -8,7 +8,7 @@
   <view class="album-state" wx:if="{{loading}}">相册加载中...</view>
 
   <view class="album-locked snowlit-subpage-heading" wx:elif="{{locked}}">
-    <view class="snowlit-subpage-brand">PRIVATE ALBUM</view>
+    <view class="snowlit-subpage-brand">私密相册</view>
     <view class="snowlit-subpage-title">私密相册</view>
     <view class="snowlit-subpage-subtitle">输入密码后继续查看照片</view>
     <input
@@ -28,7 +28,7 @@
 
   <block wx:elif="{{album}}">
     <view class="album-head snowlit-subpage-heading">
-      <view class="snowlit-subpage-brand">ALBUM</view>
+      <view class="snowlit-subpage-brand">相册</view>
       <view class="snowlit-subpage-title">{{album.title}}</view>
       <view class="snowlit-subpage-subtitle">{{album.description}}</view>
       <view class="album-badges">
@@ -86,7 +86,7 @@
     <view class="section-line"></view>
 
     <view class="photos-heading">
-      <view class="section-label">PHOTOS</view>
+      <view class="section-label">照片</view>
       <view class="photos-count">{{album.photosCountText}}</view>
     </view>
 

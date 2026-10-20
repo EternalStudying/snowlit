@@ -292,11 +292,11 @@ function mapStoryMoment(item, index, selectedMomentId) {
 function mapMarkerCallout(label, active) {
   return {
     content: label,
-    color: active ? '#050505' : '#555555',
+    color: active ? '#1d2433' : '#555e70',
     fontSize: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: active ? '#050505' : '#dddddd',
+    borderColor: active ? '#1d2433' : '#dce2ea',
     bgColor: '#ffffff',
     padding: 8,
     display: 'ALWAYS',
@@ -307,11 +307,11 @@ function mapMarkerCallout(label, active) {
 function mapClusterCallout(count) {
   return {
     content: `${count}个点滴`,
-    color: '#050505',
+    color: '#1d2433',
     fontSize: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#050505',
+    borderColor: '#1d2433',
     bgColor: '#ffffff',
     padding: 8,
     display: 'ALWAYS',

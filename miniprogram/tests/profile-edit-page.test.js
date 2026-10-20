@@ -56,7 +56,7 @@ function runStructureTest() {
   assert.match(wxml, /@\{\{user\.username\}\}/);
   assert.match(wxml, /class="role-badge"/);
   assert.match(wxml, /\{\{user\.coupleRoleLabel\}\}/);
-  assert.match(wxml, />PROFILE</);
+  assert.match(wxml, />资料</);
   assert.match(wxml, />昵称</);
   assert.match(wxml, /maxlength="20"/);
   assert.match(wxml, /\{\{form\.displayName\.length\}\}\/20/);
@@ -90,7 +90,7 @@ function runStructureTest() {
 function runProportionTest() {
   const css = read('pages/profile-edit/index.wxss');
 
-  assert.match(rule(css, '.profile-edit-page'), /background:\s*#fbfbfb;/);
+  assert.match(rule(css, '.profile-edit-page'), /background:\s*#f3f6fa;/);
   assert.match(rule(css, '.profile-edit-page'), /padding:\s*0 34rpx/);
   assert.match(rule(css, '.profile-edit-top'), /width:\s*120rpx;/);
   assert.match(rule(css, '.profile-edit-top'), /height:\s*146rpx;/);
@@ -103,9 +103,9 @@ function runProportionTest() {
   assert.match(rule(css, '.profile-username'), /font-size:\s*26rpx;/);
   assert.match(rule(css, '.role-badge'), /min-width:\s*178rpx;/);
   assert.match(rule(css, '.role-badge'), /border-radius:\s*999rpx;/);
-  assert.match(rule(css, '.role-badge'), /letter-spacing:\s*5rpx;/);
-  assert.match(rule(css, '.section-label'), /font-size:\s*20rpx;/);
-  assert.match(rule(css, '.profile-form-card'), /border:\s*1rpx solid #dedede;/);
+  assert.match(rule(css, '.role-badge'), /letter-spacing:\s*1rpx;/);
+  assert.match(rule(css, '.section-label'), /font-size:\s*24rpx;/);
+  assert.match(rule(css, '.profile-form-card'), /border:\s*1rpx solid #dce2ea;/);
   assert.match(rule(css, '.profile-form-card'), /border-radius:\s*8rpx;/);
   assert.match(rule(css, '.form-row'), /grid-template-columns:\s*126rpx minmax\(0, 1fr\) 84rpx;/);
   assert.match(rule(css, '.form-row'), /min-height:\s*120rpx;/);

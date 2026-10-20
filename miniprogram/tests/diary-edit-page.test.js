@@ -40,7 +40,7 @@ function runStructureTest() {
   assert.match(wxml, /class="diary-edit-page"/);
   assert.match(wxml, /class="diary-edit-top"/);
   assert.match(wxml, /class="diary-edit-section diary-edit-basic"/);
-  assert.match(wxml, />BASIC</);
+  assert.match(wxml, />基本信息</);
   assert.match(wxml, />标题</);
   assert.match(wxml, /class="basic-input"/);
   assert.match(wxml, /bindinput="handleTitleInput"/);
@@ -51,7 +51,7 @@ function runStructureTest() {
   assert.match(wxml, /class="visibility-switch"/);
   assert.match(wxml, />\s*共享\s*</);
   assert.match(wxml, />\s*私密\s*</);
-  assert.match(wxml, />WORDS</);
+  assert.match(wxml, />正文</);
   assert.match(wxml, /data-action="heading"/);
   assert.match(wxml, /data-action="bold"/);
   assert.match(wxml, /data-action="quote"/);
@@ -99,10 +99,10 @@ function runStructureTest() {
 function runProportionTest() {
   const css = read('pages/diary-edit/index.wxss');
 
-  assert.match(rule(css, '.diary-edit-page'), /background:\s*#fbfbfb;/);
+  assert.match(rule(css, '.diary-edit-page'), /background:\s*#f3f6fa;/);
   assert.match(rule(css, '.diary-edit-page'), /padding:\s*0 34rpx/);
   assert.match(rule(css, '.diary-edit-basic'), /padding-top:\s*183rpx;/);
-  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dedede;/);
+  assert.match(rule(css, '.basic-card'), /border:\s*1rpx solid #dce2ea;/);
   assert.match(rule(css, '.basic-row'), /min-height:\s*84rpx;/);
   assert.match(rule(css, '.basic-input'), /font-size:\s*29rpx;/);
   assert.match(rule(css, '.words-panel'), /min-height:\s*670rpx;/);
@@ -118,7 +118,7 @@ function runProportionTest() {
   assert.match(rule(css, '.preview-image'), /width:\s*50%;/);
   assert.match(rule(css, '.mode-tabs'), /grid-template-columns:\s*1fr 1fr;/);
   assert.match(rule(css, '.diary-edit-footer'), /position:\s*fixed;/);
-  assert.match(rule(css, '.save-button'), /background:\s*#050505;/);
+  assert.match(rule(css, '.save-button'), /background:\s*#1d2433;/);
   assert.match(rule(css, '.basic-label'), /font-size:\s*29rpx;/);
   assert.match(rule(css, '.basic-value'), /font-size:\s*29rpx;/);
   assert.match(rule(css, '.mood-pill'), /font-size:\s*29rpx;/);

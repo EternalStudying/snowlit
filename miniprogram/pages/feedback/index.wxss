@@ -3,8 +3,8 @@
   box-sizing: border-box;
   padding: 0 48rpx 64rpx;
   overflow-x: hidden;
-  color: #050505;
-  background: #fbfbfb;
+  color: #1d2433;
+  background: #f3f6fa;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -40,7 +40,7 @@
 .section-line {
   width: 100%;
   height: 1rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
 }
 
 .hero-line {
@@ -56,10 +56,10 @@
 }
 
 .section-label {
-  color: #050505;
+  color: #1d2433;
   font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 13rpx;
+  letter-spacing: 2rpx;
   line-height: 31rpx;
 }
 
@@ -81,8 +81,8 @@
   align-items: center;
   justify-content: center;
   height: 56rpx;
-  color: #151515;
-  border: 1rpx solid #d0d0d0;
+  color: #1d2433;
+  border: 1rpx solid #dce2ea;
   border-radius: 9rpx;
   font-size: 27rpx;
   font-weight: 400;
@@ -91,7 +91,7 @@
 }
 
 .type-chip--active {
-  border-color: #111111;
+  border-color: #1d2433;
   border-width: 2rpx;
   font-weight: 500;
 }
@@ -101,10 +101,10 @@
   box-sizing: border-box;
   width: 100%;
   margin-top: 16rpx;
-  color: #222222;
-  border: 1rpx solid #d0d0d0;
+  color: #1d2433;
+  border: 1rpx solid #dce2ea;
   border-radius: 8rpx;
-  background: #fbfbfb;
+  background: #f3f6fa;
 }
 
 .field-input {
@@ -116,7 +116,7 @@
 }
 
 .field-input--muted {
-  color: #888888;
+  color: #6b7385;
 }
 
 .textarea-wrap {
@@ -129,7 +129,7 @@
   display: block;
   width: 100%;
   height: 120rpx;
-  color: #222222;
+  color: #1d2433;
   font-size: 25rpx;
   font-weight: 400;
   line-height: 37rpx;
@@ -139,7 +139,7 @@
   position: absolute;
   right: 27rpx;
   bottom: 20rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -157,7 +157,7 @@
 }
 
 .screenshots-count {
-  color: #777777;
+  color: #6b7385;
   font-size: 25rpx;
   font-weight: 400;
   line-height: 31rpx;
@@ -178,13 +178,13 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  border: 1rpx dashed #9a9a9a;
+  border: 1rpx dashed #6b7385;
   border-radius: 9rpx;
 }
 
 .screenshot-slot--filled {
   border-style: solid;
-  border-color: #d0d0d0;
+  border-color: #dce2ea;
 }
 
 .screenshot-preview {
@@ -203,7 +203,7 @@
   min-height: 36rpx;
   padding: 0 8rpx;
   color: #ffffff;
-  background: rgba(5, 5, 5, 0.58);
+  background: rgba(29, 36, 51, 0.58);
   font-size: 20rpx;
   line-height: 28rpx;
   text-align: center;
@@ -219,7 +219,7 @@
   width: 34rpx;
   height: 34rpx;
   color: #ffffff;
-  background: rgba(5, 5, 5, 0.72);
+  background: rgba(29, 36, 51, 0.72);
   border-radius: 50%;
   font-size: 26rpx;
   line-height: 34rpx;
@@ -236,7 +236,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  background: #555555;
+  background: #555e70;
   content: "";
   transform: translate(-50%, -50%);
 }
@@ -253,7 +253,7 @@
 
 .slot-label {
   margin-top: 22rpx;
-  color: #333333;
+  color: #3a4254;
   font-size: 24rpx;
   font-weight: 400;
   line-height: 31rpx;
@@ -261,7 +261,7 @@
 
 .screenshot-helper {
   margin-top: 18rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   font-weight: 400;
   letter-spacing: 1rpx;
@@ -275,7 +275,7 @@
 .system-card {
   overflow: hidden;
   margin-top: 20rpx;
-  border: 1rpx solid #e1e1e1;
+  border: 1rpx solid #dce2ea;
   border-radius: 8rpx;
 }
 
@@ -295,13 +295,13 @@
   left: 27rpx;
   right: 27rpx;
   height: 1rpx;
-  background: #e1e1e1;
+  background: #dce2ea;
   content: "";
 }
 
 .system-label,
 .system-value {
-  color: #222222;
+  color: #1d2433;
   font-size: 24rpx;
   font-weight: 400;
   line-height: 31rpx;
@@ -318,7 +318,7 @@
 
 .feedback-message {
   margin-top: 28rpx;
-  color: #555555;
+  color: #555e70;
   font-size: 23rpx;
   font-weight: 400;
   line-height: 32rpx;
@@ -333,12 +333,12 @@
   margin-top: 30rpx;
   padding: 0;
   color: #ffffff;
-  background: #050505;
+  background: #1d2433;
   border: 0;
   border-radius: 8rpx;
   font-size: 27rpx;
   font-weight: 600;
-  letter-spacing: 6rpx;
+  letter-spacing: 2rpx;
   line-height: 65rpx;
 }
 
@@ -352,7 +352,7 @@
 
 .submit-note {
   margin-top: 17rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   letter-spacing: 1rpx;

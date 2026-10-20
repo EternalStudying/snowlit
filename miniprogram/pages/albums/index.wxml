@@ -13,7 +13,7 @@
 
   <view class="album-section">
     <view class="section-heading">
-      <view class="section-label">ALBUMS</view>
+      <view class="section-label">相册</view>
       <view class="section-state">{{totalText}}</view>
     </view>
 
@@ -47,7 +47,7 @@
           <view class="album-title-row">
             <view class="album-title">{{item.title}}</view>
             <view class="album-title-badges" wx:if="{{item.pinned || item.locked}}">
-              <view wx:if="{{item.pinned}}" class="album-title-badge">置顶</view>
+              <view wx:if="{{item.pinned}}" class="album-title-badge album-title-badge--pinned">置顶</view>
               <view wx:if="{{item.locked}}" class="album-title-badge">私密</view>
             </view>
           </view>

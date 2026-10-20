@@ -15,7 +15,7 @@
 
   <view class="wishes-section">
     <view class="section-heading">
-      <view class="section-label">WANT TO GO</view>
+      <view class="section-label">想去</view>
       <view class="section-state">{{counts.wantGo}}</view>
     </view>
 
@@ -52,7 +52,7 @@
 
   <view class="wishes-section wishes-section--next">
     <view class="section-heading">
-      <view class="section-label">WANT TO DO</view>
+      <view class="section-label">想做</view>
       <view class="section-state">{{counts.wantDo}}</view>
     </view>
 
@@ -89,7 +89,7 @@
 
   <view class="done-section">
     <view class="section-heading">
-      <view class="section-label">DONE</view>
+      <view class="section-label">已完成</view>
       <view class="section-state">{{counts.done}}</view>
     </view>
 

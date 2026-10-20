@@ -10,7 +10,7 @@
   <view class="hairline hero-line"></view>
 
   <view class="month-section">
-    <view class="section-label">MONTH</view>
+    <view class="section-label">月份</view>
 
     <view class="month-overview">
       <view>
@@ -71,7 +71,7 @@
   <view class="hairline"></view>
 
   <view class="entries-section">
-    <view class="section-label">ENTRIES</view>
+    <view class="section-label">日记</view>
 
     <view class="entry-state" wx:if="{{loading}}">日记加载中...</view>
     <view class="entry-state" wx:elif="{{message}}">{{message}}</view>

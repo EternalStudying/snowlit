@@ -1,18 +1,18 @@
 .error-state {
   padding: 56rpx 0;
-  border-top: 1rpx solid #dedede;
-  border-bottom: 1rpx solid #dedede;
+  border-top: 1rpx solid #dce2ea;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .error-state__title {
-  color: #111111;
+  color: #1d2433;
   font-size: 30rpx;
   font-weight: 500;
 }
 
 .error-state__message {
   margin-top: 14rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 26rpx;
   line-height: 1.65;
 }
@@ -20,7 +20,7 @@
 .error-state__action {
   display: inline-block;
   margin-top: 28rpx;
-  color: #111111;
+  color: #1d2433;
   font-size: 26rpx;
   line-height: 1;
   text-decoration: underline;

@@ -3,8 +3,8 @@
   min-height: 100vh;
   padding: 0 50rpx;
   overflow-x: hidden;
-  color: #050505;
-  background: #fbfbfb;
+  color: #1d2433;
+  background: #f3f6fa;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -35,7 +35,7 @@
 
 .section-line {
   height: 1rpx;
-  background: #d9d9d9;
+  background: #dce2ea;
 }
 
 .edit-section {
@@ -47,11 +47,11 @@
 }
 
 .section-label {
-  color: #777777;
-  font-size: 20rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 9rpx;
-  line-height: 24rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
 }
 
 .edit-row {
@@ -59,12 +59,12 @@
   align-items: center;
   justify-content: space-between;
   min-height: 88rpx;
-  border-bottom: 1rpx solid #dedede;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .row-label {
   flex: 0 0 auto;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 36rpx;
@@ -81,7 +81,7 @@
 .row-value {
   max-width: 520rpx;
   overflow: hidden;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 36rpx;
@@ -102,7 +102,7 @@
 .row-input {
   width: 100%;
   height: 72rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 72rpx;
@@ -125,7 +125,7 @@
 
 .picker-value {
   min-width: 170rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 72rpx;
@@ -137,13 +137,13 @@
 }
 
 .picker-group--end .picker-value {
-  color: #555555;
+  color: #555e70;
 }
 
 .clear-time {
   flex: 0 0 auto;
   margin-left: 22rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 23rpx;
   line-height: 36rpx;
 }
@@ -155,7 +155,7 @@
 .coordinate-input {
   width: 136rpx;
   height: 72rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 27rpx;
   font-weight: 400;
   line-height: 72rpx;
@@ -163,7 +163,7 @@
 }
 
 .coordinate-separator {
-  color: #777777;
+  color: #6b7385;
   font-size: 27rpx;
   line-height: 72rpx;
 }
@@ -191,7 +191,7 @@
 .category-item {
   position: relative;
   height: 62rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 62rpx;
@@ -204,7 +204,7 @@
   bottom: 2rpx;
   left: 24rpx;
   height: 4rpx;
-  background: #050505;
+  background: #1d2433;
   content: "";
 }
 
@@ -218,7 +218,7 @@
   margin-top: 20rpx;
   overflow: hidden;
   border-radius: 0;
-  background: #eeeeee;
+  background: #ebeff5;
 }
 
 .map-image {
@@ -250,7 +250,7 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  color: #333333;
+  color: #3a4254;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -265,7 +265,7 @@
 .edit-section--words {
   margin-top: 31rpx;
   padding-top: 32rpx;
-  border-top: 1rpx solid #dedede;
+  border-top: 1rpx solid #dce2ea;
 }
 
 .words-textarea {
@@ -273,8 +273,8 @@
   min-height: 140rpx;
   margin-top: 30rpx;
   padding-bottom: 26rpx;
-  color: #050505;
-  border-bottom: 1rpx solid #dedede;
+  color: #1d2433;
+  border-bottom: 1rpx solid #dce2ea;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 45rpx;
@@ -295,7 +295,7 @@
 }
 
 .photos-limit {
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -318,7 +318,7 @@
 
 .photo-wrap {
   position: relative;
-  background: #eeeeee;
+  background: #ebeff5;
 }
 
 .photo-item {
@@ -334,7 +334,7 @@
   width: 38rpx;
   height: 38rpx;
   color: #ffffff;
-  background: rgba(5, 5, 5, 0.72);
+  background: rgba(29, 36, 51, 0.72);
   border-radius: 999rpx;
   font-size: 24rpx;
   line-height: 36rpx;
@@ -349,7 +349,7 @@
   z-index: 2;
   height: 38rpx;
   color: #ffffff;
-  background: rgba(5, 5, 5, 0.58);
+  background: rgba(29, 36, 51, 0.58);
   font-size: 20rpx;
   line-height: 38rpx;
   text-align: center;
@@ -360,8 +360,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #050505;
-  background: #f3f3f3;
+  color: #1d2433;
+  background: #ebeff5;
 }
 
 .photo-add-plus {
@@ -373,7 +373,7 @@
 
 .photo-add-text {
   margin-top: 17rpx;
-  color: #555555;
+  color: #555e70;
   font-size: 23rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -385,7 +385,7 @@
 
 .edit-message {
   margin-top: 28rpx;
-  color: #b45309;
+  color: #a8661a;
   font-size: 24rpx;
   line-height: 32rpx;
   text-align: center;
@@ -403,12 +403,12 @@
   align-items: center;
   height: 148rpx;
   padding: 0 50rpx 22rpx;
-  background: rgba(251, 251, 251, 0.96);
-  border-top: 1rpx solid #e2e2e2;
+  background: rgba(243, 246, 250, 0.96);
+  border-top: 1rpx solid #dce2ea;
 }
 
 .cancel-button {
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 92rpx;
@@ -418,7 +418,7 @@
 .publish-button {
   height: 72rpx;
   color: #ffffff;
-  background: #050505;
+  background: #1d2433;
   border-radius: 999rpx;
   font-size: 29rpx;
   font-weight: 400;

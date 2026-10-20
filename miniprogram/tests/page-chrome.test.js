@@ -142,8 +142,8 @@ function runLoginLinkStyleTest() {
 function runTabbarIconStyleTest() {
   const homeActiveSvg = readAsset('assets/icons/tabbar/home-active.svg');
 
-  assert.match(homeActiveSvg, /stroke="#111111"/);
-  assert.doesNotMatch(homeActiveSvg, /fill="#111111"/);
+  assert.match(homeActiveSvg, /stroke="#1d2433"/);
+  assert.doesNotMatch(homeActiveSvg, /fill="#1d2433"/);
 }
 
 function runScrollablePageEndTipTest() {

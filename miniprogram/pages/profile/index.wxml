@@ -25,7 +25,7 @@
 
   <view class="section-line"></view>
 
-  <view class="section-heading">ACCOUNT</view>
+  <view class="section-heading">账号</view>
   <view class="list-card account-card">
     <view
       class="info-row"
@@ -39,7 +39,7 @@
   </view>
 
   <view class="notice-head">
-    <view class="section-heading notice-label">NOTICE</view>
+    <view class="section-heading notice-label">公告</view>
     <view class="notice-version">{{notice.version}}</view>
   </view>
   <view class="notice-card" bindtap="handleNoticeTap">
@@ -52,7 +52,7 @@
     <view class="notice-item">· {{notice.item}}</view>
   </view>
 
-  <view class="section-heading actions-heading">ACTIONS</view>
+  <view class="section-heading actions-heading">更多</view>
   <view class="list-card action-card">
     <view
       class="info-row action-row"

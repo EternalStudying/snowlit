@@ -85,11 +85,11 @@ function runStoryPageMappingTest() {
       active: false,
       callout: {
         content: '示例公园',
-        color: '#555555',
+        color: '#555e70',
         fontSize: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#dddddd',
+        borderColor: '#dce2ea',
         bgColor: '#ffffff',
         padding: 8,
         display: 'ALWAYS',
@@ -109,11 +109,11 @@ function runStoryPageMappingTest() {
       active: true,
       callout: {
         content: '家附近',
-        color: '#050505',
+        color: '#1d2433',
         fontSize: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#050505',
+        borderColor: '#1d2433',
         bgColor: '#ffffff',
         padding: 8,
         display: 'ALWAYS',
@@ -212,11 +212,11 @@ function runStoryPageClustersNearbyMarkersTest() {
     active: true,
     callout: {
       content: '2个点滴',
-      color: '#050505',
+      color: '#1d2433',
       fontSize: 12,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: '#050505',
+      borderColor: '#1d2433',
       bgColor: '#ffffff',
       padding: 8,
       display: 'ALWAYS',
@@ -379,8 +379,8 @@ function runStoryFilterStyleTest() {
   assert.ok(filterAreaRule, 'filter area style should exist');
   assert.ok(categoryRowRule, 'category row style should exist');
   assert.ok(yearChipRule, 'year chip style should exist');
-  assert.match(filterAreaRule[0], /background:\s*#f5f5f5;/);
-  assert.match(categoryRowRule[0], /background:\s*#f5f5f5;/);
+  assert.match(filterAreaRule[0], /background:\s*#ebeff5;/);
+  assert.match(categoryRowRule[0], /background:\s*#ebeff5;/);
   assert.match(yearChipRule[0], /display:\s*flex;/);
   assert.match(yearChipRule[0], /align-items:\s*center;/);
   assert.match(yearChipRule[0], /justify-content:\s*center;/);

@@ -6,7 +6,7 @@
   </view>
 
   <view class="album-edit-section album-edit-basic">
-    <view class="section-label">BASIC</view>
+    <view class="section-label">基本信息</view>
     <view class="basic-card">
       <view class="basic-row">
         <image class="basic-icon" src="../../assets/icons/home/clipboard-list.svg" mode="aspectFit" />
@@ -75,7 +75,7 @@
   </view>
 
   <view class="album-edit-section album-edit-details">
-    <view class="section-label">DETAILS</view>
+    <view class="section-label">描述</view>
     <view class="details-panel">
       <textarea
         class="details-textarea"
@@ -90,7 +90,7 @@
 
   <view class="album-edit-section album-edit-photos">
     <view class="photos-head">
-      <view class="section-label">PHOTOS</view>
+      <view class="section-label">照片</view>
       <view class="photos-limit">最多 9 张</view>
     </view>
     <view class="photo-list">

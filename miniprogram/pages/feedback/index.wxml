@@ -6,7 +6,7 @@
   </view>
 
   <view class="feedback-head snowlit-subpage-heading">
-    <view class="snowlit-subpage-brand">FEEDBACK</view>
+    <view class="snowlit-subpage-brand">SNOWLIT</view>
     <view class="snowlit-subpage-title">反馈</view>
     <view class="snowlit-subpage-subtitle">把不好用的地方告诉我</view>
   </view>
@@ -14,7 +14,7 @@
   <view class="section-line hero-line"></view>
 
   <view class="form-section">
-    <view class="section-label">TYPE</view>
+    <view class="section-label">类型</view>
     <view class="type-grid">
       <view
         class="type-chip {{item.active ? 'type-chip--active' : ''}}"
@@ -29,7 +29,7 @@
   </view>
 
   <view class="form-section form-section--field">
-    <view class="section-label">TITLE<text class="required-star">*</text></view>
+    <view class="section-label">标题<text class="required-star">*</text></view>
     <input
       class="field-input"
       value="{{form.title}}"
@@ -39,7 +39,7 @@
   </view>
 
   <view class="form-section form-section--field">
-    <view class="section-label">CONTENT</view>
+    <view class="section-label">内容</view>
     <view class="textarea-wrap">
       <textarea
         class="field-textarea"
@@ -52,7 +52,7 @@
   </view>
 
   <view class="form-section form-section--field">
-    <view class="section-label">CONTACT</view>
+    <view class="section-label">联系方式</view>
     <input
       class="field-input field-input--muted"
       placeholder="微信或邮箱，可不填"
@@ -63,7 +63,7 @@
   </view>
 
   <view class="screenshots-head">
-    <view class="section-label screenshots-label">SCREENSHOTS</view>
+    <view class="section-label screenshots-label">截图</view>
     <view class="screenshots-count">{{screenshots.length}}/3</view>
   </view>
 
@@ -106,7 +106,7 @@
   <view class="screenshot-helper">支持 jpg / png / webp，单张不超过 10MB</view>
 
   <view class="system-section">
-    <view class="section-label">SYSTEM</view>
+    <view class="section-label">设备信息</view>
     <view class="system-card">
       <view
         class="system-row"

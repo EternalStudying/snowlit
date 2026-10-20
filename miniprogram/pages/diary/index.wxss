@@ -5,13 +5,13 @@
   right: 0;
   z-index: 20;
   height: 128rpx;
-  background: rgba(251, 251, 251, 0.96);
+  background: rgba(243, 246, 250, 0.96);
 }
 
 .hairline {
   width: 100%;
   height: 1rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
 }
 
 .hero-line {
@@ -23,11 +23,11 @@
 }
 
 .section-label {
-  color: #8a8a8a;
-  font-size: 18rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 8rpx;
-  line-height: 22rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
 }
 
 .month-overview {
@@ -39,7 +39,7 @@
 }
 
 .month-title {
-  color: #050505;
+  color: #1d2433;
   font-size: 42rpx;
   font-weight: 400;
   letter-spacing: 4rpx;
@@ -48,7 +48,7 @@
 
 .month-caption {
   margin-top: 13rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 23rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -68,7 +68,7 @@
   width: calc((100vw - 88rpx) / 4);
   height: 100rpx;
   padding-top: 44rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 26rpx;
   font-weight: 400;
   line-height: 34rpx;
@@ -76,14 +76,17 @@
 }
 
 .month-tab--active {
-  color: #050505;
+  color: #1d2433;
 }
 
+/* The month being read is lit, like the current tab. */
 .month-tab-line {
-  width: 40rpx;
-  height: 4rpx;
-  margin: 15rpx auto 0;
-  background: #111111;
+  width: 8rpx;
+  height: 8rpx;
+  margin: 13rpx auto 0;
+  border-radius: 50%;
+  background: #e8a23a;
+  box-shadow: 0 0 10rpx rgba(232, 162, 58, 0.6);
 }
 
 .stat-row {
@@ -104,12 +107,12 @@
   left: 0;
   width: 1rpx;
   height: 70rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
   content: "";
 }
 
 .stat-label {
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   font-weight: 400;
   line-height: 30rpx;
@@ -117,7 +120,7 @@
 
 .stat-value {
   margin-top: 14rpx;
-  color: #050505;
+  color: #1d2433;
   font-size: 42rpx;
   font-weight: 300;
   line-height: 44rpx;
@@ -134,14 +137,14 @@
   min-width: 92rpx;
   margin-right: 28rpx;
   padding-bottom: 24rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 28rpx;
   font-weight: 400;
   line-height: 34rpx;
 }
 
 .filter-item--active {
-  color: #050505;
+  color: #1d2433;
   font-weight: 600;
 }
 
@@ -151,7 +154,7 @@
   left: 0;
   width: 48rpx;
   height: 3rpx;
-  background: #111111;
+  background: #1d2433;
 }
 
 .entries-section {
@@ -164,7 +167,7 @@
 
 .entry-state {
   padding: 38rpx 0;
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   line-height: 34rpx;
 }
@@ -173,7 +176,7 @@
   display: flex;
   align-items: center;
   min-height: 176rpx;
-  border-bottom: 1rpx solid #dedede;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .entry-date-cell {
@@ -181,7 +184,7 @@
 }
 
 .entry-date {
-  color: #777777;
+  color: #6b7385;
   font-size: 26rpx;
   font-weight: 400;
   line-height: 1;
@@ -189,7 +192,7 @@
 
 .entry-visibility {
   margin-top: 18rpx;
-  color: #9a9a9a;
+  color: #6b7385;
   font-size: 18rpx;
   font-weight: 400;
   letter-spacing: 3rpx;
@@ -203,7 +206,7 @@
 }
 
 .entry-title {
-  color: #050505;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 600;
   line-height: 40rpx;
@@ -211,7 +214,7 @@
 
 .entry-summary {
   margin-top: 17rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 28rpx;
@@ -219,7 +222,7 @@
 
 .entry-meta {
   margin-top: 17rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   letter-spacing: 2rpx;
@@ -248,9 +251,9 @@
   justify-content: center;
   width: 68rpx;
   height: 68rpx;
-  background: #050505;
+  background: #1d2433;
   border-radius: 50%;
-  box-shadow: 0 14rpx 28rpx rgba(0, 0, 0, 0.22);
+  box-shadow: 0 14rpx 28rpx rgba(29, 36, 51, 0.22);
 }
 
 .diary-add__icon {

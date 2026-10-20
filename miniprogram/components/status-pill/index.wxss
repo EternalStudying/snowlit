@@ -3,16 +3,16 @@
   align-items: center;
   min-height: 44rpx;
   padding: 0 18rpx;
-  border: 1rpx solid #c9c9c9;
+  border: 1rpx solid #dce2ea;
   border-radius: 999rpx;
-  color: #6f6f6f;
+  color: #555e70;
   font-size: 22rpx;
   line-height: 44rpx;
 }
 
 .status-pill--strong {
-  border-color: #111111;
-  color: #111111;
+  border-color: #1d2433;
+  color: #1d2433;
 }
 
 .status-pill--success {

@@ -3,14 +3,14 @@
   align-items: center;
   gap: 20rpx;
   min-height: 96rpx;
-  color: #8a8a8a;
+  color: #6b7385;
 }
 
 .loading-state__ring {
   width: 36rpx;
   height: 36rpx;
-  border: 2rpx solid #d6d6d6;
-  border-top-color: #111111;
+  border: 2rpx solid #dce2ea;
+  border-top-color: #1d2433;
   border-radius: 50%;
   animation: loadingRotate 900ms linear infinite;
 }

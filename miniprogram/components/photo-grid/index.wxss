@@ -13,7 +13,7 @@
 
 .photo-grid__item {
   aspect-ratio: 1;
-  background: #eeeeee;
+  background: #ebeff5;
   overflow: hidden;
 }
 

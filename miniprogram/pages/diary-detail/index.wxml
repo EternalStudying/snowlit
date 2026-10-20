@@ -77,19 +77,19 @@
 
     <view class="meta-section">
       <view class="meta-row">
-        <view class="meta-label">WEATHER</view>
+        <view class="meta-label">天气</view>
         <view class="meta-value">{{diary.weatherText}}</view>
       </view>
       <view class="meta-row">
-        <view class="meta-label">PLACE</view>
+        <view class="meta-label">地点</view>
         <view class="meta-value">{{diary.placeText}}</view>
       </view>
       <view class="meta-row">
-        <view class="meta-label">COORD</view>
+        <view class="meta-label">坐标</view>
         <view class="meta-value">{{diary.coordinate}}</view>
       </view>
       <view class="meta-row">
-        <view class="meta-label">UPDATED</view>
+        <view class="meta-label">更新于</view>
         <view class="meta-value">{{diary.updatedText}}</view>
       </view>
     </view>

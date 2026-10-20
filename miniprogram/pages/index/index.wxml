@@ -12,8 +12,10 @@
   <view class="couple-row">
     <view class="days">
       <text class="days__label">在一起</text>
-      <text class="days__value">{{couple.togetherDays}}</text>
-      <text class="days__label">天</text>
+      <view class="days__count">
+        <text class="days__value">{{couple.togetherDays}}</text>
+        <text class="days__unit">天</text>
+      </view>
     </view>
     <view class="names">
       <text class="name">{{couple.boyfriendName}}</text>
@@ -68,7 +70,7 @@
 
   <view class="section-head">
     <view>
-      <view class="section-label">MOMENTS</view>
+      <view class="section-label">点滴</view>
     </view>
     <view class="view-all" bindtap="goStory">
       <text>查看全部</text>
@@ -99,7 +101,7 @@
 
   <view class="section-head albums-head">
     <view>
-      <view class="section-label">ALBUMS</view>
+      <view class="section-label">相册</view>
     </view>
     <view class="view-all" bindtap="goAlbums">
       <text>查看全部</text>
@@ -129,7 +131,7 @@
   <view class="hairline section-line"></view>
 
   <view class="wishes">
-    <view class="section-label wishes-label">WISHES</view>
+    <view class="section-label wishes-label">清单</view>
     <view class="wish-empty" wx:if="{{wishesLoading}}">清单统计加载中...</view>
     <view class="wish-empty" wx:if="{{!wishesLoading && wishesMessage}}">{{wishesMessage}}</view>
     <block wx:if="{{!wishesLoading && !wishesMessage}}">
@@ -149,7 +151,7 @@
     <view class="hairline update-line"></view>
 
     <view class="update-section" bindtap="goProfile">
-      <view class="section-label">UPDATE</view>
+      <view class="section-label">更新</view>
       <view class="update-row">
         <view class="update-main">
           <view class="update-title">{{updateNotice.title}}</view>

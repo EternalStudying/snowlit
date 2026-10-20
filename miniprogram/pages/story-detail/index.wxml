@@ -6,7 +6,7 @@
   </view>
 
   <view class="page-head story-head snowlit-subpage-heading">
-    <view class="snowlit-subpage-brand">STORY</view>
+    <view class="snowlit-subpage-brand">点滴</view>
     <view class="snowlit-subpage-title">{{moment.title}}</view>
     <view class="snowlit-subpage-subtitle">把这一天轻轻收好</view>
   </view>
@@ -21,15 +21,15 @@
   <block wx:else>
     <view class="meta-grid">
       <view class="meta-cell meta-cell--time">
-        <view class="meta-label">TIME</view>
+        <view class="meta-label">时间</view>
         <view class="meta-value">{{moment.date}}  {{moment.timeRange}}</view>
       </view>
       <view class="meta-cell meta-cell--category">
-        <view class="meta-label">CATEGORY</view>
+        <view class="meta-label">分类</view>
         <view class="category-pill">{{moment.categoryLabel}}</view>
       </view>
       <view class="meta-cell meta-cell--location">
-        <view class="meta-label">LOCATION</view>
+        <view class="meta-label">地点</view>
         <view class="meta-value meta-value--location">{{moment.locationName}}</view>
       </view>
     </view>
@@ -40,7 +40,7 @@
       <view wx:for="{{moment.contentLines}}" wx:key="*this" class="content-line">{{item}}</view>
     </view>
 
-    <view class="section-label">PHOTOS</view>
+    <view class="section-label">照片</view>
     <view class="photo-section" wx:if="{{moment.hasImages}}">
       <image
         class="photo-main"
@@ -63,7 +63,7 @@
     </view>
     <view class="photo-empty" wx:else>暂无照片</view>
 
-    <view class="section-label section-label--map">MAP</view>
+    <view class="section-label section-label--map">地图</view>
     <view class="map-card">
       <view class="map-texture">
         <view class="map-lake"></view>
@@ -91,7 +91,7 @@
     <view class="section-line section-line--footer"></view>
 
     <view class="updated-row">
-      <text class="updated-label">UPDATED</text>
+      <text class="updated-label">更新于</text>
       <text>{{moment.updatedAt}}</text>
     </view>
 

@@ -1,6 +1,6 @@
 .minimal-section {
   padding: 44rpx 0;
-  border-top: 1rpx solid #dedede;
+  border-top: 1rpx solid #dce2ea;
 }
 
 .minimal-section__head {
@@ -12,10 +12,10 @@
 .minimal-section__label {
   width: 148rpx;
   flex: none;
-  color: #8a8a8a;
-  font-size: 22rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 600;
-  letter-spacing: 8rpx;
+  letter-spacing: 2rpx;
 }
 
 .minimal-section__content {
@@ -24,7 +24,7 @@
 }
 
 .minimal-section__title {
-  color: #111111;
+  color: #1d2433;
   font-size: 32rpx;
   font-weight: 500;
   line-height: 1.35;
@@ -32,7 +32,7 @@
 
 .minimal-section__caption {
   margin-top: 8rpx;
-  color: #8a8a8a;
+  color: #6b7385;
   font-size: 26rpx;
   line-height: 1.55;
 }

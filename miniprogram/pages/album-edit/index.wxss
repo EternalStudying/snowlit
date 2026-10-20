@@ -4,8 +4,8 @@
   box-sizing: border-box;
   padding: 0 34rpx;
   overflow-x: hidden;
-  color: #050505;
-  background: #fbfbfb;
+  color: #1d2433;
+  background: #f3f6fa;
   font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -43,17 +43,17 @@
 }
 
 .section-label {
-  color: #777777;
-  font-size: 20rpx;
+  color: #6b7385;
+  font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 14rpx;
-  line-height: 28rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
 }
 
 .basic-card {
   margin-top: 22rpx;
   overflow: hidden;
-  border: 1rpx solid #dedede;
+  border: 1rpx solid #dce2ea;
   border-radius: 8rpx;
   background: rgba(255, 255, 255, 0.68);
 }
@@ -63,7 +63,7 @@
   align-items: center;
   min-height: 84rpx;
   padding: 0 20rpx 0 28rpx;
-  border-bottom: 1rpx solid #dedede;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .basic-row--last {
@@ -79,7 +79,7 @@
 .basic-label {
   flex: 0 0 auto;
   margin-left: 36rpx;
-  color: #222222;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 40rpx;
@@ -88,7 +88,7 @@
 .required-star {
   flex: 0 0 auto;
   margin-left: 12rpx;
-  color: #ff2b20;
+  color: #d9822b;
   font-size: 31rpx;
   font-weight: 500;
   line-height: 40rpx;
@@ -98,7 +98,7 @@
   flex: 1;
   min-width: 0;
   margin-left: 28rpx;
-  color: #333333;
+  color: #3a4254;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 40rpx;
@@ -108,7 +108,7 @@
 .basic-value {
   flex: 1;
   min-width: 0;
-  color: #333333;
+  color: #3a4254;
   font-size: 29rpx;
   font-weight: 400;
   letter-spacing: 2rpx;
@@ -132,8 +132,8 @@
   height: 56rpx;
   margin-left: auto;
   padding: 0 34rpx;
-  color: #222222;
-  border: 1rpx solid #dedede;
+  color: #1d2433;
+  border: 1rpx solid #dce2ea;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.9);
   font-size: 29rpx;
@@ -147,11 +147,11 @@
   height: 52rpx;
   margin-left: auto;
   border-radius: 999rpx;
-  background: #dddddd;
+  background: #dce2ea;
 }
 
 .pin-switch--active {
-  background: #050505;
+  background: #1d2433;
 }
 
 .pin-knob {
@@ -162,7 +162,7 @@
   height: 42rpx;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 3rpx 8rpx rgba(0, 0, 0, 0.12);
+  box-shadow: 0 3rpx 8rpx rgba(29, 36, 51, 0.12);
   transition: transform 180ms ease;
 }
 
@@ -179,7 +179,7 @@
   margin-top: 22rpx;
   box-sizing: border-box;
   padding: 34rpx 32rpx;
-  border: 1rpx solid #dedede;
+  border: 1rpx solid #dce2ea;
   border-radius: 8rpx;
   background: rgba(255, 255, 255, 0.64);
 }
@@ -187,7 +187,7 @@
 .details-textarea {
   width: 100%;
   min-height: 150rpx;
-  color: #333333;
+  color: #3a4254;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 52rpx;
@@ -204,7 +204,7 @@
 }
 
 .photos-limit {
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   font-weight: 400;
   line-height: 32rpx;
@@ -233,7 +233,7 @@
   justify-content: center;
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
-  border: 2rpx dashed #d2d2d2;
+  border: 2rpx dashed #dce2ea;
   background: rgba(255, 255, 255, 0.48);
 }
 
@@ -248,7 +248,7 @@
 
 .photo-add-text {
   margin-top: 20rpx;
-  color: #222222;
+  color: #1d2433;
   font-size: 29rpx;
   font-weight: 400;
   line-height: 38rpx;
@@ -258,7 +258,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #eeeeee;
+  background: #ebeff5;
 }
 
 .photo-remove {
@@ -269,7 +269,7 @@
   width: 40rpx;
   height: 40rpx;
   color: #ffffff;
-  background: #050505;
+  background: #1d2433;
   border-radius: 50%;
   font-size: 30rpx;
   font-weight: 300;
@@ -285,7 +285,7 @@
   z-index: 2;
   padding: 8rpx 10rpx;
   color: #ffffff;
-  background: rgba(5, 5, 5, 0.58);
+  background: rgba(29, 36, 51, 0.58);
   font-size: 20rpx;
   line-height: 26rpx;
   text-align: center;
@@ -316,11 +316,11 @@
   align-items: center;
   padding: 38rpx 58rpx calc(38rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.94);
-  border-top: 1rpx solid #eeeeee;
+  border-top: 1rpx solid #ebeff5;
 }
 
 .cancel-button {
-  color: #777777;
+  color: #6b7385;
   font-size: 29rpx;
   font-weight: 600;
   line-height: 84rpx;
@@ -332,7 +332,7 @@
   margin: 0;
   padding: 0;
   color: #ffffff;
-  background: #050505;
+  background: #1d2433;
   border-radius: 999rpx;
   font-size: 29rpx;
   font-weight: 500;

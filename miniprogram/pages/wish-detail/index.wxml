@@ -9,7 +9,7 @@
   <view class="detail-state" wx:elif="{{message}}">{{message}}</view>
   <block wx:else>
     <view class="wish-head snowlit-subpage-heading">
-      <view class="snowlit-subpage-brand">WISH</view>
+      <view class="snowlit-subpage-brand">清单</view>
       <view class="snowlit-subpage-title">{{wish.title}}</view>
       <view class="snowlit-subpage-subtitle">{{wish.description}}</view>
       <view class="wish-badges">
@@ -46,21 +46,21 @@
     <view class="section-line"></view>
 
     <view class="coordinate-row">
-      <view class="section-label">COORDINATE</view>
+      <view class="section-label">坐标</view>
       <view class="coordinate-value">{{wish.coordinate}}</view>
     </view>
 
     <view class="section-line"></view>
 
     <view class="note-section">
-      <view class="section-label">NOTE</view>
+      <view class="section-label">备注</view>
       <view class="note-content">{{wish.note}}</view>
     </view>
 
     <view class="section-line"></view>
 
     <view class="timeline-section">
-      <view class="section-label">TIMELINE</view>
+      <view class="section-label">记录</view>
       <view class="timeline-list">
         <view class="timeline-item">
           <view class="timeline-axis">

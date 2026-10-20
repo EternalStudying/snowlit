@@ -1,7 +1,7 @@
 .hairline {
   width: 100%;
   height: 1rpx;
-  background: #d8d8d8;
+  background: #dce2ea;
 }
 
 .hero-line {
@@ -16,8 +16,8 @@
   width: 68rpx;
   height: 68rpx;
   border-radius: 50%;
-  background: #050505;
-  box-shadow: 0 12rpx 26rpx rgba(0, 0, 0, 0.24);
+  background: #1d2433;
+  box-shadow: 0 12rpx 26rpx rgba(29, 36, 51, 0.24);
 }
 
 .album-add__icon {
@@ -40,15 +40,15 @@
 }
 
 .section-label {
-  color: #050505;
+  color: #1d2433;
   font-size: 24rpx;
   font-weight: 400;
-  letter-spacing: 6rpx;
+  letter-spacing: 2rpx;
   line-height: 30rpx;
 }
 
 .section-state {
-  color: #777777;
+  color: #6b7385;
   font-size: 23rpx;
   font-weight: 400;
   line-height: 30rpx;
@@ -60,7 +60,7 @@
 
 .album-state {
   padding: 40rpx 0;
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   line-height: 34rpx;
 }
@@ -71,7 +71,7 @@
   align-items: center;
   min-height: 214rpx;
   padding: 26rpx 0;
-  border-bottom: 1rpx solid #dedede;
+  border-bottom: 1rpx solid #dce2ea;
 }
 
 .album-media {
@@ -114,7 +114,7 @@
 .cover-photo {
   width: 100%;
   height: 100%;
-  background: #eeeeee;
+  background: #ebeff5;
 }
 
 .cover-photo {
@@ -134,7 +134,7 @@
   justify-content: center;
   width: 230rpx;
   height: 181rpx;
-  background: #f0f0f0;
+  background: #ebeff5;
 }
 
 .lock-icon {
@@ -157,7 +157,7 @@
 
 .album-title {
   min-width: 0;
-  color: #050505;
+  color: #1d2433;
   flex: 0 1 auto;
   font-size: 31rpx;
   font-weight: 500;
@@ -178,8 +178,8 @@
   flex: 0 0 auto;
   height: 34rpx;
   padding: 0 14rpx;
-  color: #333333;
-  border: 1rpx solid #d2d2d2;
+  color: #3a4254;
+  border: 1rpx solid #dce2ea;
   border-radius: 999rpx;
   font-size: 20rpx;
   font-weight: 400;
@@ -187,16 +187,22 @@
   text-align: center;
 }
 
+.album-title-badge--pinned {
+  color: #a8661a;
+  border-color: #f3dcb5;
+  background: #fbeed8;
+}
+
 .album-description {
   margin-top: 22rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 30rpx;
 }
 
 .album-meta {
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   letter-spacing: 2rpx;
@@ -218,7 +224,7 @@
 .album-stat {
   display: flex;
   align-items: center;
-  color: #777777;
+  color: #6b7385;
   font-size: 22rpx;
   font-weight: 400;
   line-height: 1;
@@ -232,7 +238,7 @@
 }
 
 .album-stat--active {
-  color: #050505;
+  color: #1d2433;
 }
 
 .album-stat--active .album-stat-icon {
@@ -255,7 +261,7 @@
 
 .album-load-more {
   padding: 30rpx 0 10rpx;
-  color: #777777;
+  color: #6b7385;
   font-size: 24rpx;
   line-height: 32rpx;
   text-align: center;
