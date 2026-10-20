@@ -103,6 +103,21 @@ class AlbumModuleTests {
     }
 
     @Test
+    void legacyUnpublishedAlbumsCannotBeOpenedLikedOrViewed() {
+        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum());
+        for (Runnable action : List.<Runnable>of(
+                () -> albumService.getAlbumDetail(MANAGER, 9L, null),
+                () -> albumService.likeAlbum(MANAGER, 9L),
+                () -> albumService.recordAlbumView(MANAGER, 9L, null))) {
+            assertThatThrownBy(action::run).isInstanceOfSatisfying(ApplicationFailure.class,
+                    failure -> assertThat(failure.code()).isEqualTo("ALBUM_NOT_FOUND"));
+        }
+        verify(albumMapper, never()).findPhotosByAlbumId(any());
+        verify(albumMapper, never()).toggleDailyLike(any(), any(), any(), any());
+        verify(albumMapper, never()).insertDailyView(any(), any(), any(), any());
+    }
+
+    @Test
     void privateDetailRequiresAlbumScopedToken() {
         when(albumMapper.findAlbumById(2L)).thenReturn(privateAlbum());
 
