@@ -1,4 +1,5 @@
 <view class="album-edit-page">
+  <view class="draft-loading" wx:if="{{draftLocked}}">{{message || '正在读取草稿…'}}</view>
   <view class="album-edit-top">
     <view class="back-button" bindtap="goBack">
       <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
@@ -13,6 +14,7 @@
         <view class="basic-label">标题</view>
         <view class="required-star">*</view>
         <input
+          disabled="{{draftLocked || submitting}}"
           class="basic-input"
           value="{{form.title}}"
           placeholder="给相册起个名字"
@@ -34,6 +36,7 @@
         <view class="basic-label">私密密码</view>
         <view class="required-star">*</view>
         <input
+          disabled="{{draftLocked || submitting}}"
           class="basic-input"
           password="{{true}}"
           value="{{form.privatePassword}}"
@@ -63,6 +66,7 @@
         <image class="basic-icon" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
         <view class="basic-label">地点</view>
         <input
+          disabled="{{draftLocked || submitting}}"
           class="basic-input"
           value="{{form.location}}"
           placeholder="写下拍摄地点"
@@ -78,6 +82,7 @@
     <view class="section-label snowlit-kai">描述</view>
     <view class="details-panel">
       <textarea
+          disabled="{{draftLocked || submitting}}"
         class="details-textarea"
         value="{{form.description}}"
         placeholder="把这组照片的故事轻轻写下"
@@ -91,7 +96,7 @@
   <view class="album-edit-section album-edit-photos">
     <view class="photos-head">
       <view class="section-label snowlit-kai">照片</view>
-      <view class="photos-limit">最多 9 张</view>
+      <view class="photos-limit">最多 {{maxAlbumPhotos}} 张</view>
     </view>
     <view class="photo-list">
       <view class="photo-add" wx:if="{{canAddPhoto}}" bindtap="choosePhotos">
@@ -117,13 +122,14 @@
     <view class="metadata-hint" wx:if="{{metadataHint}}">{{metadataHint}}</view>
   </view>
 
+  <view class="draft-status" wx:if="{{draftStatus}}">{{draftStatus}}</view>
   <view class="edit-message" wx:if="{{message}}">{{message}}</view>
   <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
   <view class="footer-spacer"></view>
 
   <view class="album-edit-footer">
     <view class="cancel-button" bindtap="goBack">取消</view>
-    <button class="save-button" loading="{{submitting || metadataReading}}" disabled="{{submitting || metadataReading}}" bindtap="saveAlbum">{{metadataReading ? '读取照片信息中' : (submitting ? '保存中' : '保存相册')}}</button>
+    <button class="save-button" loading="{{submitting || metadataReading}}" disabled="{{submitting || metadataReading || draftLocked || removingImage}}" bindtap="saveAlbum">{{metadataReading ? '读取照片信息中' : (submitting ? '保存中' : '保存相册')}}</button>
   </view>
 </view>
 

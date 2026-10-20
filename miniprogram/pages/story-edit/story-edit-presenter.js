@@ -152,6 +152,19 @@ function buildStoryPayload(form, imageUrls) {
   };
 }
 
+function storyDraftFields(form) {
+  const eventTime = buildDateTime(form.eventDate, form.eventTime);
+  const endTime = buildDateTime(form.endDate, form.endTime);
+  const longitude = parseCoordinate(form.longitude, -180, 180);
+  const latitude = parseCoordinate(form.latitude, -90, 90);
+  return {
+    title: form.title, content: form.content,
+    ...(eventTime ? { eventTime } : {}), ...(endTime ? { endTime } : {}),
+    locationName: form.locationName, address: form.address,
+    ...(longitude !== null ? { longitude } : {}), ...(latitude !== null ? { latitude } : {}), category: form.category
+  };
+}
+
 function createLocalImage(path) {
   const imagePath = clean(path);
   return {
@@ -207,6 +220,7 @@ function appendSelectedImages(currentImages, selectedFiles) {
 
 module.exports = {
   MAX_STORY_IMAGES,
+  storyDraftFields,
   appendSelectedImages,
   buildStoryPayload,
   createInitialStoryForm,

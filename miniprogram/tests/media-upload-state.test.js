@@ -81,7 +81,7 @@ test('album keeps the selected upload batch stable while its first photo is uplo
   await flush();
   assert.deepEqual(page.data.photos.map((item) => item.id), ['a.jpg', 'b.jpg']);
   assert.equal(picks.length, 0);
-  uploads[0].success({ statusCode: 200, data: JSON.stringify({ previewUrl: 'https://media.test/a.jpg' }) });
+  uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'image-a', url: 'https://media.test/a.jpg' }) });
   await flush();
   assert.equal(uploads.length, 2);
   assert.equal(uploads[0].filePath, 'wxfile://tmp/a.compressed.jpg');

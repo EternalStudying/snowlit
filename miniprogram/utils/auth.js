@@ -9,16 +9,30 @@ const STORAGE_KEYS = {
   ALBUM_PRIVATE_TOKEN_PREFIX: 'snowlit_album_private_token_'
 };
 
+const tokenListeners = new Set();
+
+function onTokenChange(listener) {
+  tokenListeners.add(listener);
+  return () => tokenListeners.delete(listener);
+}
+
+function notifyTokenChange(previous) {
+  if (getToken() !== previous) tokenListeners.forEach((listener) => listener());
+}
+
 function getToken() {
   return getStorage(STORAGE_KEYS.TOKEN, '');
 }
 
 function setToken(token) {
+  const previous = getToken();
   if (!token) {
     removeStorage(STORAGE_KEYS.TOKEN);
+    notifyTokenChange(previous);
     return;
   }
   setStorage(STORAGE_KEYS.TOKEN, token);
+  notifyTokenChange(previous);
 }
 
 function normalizeUser(user) {
@@ -60,7 +74,7 @@ function persistLoginSession(payload) {
 }
 
 function clearAuthSession() {
-  removeStorage(STORAGE_KEYS.TOKEN);
+  setToken('');
   removeStorage(STORAGE_KEYS.USER);
   removeStorageByPrefix(STORAGE_KEYS.ALBUM_PRIVATE_TOKEN_PREFIX);
   const app = typeof getApp === 'function' ? getApp({ allowDefault: true }) : null;
@@ -149,6 +163,7 @@ function clearAlbumPrivateToken(albumId) {
 module.exports = {
   STORAGE_KEYS,
   getToken,
+  onTokenChange,
   setToken,
   getStoredUser,
   setStoredUser,

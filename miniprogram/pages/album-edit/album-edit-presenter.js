@@ -1,6 +1,6 @@
 const { appendPickedImages } = require('../../utils/image-list');
 
-const MAX_ALBUM_PHOTOS = 9;
+const MAX_ALBUM_PHOTOS = 50;
 const VISIBILITY_OPTIONS = [
   { value: 'public', label: '公开' },
   { value: 'private', label: '私密' }
@@ -65,6 +65,18 @@ function buildAlbumDraftPayload(form) {
   };
 }
 
+function albumDraftFields(form) {
+  const { title, description, eventDate, location, visibility, pinned } = form;
+  return { title, description, ...(eventDate ? { eventDate } : {}), location, visibility, pinned: Boolean(pinned) };
+}
+
+function mapAlbumDraft(draft) {
+  const form = { ...createInitialAlbumForm(), ...draft.fields, privatePassword: '' };
+  form.eventDateText = form.eventDate ? formatAlbumDateText(form.eventDate) : '从照片读取或手动选择';
+  form.visibilityText = visibilityLabel(form.visibility);
+  return form;
+}
+
 function createPhoto(path, file) {
   return {
     id: `${path}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -81,6 +93,9 @@ function createPhoto(path, file) {
 }
 
 function appendSelectedAlbumPhotos(existing, selected) {
+  if (Array.isArray(existing) && existing.length >= MAX_ALBUM_PHOTOS) {
+    return { photos: existing.slice(), reachedLimit: Boolean(selected && selected.length) };
+  }
   const result = appendPickedImages(existing, selected, MAX_ALBUM_PHOTOS, createPhoto);
   return {
     photos: result.images,
@@ -98,16 +113,17 @@ function createAlbumPhotoMetadata(photo, index, form) {
   const albumForm = form || {};
   return {
     caption: clean(albumForm.title) || '未命名照片',
-    takenAt: clean(source.takenAt) || clean(albumForm.eventDate),
-    location: clean(albumForm.location),
+    ...(clean(source.takenAt) ? { takenAt: clean(source.takenAt) } : {}),
+    location: clean(source.location),
     width: positiveNumber(source.width, 1),
-    height: positiveNumber(source.height, 1),
-    sortOrder: index + 1
+    height: positiveNumber(source.height, 1)
   };
 }
 
 module.exports = {
   MAX_ALBUM_PHOTOS,
+  albumDraftFields,
+  mapAlbumDraft,
   VISIBILITY_OPTIONS,
   appendSelectedAlbumPhotos,
   buildAlbumDraftPayload,

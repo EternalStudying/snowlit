@@ -1,4 +1,5 @@
 <view class="story-edit-page">
+  <view class="draft-loading" wx:if="{{draftLocked}}">{{message || '正在读取草稿…'}}</view>
   <view class="story-edit-top">
     <view class="back-button" bindtap="goBack">
       <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
@@ -11,6 +12,7 @@
       <view class="row-label">标题</view>
       <view class="row-right">
         <input
+          disabled="{{draftLocked || submitting}}"
           class="row-input"
           value="{{form.title}}"
           placeholder="输入标题"
@@ -63,6 +65,7 @@
       <view class="row-label">地点名称</view>
       <view class="row-right">
         <input
+          disabled="{{draftLocked || submitting}}"
           class="row-input"
           value="{{form.locationName}}"
           placeholder="输入地点"
@@ -76,6 +79,7 @@
       <view class="row-label">详细地址</view>
       <view class="row-right">
         <input
+          disabled="{{draftLocked || submitting}}"
           class="row-input row-input--address"
           value="{{form.address}}"
           placeholder="输入地址"
@@ -89,6 +93,7 @@
       <view class="row-label">经纬度</view>
       <view class="row-right coordinate-group">
         <input
+          disabled="{{draftLocked || submitting}}"
           class="coordinate-input"
           value="{{form.longitude}}"
           placeholder="经度"
@@ -97,6 +102,7 @@
         />
         <view class="coordinate-separator">,</view>
         <input
+          disabled="{{draftLocked || submitting}}"
           class="coordinate-input"
           value="{{form.latitude}}"
           placeholder="纬度"
@@ -118,6 +124,7 @@
   <view class="edit-section edit-section--words">
     <view class="section-label snowlit-kai">正文</view>
     <textarea
+          disabled="{{draftLocked || submitting}}"
       class="words-textarea"
       value="{{form.content}}"
       placeholder="写下这一天的细节"
@@ -152,13 +159,14 @@
     </view>
   </view>
 
+  <view class="draft-status" wx:if="{{draftStatus}}">{{draftStatus}}</view>
   <view class="edit-message" wx:if="{{message}}">{{message}}</view>
   <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
   <view class="bottom-placeholder"></view>
 
   <view class="action-footer">
     <view class="cancel-button" bindtap="goBack">取消</view>
-    <button class="publish-button" loading="{{submitting}}" disabled="{{submitting || loadingMoment}}" bindtap="submitMoment">{{isEditing ? '保存修改' : '发布点滴'}}</button>
+    <button class="publish-button" loading="{{submitting}}" disabled="{{submitting || loadingMoment || draftLocked || removingImage}}" bindtap="submitMoment">{{isEditing ? '保存修改' : '发布点滴'}}</button>
   </view>
 </view>
 

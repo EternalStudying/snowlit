@@ -1,6 +1,4 @@
 const { request, buildQuery } = require('../utils/request');
-const { uploadFile } = require('../utils/upload');
-const { resolveMediaUrl } = require('../utils/media');
 const { saveAlbumPrivateToken, getAlbumPrivateToken, clearAlbumPrivateToken } = require('../utils/auth');
 
 const TOKEN_ERROR_CODES = ['PRIVATE_ALBUM_TOKEN_EXPIRED', 'PRIVATE_ALBUM_TOKEN_INVALID'];
@@ -75,72 +73,12 @@ function recordAlbumView(albumId) {
   });
 }
 
-function getCurrentAlbumDraft(options) {
-  return request({
-    url: '/api/albums/drafts/current',
-    method: 'GET',
-    silent: Boolean(options && options.silent),
-    errorMessage: '未完成相册加载失败'
-  });
-}
-
-function createAlbumDraft(payload, options) {
-  return request({
-    url: '/api/albums',
-    method: 'POST',
-    data: payload,
-    silent: Boolean(options && options.silent),
-    errorMessage: '相册保存失败'
-  });
-}
-
-function uploadAlbumDraftPhoto(albumId, filePath, metadata, onProgress) {
-  return uploadFile({
-    url: `/api/albums/${albumId}/photos/mobile`,
-    filePath,
-    name: 'file',
-    formData: {
-      metadata: JSON.stringify(metadata || {})
-    },
-    onProgress,
-    errorMessage: '相册照片上传失败'
-  }).then((response) => ({
-    ...(response || {}),
-    // UI-local field for existing upload state. Backend contract is previewUrl/originalUrl.
-    url: resolveMediaUrl(response && response.previewUrl),
-    previewUrl: resolveMediaUrl(response && response.previewUrl),
-    originalUrl: resolveMediaUrl(response && response.originalUrl)
-  }));
-}
-
-function publishAlbumDraft(albumId) {
-  return request({
-    url: `/api/albums/${albumId}/publish`,
-    method: 'POST',
-    errorMessage: '相册发布失败'
-  });
-}
-
-function cancelAlbumDraft(albumId) {
-  return request({
-    url: `/api/albums/${albumId}/draft`,
-    method: 'DELETE',
-    silent: true,
-    errorMessage: '相册临时内容清理失败'
-  });
-}
-
 module.exports = {
   getAlbums,
   getAlbumDetail,
   unlockAlbum,
   likeAlbum,
   recordAlbumView,
-  getCurrentAlbumDraft,
-  createAlbumDraft,
-  uploadAlbumDraftPhoto,
-  publishAlbumDraft,
-  cancelAlbumDraft,
   getAlbumPrivateToken,
   clearAlbumPrivateToken
 };

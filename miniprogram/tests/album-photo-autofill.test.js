@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { test } = require('node:test');
+const { test, afterEach } = require('node:test');
+const pages = [];
+afterEach(() => pages.splice(0).forEach((page) => { if (page.autosave) page.autosave.stop(); }));
 const { buildJpeg } = require('./helpers/exif-jpeg');
 
 const root = path.resolve(__dirname, '..');
@@ -45,8 +47,8 @@ function createAlbumPage({ files = {}, place = { city: 'Example City', country: 
       if (pathname === '/api/weather/atmosphere/browser') {
         if (deferPlaceLookup) pendingPlaces.push(() => finishPlace(options));
         else finishPlace(options);
-      } else if (pathname === '/api/albums' && options.method === 'POST') {
-        options.success({ statusCode: 200, data: { album: { id: 41 } } });
+      } else if (pathname === '/api/drafts/album' && options.method === 'PUT') {
+        options.success({ statusCode: 200, data: { kind: 'album', fields: options.data.fields, images: [], updatedAt: '2026-05-28T20:00:00' } });
       } else {
         options.success({ statusCode: 200, data: {} });
       }
@@ -77,6 +79,8 @@ function createAlbumPage({ files = {}, place = { city: 'Example City', country: 
       });
     }
   };
+  page.startAutosave();
+  pages.push(page);
   return { page, picks, prompts, toasts, requests, uploads, pendingReads, pendingPlaces };
 }
 
@@ -100,7 +104,7 @@ const photos = {
 };
 
 function albumCreates(context) {
-  return context.requests.filter((request) => request.method === 'POST' && new URL(request.url).pathname === '/api/albums');
+  return context.requests.filter((request) => request.method === 'PUT' && new URL(request.url).pathname === '/api/drafts/album');
 }
 
 function albumPublishes(context) {
@@ -129,7 +133,8 @@ test('never replaces a date or place the person set', async () => {
 
   assert.equal(context.page.data.form.eventDate, '2026-01-01');
   assert.equal(context.page.data.form.location, '我写的地点');
-  assert.equal(context.requests.some((item) => item.url.includes('/api/weather/')), false);
+  assert.equal(context.requests.some((item) => item.url.includes('/api/weather/')), true, 'each GPS photo still keeps its own resolved place');
+  assert.equal(context.page.data.photos[0].location, 'Example City，Example Country');
   assert.equal(context.page.data.photos[0].takenAt, '2026-05-20');
 });
 
@@ -137,6 +142,8 @@ test('photos added later do not change fields already filled from photos', async
   const context = createAlbumPage({ files: photos });
   await pick(context, ['wxfile://late.jpg']);
   assert.equal(context.page.data.form.eventDate, '2026-05-28');
+  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'late', url: 'https://media.test/late.jpg' }) });
+  await flush();
   await pick(context, ['wxfile://early.jpg']);
 
   assert.equal(context.page.data.form.eventDate, '2026-05-28');
@@ -172,10 +179,10 @@ test('uploads the compressed copy with each photo\'s own shooting date', async (
   assert.equal(context.uploads.length, 1);
   assert.equal(context.uploads[0].filePath, 'wxfile://late.jpg.small');
   assert.equal(JSON.parse(context.uploads[0].formData.metadata).takenAt, '2026-05-28');
-  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ previewUrl: 'https://media.test/1.jpg' }) });
+  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'image-1', url: 'https://media.test/1.jpg' }) });
   await flush();
   assert.equal(context.uploads[1].filePath, 'wxfile://plain.jpg.small');
-  assert.equal(JSON.parse(context.uploads[1].formData.metadata).takenAt, '2026-05-28', 'falls back to the album date');
+  assert.equal(JSON.parse(context.uploads[1].formData.metadata).takenAt, undefined, 'missing date stays optional until publish uses the album date');
 });
 
 test('a photo that cannot be compressed fails instead of uploading the original', async () => {
@@ -215,14 +222,12 @@ test('save requested during EXIF reading waits for the photo date and place and 
   context.pendingPlaces.shift()();
   await flush();
   assert.equal(context.page.data.metadataReading, false);
-  assert.equal(albumCreates(context).length, 1);
-  assert.equal(albumCreates(context)[0].data.eventDate, '2026-05-20');
-  assert.equal(albumCreates(context)[0].data.location, 'Example City，Example Country');
+  assert.equal(albumCreates(context).length, 0, 'the draft image upload itself creates the draft');
   assert.equal(context.uploads.length, 1);
   const metadata = JSON.parse(context.uploads[0].formData.metadata);
   assert.equal(metadata.takenAt, '2026-05-20');
   assert.equal(metadata.location, 'Example City，Example Country');
-  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ previewUrl: 'https://media.test/1.jpg' }) });
+  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'image-1', url: 'https://media.test/1.jpg' }) });
   await flush();
   assert.equal(albumCreates(context).length, 1);
   assert.equal(albumPublishes(context).length, 1);
@@ -242,8 +247,7 @@ test('save requested after EXIF but before place resolution waits for the place'
   context.pendingPlaces.shift()();
   await flush();
 
-  assert.equal(albumCreates(context).length, 1);
-  assert.equal(albumCreates(context)[0].data.location, 'Example City，Example Country');
+  assert.equal(albumCreates(context).length, 0);
   assert.equal(JSON.parse(context.uploads[0].formData.metadata).location, 'Example City，Example Country');
 });
 
@@ -288,18 +292,21 @@ test('photos without a shooting date require a deliberate date choice and keep a
   await flush();
 
   assert.equal(albumCreates(context).length, 0, 'missing shooting dates cannot silently become today');
-  assert.equal(context.uploads.length, 0);
+  assert.equal(context.uploads.length, 1, 'an undated photo is uploaded immediately into the draft');
+  assert.equal(JSON.parse(context.uploads[0].formData.metadata).takenAt, undefined);
   assert.equal(context.page.data.form.eventDate, '');
   assert.equal(context.page.data.message, '请选择相册日期');
 
+  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'plain', url: 'https://media.test/plain.jpg' }) });
+  await flush();
   context.page.confirmDateFromSheet({ detail: { value: '2026-02-03' } });
   context.page.saveAlbum();
   await flush();
   assert.equal(albumCreates(context).length, 1);
-  assert.equal(albumCreates(context)[0].data.eventDate, '2026-02-03');
-  assert.equal(albumCreates(context)[0].data.location, '');
+  assert.equal(albumCreates(context)[0].data.fields.eventDate, '2026-02-03');
+  assert.equal(albumCreates(context)[0].data.fields.location, '');
   const metadata = JSON.parse(context.uploads[0].formData.metadata);
-  assert.equal(metadata.takenAt, '2026-02-03');
+  assert.equal(metadata.takenAt, undefined, 'publish fills the missing photo date from the chosen album eventDate');
   assert.equal(metadata.location, '');
 });
 
@@ -315,11 +322,14 @@ test('a queued save preserves manual fields set while EXIF is still being read',
 
   context.pendingReads.shift()();
   await flush();
+  context.uploads[0].success({ statusCode: 200, data: JSON.stringify({ id: 'manual', url: 'https://media.test/manual.jpg' }) });
+  await flush();
   assert.equal(albumCreates(context).length, 1);
-  assert.equal(albumCreates(context)[0].data.eventDate, '2026-01-01');
-  assert.equal(albumCreates(context)[0].data.location, 'Manual place');
-  assert.equal(context.requests.some((request) => request.url.includes('/api/weather/')), false);
+  assert.equal(albumCreates(context)[0].data.fields.eventDate, '2026-01-01');
+  assert.equal(albumCreates(context)[0].data.fields.location, 'Manual place');
+  assert.equal(context.requests.some((request) => request.url.includes('/api/weather/')), true, 'photo place resolves independently of manual album place');
   const metadata = JSON.parse(context.uploads[0].formData.metadata);
   assert.equal(metadata.takenAt, '2026-05-20', 'the photo retains its own shooting date');
-  assert.equal(metadata.location, 'Manual place');
+  assert.equal(metadata.location, 'Example City，Example Country');
+  assert.equal(context.page.data.form.location, 'Manual place');
 });

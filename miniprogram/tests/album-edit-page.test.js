@@ -36,13 +36,13 @@ function runStructureTest() {
   const presenter = read('pages/album-edit/album-edit-presenter.js');
   const albumsJs = read('pages/albums/index.js');
 
-  assert.equal(js.includes("require('../../services/album')"), true);
-  assert.match(js, /cancelAlbumDraft/);
-  assert.match(js, /createAlbumDraft/);
-  assert.match(js, /getCurrentAlbumDraft/);
-  assert.match(js, /uploadAlbumDraftPhoto/);
-  assert.match(js, /publishAlbumDraft/);
-  assert.match(js, /showConfirm/);
+  assert.equal(js.includes("require('../../services/draft')"), true);
+  assert.match(js, /removeDraftImage/);
+  assert.match(js, /createDraftAutosave/);
+  assert.match(js, /loadDraft/);
+  assert.match(js, /uploadDraftImage/);
+  assert.match(js, /publishDraft/);
+  assert.match(js, /loadDraft/);
   assert.match(js, /album-edit-presenter/);
   assert.equal(wxml.includes('snowlit-page-heading'), false);
   assert.equal(wxml.includes('snowlit-subpage-heading'), false);
@@ -74,7 +74,7 @@ function runStructureTest() {
   assert.match(wxml, /class="details-textarea"/);
   assert.match(wxml, /placeholder="把这组照片的故事轻轻写下"/);
   assert.match(wxml, />照片</);
-  assert.match(wxml, />最多 9 张</);
+  assert.match(wxml, />最多 \{\{maxAlbumPhotos\}\} 张</);
   assert.match(wxml, /bindtap="choosePhotos"/);
   assert.match(wxml, />添加照片</);
   assert.match(wxml, /class="album-edit-footer"/);
@@ -90,14 +90,15 @@ function runStructureTest() {
   assert.match(js, /confirmDateFromSheet/);
   assert.match(js, /choosePhotos/);
   assert.match(js, /uploadPhotos/);
-  assert.match(js, /cleanupDraft/);
-  assert.match(js, /handleDraftExists/);
-  assert.match(js, /ALBUM_DRAFT_EXISTS/);
-  assert.match(js, /清理并保存/);
-  assert.match(js, /createAlbumDraft\(validation\.payload,\s*\{\s*silent:\s*true\s*\}\)/);
-  assert.match(js, /resetUploadedPhotoState/);
+
+
+
+
+
+
   assert.match(js, /refreshAlbumPages/);
-  assert.match(js, /cancelAlbumDraft\(albumId\)/);
+  assert.doesNotMatch(js, /ALBUM_DRAFT_EXISTS|cleanupDraft|handleDraftExists|resetUploadedPhotoState/);
+
   assert.doesNotMatch(js, /保存接口下一步接入/);
   assert.match(albumsJs, /ROUTES\.ALBUM_EDIT/);
   assert.doesNotMatch(albumsJs, /相册新增下一步接入/);

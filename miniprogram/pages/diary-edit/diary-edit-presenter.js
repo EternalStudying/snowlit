@@ -107,6 +107,22 @@ function ensureTitleMarkdown(title, content) {
   return `# ${titleText}\n\n${body}`.trim();
 }
 
+function diaryDraftFields(form) {
+  return {
+    contentMarkdown: ensureTitleMarkdown(form.title, form.content),
+    ...(form.date ? { date: form.date } : {}),
+    moodKey: form.moodKey, visibility: form.visibility,
+    ...(form.weatherSnapshot ? { weatherSnapshot: form.weatherSnapshot } : {})
+  };
+}
+
+function mapDiaryDraft(draft) {
+  const fields = draft.fields || {};
+  const firstLine = String(fields.contentMarkdown || '').split(/\r?\n/).find((line) => line.trim()) || '';
+  return { ...mapDiaryEditForm({ ...fields, title: firstLine.replace(/^#\s*/, ''), entryDate: fields.date }),
+    ...(fields.weatherSnapshot ? { weatherSnapshot: fields.weatherSnapshot } : {}) };
+}
+
 function buildDiaryCreatePayload(form) {
   const source = form || {};
   const title = stripInlineMarkdown(source.title).slice(0, 36);
@@ -269,8 +285,22 @@ function insertDiaryImageMarkdown(content, url, cursor) {
   return insertMarkdownAtCursor(source, `${prefix}![图片](${imageUrl})\n\n`, position);
 }
 
+function removeDiaryImageMarkdown(content, url) {
+  const escaped = String(url).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const image = new RegExp(`!\\[[^\\]]*]\\(\\s*<?${escaped}>?(?:\\s+["'][^"']*["'])?\\s*\\)`, 'g');
+  return String(content || '').replace(image, '').replace(/<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi, (tag) => {
+    const attributes = tag.matchAll(/\s+([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g);
+    for (const attribute of attributes) {
+      if (attribute[1].toLowerCase() === 'src' && (attribute[2] === undefined ? attribute[3] : attribute[2]) === String(url)) return '';
+    }
+    return tag;
+  });
+}
+
 module.exports = {
   MAX_DIARY_IMAGES,
+  diaryDraftFields,
+  mapDiaryDraft,
   appendSelectedDiaryImages,
   buildDiaryCreatePayload,
   buildDiaryUpdatePayload,
@@ -278,6 +308,7 @@ module.exports = {
   formatDiaryDateText,
   insertBlockMarkdown,
   insertDiaryImageMarkdown,
+  removeDiaryImageMarkdown,
   insertInlineMarkdown,
   mapDiaryEditForm,
   mapDiaryMoods,

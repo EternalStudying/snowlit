@@ -1,13 +1,17 @@
 const { ROUTES, routePath } = require('../../constants/routes');
-const { cancelAlbumDraft, createAlbumDraft, getCurrentAlbumDraft, publishAlbumDraft, uploadAlbumDraftPhoto } = require('../../services/album');
+const { uploadDraftImage, removeDraftImage, publishDraft } = require('../../services/draft');
+const { createDraftAutosave, loadDraft } = require('../../utils/draft-autosave');
+const { beginRequest } = require('../../utils/request-guard');
+const { resolveMediaUrl } = require('../../utils/media');
 const { getPhotoPlaceName } = require('../../services/weather');
-const { showConfirm } = require('../../utils/dialog');
 const { showInfo, showSuccess } = require('../../utils/notify');
 const { pickImages } = require('../../utils/image-picker');
 const { readPhotoMetadata, summarizePhotoMetadata } = require('../../utils/photo-metadata');
 const { patchItem, uploadQueue } = require('../../utils/upload-queue');
 const {
   MAX_ALBUM_PHOTOS,
+  albumDraftFields,
+  mapAlbumDraft,
   VISIBILITY_OPTIONS,
   appendSelectedAlbumPhotos,
   buildAlbumDraftPayload,
@@ -38,9 +42,13 @@ Page({
   data: {
     form: createInitialAlbumForm(),
     visibilityOptions: VISIBILITY_OPTIONS,
+    maxAlbumPhotos: MAX_ALBUM_PHOTOS,
     photos: [],
     canAddPhoto: true,
-    draftId: '',
+    draftLocked: false,
+    draftStatus: '',
+    removingImage: false,
+    uploading: false,
     visibilitySheetVisible: false,
     dateSheetVisible: false,
     metadataReading: false,
@@ -49,8 +57,45 @@ Page({
     message: ''
   },
 
+  onLoad() {
+    this.startAutosave();
+    this.setData({ draftLocked: true });
+    return loadDraft(this, 'album').then((result) => {
+      if (!result.current || this.metadataDisposed) return;
+      if (result.draft) {
+        this.setData({ form: mapAlbumDraft(result.draft) });
+        this.settledFields = { eventDate: Boolean(this.data.form.eventDate), location: Boolean(this.data.form.location) };
+        this.updatePhotos(result.draft.images.map((image) => ({
+          ...image, serverId: image.id, path: resolveMediaUrl(image.url), status: 'uploaded', progress: 100, message: '已上传'
+        })));
+      }
+      this.setData({ draftLocked: false });
+    }).catch((error) => { if (!this.metadataDisposed) this.setData({ message: error.message || '草稿加载失败，请重新打开页面' }); });
+  },
+
+  startAutosave() {
+    if (this.autosave) this.autosave.stop();
+    this.autosave = createDraftAutosave({ page: this, kind: 'album', read: () => albumDraftFields(this.data.form),
+      view: (draftStatus) => { if (!this.metadataDisposed) this.setData({ draftStatus }); },
+      sessionChanged: () => {
+        this.metadataDisposed = true;
+        this.setData({ form: createInitialAlbumForm(), photos: [], draftStatus: '', removingImage: false, draftLocked: true, submitting: false, uploading: false, metadataReading: false, metadataHint: '', message: '', dateSheetVisible: false, visibilitySheetVisible: false });
+      }
+    });
+  },
+
+  changed() {
+    if (this.autosave && !this.data.draftLocked) this.autosave.changed();
+  },
+
+  onHide() {
+    return this.autosave ? this.autosave.flush() : Promise.resolve();
+  },
+
   onUnload() {
     this.metadataDisposed = true;
+    if (this.autosave) return this.autosave.flush().finally(() => this.autosave.stop());
+    return Promise.resolve();
   },
 
   goBack() {
@@ -62,6 +107,7 @@ Page({
   },
 
   handleInput(event) {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
@@ -73,9 +119,11 @@ Page({
       [`form.${field}`]: event.detail.value,
       message: ''
     });
+    if (field !== 'privatePassword') this.changed();
   },
 
   openVisibilitySheet() {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     this.setData({
       visibilitySheetVisible: true,
       message: ''
@@ -89,6 +137,7 @@ Page({
   },
 
   selectVisibilityFromSheet(event) {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     const value = event.detail && event.detail.value;
     const option = VISIBILITY_OPTIONS.find((item) => item.value === value) || VISIBILITY_OPTIONS[0];
     this.setData({
@@ -98,16 +147,20 @@ Page({
       visibilitySheetVisible: false,
       message: ''
     });
+    this.changed();
   },
 
   togglePinned() {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     this.setData({
       'form.pinned': !this.data.form.pinned,
       message: ''
     });
+    this.changed();
   },
 
   openDateSheet() {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     this.setData({
       dateSheetVisible: true,
       message: ''
@@ -121,6 +174,7 @@ Page({
   },
 
   confirmDateFromSheet(event) {
+    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
     const value = event.detail && event.detail.value;
     if (!value) {
       return;
@@ -132,10 +186,12 @@ Page({
       dateSheetVisible: false,
       message: ''
     });
+    this.changed();
   },
 
   choosePhotos() {
-    if (this.data.submitting || this.queuedSave) {
+    if (this.data.removingImage) return;
+    if (this.data.submitting || this.queuedSave || this.data.draftLocked || this.data.uploading || this.metadataDisposed) {
       return;
     }
     if (!this.data.canAddPhoto) {
@@ -144,12 +200,12 @@ Page({
     }
 
     return pickImages({
-      count: MAX_ALBUM_PHOTOS - this.data.photos.length,
+      count: Math.min(9, MAX_ALBUM_PHOTOS - this.data.photos.length),
       title: '选择照片',
       message: '需要读取你选中的照片及其中的拍摄时间和地点，用于添加相册照片并自动填写日期和地点。',
       noun: '照片',
       sizeType: ['original'],
-      isBlocked: () => this.data.submitting || Boolean(this.queuedSave)
+      isBlocked: () => this.data.submitting || Boolean(this.queuedSave) || this.data.draftLocked || this.data.uploading || this.metadataDisposed
     }).then((files) => {
       if (!files.length) {
         return;
@@ -160,7 +216,14 @@ Page({
       if (result.reachedLimit) {
         showInfo(`最多 ${MAX_ALBUM_PHOTOS} 张`);
       }
-      return this.fillFromPhotos(result.photos.slice(before));
+      this.changed();
+      return this.fillFromPhotos(result.photos.slice(before)).then(() => {
+        if (!this.metadataDisposed) return this.uploadPhotos().catch((error) => {
+          this.setData({ message: error.message || '照片上传失败，请重试' });
+          showInfo(error.message || '照片上传失败，请重试');
+        });
+        return undefined;
+      });
     });
   },
 
@@ -222,20 +285,21 @@ Page({
           'form.eventDate': summary.takenAt,
           'form.eventDateText': formatAlbumDateText(summary.takenAt)
         });
+        this.changed();
       }
-      if (!summary.position || this.isSettled('location')) {
-        updateHint();
-        return undefined;
-      }
-      const source = current.find((item) => item.latitude !== null && item.longitude !== null);
-      return getPhotoPlaceName(summary.position).then((place) => {
-        if (!active()) return;
-        if (place && retained(source.id) && !this.isSettled('location') && !this.data.submitting) {
-          this.settleField('location');
-          this.setData({ 'form.location': place });
-        }
-        updateHint();
-      });
+      const positioned = current.filter((item) => item.latitude !== null && item.longitude !== null);
+      return positioned.reduce((chain, item) => chain.then(() => {
+        if (!retained(item.id)) return;
+        return getPhotoPlaceName({ latitude: item.latitude, longitude: item.longitude }).then((place) => {
+          if (!retained(item.id)) return;
+          if (place) this.updatePhotos(this.data.photos.map((photo) => photo.id === item.id ? { ...photo, location: place } : photo));
+          if (place && !this.isSettled('location') && !this.data.submitting) {
+            this.settleField('location');
+            this.setData({ 'form.location': place });
+            this.changed();
+          }
+        });
+      }), Promise.resolve()).then(updateHint);
     }).catch(() => {
       if (active()) this.setData({ metadataHint: '未能读取照片拍摄信息，请手动填写' });
     }).finally(() => {
@@ -259,18 +323,24 @@ Page({
   },
 
   removePhoto(event) {
-    if (this.data.submitting) {
-      return;
-    }
+    if (this.data.removingImage || this.data.submitting || this.data.uploading || this.data.draftLocked || this.metadataDisposed) return;
     const index = Number(event.currentTarget.dataset.index);
-    if (!Number.isInteger(index)) {
-      return;
+    const photo = this.data.photos[index];
+    if (!Number.isInteger(index) || !photo) return;
+    if (!photo.serverId) {
+      this.updatePhotos(this.data.photos.filter((item) => item.id !== photo.id));
+      return Promise.resolve();
     }
-    this.updatePhotos(this.data.photos.filter((item, itemIndex) => itemIndex !== index));
+    const isCurrent = beginRequest(this, 'draft-remove');
+    this.setData({ removingImage: true });
+    const remove = removeDraftImage('album', photo.serverId);
+    return remove.then(() => {
+      if (isCurrent() && !this.metadataDisposed) this.updatePhotos(this.data.photos.filter((item) => item.id !== photo.id));
+    }).catch((error) => { if (isCurrent() && !this.metadataDisposed) { this.setData({ message: error.message }); showInfo(error.message); } }).finally(() => { if (isCurrent() && !this.metadataDisposed) this.setData({ removingImage: false }); });
   },
 
   updatePhotos(photos) {
-    const list = Array.isArray(photos) ? photos.slice(0, MAX_ALBUM_PHOTOS) : [];
+    const list = Array.isArray(photos) ? photos.slice() : [];
     this.setData({
       photos: list,
       canAddPhoto: list.length < MAX_ALBUM_PHOTOS,
@@ -308,81 +378,32 @@ Page({
     });
   },
 
-  uploadPhotos(albumId) {
-    return uploadQueue({
-      read: () => this.data.photos,
-      patch: (index, patch) => this.patchPhoto(index, patch),
+  uploadPhotos() {
+    if (this.data.metadataReading) return this.metadataTask.then(() => this.uploadPhotos());
+    if (this.uploadTask) return this.uploadTask;
+    const isCurrent = beginRequest(this, 'draft-upload');
+    const active = () => isCurrent() && !this.metadataDisposed;
+    if (!active()) return Promise.resolve();
+    this.setData({ uploading: true });
+    this.uploadTask = uploadQueue({
+      read: () => active() ? this.data.photos : [],
+      patch: (index, patch) => { if (active()) this.patchPhoto(index, patch); },
       failureMessage: '有照片没有上传成功，请稍后再试',
       upload: (photo, index, onProgress) => this.resolvePhotoSize(photo).then((size) => {
-        const resolvedPhoto = {
-          ...photo,
-          width: photo.width || size.width,
-          height: photo.height || size.height
-        };
-        this.patchPhoto(index, { width: resolvedPhoto.width, height: resolvedPhoto.height });
-        return compressForUpload(resolvedPhoto.path).then((uploadPath) => uploadAlbumDraftPhoto(
-          albumId,
-          uploadPath,
-          createAlbumPhotoMetadata(resolvedPhoto, index, this.data.form),
-          onProgress
-        ));
-      })
-    });
-  },
-
-  resetUploadedPhotoState() {
-    this.updatePhotos(this.data.photos.map((photo) => ({
-      ...photo,
-      status: '',
-      progress: 0,
-      message: '',
-      url: ''
-    })));
-  },
-
-  cleanupDraft(albumId) {
-    if (!albumId) {
-      return Promise.resolve();
-    }
-
-    return cancelAlbumDraft(albumId)
-      .catch(() => null)
-      .then(() => {
-        if (this.data.draftId === albumId) {
-          this.setData({ draftId: '' });
-        }
-        this.resetUploadedPhotoState();
-      });
-  },
-
-  handleDraftExists(error, payload) {
-    if (!error || error.code !== 'ALBUM_DRAFT_EXISTS') {
-      return Promise.reject(error);
-    }
-
-    return getCurrentAlbumDraft({ silent: true }).then((current) => {
-      const draft = current && current.draft;
-      const albumId = draft && draft.album && draft.album.id;
-      if (!albumId) {
-        throw error;
-      }
-
-      return showConfirm({
-        title: '发现未完成相册',
-        content: '之前有一份未完成的相册保存记录。清理后会重新保存当前内容。',
-        confirmText: '清理并保存',
-        cancelText: '先不保存'
-      }).then((result) => {
-        if (!result || !result.confirm) {
-          throw new Error('已取消保存');
-        }
-        return cancelAlbumDraft(albumId).then(() => {
-          this.setData({ draftId: '' });
-          this.resetUploadedPhotoState();
-          return createAlbumDraft(payload, { silent: true });
+        if (!active()) throw new Error('登录状态已变化');
+        const resolved = { ...photo, width: photo.width || size.width, height: photo.height || size.height };
+        this.patchPhoto(index, { width: resolved.width, height: resolved.height });
+        return compressForUpload(resolved.path).then((uploadPath) => {
+          if (!active()) throw new Error('登录状态已变化');
+          return uploadDraftImage('album', uploadPath, createAlbumPhotoMetadata(resolved, index, this.data.form), onProgress);
         });
-      });
+      }),
+      onUploaded: (response, index) => { if (active()) this.patchPhoto(index, { serverId: response.id }); }
+    }).finally(() => {
+      this.uploadTask = null;
+      if (active()) this.setData({ uploading: false });
     });
+    return this.uploadTask;
   },
 
   refreshAlbumPages() {
@@ -400,7 +421,8 @@ Page({
   },
 
   saveAlbum() {
-    if (this.data.submitting || this.metadataDisposed) {
+    if (this.data.removingImage) return;
+    if (this.data.submitting || this.metadataDisposed || this.data.draftLocked) {
       return;
     }
     if (this.data.metadataReading) {
@@ -426,44 +448,32 @@ Page({
       return;
     }
 
-    let albumId = this.data.draftId;
-    this.setData({
-      submitting: true,
-      message: ''
-    });
-
-    const draftTask = albumId
-      ? Promise.resolve({ album: { id: albumId } })
-      : createAlbumDraft(validation.payload, { silent: true })
-        .catch((error) => this.handleDraftExists(error, validation.payload));
-
-    return draftTask
-      .then((draft) => {
-        albumId = albumId || (draft && draft.album && draft.album.id);
-        if (!albumId) {
-          throw new Error('相册保存准备失败，请稍后再试');
-        }
-        this.setData({ draftId: albumId });
-        return this.uploadPhotos(albumId);
-      })
-      .then(() => publishAlbumDraft(albumId))
+    const isCurrent = beginRequest(this, 'draft-publish');
+    this.setData({ submitting: true, message: '' });
+    return this.uploadPhotos()
+      .then(() => this.autosave ? this.autosave.flush() : undefined)
       .then(() => {
+        if (!isCurrent() || this.metadataDisposed) return null;
+        if (this.autosave) this.autosave.pause();
+        return publishDraft('album', albumDraftFields(this.data.form), { privatePassword: validation.payload.privatePassword });
+      })
+      .then((result) => {
+        if (!result || !isCurrent() || this.metadataDisposed) return;
+        this.published = true;
+        if (this.autosave) this.autosave.stop();
         this.refreshAlbumPages();
-        showSuccess({
-          title: '相册已经轻轻收好啦',
-          duration: 1200
-        });
+        showSuccess({ title: '相册已经轻轻收好啦', duration: 1200 });
         setTimeout(() => this.goBack(), 700);
       })
       .catch((error) => {
-        const message = error && error.message ? error.message : '相册保存失败，请稍后再试';
-        return this.cleanupDraft(albumId).then(() => {
-          this.setData({ message });
-          showInfo(message);
-        });
+        if (!isCurrent() || this.metadataDisposed) return;
+        if (this.autosave) this.autosave.resume();
+        else this.startAutosave();
+        this.changed();
+        const message = error.message || '相册保存失败，请稍后再试';
+        this.setData({ message });
+        showInfo(message);
       })
-      .then(() => {
-        this.setData({ submitting: false });
-      });
+      .finally(() => { if (isCurrent() && !this.metadataDisposed) this.setData({ submitting: false }); });
   }
 });

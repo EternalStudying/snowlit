@@ -170,7 +170,7 @@ function runTemplateBindingTest() {
   assert.equal(wxml.includes('bindtap="chooseImages"'), true);
   assert.equal(wxml.includes('bindtap="submitMoment"'), true);
   assert.equal(wxml.includes("{{isEditing ? '保存修改' : '发布点滴'}}"), true);
-  assert.equal(wxml.includes('disabled="{{submitting || loadingMoment}}"'), true);
+  assert.equal(wxml.includes('disabled="{{submitting || loadingMoment || draftLocked || removingImage}}"'), true);
   assert.equal(wxml.includes('bindinput="handleInput"'), true);
   assert.equal(wxml.includes('class="edit-section edit-section--words"'), true);
   assert.equal(wxml.includes('class="words-row"'), false);

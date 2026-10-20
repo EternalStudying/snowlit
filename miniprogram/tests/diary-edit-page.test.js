@@ -76,11 +76,11 @@ function runStructureTest() {
   assert.match(wxml, />\s*预览\s*</);
   assert.match(wxml, /class="diary-edit-footer"/);
   assert.match(wxml, /loading="{{submitting}}"/);
-  assert.match(wxml, /disabled="{{submitting \|\| loadingDiary}}"/);
+  assert.match(wxml, /disabled="{{submitting \|\| loadingDiary \|\| draftLocked \|\| removingImage}}"/);
   assert.match(wxml, />取消</);
   assert.match(wxml, /\{\{isEditing \? '保存修改' : '保存日记'\}\}/);
   assert.match(wxml, /snowlit-privacy/);
-  assert.match(js, /createDiary/);
+  assert.match(js, /publishDraft/);
   assert.match(js, /updateDiary/);
   assert.match(js, /getDiaryDetail/);
   assert.match(js, /uploadDiaryImage/);

@@ -476,3 +476,12 @@
 .save-button::after {
   border: 0;
 }
+
+.draft-loading { position: fixed; top: 120rpx; left: 34rpx; right: 34rpx; z-index: 5; color: #687180; font-size: 24rpx; text-align: center; }
+.draft-status { color: #7d8591; font-size: 23rpx; text-align: center; padding: 20rpx 0; }
+
+.image-upload-status { color: #7d8591; font-size: 23rpx; padding: 12rpx 20rpx; }
+.draft-image-list { display: flex; flex-wrap: wrap; gap: 16rpx; padding: 16rpx 20rpx; }
+.draft-image { position: relative; width: 96rpx; height: 96rpx; }
+.draft-image-preview { width: 96rpx; height: 96rpx; border-radius: 8rpx; }
+.draft-image-remove { position: absolute; top: -10rpx; right: -10rpx; width: 36rpx; height: 36rpx; line-height: 34rpx; text-align: center; border-radius: 50%; background: #1d2433; color: #fff; font-size: 27rpx; }

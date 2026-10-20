@@ -110,15 +110,13 @@ function runMetadataTest() {
 
   assert.deepEqual(metadata, {
     caption: '集市相册',
-    takenAt: '2026-05-28',
     location: '',
     width: 900,
-    height: 1200,
-    sortOrder: 3
+    height: 1200
   });
 
   const unknown = createAlbumPhotoMetadata({}, 0, createInitialAlbumForm());
-  assert.equal(unknown.takenAt, '');
+  assert.equal(unknown.takenAt, undefined, 'missing shooting date is resolved from the album only at publish');
   assert.equal(unknown.location, '');
 }
 
