@@ -35,6 +35,7 @@
 }
 
 .snowlit-dialog-brand {
+  font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
   color: #6b7385;
   font-size: 19rpx;
   font-weight: 400;

@@ -1,6 +1,6 @@
 <view class="login-page">
   <view class="login-title">Snowlit</view>
-  <view class="login-subtitle">把回忆轻轻收好</view>
+  <view class="login-subtitle snowlit-kai">把回忆轻轻收好</view>
   <view class="login-short-line"></view>
 
   <view wx:if="{{!showBindForm}}" class="login-button" hover-class="login-button--hover" bindtap="handleWechatLogin">

@@ -6,7 +6,7 @@
   </view>
 
   <view class="edit-section edit-section--basic">
-    <view class="section-label">基本信息</view>
+    <view class="section-label snowlit-kai">基本信息</view>
     <view class="edit-row">
       <view class="row-label">标题</view>
       <view class="row-right">
@@ -37,7 +37,7 @@
   </view>
 
   <view class="edit-section">
-    <view class="section-label">时间</view>
+    <view class="section-label snowlit-kai">时间</view>
     <view class="edit-row">
       <view class="row-label">开始时间</view>
       <view class="row-right picker-group">
@@ -58,7 +58,7 @@
   </view>
 
   <view class="edit-section edit-section--location">
-    <view class="section-label">地点</view>
+    <view class="section-label snowlit-kai">地点</view>
     <view class="edit-row">
       <view class="row-label">地点名称</view>
       <view class="row-right">
@@ -116,7 +116,7 @@
   </view>
 
   <view class="edit-section edit-section--words">
-    <view class="section-label">正文</view>
+    <view class="section-label snowlit-kai">正文</view>
     <textarea
       class="words-textarea"
       value="{{form.content}}"
@@ -130,7 +130,7 @@
 
   <view class="edit-section edit-section--photos">
     <view class="photos-head">
-      <view class="section-label section-label--photos">照片</view>
+      <view class="section-label section-label--photos snowlit-kai">照片</view>
       <view class="photos-limit">最多 3 张</view>
     </view>
     <view class="photo-list">

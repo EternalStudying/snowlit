@@ -228,8 +228,8 @@ function runPrivateAlbumHeaderTemplateTest() {
   assert.ok(lockedBlock, 'private album locked block should exist');
   assert.equal(lockedBlock[0].includes('album-brand'), false);
   assert.equal(lockedBlock[0].includes('class="snowlit-subpage-brand">私密相册'), true);
-  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-title">私密相册'), true);
-  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-subtitle">输入密码后继续查看照片'), true);
+  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-title snowlit-kai">私密相册'), true);
+  assert.equal(lockedBlock[0].includes('class="snowlit-subpage-subtitle snowlit-kai">输入密码后继续查看照片'), true);
   assert.equal(lockedBlock[0].includes('snowlit-page-heading'), false);
 }
 

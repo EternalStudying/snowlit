@@ -46,21 +46,21 @@
     <view class="section-line"></view>
 
     <view class="coordinate-row">
-      <view class="section-label">坐标</view>
+      <view class="section-label snowlit-kai">坐标</view>
       <view class="coordinate-value">{{wish.coordinate}}</view>
     </view>
 
     <view class="section-line"></view>
 
     <view class="note-section">
-      <view class="section-label">备注</view>
+      <view class="section-label snowlit-kai">备注</view>
       <view class="note-content">{{wish.note}}</view>
     </view>
 
     <view class="section-line"></view>
 
     <view class="timeline-section">
-      <view class="section-label">记录</view>
+      <view class="section-label snowlit-kai">记录</view>
       <view class="timeline-list">
         <view class="timeline-item">
           <view class="timeline-axis">

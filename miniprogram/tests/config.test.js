@@ -9,10 +9,6 @@ const appJs = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
 const appWxss = fs.readFileSync(path.join(__dirname, '../app.wxss'), 'utf8');
 const projectConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../project.config.json'), 'utf8'));
 const projectPrivateConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../project.private.config.json'), 'utf8'));
-const fontFaceWxssPath = path.join(__dirname, '../assets/fonts/snowlit-sans.wxss');
-const fontFaceWxss = fs.existsSync(fontFaceWxssPath)
-  ? fs.readFileSync(fontFaceWxssPath, 'utf8')
-  : '';
 
 assert.equal(CURRENT_ENV, 'dev');
 assert.equal(config.env, 'dev');
@@ -37,12 +33,8 @@ assert.equal(
 );
 assert.equal(ENVIRONMENTS.dev.fontFace, null);
 assert.equal(ENVIRONMENTS.prod.fontFace, null);
-assert.ok(fs.existsSync(fontFaceWxssPath));
-assert.match(appWxss, /@import\s+"\.\/assets\/fonts\/snowlit-sans\.wxss";/);
-assert.match(fontFaceWxss, /font-family:\s*"Snowlit Sans"/);
-assert.match(fontFaceWxss, /data:application\/font-woff;charset=utf-8;base64,/);
-assert.match(fontFaceWxss, /font-weight:\s*100\s+900;/);
-assert.ok(Buffer.byteLength(fontFaceWxss, 'utf8') < 170 * 1024);
+// Bundled faces are covered by fonts.test.js; the old full-text subset must not come back.
+assert.doesNotMatch(appWxss, /snowlit-sans\.wxss/);
 assert.doesNotMatch(appJs, /NotoSansSC-VF\.woff/);
 
 console.log('config tests passed');

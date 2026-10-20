@@ -132,8 +132,8 @@ function runTemplateBindingTest() {
   assert.equal(js.includes('相册详情进入时有点慢'), false);
   assert.equal(wxml.includes('class="feedback-head snowlit-subpage-heading"'), true);
   assert.equal(wxml.includes('class="snowlit-subpage-brand">SNOWLIT'), true);
-  assert.equal(wxml.includes('class="snowlit-subpage-title">反馈'), true);
-  assert.equal(wxml.includes('class="snowlit-subpage-subtitle">把不好用的地方告诉我'), true);
+  assert.equal(wxml.includes('class="snowlit-subpage-title snowlit-kai">反馈'), true);
+  assert.equal(wxml.includes('class="snowlit-subpage-subtitle snowlit-kai">把不好用的地方告诉我'), true);
   assert.equal(wxml.includes('snowlit-page-heading'), false);
   assert.equal(wxml.includes('class="feedback-brand"'), false);
   assert.equal(wxml.includes('class="feedback-hero"'), false);

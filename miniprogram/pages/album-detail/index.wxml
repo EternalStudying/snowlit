@@ -9,8 +9,8 @@
 
   <view class="album-locked snowlit-subpage-heading" wx:elif="{{locked}}">
     <view class="snowlit-subpage-brand">私密相册</view>
-    <view class="snowlit-subpage-title">私密相册</view>
-    <view class="snowlit-subpage-subtitle">输入密码后继续查看照片</view>
+    <view class="snowlit-subpage-title snowlit-kai">私密相册</view>
+    <view class="snowlit-subpage-subtitle snowlit-kai">输入密码后继续查看照片</view>
     <input
       class="unlock-input"
       password
@@ -86,7 +86,7 @@
     <view class="section-line"></view>
 
     <view class="photos-heading">
-      <view class="section-label">照片</view>
+      <view class="section-label snowlit-kai">照片</view>
       <view class="photos-count">{{album.photosCountText}}</view>
     </view>
 

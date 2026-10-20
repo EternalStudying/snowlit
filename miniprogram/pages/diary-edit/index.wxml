@@ -6,7 +6,7 @@
   </view>
 
   <view class="diary-edit-section diary-edit-basic">
-    <view class="section-label">基本信息</view>
+    <view class="section-label snowlit-kai">基本信息</view>
     <view class="basic-card">
       <view class="basic-row">
         <view class="basic-icon basic-icon--text">H₁</view>
@@ -76,7 +76,7 @@
   </view>
 
   <view class="diary-edit-section diary-edit-words">
-    <view class="section-label">正文</view>
+    <view class="section-label snowlit-kai">正文</view>
     <view class="words-panel">
       <view class="toolbar" wx:if="{{mode === 'edit'}}">
         <view class="toolbar-button toolbar-button--text" data-action="heading" bindtap="handleToolTap">H₂</view>

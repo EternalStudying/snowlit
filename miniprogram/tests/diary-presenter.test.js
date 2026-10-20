@@ -185,7 +185,7 @@ function runDiaryTemplateTest() {
   assert.equal(wxml.includes('scroll-x'), true);
   assert.equal(wxml.includes('scroll-with-animation'), true);
   assert.equal(wxml.includes('scroll-into-view="{{activeMonthAnchor}}"'), true);
-  assert.match(wxml, /id="month-\{\{item\.value\}\}"[\s\S]*class="month-tab \{\{item\.active \? 'month-tab--active' : ''\}\}"[\s\S]*data-value="\{\{item\.value\}\}"[\s\S]*bindtap="handleMonthTap"/);
+  assert.match(wxml, /id="month-\{\{item\.value\}\}"[\s\S]*class="month-tab snowlit-serif \{\{item\.active \? 'month-tab--active' : ''\}\}"[\s\S]*data-value="\{\{item\.value\}\}"[\s\S]*bindtap="handleMonthTap"/);
   assert.match(wxml, /class="diary-add"[\s\S]*bindtap="handleCreateDiary"/);
   assert.match(wxml, /assets\/icons\/story\/plus-white\.svg/);
   assert.equal(wxss.includes('.month-action'), false);

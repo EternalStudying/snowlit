@@ -1,4 +1,5 @@
-@import "./assets/fonts/snowlit-sans.wxss";
+@import "./assets/fonts/snowlit-kai.wxss";
+@import "./assets/fonts/snowlit-serif.wxss";
 
 /*
  * Snowlit mini program palette: a lit window in the snow.
@@ -7,13 +8,18 @@
  *   line     #dce2ea  hairlines            fill     #ebeff5  pressed / placeholder fills
  *   lamp     #e8a23a  the one accent: "lit" marks only (current tab, wordmark dot, pinned,
  *                     the day count); never body text. lamp-text #a8661a when amber must be read.
+ *
+ * Type: the system font for everything people read or type. Two bundled subsets add character:
+ *   Snowlit Kai (LXGW WenKai)    fixed headings only, via .snowlit-kai; never bound/user text
+ *   Snowlit Serif (Source Serif 4) the wordmark, counts and dates, via .snowlit-serif
+ * Rebuild both with tools/miniprogram-fonts/build_fonts.py after changing a .snowlit-kai heading.
  */
 
 page {
   min-height: 100%;
   background: #ebeff5;
   color: #1d2433;
-  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
   font-size: 28rpx;
   letter-spacing: 0;
 }
@@ -52,7 +58,7 @@ button::after {
   overflow-x: hidden;
   color: #1d2433;
   background: #f3f6fa;
-  font-family: "Snowlit Sans", "Noto Sans SC", "Source Han Sans SC", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
 }
 
 .snowlit-page-heading {
@@ -61,6 +67,7 @@ button::after {
 
 .snowlit-page-brand {
   display: flex;
+  font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
   align-items: center;
   color: #1d2433;
   font-size: 26rpx;
@@ -104,6 +111,7 @@ button::after {
 
 .snowlit-subpage-brand {
   display: flex;
+  font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
   align-items: center;
   color: #1d2433;
   font-size: 26rpx;
@@ -219,4 +227,18 @@ button::after {
 
 .snowlit-end-tip--compact {
   margin-top: 32rpx;
+}
+
+/* Headings with fixed text, written in the hand-lettered face. Kai has one weight; never fake bold. */
+page .snowlit-kai {
+  font-family: "Snowlit Kai", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}
+
+/* Counts and dates: lining, tabular serif figures that line up and read like a dated journal. */
+page .snowlit-serif {
+  font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum", "tnum";
 }

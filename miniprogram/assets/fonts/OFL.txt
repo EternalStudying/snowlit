@@ -1,4 +1,10 @@
-Copyright 2018 The Noto Project Authors (github.com/googlei18n/noto-fonts)
+Snowlit Kai is a subset of LXGW WenKai; Snowlit Serif is a subset of Source Serif 4.
+Both are used under the SIL Open Font License 1.1 below. The subsets are renamed and
+contain only the characters the mini program needs.
+
+Copyright 2021-2026 LXGW (https://github.com/lxgw/LxgwWenKai), with Reserved Font Name '霞鹜', '霞鶩', '落霞孤鹜', '落霞孤鶩' and 'LXGW'.
+Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee)
+© 2014 - 2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
 
 This Font Software is licensed under the SIL Open Font License,
 Version 1.1.

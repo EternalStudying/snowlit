@@ -22,7 +22,7 @@
     "navigationBarTitleText": "Snowlit",
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#F7F7F7",
+    "backgroundColor": "#F3F6FA",
     "backgroundTextStyle": "dark"
   },
   "permission": {
@@ -45,8 +45,8 @@
   },
   "tabBar": {
     "custom": true,
-    "color": "#777777",
-    "selectedColor": "#111111",
+    "color": "#6B7385",
+    "selectedColor": "#1D2433",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [

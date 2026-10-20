@@ -1,8 +1,8 @@
 <view class="albums-page snowlit-tab-page">
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
-    <view class="snowlit-page-title">相册</view>
-    <view class="snowlit-page-subtitle">把照片慢慢收好</view>
+    <view class="snowlit-page-title snowlit-kai">相册</view>
+    <view class="snowlit-page-subtitle snowlit-kai">把照片慢慢收好</view>
   </view>
 
   <view class="hairline hero-line"></view>
@@ -12,9 +12,9 @@
   </view>
 
   <view class="album-section">
-    <view class="section-heading">
-      <view class="section-label">相册</view>
-      <view class="section-state">{{totalText}}</view>
+    <view class="section-heading snowlit-kai">
+      <view class="section-label snowlit-kai">相册</view>
+      <view class="section-state snowlit-serif">{{totalText}}</view>
     </view>
 
     <view class="album-state" wx:if="{{loading}}">相册加载中...</view>
@@ -52,7 +52,7 @@
             </view>
           </view>
           <view class="album-description">{{item.description}}</view>
-          <view class="album-meta">{{item.meta}}</view>
+          <view class="album-meta snowlit-serif">{{item.meta}}</view>
           <view class="album-stats">
             <view
               class="album-stat {{stat.active ? 'album-stat--active' : ''}}"
@@ -61,7 +61,7 @@
               wx:key="type"
             >
               <image class="album-stat-icon" src="{{stat.icon}}" mode="aspectFit" />
-              <text class="album-stat-value">{{stat.value}}</text>
+              <text class="album-stat-value snowlit-serif">{{stat.value}}</text>
             </view>
           </view>
         </view>

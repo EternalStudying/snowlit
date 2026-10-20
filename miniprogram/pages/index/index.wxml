@@ -3,7 +3,7 @@
 
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
-    <view class="snowlit-page-title">{{greetingTitle}}</view>
+    <view class="snowlit-page-title snowlit-kai">{{greetingTitle}}</view>
     <view class="snowlit-page-subtitle">{{greetingSubtitle}}</view>
   </view>
 
@@ -13,7 +13,7 @@
     <view class="days">
       <text class="days__label">在一起</text>
       <view class="days__count">
-        <text class="days__value">{{couple.togetherDays}}</text>
+        <text class="days__value snowlit-serif">{{couple.togetherDays}}</text>
         <text class="days__unit">天</text>
       </view>
     </view>
@@ -29,7 +29,7 @@
   <view class="weather-section">
     <view class="weather-row">
       <image class="weather-icon" src="../../assets/icons/home/cloud.svg" mode="aspectFit" />
-      <view class="temperature">{{weather.temperatureText}}</view>
+      <view class="temperature snowlit-serif">{{weather.temperatureText}}</view>
       <view class="weather-copy">
         <view class="weather-name">{{weather.name}}</view>
         <view class="weather-place">{{weather.place}}</view>
@@ -70,7 +70,7 @@
 
   <view class="section-head">
     <view>
-      <view class="section-label">点滴</view>
+      <view class="section-label snowlit-kai">点滴</view>
     </view>
     <view class="view-all" bindtap="goStory">
       <text>查看全部</text>
@@ -84,7 +84,7 @@
     <view class="moment-empty" wx:if="{{!momentsLoading && !momentsError && !moments.length}}">最近还没有点滴</view>
     <block wx:if="{{!momentsLoading && !momentsError && moments.length}}">
       <view class="moment-row" wx:for="{{moments}}" wx:key="id" bindtap="goStory">
-        <view class="moment-date">{{item.date}}</view>
+        <view class="moment-date snowlit-serif">{{item.date}}</view>
         <view class="moment-main">
           <view class="moment-title">{{item.title}}</view>
           <view class="moment-meta">
@@ -101,7 +101,7 @@
 
   <view class="section-head albums-head">
     <view>
-      <view class="section-label">相册</view>
+      <view class="section-label snowlit-kai">相册</view>
     </view>
     <view class="view-all" bindtap="goAlbums">
       <text>查看全部</text>
@@ -131,7 +131,7 @@
   <view class="hairline section-line"></view>
 
   <view class="wishes">
-    <view class="section-label wishes-label">清单</view>
+    <view class="section-label wishes-label snowlit-kai">清单</view>
     <view class="wish-empty" wx:if="{{wishesLoading}}">清单统计加载中...</view>
     <view class="wish-empty" wx:if="{{!wishesLoading && wishesMessage}}">{{wishesMessage}}</view>
     <block wx:if="{{!wishesLoading && !wishesMessage}}">
@@ -141,7 +141,7 @@
         <view class="wish-progress">
           <view class="wish-progress__bar" style="width: {{item.progress}}%;"></view>
         </view>
-        <view class="wish-count">{{item.count}} 项</view>
+        <view class="wish-count snowlit-serif">{{item.count}} 项</view>
         <image class="wish-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
       </view>
     </block>
@@ -151,7 +151,7 @@
     <view class="hairline update-line"></view>
 
     <view class="update-section" bindtap="goProfile">
-      <view class="section-label">更新</view>
+      <view class="section-label snowlit-kai">更新</view>
       <view class="update-row">
         <view class="update-main">
           <view class="update-title">{{updateNotice.title}}</view>

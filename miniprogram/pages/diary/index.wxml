@@ -3,18 +3,18 @@
 <view class="diary-page snowlit-tab-page">
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
-    <view class="snowlit-page-title">日记</view>
-    <view class="snowlit-page-subtitle">把心事慢慢写下来</view>
+    <view class="snowlit-page-title snowlit-kai">日记</view>
+    <view class="snowlit-page-subtitle snowlit-kai">把心事慢慢写下来</view>
   </view>
 
   <view class="hairline hero-line"></view>
 
   <view class="month-section">
-    <view class="section-label">月份</view>
+    <view class="section-label snowlit-kai">月份</view>
 
     <view class="month-overview">
       <view>
-        <view class="month-title">{{monthTitle}}</view>
+        <view class="month-title snowlit-serif">{{monthTitle}}</view>
         <view class="month-caption">{{monthCaption}}</view>
       </view>
     </view>
@@ -28,7 +28,7 @@
     >
       <view
         id="month-{{item.value}}"
-        class="month-tab {{item.active ? 'month-tab--active' : ''}}"
+        class="month-tab snowlit-serif {{item.active ? 'month-tab--active' : ''}}"
         wx:for="{{monthTabs}}"
         wx:key="value"
         data-value="{{item.value}}"
@@ -49,7 +49,7 @@
       wx:key="label"
     >
       <view class="stat-label">{{item.label}}</view>
-      <view class="stat-value">{{item.value}}</view>
+      <view class="stat-value snowlit-serif">{{item.value}}</view>
     </view>
   </view>
 
@@ -71,7 +71,7 @@
   <view class="hairline"></view>
 
   <view class="entries-section">
-    <view class="section-label">日记</view>
+    <view class="section-label snowlit-kai">日记</view>
 
     <view class="entry-state" wx:if="{{loading}}">日记加载中...</view>
     <view class="entry-state" wx:elif="{{message}}">{{message}}</view>
@@ -86,7 +86,7 @@
         bindtap="handleEntryTap"
       >
         <view class="entry-date-cell">
-          <view class="entry-date">{{item.date}}</view>
+          <view class="entry-date snowlit-serif">{{item.date}}</view>
           <view class="entry-visibility">{{item.visibility}}</view>
         </view>
         <view class="entry-main">

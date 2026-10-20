@@ -3,8 +3,8 @@
 
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
-    <view class="snowlit-page-title">清单</view>
-    <view class="snowlit-page-subtitle">把想去和想做慢慢实现</view>
+    <view class="snowlit-page-title snowlit-kai">清单</view>
+    <view class="snowlit-page-subtitle snowlit-kai">把想去和想做慢慢实现</view>
   </view>
 
   <view class="hairline hero-line"></view>
@@ -14,9 +14,9 @@
   </view>
 
   <view class="wishes-section">
-    <view class="section-heading">
-      <view class="section-label">想去</view>
-      <view class="section-state">{{counts.wantGo}}</view>
+    <view class="section-heading snowlit-kai">
+      <view class="section-label snowlit-kai">想去</view>
+      <view class="section-state snowlit-serif">{{counts.wantGo}}</view>
     </view>
 
     <view class="wish-list">
@@ -41,7 +41,7 @@
           <view class="wish-content">
             <view class="wish-title-cell">{{item.title}}</view>
           </view>
-          <view class="wish-date">{{item.createdDate}} 创建</view>
+          <view class="wish-date snowlit-serif">{{item.createdDate}} 创建</view>
           <image class="row-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
       </block>
@@ -51,9 +51,9 @@
   </view>
 
   <view class="wishes-section wishes-section--next">
-    <view class="section-heading">
-      <view class="section-label">想做</view>
-      <view class="section-state">{{counts.wantDo}}</view>
+    <view class="section-heading snowlit-kai">
+      <view class="section-label snowlit-kai">想做</view>
+      <view class="section-state snowlit-serif">{{counts.wantDo}}</view>
     </view>
 
     <view class="wish-list">
@@ -78,7 +78,7 @@
           <view class="wish-content">
             <view class="wish-title-cell">{{item.title}}</view>
           </view>
-          <view class="wish-date">{{item.createdDate}} 创建</view>
+          <view class="wish-date snowlit-serif">{{item.createdDate}} 创建</view>
           <image class="row-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
       </block>
@@ -88,9 +88,9 @@
   </view>
 
   <view class="done-section">
-    <view class="section-heading">
-      <view class="section-label">已完成</view>
-      <view class="section-state">{{counts.done}}</view>
+    <view class="section-heading snowlit-kai">
+      <view class="section-label snowlit-kai">已完成</view>
+      <view class="section-state snowlit-serif">{{counts.done}}</view>
     </view>
 
     <view class="done-list">
@@ -112,7 +112,7 @@
           </view>
           <view class="done-content">
             <view class="done-title">{{item.title}}</view>
-            <view class="done-date">{{item.completedDate}} 完成</view>
+            <view class="done-date snowlit-serif">{{item.completedDate}} 完成</view>
           </view>
           <image class="done-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
