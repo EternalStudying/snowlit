@@ -38,9 +38,12 @@ _Avoid_: dashboard, home data
 A published collection of photos, public or private.
 _Avoid_: gallery, folder
 
-**Draft album**:
-An unpublished album being filled by the manager who created it.
-_Avoid_: temporary album, upload session
+**Draft**:
+A member's unpublished album, diary entry or moment, saved on the server as they create it; at most one per member per kind. Publishing turns it into the real record and removes the draft.
+_Avoid_: temporary album, upload session, autosave record
+
+**Draft image**:
+A photo uploaded into a draft before publishing; owned by the draft, deleted with it if the draft is discarded or the image is not used at publish.
 
 **Private album access**:
 A time-limited permission to see one private album, earned by entering its password; separate from being signed in.

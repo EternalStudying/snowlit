@@ -4,7 +4,7 @@
 
 Spring Boot, MyBatis, and MySQL form a monolith. The Maven compilation target is Java 17. The root Java package and Maven group are xyz.snowlit. Domain terms are in the [glossary](../GLOSSARY.md).
 
-Ten vertical domains are album, auth, diary, feedback, home, messages, notices, story, weather, and wishes. Shared modules:
+Eleven vertical domains are album, auth, diary, draft, feedback, home, messages, notices, story, weather, and wishes. Shared modules:
 
 | Package | Owns |
 |---|---|
@@ -21,14 +21,14 @@ Inside features:
 
 | Feature | Modules |
 |---|---|
-| album | `AlbumModule` (published catalog, daily likes/views, highlights), `AlbumDrafts` (create/fill/publish/discard), `AlbumPrivateAccess` (password unlock, failure lock, access tokens); package-private `Albums` holds shared lookups and response mapping |
+| album | `AlbumModule` (published catalog, daily likes/views, highlights), `AlbumPublisher` (publication validation, insertion and upload policies), `AlbumPrivateAccess` (password unlock, failure lock, access tokens); package-private `Albums` holds shared lookups and response mapping |
 | diary | `DiaryModule`; package-private `DiaryMarkdown` reads title, summary and image URLs from Markdown |
 | home | `HomeModule` composes the overview from other features' modules; `MemberLocations` owns each member's stored location (Diary uses it for weather snapshots) |
 | weather | `WeatherModule`; `WeatherCondition` is the typed condition (label + state/variant/precipitation) the gateway reports |
 
 Features read each other only through modules: `DiaryModule.latestShared`, `AlbumModule.latestPublicPhoto/photoCount`, `WishModule.latest/totals`, `MessageModule.latest/count`. `ArchitectureTests.mappersOnlyQueryTheirOwnFeature` fails when a mapper imports another feature.
 
-Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. Modules have one constructor and take the shared `Clock` bean; tests pass a fixed clock. `SpringModuleWiringTests` covers every business module plus `ImageIntake`, `AuthSessions`, `AlbumDrafts`, `AlbumPrivateAccess` and `MemberLocations`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
+Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. Modules have one constructor and take the shared `Clock` bean; tests pass a fixed clock. `SpringModuleWiringTests` covers every business module plus `ImageIntake`, `AuthSessions`, `DraftModule`, `AlbumPublisher`, `AlbumPrivateAccess` and `MemberLocations`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
 
 Defensive style: trust framework guarantees (generated ids, required bodies, injected beans, non-null columns) and let unexpected infrastructure failures surface. Null handling belongs only where data is genuinely optional (nullable columns, optional request fields, absent rows).
 
@@ -44,10 +44,25 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - `User.isManager` currently grants management to user IDs 1 and 2. Complete multi-couple tenant isolation is not implemented; it would need couple-owned records and a schema change, which was deliberately left out.
 - Private diaries are author-readable; updates/deletes check authorship. Messages can be deleted only by their author. Album draft operations check ownership. Wish complete/reopen requires authentication. Client visibility cannot replace backend authorization.
 - WeChat login/binding reuses users and Redis sessions. Business tokens are returned; openid, session_key, and AppSecret are not returned to clients.
-- Album draft creation and photo metadata preserve missing location as an empty string. They do not substitute Earth. Date remains required by the API; the mini-program waits for EXIF/place work and otherwise requires a manually selected date. Existing records and the locked-private-album presentation mask are unchanged.
+- Album draft creation and photo metadata preserve missing location as an empty string. They do not substitute Earth. Draft fields and photo shooting dates may be absent. Album eventDate is required at publish; a photo without takenAt uses that eventDate, as confirmed by the owner. The mini program waits for EXIF/place work and otherwise asks for an album date. Existing records and the locked-private-album presentation mask are unchanged.
 - Current fields include originalUrl/previewUrl, diary entryDate with date on creation, and feedback imageUrls. Contract changes require checking both clients.
 - Story lists/details are public and include record-supplied address/coordinates. Home is authenticated. Image storage keeps uploaded bytes without centralized EXIF removal.
 - Diary create, update, and delete each run in one transaction; album likes and views run in one transaction each.
+
+## Unified Drafts
+
+`DraftModule` owns one `drafts` row per `(user_id, kind)` for album, diary and moment. Its annotated mapper never writes another domain's tables. Publication enters the narrow `AlbumModule.createFromDraft`, `DiaryModule.createFromDraft` and `StoryModule.createFromDraft` methods. The album helper retains the existing original/WebP-preview policies; diary and story draft uploads share their edit-upload policies.
+
+- `GET/PUT/DELETE /api/drafts/{kind}` read, replace fields, or discard. `POST .../images`, `DELETE .../images/{imageId}`, and `POST .../publish` own media and publication. Kind URLs contain no draft or member id.
+- Album/moment require manager authorization; diaries resolve the signed-in couple role. Every operation addresses the acting member's row only.
+- `fields_json` is a strict partial form: reject unknown keys, wrong types, invalid enums/dates and column-length overflow as `DRAFT_FIELDS_INVALID`. Diary Markdown retains its 60,000-character cap; text and the complete serialized fields object must also fit 65,535 UTF-8 bytes (owner clarification). Passwords are accepted only in the album publish envelope and never saved.
+- `images_json` contains server-generated opaque ids and server-owned object metadata. Responses expose only display data, never object names. Uploads compensate stored objects on failure. Image mutations lock the row; fields saves update only fields_json. Field saves from different clients use last-save-wins.
+- Publication saves the latest fields before create validation. Expected validation/conflict failures commit only those fields and retain images; unexpected write failures roll back. Successful creation and draft deletion share one transaction. Object cleanup runs best effort after commit, including unused diary images and discarded/removed images.
+- Draft diary images never enter diary_uploads before publication, so hourly six-hour temporary-upload cleanup cannot expire them. Publication inserts permanent uploads/references only for images actually referenced by Markdown.
+- The owner superseded the original 300-Web/9-mini split with a **50-photo album cap everywhere**. Native selection remains at most nine per picker call across batches. Older over-cap drafts remain intact and can be reduced before publication. Diary/moment image limits remain 20/3.
+- Old album draft endpoints, lifecycle methods/VOs and `ALBUM_DRAFT_EXISTS` are removed. Catalog, detail, activity and public highlights remain published-only. Existing diary/story upload endpoints remain available for editing.
+
+Only schema.sql changes SQL: drafts is added after moments; all 16 existing table definitions are unchanged. Retained databases with SQL_INIT_MODE=never need a reviewer-approved, backed-up, one-time table creation and conversion of old album drafts. This implementation did **not** inspect or migrate retained databases, restart services or push.
 
 ## Images and Object Storage
 
@@ -66,7 +81,7 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - Database, Redis, and storage credentials use LOCAL_* or production variables. Never copy real keys into source, documentation, reports, or client bundles.
 - When SQL initialization is disabled, a listening port does not establish MySQL authentication: the pool can connect lazily on the first query. The local credential file also supports LOCAL_DB_PASSWORD and SQL_INIT_MODE=never. Check a database-backed endpoint when verifying startup.
 - Album likes/views use UTC calendar days; dev JDBC defaults to UTC. Existing activity dates are not recalculated. Other time fields retain their contracts.
-- After `git` removes source files, run `mvn clean` before packaging; stale classes in `target/` can break startup.
+- Removed Java sources may leave stale classes in `target/`. Remove only those obsolete class files or build in an isolated checkout before packaging. Preserve any retained `target/local-uploads`; do not blindly clean a retained upload directory.
 
 ## Global Location and Weather
 

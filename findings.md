@@ -1,5 +1,14 @@
 # Snowlit Current Findings
 
+## Current Task: Unified Drafts (2026-10-20)
+
+Implementation is on `feature/drafts`. Backend, Web and native creation drafts are implemented and committed; latest gates passed 301 backend tests, 450 Web tests and 180 native tests in each of four timezones, plus 133 JS syntax checks. The agreed source is `docs/specs/2026-10-20-drafts.md`, intentionally excluded from implementation commits.
+
+Drafts are member/kind-owned rows with server-owned image metadata. Object names stay server-side. The owner confirmed the 60,000-character diary cap plus UTF-8 byte validation of text and serialized fields (65,535 bytes), and album eventDate as the publish-time fallback for a missing photo shooting date. Existing table definitions are unchanged. The owner also unified the album limit at 50 on all clients/backend, preserving over-cap drafts for removal, and chose editable local-today defaults for missing dates when Web resumes a draft.
+
+This task never accesses retained developer MySQL, Redis or MinIO, creates a table on an existing database, restarts retained services, or pushes Git commits. Deployment requires the separately approved reviewer rollout.
+
+
 Baseline date: 2026-10-17. This file records facts and decisions. Task status belongs in task_plan.md; verification evidence and limits belong in progress.md.
 
 ## Project Structure
@@ -7,7 +16,7 @@ Baseline date: 2026-10-17. This file records facts and decisions. Task status be
 | Directory | Implementation and boundary |
 |---|---|
 | frontend | Vue 3, Vite, TypeScript; ten business modules under src/modules with index.ts public entry points |
-| backend | Spring Boot, MyBatis, MySQL; xyz.snowlit root package and ten vertical business domains |
+| backend | Spring Boot, MyBatis, MySQL; xyz.snowlit root package and eleven vertical business domains |
 | miniprogram | Native WeChat application with 17 registered pages, sharing the existing backend and business data |
 | docs | Development instructions and cross-client contracts; not a runtime asset source |
 | codex-work | Git-ignored temporary checks and local debugging material; not a permanent specification |
@@ -18,7 +27,7 @@ Web requests share SessionRequest and drop responses from an earlier session; th
 
 - Write all project context and maintenance documents in English; reply to the user in Chinese.
 - Backend refactor decisions (2026-10-18): images are recognised by content for every flow and GIF is allowed everywhere; per-domain image error codes stay; oversized feedback screenshots answer 413; local disk is the object store whenever MinIO is not fully configured; session tokens are opaque (no JWT); `@CurrentActor` is the only login rule; overly defensive code is removed. Domain vocabulary lives in GLOSSARY.md (CONTEXT.md retired).
-- Frontend refactor decisions (2026-10-18): a session change discards in-flight responses and clears cached feature state; one image rule (JPEG/PNG/WebP/GIF by type or extension, ≤10MB, message "只支持 jpg、png、webp、gif，单张不超过 10MB"); legacy weather scenes removed; a shared motion module with a test-only instant mode replaces test-runner checks and animations must look the same; the wish completion stamp plays only after the server confirms; the journal shell lives in src/shell and weather owns its consent and schedule; source-text tests are replaced by behaviour tests except seam audits and cross-client contract checks; the 390px Home overflow stays out of scope.
+- Frontend refactor decisions (2026-10-18): a session change discards in-flight responses and clears cached feature state; one image rule (JPEG/PNG/WebP/GIF by type or extension, ≤10MB, a localized message listing the accepted formats and 10MB limit); legacy weather scenes removed; a shared motion module with a test-only instant mode replaces test-runner checks and animations must look the same; the wish completion stamp plays only after the server confirms; the journal shell lives in src/shell and weather owns its consent and schedule; source-text tests are replaced by behaviour tests except seam audits and cross-client contract checks; the 390px Home overflow stays out of scope.
 - Preserve the public ICP component and its current record number.
 - Do not hardcode personal names, addresses, or real precise coordinates. Use generic initialization data and actual location results; unresolved locations remain unknown.
 - The privacy criterion concerns direct evidence of the user's physical location in mainland China. Chinese language, holidays, simplified fonts, AMap, WeChat, and npm mirror choices may remain.

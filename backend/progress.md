@@ -1,5 +1,10 @@
 # Backend Progress Baseline
 
+## Unified Drafts (2026-10-20)
+
+Unified drafts, narrow publication seams, UTF-8 validation and retired album endpoints are implemented. The 16 previous table definitions are unchanged. The latest complete offline Maven suite passed 301 tests. No retained-service or database rollout checks ran. Source changes are committed on `feature/drafts` (`a77d8e8 / 9af661f / b096289`); no push. Detailed command history and resolved failure outputs are in [the implementation report](../docs/drafts-implementation-report.md).
+
+
 ## City Hierarchy and Original Coordinates (2026-10-20)
 
 - Actual reverse-geocoding output omitted a parent city and used a county name as city. The same provider's administrative point response contained the correct hierarchy. Added optional enrichment for suburb/district/county results, administrative-district preference and graceful enrichment failure. [Provider API reference](https://apidocs.geoapify.com/docs/boundaries/).

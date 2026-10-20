@@ -28,13 +28,23 @@ Plain YYYY-MM-DD values preserve calendar dates across timezones. Default diary/
 
 ## Albums
 
-1. Web flow: find current draft, create if needed, upload photos, then publish. Drafts do not appear in the published catalog. Draft operations check creator ownership.
-2. An album allows at most 300 photos and requires a successful upload before publication. Web uploads original and preview separately; originals are limited to 10MB. Previews are Canvas-produced WebP with longest side up to 2560px and quality 0.82.
-3. The queue supports per-item progress, failure/retry, and submission guards. Server drafts can be recovered, but unuploaded local File objects cannot survive a reload.
-4. Mini-program /photos/mobile accepts one file used for original and preview. Its lightweight creation flow handles conflicting drafts; it does not provide a persistent draft-management workspace.
-5. X-Album-Access-Token carries private access qualification stored through Redis. Repeated incorrect passwords can temporarily lock access. Exact thresholds are defined by AlbumModule.
-6. Likes toggle per user, album, and UTC day. Views deduplicate using the same calendar-day boundary and current access rules. Counts cannot become negative. Liking a private album does not unlock its photos.
-7. Photo response fields are originalUrl and previewUrl. Media URL access and API authorization are separate boundaries that require deployment verification.
+1. Web albums use an explicit server draft: read/resume or save fields, upload images, then publish or discard. The native mini program autosaves new albums, diaries and moments; existing-entry edits do not use drafts.
+2. The shared album maximum is 50 photos across backend/Web/mini program (owner decision superseding the original 300/9 split). Native picking uses up to nine each call. All images in an older over-cap draft remain visible and owned until removed/discarded; publish requires reducing it to the current cap.
+3. Web uploads originals and Canvas WebP previews (longest side 2560px, quality 0.82), each up to 10MB. Native album uploads one compressed file using the existing original/preview storage rule. Progress/retry and publish guards remain. Unuploaded local files cannot survive reload; already uploaded images recover from the server without re-upload.
+4. A resumed untitled draft can be named before publishing. Resumed private drafts need a new password, never stored in fields. Web resumes a missing album date with local today and allows editing it (owner clarification). Missing photo dates fall back to album eventDate only at publish; unknown places remain empty.
+5. X-Album-Access-Token carries private access qualification stored through Redis. Repeated incorrect passwords can temporarily lock access. Exact thresholds are defined by AlbumPrivateAccess.
+6. Likes toggle per user, album, and UTC day. Views deduplicate using the same calendar-day boundary and current access rules. Counts cannot become negative. Liking a private album does not unlock its photos. Catalog, detail, activity and public highlights exclude unpublished rows.
+7. Published photos retain originalUrl/previewUrl; draft images use id/url with optional originalUrl and metadata. Media access and API authorization remain separate deployment boundaries.
+
+## Drafts
+
+The drafts table has a unique `(user_id, kind)` key. GET/PUT/DELETE `/api/drafts/{kind}` read, replace fields or discard; POST `/images`, DELETE `/images/{imageId}` and POST `/publish` own media/publication. Managers own album/moment drafts; diary drafts require the acting member's couple role. There is no client-selectable member or draft id. Image ids are opaque; object names are stored only server-side.
+
+Every form field may be absent during drafting. Wrong types, unknown keys, bad enums/dates and length overflow return DRAFT_FIELDS_INVALID. Diary Markdown keeps a 60,000-character limit with the owner's additional 65,535-byte UTF-8 limit for text and complete serialized fields_json. Image limits are album 50, diary 20, moment 3. Field saves use last-save-wins without replacing images_json; image mutations lock their row. Passwords are album-publish-only.
+
+Publication saves latest fields first, creates through the target module and removes the draft in one transaction. Expected validation/date conflicts keep the newly saved fields and images. Cleanup happens best effort after commit. Draft diary images are outside diary_uploads until publication; only referenced images become permanent uploads/references, and unused images are deleted. Drafts do not expire. Native pages autosave after 1.5 seconds and on hide/unload, upload on pick, offer continue/discard and clear former-member state on token change. Web has no autosave and no diary/moment drafts.
+
+Retained databases with SQL_INIT_MODE=never need a separate backed-up, owner-approved reviewer rollout: create the new table once and convert legacy album drafts while preserving object references. This implementation does not perform that rollout or touch retained services/data.
 
 ## Wishes
 
@@ -83,7 +93,8 @@ Plain YYYY-MM-DD values preserve calendar dates across timezones. Default diary/
 |---|---|
 | /api/auth | login, wechat-login, wechat-bind-login, logout, GET me, PATCH me/profile |
 | /api/home | GET overview, POST location |
-| /api/albums | GET catalog/details/current draft; POST create/unlock/like/view/photos/photos/mobile/publish; DELETE draft |
+| /api/albums | GET published catalog/details; POST unlock/like/view |
+| /api/drafts/{kind} | GET/PUT/DELETE fields/draft; POST images/publish; DELETE images/{imageId} |
 | /api/wishes | GET list/details/summary; POST create/complete/reopen; PUT edit; DELETE |
 | /api/diary | GET months/month/details; POST entry/images; PUT edit; DELETE |
 | /api/story/moments | GET list/details; POST create/images; PUT edit; DELETE |

@@ -35,6 +35,12 @@ Ten modules live under src/modules: home, album, wishes, diary, story, messages,
 - Upload queues preserve retries and submission guards. Album original/preview uploads and the mini-program single-file protocol remain separate contracts.
 - Chinese language, holidays, fonts, and platform choices may remain; they do not establish the user's physical location.
 
+## Album Drafts
+
+The album gateway uses `/api/drafts/album`: GET reads `{draft}`, PUT replaces `{fields}`, multipart POST `/images` sends original + WebP preview + metadata, DELETE `/images/{opaqueId}` removes a photo, POST `/publish` sends latest fields plus the separate password, and DELETE the root discards. Drafts use `{kind, fields, images, createdAt, updatedAt}`; published album detail responses keep their existing shape.
+
+The Web flow remains explicit save/upload, resume, retry, publish and discard; it has no autosave and no diary/moment drafts. Untitled drafts have an explicit label and editable title. Resumed private drafts start with an empty required password. A missing resumed eventDate defaults to local today and has a date input (owner decision); the saved pinned flag survives Web edits. The shared album limit is 50 including already uploaded draft images. Older over-cap drafts stay visible for removal; stale upload batches cannot attach to a replacement draft. Unuploaded local File objects still cannot survive a reload.
+
 ## Current Limits
 
 The 390px home-page overflow remains unresolved. Found during the 2026-10-18 browser checks and present before the refactor: closing the new-wish dialog logs two Naive UI slot warnings (its content is v-if'd off while the modal's leave transition still renders it; v-show removes the warnings but flashes the dialog for ~300ms, so it stays); the new-wish dialog's background art shows its baked-in text at narrow widths. At 375px the Diary page is 537px wide, which pushes the write-diary button off-screen. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.

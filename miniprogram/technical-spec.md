@@ -10,11 +10,12 @@ Use native WXML/WXSS/JavaScript in `miniprogram/`, sharing the Spring Boot/MyBat
 | --- | --- |
 | [app.json](app.json), [app.js](app.js), [app.wxss](app.wxss) | Page/component registration, lifecycle, theme, and fonts |
 | [constants/config.js](constants/config.js), [constants/routes.js](constants/routes.js) | Environments, timeouts, and navigation; use `switchTab` for tabs and `redirectTo` for ordinary return routes |
-| [services](services) | Ten business services wrapping APIs and upload protocols |
+| [services](services) | Eleven business services wrapping APIs and upload protocols |
 | [utils/request.js](utils/request.js), [utils/upload.js](utils/upload.js) | Authorization, failure mapping, business tokens, and single-file uploads |
 | [utils/media.js](utils/media.js) | Resolves server-relative album media URLs against mediaBaseUrl or apiBaseUrl for native image loading; preserves absolute CDN URLs |
 | [utils/image-picker.js](utils/image-picker.js), [utils/image-list.js](utils/image-list.js) | The one image picker (privacy consent, `chooseMedia`, busy re-check, quiet cancel) and the pure list rules (append within a limit, uploaded URLs) |
 | [utils/upload-queue.js](utils/upload-queue.js) | `uploadQueue`: uploads an image list one file at a time, keeps each item's status/progress/url current, stops at the first failure or (diary) finishes the batch first |
+| [utils/draft-autosave.js](utils/draft-autosave.js) | Shared creation-draft recovery, serialized saves, flush, status and session shutdown |
 | [utils/request-guard.js](utils/request-guard.js) | `beginRequest(page, key)`: only the latest request per piece of page state, in the same session, may apply its response |
 | [utils/auth.js](utils/auth.js), [utils/storage.js](utils/storage.js), [utils/permission.js](utils/permission.js) | Sessions, necessary caches, and entry visibility |
 | [utils/date.js](utils/date.js), [utils/diary-markdown.js](utils/diary-markdown.js) | Calendar dates and diary rendering |
@@ -59,7 +60,9 @@ These operations are consumed by `services/`; current source defines dynamic IDs
 | Moment reads | `GET /api/story/moments`; `GET /api/story/moments/{id}` | category/year filters; createdByUserId |
 | Moment writes/images | `POST /api/story/moments`; `PUT /api/story/moments/{id}`; `DELETE /api/story/moments/{id}`; `POST /api/story/moments/images` | title/content/eventTime/endTime/locationName/address/longitude/latitude/category/images; file upload field |
 | Album reads/access | `GET /api/albums`; `GET /api/albums/{id}`; `POST /api/albums/{id}/unlock`; `POST /api/albums/{id}/like`; `POST /api/albums/{id}/view` | Pagination/previewLimit; optional originalUrl and previewUrl; UTC activity day |
-| Album publishing | `POST /api/albums`; `GET /api/albums/drafts/current`; `POST /api/albums/{id}/photos/mobile`; `POST /api/albums/{id}/publish`; `DELETE /api/albums/{id}/draft` | Mobile file + metadata JSON; cleanup is best-effort |
+| Draft fields | `GET/PUT/DELETE /api/drafts/{kind}` | kind is album/diary/moment; GET returns draft or null, PUT replaces fields only; one draft per member/kind |
+| Draft images | `POST /api/drafts/{kind}/images`; `DELETE /api/drafts/{kind}/images/{imageId}` | file; album adds caption/takenAt/location/width/height metadata JSON; opaque image id, no object names |
+| Draft publication | `POST /api/drafts/{kind}/publish` | Latest fields plus album-only privatePassword; original published response shape; no password stored |
 | Wish reads | `GET /api/wishes`; `GET /api/wishes/{id}`; `GET /api/wishes/summary` | category/completed/page/size; lastOperatedByUserId |
 | Wish writes | `POST /api/wishes`; `PUT /api/wishes/{id}`; `DELETE /api/wishes/{id}` | Creation uses multipart payload without an image; updates use JSON |
 | Wish state | `POST /api/wishes/{id}/complete`; `POST /api/wishes/{id}/reopen` | Completion requires image; reopening has no image; backend requires authentication |
@@ -92,7 +95,11 @@ Initial automatic location follows this sequence: disclose foreground frequency/
 | Feedback | 3 images | file; submit imageUrls after all uploads succeed |
 
 Check privacy before `wx.chooseMedia`, using image/compressed options (album creation picks originals; see below). Cancellation is quiet; other failures are visible. Lock image lists and duplicate operations during selection/upload/submission, and recheck state when callbacks return. Diary batches run serially to prevent late insertion/index errors. Preserve compatibility with extensionless/generic-MIME WeChat files and backend content-header/size validation.
-Albums use create, upload, publish. On `ALBUM_DRAFT_EXISTS`, fetch the old draft and confirm discard before recreation; this is not recovery. Cleanup is best-effort; failures retain input and retry state.
+New albums, diaries and moments use `services/draft.js` and one `utils/draft-autosave.js` helper. It owns recovery/continue/discard, the 1500 ms debounce, one field save in flight, queued newest fields, hide/unload flush, retry status, and token-change shutdown. Diary exit begins flushing immediately and also awaits pending image deletion plus a final cleaned snapshot before stopping, without updating unloaded UI. `beginRequest` guards draft load/save/upload/remove/publish callbacks. Publishing drains uploads/field saves, pauses autosave without removing the token listener, then stops after success or resumes the same helper after failure; a delayed PUT must not recreate a published draft. Pages keep editing and navigation available according to their load/submission state; failed recovery stays locked for mutations but Back remains usable.
+
+Only creation uses drafts; existing diary/moment edits retain their services and upload paths. The first change creates a draft, photos upload on pick via pickImages/uploadQueue, and a footer reports quiet save status. Native album picking is capped at nine per call across batches, while the shared album maximum is 50 (owner decision). Resume never slices away server images, including older drafts above the current cap; additions are blocked and images may be removed before publishing. Draft passwords are never included in fields, and private recovery requires re-entry. No destructive cleanup follows a failed publication.
+
+The server owns draft images outside diary_uploads until publish. Discard/removal deletes their objects best effort after the row/list change commits. Diary publication promotes referenced images and deletes unused ones, preventing hourly temporary-upload cleanup from expiring drafts. Draft fields enforce table lengths, enums and date types; diary Markdown retains 60,000 characters plus the approved UTF-8/serialized-JSON byte ceiling. Missing photo takenAt uses album eventDate only at publication; missing locations stay unknown.
 Paginate lists, keep a single setData under 256KB, and update only necessary paths frequently. Page exit clears timers/stale responses. Support iPhone SE through iPad.
 
 `app.json` declares scope.userLocation and requiredPrivateInfos:getLocation. Disclosures for permissions, third-party location queries, accounts, media, feedback, devices, and caches must match WeChat backend privacy settings. `authorizePrivacy` prefers the page component and stops on explicit denial. Unsupported/failed platform checks currently may continue through the no-authorization-needed branch; this does not establish backend compliance.
@@ -114,6 +121,8 @@ TZ=UTC node --test miniprogram/tests/*.test.js
 ```
 
 `tests/date.test.js` launches three timezone subprocesses covering calendar boundaries, leap years, date-only values, and instants. Singapore represents UTC+08; tests do not alter runtime configuration. Geographic fixtures use overseas/generic places and synthetic clustering coordinates.
+
+Current drafts verification (2026-10-20): default, America/Los_Angeles, Asia/Singapore and UTC each passed **180/180** Node tests, and **133/133 JS** syntax checks passed. Shared autosave, resume/discard, hide/unload flush, immediate uploads, publish ordering/session invalidation, private passwords, exact diary Markdown/HTML image removal and 50-photo cross-client boundaries are covered. WXML/WXSS compilation, simulator, native picker, devices and production were not run for this feature. The simulator option was explicitly skipped; retained services/data and database rollout were untouched. See [the implementation report](../docs/drafts-implementation-report.md). Earlier baselines follow.
 
 Validation baseline (2026-10-19, after album photo details): Node **112/112** in the default, Los Angeles, Singapore and UTC timezones, and **124 JS** syntax checks passed. WXML/WXSS were not changed and not recompiled; the simulator was not rerun for this refactor. Previous simulator coverage included WeChat login, main read/write flows, five upload flows, and global location/weather. Injected picker results do not establish native photo/camera or physical-device behavior. Simulator album publication used a prepared test draft, so it does not establish an end-to-end creation run.
 

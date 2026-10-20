@@ -7,7 +7,7 @@ This is the current product baseline. See the [technical specification](technica
 The native WeChat Mini Program is a lightweight companion to the couple's shared record space. It reuses the Web application's Spring Boot backend, accounts, permissions, and media storage. Its main tasks are browsing updates, diaries, moments, albums, and wishes, plus lightweight editing and feedback. Do not introduce a second business data source or cloud development by default.
 
 Implemented features include WeChat login and existing-account binding, the home dashboard, diaries, a public moments map and list, manager editing, lightweight album creation, wish state changes, profile editing, notices, and feedback.
-Not currently provided: diary draft recovery, large batch albums or resumable uploads, map-based location picking, images when creating/editing wishes, feedback history, notice history, subscription messages, or payments. These are scope boundaries, not scheduled requirements.
+Not currently provided: albums above 50 photos or resumable binary uploads, map-based location picking, images when creating/editing wishes, feedback history, notice history, subscription messages, or payments. These are scope boundaries, not scheduled requirements.
 
 ## Identity and Permissions
 
@@ -49,7 +49,7 @@ There are 17 registered pages and no business subpackages. Five tabs are Home, D
 
 ### Diaries and Moments
 
-Diaries use real month metadata and support all, mine, partner, and private filters. Store the title as a Markdown level-one heading and render text, images, quotes, lists, code, and tables in order. Creation submits a date; editing keeps it read-only. Allow up to 20 images, uploading before inserting them into Markdown; incomplete/failed uploads block saving. Authors confirm deletion. There is no local draft recovery.
+Diaries use real month metadata and support all, mine, partner, and private filters. Store the title as a Markdown level-one heading and render text, images, quotes, lists, code, and tables in order. Creation submits a date; editing keeps it read-only. Allow up to 20 images, uploading before inserting them into Markdown; incomplete/failed uploads block saving. Authors confirm deletion. New entries recover server drafts; editing existing entries does not use drafts.
 
 Guests can browse moments, filter by category/year, and adjust the native map/list layout. The map displays recorded coordinates without requesting the viewer's location. A single marker selects its item; a list item opens details. Nearby markers cluster and can be expanded. Empty maps use a world view; records without coordinates remain in the list. Managers enter place/address/coordinates manually and attach up to three images.
 
@@ -57,7 +57,16 @@ Guests can browse moments, filter by category/year, and adjust the native map/li
 
 Signed-in users browse published albums with pagination, private locks, pinning, and photo/view/like statistics. Private access tokens expire and require unlocking again. Prefer preview images while retaining an optional original URL. There is no dedicated original-download or save-image flow. Likes and views use the backend's UTC calendar day.
 
-Managers can create an album with up to nine photos: create a temporary album, upload, then publish. An existing draft triggers a choice to discard and recreate; this is not draft recovery. Failures retain input and attempt cleanup, without guaranteeing that cleanup succeeded. When picked photos carry a shooting date or GPS, the album date (earliest shot) and place (district and city of the first photo with GPS, falling back to region/country) fill in automatically unless the manager already set them, and each photo keeps its own date; photos without these details leave the fields for manual entry with a short hint. A new album starts with an empty date and place, and saving waits until metadata reading and place lookup complete. Results from removed photos cannot fill the form. A date must be read or manually selected; unknown places remain empty. Existing albums are not rewritten.
+Managers create albums through server drafts, with a shared 50-photo limit on both clients and the backend (owner decision). Native picking selects up to nine photos each time and supports multiple batches. A shared draft with more than nine photos restores all images without re-upload; older over-cap drafts are never truncated and can be reduced before publishing.
+
+When photos carry shooting dates or GPS, untouched album date/place fields fill from the earliest shot and the first resolved GPS photo, retaining the existing settled-field rules. Every photo keeps its own available date/place. Metadata reading and place lookup finish before its upload. Missing details stay unknown in the draft; publication requires an album date and uses it for a photo without a shooting date, as confirmed by the owner. Missing places stay empty. Removed-photo callbacks cannot fill the form. Existing albums are not rewritten.
+
+### Creation Drafts
+
+Albums, diary entries and moments each have one server draft per member. On returning to a new-entry page, the form stays locked until the member chooses to continue the saved fields/images or discard the draft. The dialog shows its last save time. Discard deletes the draft and its owned images; failures keep the draft available for retry.
+
+The first field edit or photo pick starts a draft. Fields autosave after 1.5 seconds without typing and immediately when the page hides or unloads. Picked images upload immediately; a quiet footer reports saving, last save time or retryable failure. There are no autosave toasts. Publishing waits for uploads and field saves, submits the newest form, creates the real record and removes the draft. A validation/date conflict retains the latest fields and images. Private album passwords are never autosaved and must be entered again after recovery. Changing account stops autosave and clears the former member's page state. Editing existing diaries/moments retains its original APIs and has no drafts.
+
 
 ### Wishes, Profile, and Feedback
 

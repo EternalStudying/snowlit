@@ -1,5 +1,10 @@
 # Web Progress Baseline
 
+## Unified Drafts (2026-10-20)
+
+The album gateway/lifecycle uses the unified drafts API, explicit save only. Resumed private passwords are re-entered; missing dates default to local today and are editable. Saved pinned state survives recovery. The shared album cap is 50. Latest checks: 70 files / 450 Vitest tests, vue-tsc and production build passed; live browser/device checks were not run. Source changes are committed on `feature/drafts` (`2f17921 / b096289`); no push. Detailed command history and resolved failure outputs are in [the implementation report](../docs/drafts-implementation-report.md).
+
+
 ## Current State
 
 2026-10-20: synchronized the weather consent text with original-coordinate provider queries. Relevant weather HTTP/refresh tests: 2 files, 11 passed. `npm run build` (vue-tsc and Vite) passed. No browser or live Web geolocation check; the mini-program/backend live check is recorded at the root.
@@ -18,7 +23,7 @@
 - Diary no longer pre-fills the weather fallback's "unknown" location or its default weather label, and does not save a snapshot from the fallback alone; the shared helpers live in the weather module.
 - The immersive album gallery uses the stacked list at 760px or narrower; the header scrolls away with the list.
 - Checks: `npx vitest run` passed (67 files, 437 tests); the new diary and gallery tests fail against the old code. `npx vue-tsc -b` is clean and `npm run build` passes.
-- Browser check at 375px against throwaway MySQL 8.4 (13306) and Redis 7.4 (16379), seeded with SQL_INIT_MODE=always, plus the packaged jar on 18080 with local-disk uploads. Passed: three photos stacked and visible with transform none; the gallery scrolls; photo preview opens and Escape closes it. Widening to 1280px switches live to the timeline, and scrolling it reveals photos. A new diary with the fallback active (top bar "位置待更新 · 天气待更新") had empty location and weather fields. Containers were removed afterwards.
+- Browser check at 375px against throwaway MySQL 8.4 (13306) and Redis 7.4 (16379), seeded with SQL_INIT_MODE=always, plus the packaged jar on 18080 with local-disk uploads. Passed: three photos stacked and visible with transform none; the gallery scrolls; photo preview opens and Escape closes it. Widening to 1280px switches live to the timeline, and scrolling it reveals photos. A new diary with the fallback active (top bar displaying localized location/weather-pending placeholders) had empty location and weather fields. Containers were removed afterwards.
 
 ## Second Pass (2026-10-18, branch `refactor/frontend-ideal`)
 
