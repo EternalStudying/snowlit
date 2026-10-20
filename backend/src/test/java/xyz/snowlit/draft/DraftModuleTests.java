@@ -124,7 +124,7 @@ class DraftModuleTests {
     }
 
     @ParameterizedTest @EnumSource(DraftKind.class) void uploadEnforcesLimits(DraftKind kind) throws Exception {
-        int max = kind == DraftKind.ALBUM ? 300 : kind == DraftKind.DIARY ? 20 : 3;
+        int max = kind == DraftKind.ALBUM ? 50 : kind == DraftKind.DIARY ? 20 : 3;
         var image = upload(kind);
         Draft row = rows.find(1L, kind.path());
         JsonNode item = json.readTree(row.getImagesJson()).get(0);
@@ -187,6 +187,18 @@ class DraftModuleTests {
         assertThat(result.photos()).extracting(AlbumVos.AlbumPhotoVo::takenAt).containsOnly(LocalDate.of(2026, 5, 20));
         verify(albumMapper).insertAlbum(argThat(a -> a.getStatus().equals("published") && a.getPublishedAt().equals(LocalDateTime.now(CLOCK)) && a.getCoverPhotoUrl().equals(first.url())));
         assertThat(rows.rows).isEmpty(); assertThat(objects.stored()).hasSize(4);
+    }
+
+    @Test void olderOverLimitAlbumStaysIntactUntilReducedToFiftyPhotos() throws Exception {
+        upload(DraftKind.ALBUM);
+        var row = rows.find(1L, "album");
+        var source = json.readTree(row.getImagesJson()).get(0);
+        var list = json.createArrayNode();
+        for (int i = 0; i < 51; i++) list.add(source.deepCopy());
+        row.setImagesJson(json.writeValueAsString(list));
+        fails("ALBUM_PHOTO_LIMIT_EXCEEDED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null)));
+        assertThat(drafts.current(OWNER, DraftKind.ALBUM).draft().images()).hasSize(51);
+        verify(albumMapper, never()).insertAlbum(any());
     }
 
     @Test void albumValidationFailureCommitsNewestFieldsAndPrivatePasswordNeverStored() {

@@ -1,3 +1,5 @@
+export const MAX_ALBUM_PHOTOS = 50;
+
 export type AlbumVisibility = 'public' | 'private';
 
 export type AlbumPhotoData = {
@@ -95,6 +97,7 @@ export type AlbumCreatePayload = {
   location: string;
   visibility: AlbumVisibility;
   privatePassword?: string;
+  pinned?: boolean;
 };
 
 export type AlbumPhotoUploadMetadata = {

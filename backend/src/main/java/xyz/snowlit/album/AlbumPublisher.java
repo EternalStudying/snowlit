@@ -12,6 +12,7 @@ import java.util.*;
 /** Album validation, upload policies and the final insertion; draft ownership lives in DraftModule. */
 @Service
 public final class AlbumPublisher {
+    public static final int MAX_PHOTOS = 50;
     public static final ImagePolicy ORIGINAL_IMAGE =
             ImagePolicy.standard("ALBUM", "album", false, "相册图片上传失败，请稍后重试");
     public static final ImagePolicy.Rejection PREVIEW_NOT_WEBP =
@@ -42,7 +43,7 @@ public final class AlbumPublisher {
         if (!Set.of("public", "private").contains(Text.trim(request.visibility()))) throw ApplicationFailure.invalidInput("ALBUM_VISIBILITY_INVALID", "相册可见性不正确");
         if ("private".equals(request.visibility()) && Text.trim(request.privatePassword()).isBlank()) throw ApplicationFailure.invalidInput("ALBUM_PRIVATE_PASSWORD_REQUIRED", "私密相册密码不能为空");
         if (photos.isEmpty()) throw ApplicationFailure.invalidInput("ALBUM_PHOTO_REQUIRED", "发布相册前至少上传 1 张照片");
-        if (photos.size() > 300) throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 300 张照片");
+        if (photos.size() > MAX_PHOTOS) throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 50 张照片");
         LocalDateTime now = LocalDateTime.now(clock);
         Album album = new Album();
         album.setTitle(Text.trim(request.title())); album.setDescription(Text.trim(request.description()));

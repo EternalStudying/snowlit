@@ -83,7 +83,8 @@ const draftForm = ref<AlbumCreatePayload>({
   eventDate: formatLocalCalendarDate(),
   location: '',
   visibility: 'public',
-  privatePassword: ''
+  privatePassword: '',
+  pinned: false
 });
 
 const shouldShowAlbumUploadProgress = computed(
@@ -190,7 +191,8 @@ function resetDraftForm() {
     eventDate: formatLocalCalendarDate(),
     location: '',
     visibility: 'public',
-    privatePassword: ''
+    privatePassword: '',
+    pinned: false
   };
   albumDraftFileList.value = [];
   albumLifecycle.beginNewDraft();
@@ -214,10 +216,11 @@ function openDraftDialog() {
   draftForm.value = {
     title: draft.fields.title ?? '',
     description: draft.fields.description ?? '',
-    eventDate: draft.fields.eventDate ?? '',
+    eventDate: draft.fields.eventDate || formatLocalCalendarDate(),
     location: draft.fields.location ?? '',
     visibility: draft.fields.visibility ?? 'public',
-    privatePassword: ''
+    privatePassword: '',
+    pinned: draft.fields.pinned ?? false
   };
   showCreateDialog();
 }
@@ -613,6 +616,18 @@ onMounted(() => {
                       />
                     </label>
 
+                    <label class="album-create-field">
+                      <span>相册日期 <b aria-hidden="true">*</b></span>
+                      <input
+                        v-model="draftForm.eventDate"
+                        data-album-event-date-input
+                        class="album-create-date-input"
+                        type="date"
+                        required
+                        :disabled="draftSaving || draftPublishing"
+                      />
+                    </label>
+
                     <div class="album-create-options">
                       <div class="album-create-private">
                         <span class="album-create-private__label">私密相册 <i aria-hidden="true">i</i></span>
@@ -687,7 +702,7 @@ onMounted(() => {
                         />
                         <span class="album-create-upload__title">点击或拖拽照片到这里上传</span>
                         <span class="album-create-upload__format">支持 JPG / PNG / WEBP</span>
-                        <span class="album-create-upload__limit">单次最多 300 张</span>
+                        <span class="album-create-upload__limit">每个相册最多 50 张</span>
                       </label>
                       <NUpload
                         v-model:file-list="albumDraftFileList"

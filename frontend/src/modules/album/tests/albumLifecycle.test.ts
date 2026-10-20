@@ -506,12 +506,22 @@ describe('useAlbumLifecycle draft behavior', () => {
     expect(lifecycle.state.workingDraft.value).toBeNull();
   });
 
-  it('rejects more than 300 files without enqueuing them', () => {
+  it('rejects more than 50 files without enqueuing them', () => {
     const lifecycle = useAlbumLifecycle({ adapter: vi.fn() });
-    const files = Array.from({length:301}, (_, index) => new File(['x'], `p-${index}.jpg`, { type:'image/jpeg' }));
+    const files = Array.from({length:51}, (_, index) => new File(['x'], `p-${index}.jpg`, { type:'image/jpeg' }));
     expect(lifecycle.queueFiles(files)).toBe(false);
-    expect(lifecycle.state.uploadError.value).toBe('最多选择 300 张照片');
+    expect(lifecycle.state.uploadError.value).toBe('最多选择 50 张照片');
     expect(lifecycle.state.uploadItems.value).toHaveLength(0);
+  });
+
+  it('counts restored photos toward the shared 50-photo cap without truncating an older draft', async () => {
+    const images = Array.from({length:51}, (_,index) => ({...currentDraft.images[0],id:`image-${index}`}));
+    const { lifecycle, fetcher } = await restored({...currentDraft, images});
+    expect(lifecycle.state.draftPhotos.value).toHaveLength(51);
+    expect(lifecycle.queueFiles([new File(['x'],'new.jpg',{type:'image/jpeg'})])).toBe(false);
+    await expect(lifecycle.publishDraft()).resolves.toBe(false);
+    expect(lifecycle.state.draftNotice.value).toBe('每本相册最多 50 张照片，请移除多余照片后再发布');
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it('blocks publishing while queued photos are unfinished', async () => {

@@ -366,7 +366,7 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(dialog.text()).toContain('相册标题');
     expect(dialog.text()).toContain('私密相册');
     expect(dialog.text()).toContain('访问密码');
-    expect(dialog.text()).toContain('单次最多 300 张');
+    expect(dialog.text()).toContain('每个相册最多 50 张');
     expect(dialog.find('[data-album-submit-draft]').exists()).toBe(true);
     expect(dialog.find('[data-album-publish]').exists()).toBe(true);
     expect(dialog.get('[data-album-private-password-input]').attributes('disabled')).toBeDefined();
@@ -528,14 +528,18 @@ describe('AlbumView DOM and interaction behavior', () => {
   });
 
   it('labels an untitled private draft and allows title/password entry after resuming', async () => {
-    const requestAdapter = vi.fn(async (input: RequestInfo | URL) => {
+    const requestAdapter = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === '/api/drafts/album/publish' && init?.method === 'POST') return jsonResponse(publicDetail);
       if (String(input).startsWith('/api/albums?')) return jsonResponse(firstPage);
-      if (String(input) === '/api/drafts/album') return jsonResponse({draft: {...currentDraft, fields: {...currentDraft.fields, title: '', visibility: 'private'}}});
+      if (String(input) === '/api/drafts/album') return jsonResponse({draft: {...currentDraft, fields: {...currentDraft.fields, title: '', eventDate: '', visibility: 'private', pinned: true}}});
       throw new Error(`Unexpected request: ${input}`);
     });
     const wrapper = await mountAlbumView(requestAdapter);
     expect(wrapper.get('[data-album-draft-continue]').text()).toContain('未命名草稿');
     await wrapper.get('[data-album-draft-continue]').trigger('click'); await flushPromises();
+    const dateInput = wrapper.get('[data-album-event-date-input]');
+    expect((dateInput.element as HTMLInputElement).value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    await dateInput.setValue('2026-05-21');
     const title = wrapper.get('[data-album-title-input]');
     const password = wrapper.get('[data-album-private-password-input]');
     expect(title.attributes('disabled')).toBeUndefined();
@@ -543,9 +547,14 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect((password.element as HTMLInputElement).value).toBe('');
     expect(password.attributes('required')).toBeDefined();
     await title.setValue('New title'); await password.setValue('new-password');
+    await wrapper.get('[data-album-publish]').trigger('click'); await flushPromises();
+    const publication = requestAdapter.mock.calls.find(([input]) => input === '/api/drafts/album/publish');
+    const fields = JSON.parse(String(publication?.[1]?.body)).fields;
+    expect(fields.pinned).toBe(true);
+    expect(fields.eventDate).toBe('2026-05-21');
   });
 
-  it('restores a draft dialog and reports the 300-file selection boundary', async () => {
+  it('restores a draft dialog and reports the 50-file selection boundary', async () => {
     const requestAdapter = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === '/api/albums?page=1&size=5&previewLimit=9') {
@@ -570,14 +579,14 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(dialog.get('[data-album-title-input]').attributes('disabled')).toBeUndefined();
 
     const files = Array.from(
-      { length: 301 },
+      { length: 51 },
       (_, index) => new File(['x'], `photo-${index + 1}.jpg`, { type: 'image/jpeg' })
     );
     const input = dialog.get('[data-album-file-input]').element as HTMLInputElement;
     setInputFiles(input, files);
     await dialog.get('[data-album-file-input]').trigger('change');
 
-    expect(dialog.get('[role="status"]').text()).toContain('最多选择 300 张照片');
+    expect(dialog.get('[role="status"]').text()).toContain('最多选择 50 张照片');
   });
 
   it('renders detailed upload queue rows from file selection without private state access', async () => {

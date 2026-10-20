@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { MAX_ALBUM_PHOTOS } from '../model';
 import type { AlbumDraftImage, AlbumPhotoUploadMetadata } from '../model';
 import { encodeCanvasWebpPreview } from './canvasWebpPreviewEncoder';
 import type { AlbumPreviewGenerator } from './ports';
@@ -30,7 +31,7 @@ type AlbumUploadQueueOptions = {
   now?: () => Date;
 };
 
-const MAX_FILES = 300;
+const MAX_FILES = MAX_ALBUM_PHOTOS;
 export function createAlbumUploadQueue({
   generatePreview = encodeCanvasWebpPreview,
   isMobileUpload = detectMobileUpload,
@@ -44,12 +45,12 @@ export function createAlbumUploadQueue({
   const blockingCount = computed(() => items.value.filter((item) => item.status !== 'success').length);
 
   /** Queues the acceptable images; files that break the image rule are left out and named in `error`. */
-  function addFiles(files: File[] | FileList) {
+  function addFiles(files: File[] | FileList, existingCount = 0) {
     const { accepted: selected, rejection } = pickImages(files);
     error.value = rejection;
 
-    if (selected.length + items.value.length > MAX_FILES) {
-      error.value = '最多选择 300 张照片';
+    if (selected.length + items.value.length + existingCount > MAX_FILES) {
+      error.value = '最多选择 50 张照片';
       return false;
     }
 

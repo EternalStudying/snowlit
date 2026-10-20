@@ -253,11 +253,11 @@ public class DraftModule {
     private ApplicationFailure metadataInvalid() { return ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确"); }
 
     private void limit(DraftKind kind, int count) {
-        int max = switch (kind) { case ALBUM -> 300; case DIARY -> 20; case MOMENT -> 3; };
+        int max = switch (kind) { case ALBUM -> AlbumPublisher.MAX_PHOTOS; case DIARY -> 20; case MOMENT -> 3; };
         if (count >= max) throw ApplicationFailure.invalidInput(switch (kind) {
             case ALBUM -> "ALBUM_PHOTO_LIMIT_EXCEEDED"; case DIARY -> "DIARY_IMAGE_LIMIT_EXCEEDED"; case MOMENT -> "STORY_IMAGE_LIMIT_EXCEEDED";
         }, switch (kind) {
-            case ALBUM -> "每本相册最多 300 张照片";
+            case ALBUM -> "每本相册最多 50 张照片";
             case DIARY -> "每篇日记最多 20 张图片";
             case MOMENT -> "每条点滴最多 3 张图片";
         });

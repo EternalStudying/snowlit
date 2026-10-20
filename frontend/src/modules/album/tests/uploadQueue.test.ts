@@ -110,23 +110,23 @@ describe('album upload queue', () => {
     expect(queue.items.value.map((item) => item.id)).not.toContain(waitingId);
   });
 
-  it('enforces the 300-image and per-file validation boundaries', () => {
+  it('enforces the 50-image and per-file validation boundaries', () => {
     const queue = createAlbumUploadQueue({
       generatePreview: vi.fn(),
       now: () => new Date('2026-07-25T08:00:00.000Z')
     });
     const validFiles = Array.from(
-      { length: 300 },
+      { length: 50 },
       (_, index) => new File(['x'], `photo-${index + 1}.jpg`, { type: 'image/jpeg' })
     );
 
     expect(queue.addFiles(validFiles)).toBe(true);
-    expect(queue.items.value).toHaveLength(300);
+    expect(queue.items.value).toHaveLength(50);
     expect(
-      queue.addFiles([new File(['x'], 'photo-301.jpg', { type: 'image/jpeg' })])
+      queue.addFiles([new File(['x'], 'photo-51.jpg', { type: 'image/jpeg' })])
     ).toBe(false);
-    expect(queue.error.value).toBe('最多选择 300 张照片');
-    expect(queue.items.value).toHaveLength(300);
+    expect(queue.error.value).toBe('最多选择 50 张照片');
+    expect(queue.items.value).toHaveLength(50);
 
     queue.clear();
     expect(queue.addFiles([new File(['text'], 'notes.txt', { type: 'text/plain' })])).toBe(

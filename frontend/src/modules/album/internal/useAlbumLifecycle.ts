@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { MAX_ALBUM_PHOTOS } from '../model';
 import type {
   AlbumCollection,
   AlbumCreatePayload,
@@ -272,7 +273,9 @@ export function useAlbumLifecycle({
     if (!files || files.length === 0) {
       return false;
     }
-    return uploadQueue.addFiles(files);
+    const uploadedInQueue = uploadQueue.items.value.filter(item => item.status === 'success').length;
+    const existingCount = Math.max(0, draftPhotos.value.length - uploadedInQueue);
+    return uploadQueue.addFiles(files, existingCount);
   }
 
   async function saveAndUpload(payload: AlbumCreatePayload) {
@@ -313,6 +316,10 @@ export function useAlbumLifecycle({
       return false;
     }
     draftNotice.value = '';
+    if (draftPhotos.value.length > MAX_ALBUM_PHOTOS) {
+      draftNotice.value = '每本相册最多 50 张照片，请移除多余照片后再发布';
+      return false;
+    }
     if (draftPhotos.value.length < 1 && uploadQueue.successCount.value < 1) {
       draftNotice.value = '发布前至少需要 1 张已成功上传的照片';
       return false;
