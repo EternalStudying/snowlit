@@ -14,6 +14,7 @@ drop table if exists album_unlock_failures;
 drop table if exists photos;
 drop table if exists album_photos;
 drop table if exists albums;
+drop table if exists drafts;
 drop table if exists moments;
 drop table if exists story_moments;
 drop table if exists feedback;
@@ -300,3 +301,15 @@ create table if not exists moments (
     index idx_moments_event_time (deleted_at, event_time),
     index idx_moments_category_time (deleted_at, category, event_time)
 ) comment='点滴地图记录';
+
+create table if not exists drafts (
+    id bigint primary key auto_increment comment '草稿主键',
+    user_id bigint not null comment '草稿所属用户 ID',
+    kind varchar(20) not null comment '草稿类型：album、diary 或 moment',
+    fields_json text not null comment '客户端可写的表单字段 JSON 对象',
+    images_json mediumtext not null comment '服务端维护的草稿图片 JSON 数组',
+    created_at datetime not null comment '创建时间',
+    updated_at datetime not null comment '最近保存时间',
+    constraint fk_drafts_user foreign key (user_id) references users(id) on delete cascade,
+    unique key uq_drafts_user_kind (user_id, kind)
+) comment='创建中的相册、日记与点滴草稿';

@@ -43,7 +43,7 @@ public class DiaryModule {
             "happy", "miss", "calm", "wronged", "expecting",
             "tired", "sweet", "secret", "angry", "touched"
     );
-    private static final ImagePolicy IMAGE = ImagePolicy.standard("DIARY", "diary/tmp", false, "图片上传失败，请稍后重试");
+    public static final ImagePolicy IMAGE = ImagePolicy.standard("DIARY", "diary/tmp", false, "图片上传失败，请稍后重试");
     private static final int MAX_IMAGES_PER_DIARY = 20;
     private static final Map<String, String> ROLE_AVATARS = Map.of(
             "boyfriend", "/assets/home-avatars/partner-a.webp",
@@ -112,6 +112,19 @@ public class DiaryModule {
 
     @Transactional
     public DiarySummaryVo create(AuthenticatedActor actor, DiaryCreateDto request) {
+        return createEntry(actor, request, null);
+    }
+
+    /** Called inside the draft publication transaction, with only server-owned image records. */
+    public DiarySummaryVo createFromDraft(AuthenticatedActor actor, DiaryCreateDto request, List<DiaryImage> draftImages) {
+        return createEntry(actor, request, draftImages);
+    }
+
+    public List<String> draftImageUrls(String markdown) {
+        return DiaryMarkdown.read(Text.trim(markdown)).imageUrls();
+    }
+
+    private DiarySummaryVo createEntry(AuthenticatedActor actor, DiaryCreateDto request, List<DiaryImage> draftImages) {
         ActorContext user = context(actor);
         validateCreateRequest(request);
         if (diaryMapper.existsActiveDiaryForRoleAndDate(user.role(), request.date(), null)) {
@@ -120,7 +133,10 @@ public class DiaryModule {
 
         DiaryMarkdown content = DiaryMarkdown.read(request.contentMarkdown());
         List<String> imageUrls = content.imageUrls();
-        ImageReferencePlan imagePlan = planImageReferences(null, imageUrls, actor.userId());
+        ImageReferencePlan imagePlan = draftImages == null ? planImageReferences(null, imageUrls, actor.userId()) : null;
+        if (draftImages != null && !draftImages.stream().map(DiaryImage::getUrl).toList().containsAll(imageUrls)) {
+            throw ApplicationFailure.forbidden("DIARY_IMAGE_FORBIDDEN", "不能引用这张图片");
+        }
         LocalDateTime now = now();
         DiaryEntry diary = new DiaryEntry();
         diary.setRole(user.role());
@@ -136,8 +152,26 @@ public class DiaryModule {
         diary.setCreatedAt(now);
         diary.setUpdatedAt(now);
 
-        diaryMapper.insertDiary(diary);
-        persistReferences(diary.getId(), imagePlan, now);
+        try {
+            diaryMapper.insertDiary(diary);
+        } catch (org.springframework.dao.DuplicateKeyException exception) {
+            throw ApplicationFailure.conflict("DIARY_DAY_ALREADY_EXISTS", "这一天已经写过日记啦");
+        }
+        if (draftImages == null) {
+            persistReferences(diary.getId(), imagePlan, now);
+        } else {
+            List<DiaryImageReference> references = new ArrayList<>();
+            for (String url : imageUrls) {
+                DiaryImage image = draftImages.stream().filter(candidate -> candidate.getUrl().equals(url)).findFirst().orElseThrow();
+                image.setTemporary(false); image.setCreatedAt(now);
+                diaryMapper.insertImage(image);
+                diaryMapper.markImagesPermanent(List.of(image.getId()), now);
+                DiaryImageReference reference = new DiaryImageReference();
+                reference.setDiaryId(diary.getId()); reference.setUploadId(image.getId());
+                reference.setImageUrl(url); reference.setCreatedAt(now); references.add(reference);
+            }
+            diaryMapper.replaceImageReferences(diary.getId(), references);
+        }
         return toSummary(diary, imageUrls);
     }
 
@@ -254,7 +288,7 @@ public class DiaryModule {
         return new ActorContext(actor.userId(), resolveRole(actor));
     }
 
-    private String resolveRole(AuthenticatedActor actor) {
+    public String resolveRole(AuthenticatedActor actor) {
         if (actor.coupleRole() == null) {
             throw ApplicationFailure.invalidInput("DIARY_ROLE_NOT_CONFIGURED", "账号角色尚未配置");
         }

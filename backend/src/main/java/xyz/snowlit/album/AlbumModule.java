@@ -34,11 +34,17 @@ public class AlbumModule {
     private final AlbumMapper albumMapper;
     private final AlbumPrivateAccess privateAccess;
     private final Clock clock;
+    private final AlbumPublisher publisher;
 
-    public AlbumModule(AlbumMapper albumMapper, AlbumPrivateAccess privateAccess, Clock clock) {
+    public AlbumModule(AlbumMapper albumMapper, AlbumPrivateAccess privateAccess, Clock clock, AlbumPublisher publisher) {
         this.albumMapper = albumMapper;
         this.privateAccess = privateAccess;
         this.clock = clock;
+        this.publisher = publisher;
+    }
+
+    public AlbumDetailVo createFromDraft(AuthenticatedActor actor, AlbumDtos.AlbumCreateDto request, List<AlbumPhoto> photos) {
+        return publisher.create(actor, request, photos);
     }
 
     public AlbumPageVo listAlbums(AuthenticatedActor actor, Integer page, Integer size, Integer previewLimit) {

@@ -9,18 +9,7 @@ public final class AlbumVos {
     private AlbumVos() {
     }
 
-    public record AlbumCurrentDraftVo(
-            AlbumDraftVo draft
-    ) {
-    }
-
     public record AlbumDetailVo(
-            AlbumVo album,
-            List<AlbumPhotoVo> photos
-    ) {
-    }
-
-    public record AlbumDraftVo(
             AlbumVo album,
             List<AlbumPhotoVo> photos
     ) {

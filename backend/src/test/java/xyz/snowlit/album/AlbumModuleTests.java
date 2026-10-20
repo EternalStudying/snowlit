@@ -10,9 +10,7 @@ import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.album.AlbumDtos.AlbumUnlockDto;
 import xyz.snowlit.album.AlbumDtos.AlbumCreateDto;
 import xyz.snowlit.album.AlbumDtos.AlbumPhotoMetadataDto;
-import xyz.snowlit.album.AlbumVos.AlbumCurrentDraftVo;
 import xyz.snowlit.album.AlbumVos.AlbumDetailVo;
-import xyz.snowlit.album.AlbumVos.AlbumDraftVo;
 import xyz.snowlit.album.AlbumVos.AlbumLikeVo;
 import xyz.snowlit.album.AlbumVos.AlbumPageVo;
 import xyz.snowlit.album.AlbumVos.AlbumPhotoVo;
@@ -57,9 +55,7 @@ class AlbumModuleTests {
     private final FakeTokenStore tokenStore = new FakeTokenStore();
     private final AlbumPrivateAccess privateAccess =
             new AlbumPrivateAccess(albumMapper, new BCryptPasswordEncoder(), tokenStore, CLOCK);
-    private final AlbumModule albumService = new AlbumModule(albumMapper, privateAccess, CLOCK);
-    private final AlbumDrafts drafts =
-            new AlbumDrafts(albumMapper, new BCryptPasswordEncoder(), new ImageIntake(objects, CLOCK), CLOCK);
+    private final AlbumModule albumService = new AlbumModule(albumMapper, privateAccess, CLOCK, new AlbumPublisher(albumMapper, new BCryptPasswordEncoder(), CLOCK));
 
     @Test
     void listAlbumsReturnsPagedItemsAndMasksLockedPrivateAlbum() {
@@ -104,199 +100,6 @@ class AlbumModuleTests {
         assertThat(page.canManage()).isTrue();
         verify(albumMapper).countPublishedAlbums();
         verify(albumMapper).findPublishedAlbums(0, 5);
-    }
-
-    @Test
-    void nonManagerCannotCreateAlbumDraft() {
-        assertThatThrownBy(() -> drafts.createDraft(GUEST, publicDraftRequest()))
-                .isInstanceOfSatisfying(
-                        ApplicationFailure.class,
-                        failure -> assertThat(failure.code()).isEqualTo("ALBUM_FORBIDDEN")
-                );
-
-        verify(albumMapper, never()).insertAlbum(any());
-    }
-
-    @Test
-    void createPrivateDraftHashesPasswordAndReturnsDraft() {
-        AlbumCreateDto request = new AlbumCreateDto(
-                " 私密小册 ",
-                " 只给我们看 ",
-                LocalDate.of(2026, 6, 1),
-                " ",
-                "private",
-                "5201314",
-                true
-        );
-        when(albumMapper.findLatestDraftByUserId(1L)).thenReturn(null);
-
-        AlbumDraftVo draft = drafts.createDraft(MANAGER, request);
-
-        assertThat(draft.album().title()).isEqualTo("私密小册");
-        assertThat(draft.album().location()).isEmpty();
-        assertThat(draft.album().visibility()).isEqualTo("private");
-        verify(albumMapper).insertAlbum(argThat(album -> {
-            capturedAlbum = new CapturedAlbum(album.getPrivatePasswordHash());
-            return "draft".equals(album.getStatus())
-                    && album.getCreatedByUserId().equals(1L)
-                    && album.getCoverPhotoUrl().isEmpty()
-                    && album.isPinned()
-                    && album.getSortOrder() == 10
-                    && album.getPrivatePasswordHash() != null;
-        }));
-        assertThat(new BCryptPasswordEncoder().matches("5201314", capturedAlbum.privatePasswordHash())).isTrue();
-    }
-
-    @Test
-    void currentDraftReturnsUploadedPhotoSummary() {
-        Album draftAlbum = draftAlbum();
-        when(albumMapper.findLatestDraftByUserId(1L)).thenReturn(draftAlbum);
-        when(albumMapper.findPhotosByAlbumId(9L)).thenReturn(List.of(storedPhoto(901L, 9L)));
-
-        AlbumCurrentDraftVo currentDraft = drafts.currentDraft(MANAGER);
-
-        assertThat(currentDraft.draft()).isNotNull();
-        assertThat(currentDraft.draft().album().id()).isEqualTo(9L);
-        assertThat(currentDraft.draft().photos()).extracting(AlbumPhotoVo::previewUrl).containsExactly("https://cdn.example.com/album/preview.webp");
-        assertThat(currentDraft.draft().photos()).extracting(AlbumPhotoVo::originalUrl).containsExactly("https://cdn.example.com/album/original.jpg");
-    }
-
-    @Test
-    void uploadPhotoStoresOriginalAndPreviewForOwnDraft() {
-        Album draftAlbum = draftAlbum();
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
-        when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0);
-        MockMultipartFile original = TestImages.jpeg("original", "memory.jpg");
-        MockMultipartFile preview = TestImages.webp("preview", "memory.webp");
-        doAnswer(invocation -> {
-            AlbumPhoto photo = invocation.getArgument(0);
-            photo.setId(901L);
-            return 1;
-        }).when(albumMapper).insertPhoto(any());
-        when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
-
-        AlbumPhotoVo uploaded = drafts.uploadPhoto(
-                MANAGER,
-                9L,
-                original,
-                preview,
-                new AlbumPhotoMetadataDto("  海边  ", LocalDate.of(2026, 6, 1), "  尼斯  ", 1200, 800, 12)
-        );
-
-        assertThat(uploaded.previewUrl()).isEqualTo("https://cdn.example.com/album/preview.webp");
-        assertThat(uploaded.originalUrl()).isEqualTo("https://cdn.example.com/album/original.jpg");
-        assertThat(objects.stored()).extracting(ObjectStore.StoredObject::contentType)
-                .containsExactly("image/jpeg", "image/webp");
-        ObjectStore.StoredObject storedOriginal = objects.stored().get(0);
-        ObjectStore.StoredObject storedPreview = objects.stored().get(1);
-        assertThat(storedOriginal.objectName()).matches("album/9/original/1/[0-9a-f-]+\\.jpg");
-        assertThat(storedPreview.objectName()).matches("album/9/preview/1/[0-9a-f-]+\\.webp");
-        verify(albumMapper).insertPhoto(argThat(photo ->
-                storedPreview.url().equals(photo.getPreviewUrl())
-                        && storedOriginal.url().equals(photo.getOriginalUrl())
-                        && storedOriginal.objectName().equals(photo.getOriginalObjectName())
-                        && storedPreview.objectName().equals(photo.getPreviewObjectName())
-                        && photo.getOriginalSizeBytes() == original.getSize()
-                        && photo.getPreviewSizeBytes() == preview.getSize()
-        ));
-    }
-
-    @Test
-    void mobileUploadStoresSingleFileAsOriginalAndPreviewForMiniProgram() {
-        Album draftAlbum = draftAlbum();
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
-        when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0);
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "tmp",
-                MediaType.APPLICATION_OCTET_STREAM_VALUE,
-                new byte[]{(byte) 0xff, (byte) 0xd8, (byte) 0xff, 0x00}
-        );
-        doAnswer(invocation -> {
-            AlbumPhoto photo = invocation.getArgument(0);
-            photo.setId(901L);
-            return 1;
-        }).when(albumMapper).insertPhoto(any());
-        AlbumPhoto stored = storedPhoto(901L, 9L);
-        stored.setOriginalUrl("https://cdn.example.com/album/original.jpg");
-        stored.setPreviewUrl("https://cdn.example.com/album/preview.jpg");
-        when(albumMapper.findPhotoById(901L)).thenReturn(stored);
-
-        AlbumPhotoVo uploaded = drafts.uploadMobilePhoto(
-                MANAGER,
-                9L,
-                file,
-                new AlbumPhotoMetadataDto("花", LocalDate.of(2026, 6, 1), "集市", 900, 1200, 1)
-        );
-
-        assertThat(uploaded.previewUrl()).isEqualTo("https://cdn.example.com/album/preview.jpg");
-        assertThat(uploaded.originalUrl()).isEqualTo("https://cdn.example.com/album/original.jpg");
-        assertThat(objects.stored()).extracting(ObjectStore.StoredObject::objectName)
-                .satisfiesExactly(
-                        name -> assertThat(name).matches("album/9/original/1/[0-9a-f-]+\\.jpg"),
-                        name -> assertThat(name).matches("album/9/preview/1/[0-9a-f-]+\\.jpg")
-                );
-        verify(albumMapper).insertPhoto(argThat(photo ->
-                objects.stored().get(1).url().equals(photo.getPreviewUrl())
-                        && objects.stored().get(0).url().equals(photo.getOriginalUrl())
-                        && "image/jpeg".equals(photo.getOriginalContentType())
-                        && "花".equals(photo.getCaption())
-                        && "集市".equals(photo.getLocation())
-        ));
-    }
-
-    @Test
-    void mobileUploadDoesNotInventLocationWhenMetadataHasNone() {
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum());
-        when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0);
-        doAnswer(invocation -> {
-            AlbumPhoto photo = invocation.getArgument(0);
-            photo.setId(901L);
-            return 1;
-        }).when(albumMapper).insertPhoto(any());
-        when(albumMapper.findPhotoById(901L)).thenReturn(storedPhoto(901L, 9L));
-
-        drafts.uploadMobilePhoto(
-                MANAGER,
-                9L,
-                TestImages.jpeg("file", "photo.jpg"),
-                new AlbumPhotoMetadataDto("Photo", LocalDate.of(2024, 2, 29), " ", 32, 32, 1)
-        );
-
-        verify(albumMapper).insertPhoto(argThat(photo -> photo.getLocation().isEmpty()));
-    }
-
-    @Test
-    void publishDraftRequiresAtLeastOnePhotoAndUsesFirstPreviewAsCover() {
-        Album draftAlbum = draftAlbum();
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
-        when(albumMapper.countPhotosByAlbumId(9L)).thenReturn(0, 1);
-        when(albumMapper.findFirstPhotoByAlbumId(9L)).thenReturn(storedPhoto(901L, 9L));
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum, draftAlbum, publishedAlbum());
-
-        assertThatThrownBy(() -> drafts.publish(MANAGER, 9L))
-                .isInstanceOfSatisfying(
-                        ApplicationFailure.class,
-                        failure -> assertThat(failure.code()).isEqualTo("ALBUM_PHOTO_REQUIRED")
-                );
-
-        AlbumDraftVo published = drafts.publish(MANAGER, 9L);
-
-        assertThat(published.album().title()).isEqualTo("草稿相册");
-        verify(albumMapper).publishAlbum(9L, "https://cdn.example.com/album/preview.webp", LocalDateTime.of(2026, 5, 16, 20, 0));
-    }
-
-    @Test
-    void cancelDraftDeletesDatabaseAndBestEffortStoredObjects() {
-        Album draftAlbum = draftAlbum();
-        AlbumPhoto photo = storedPhoto(901L, 9L);
-        when(albumMapper.findAlbumById(9L)).thenReturn(draftAlbum);
-        when(albumMapper.findPhotosByAlbumId(9L)).thenReturn(List.of(photo));
-
-        drafts.discard(MANAGER, 9L);
-
-        assertThat(objects.deleted()).containsExactly("album/9/original/original.jpg", "album/9/preview/preview.webp");
-        verify(albumMapper).deleteAlbumById(9L);
     }
 
     @Test
@@ -394,7 +197,7 @@ class AlbumModuleTests {
 
     @Test
     void likeUsesUtcDateWhenClockZoneHasAlreadyCrossedMidnight() {
-        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore")));
+        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-16T16:30:00Z"), ZoneId.of("Asia/Singapore")), new AlbumPublisher(albumMapper, new BCryptPasswordEncoder(), CLOCK));
         LocalDate utcDate = LocalDate.of(2026, 5, 16);
         LocalDateTime utcNow = LocalDateTime.of(2026, 5, 16, 16, 30);
         when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum(), publicAlbumWithLikes(1));
@@ -410,7 +213,7 @@ class AlbumModuleTests {
 
     @Test
     void activityReadsAndViewsUseUtcDayWhenClockZoneIsOnPreviousDay() {
-        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles")));
+        AlbumModule albumsAtMidnight = new AlbumModule(albumMapper, privateAccess, Clock.fixed(Instant.parse("2026-05-17T00:30:00Z"), ZoneId.of("America/Los_Angeles")), new AlbumPublisher(albumMapper, new BCryptPasswordEncoder(), CLOCK));
         LocalDate utcDate = LocalDate.of(2026, 5, 17);
         LocalDateTime utcNow = LocalDateTime.of(2026, 5, 17, 0, 30);
         when(albumMapper.countPublishedAlbums()).thenReturn(1L);

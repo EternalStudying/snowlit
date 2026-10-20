@@ -1,6 +1,6 @@
 package xyz.snowlit;
 
-import xyz.snowlit.album.AlbumDrafts;
+import xyz.snowlit.album.AlbumPublisher;
 import xyz.snowlit.album.AlbumModule;
 import xyz.snowlit.album.AlbumPrivateAccess;
 import xyz.snowlit.auth.AuthModule;
@@ -37,7 +37,7 @@ class SpringModuleWiringTests {
         return Stream.of(AlbumModule.class, AuthModule.class, DiaryModule.class, FeedbackModule.class,
                 HomeModule.class, MessageModule.class, NoticeModule.class, StoryModule.class,
                 WeatherModule.class, WishModule.class, ImageIntake.class, AuthSessions.class,
-                AlbumDrafts.class, AlbumPrivateAccess.class, MemberLocations.class);
+                AlbumPublisher.class, xyz.snowlit.draft.DraftModule.class, AlbumPrivateAccess.class, MemberLocations.class);
     }
 
     @ParameterizedTest
@@ -48,7 +48,7 @@ class SpringModuleWiringTests {
             // constructor and create transaction proxies just as application startup does.
             var constructor = Arrays.stream(module.getConstructors()).findFirst().orElseThrow();
             Arrays.stream(constructor.getParameterTypes())
-                    .filter(type -> type != String.class && type != Environment.class)
+                    .filter(type -> type != String.class && type != Environment.class && type != PlatformTransactionManager.class)
                     .distinct()
                     .forEach(type -> context.getBeanFactory().registerSingleton(type.getName(), mock(type)));
             context.register(TransactionConfiguration.class, module);

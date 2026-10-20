@@ -57,7 +57,7 @@ public interface AlbumMapper {
                    a.created_by_user_id,
                    (select count(*) from photos p where p.album_id = a.id) as photo_count
             from albums a
-            where a.id = #{albumId}
+            where a.id = #{albumId} and a.status = 'published'
             limit 1
             """)
     @Results(value = {
@@ -74,20 +74,6 @@ public interface AlbumMapper {
             @Result(column = "created_by_user_id", property = "createdByUserId")
     })
     Album findAlbumById(Long albumId);
-
-    @Select("""
-            select a.id, a.title, a.description, a.cover_photo_url, a.author_name, a.created_at,
-                   a.event_date, a.location, a.view_count, a.like_count, a.visibility,
-                   a.private_password_hash, a.pinned, a.sort_order, a.status, a.published_at,
-                   a.created_by_user_id,
-                   (select count(*) from photos p where p.album_id = a.id) as photo_count
-            from albums a
-            where a.status = 'draft' and a.created_by_user_id = #{userId}
-            order by a.created_at desc, a.id desc
-            limit 1
-            """)
-    @ResultMap("albumMap")
-    Album findLatestDraftByUserId(Long userId);
 
     @Select("""
             select id, album_id, caption, description, taken_at, location, sort_order, width, height,
@@ -193,20 +179,6 @@ public interface AlbumMapper {
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertPhoto(AlbumPhoto photo);
-
-    @Update("""
-            update albums
-            set status = 'published',
-                published_at = #{publishedAt},
-                cover_photo_url = #{coverPhotoUrl}
-            where id = #{albumId} and status = 'draft'
-            """)
-    int publishAlbum(@Param("albumId") Long albumId,
-                     @Param("coverPhotoUrl") String coverPhotoUrl,
-                     @Param("publishedAt") LocalDateTime publishedAt);
-
-    @Delete("delete from albums where id = #{albumId} and status = 'draft'")
-    int deleteAlbumById(Long albumId);
 
     @Update("update albums set like_count = like_count + 1 where id = #{albumId}")
     int incrementLike(Long albumId);
@@ -339,7 +311,7 @@ public interface AlbumMapper {
             select p.id, p.album_id, p.preview_url, p.caption, p.taken_at
             from photos p
             join albums a on a.id = p.album_id
-            where a.visibility = 'public'
+            where a.visibility = 'public' and a.status = 'published'
             order by p.taken_at desc, p.id desc
             limit 1
             """)
@@ -350,6 +322,6 @@ public interface AlbumMapper {
     })
     AlbumPhoto findLatestPublicPhoto();
 
-    @Select("select count(*) from photos")
+    @Select("select count(*) from photos p join albums a on a.id = p.album_id where a.status = 'published'")
     long countAllPhotos();
 }

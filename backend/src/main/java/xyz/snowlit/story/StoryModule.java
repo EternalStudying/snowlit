@@ -26,7 +26,7 @@ import java.util.Set;
 public final class StoryModule {
 
     private static final Set<String> CATEGORIES = Set.of("daily", "date", "travel", "anniversary", "surprise");
-    private static final ImagePolicy IMAGE = ImagePolicy.standard("STORY", "story", true, "图片上传失败，请稍后重试");
+    public static final ImagePolicy IMAGE = ImagePolicy.standard("STORY", "story", true, "图片上传失败，请稍后重试");
     private static final int MAX_IMAGES = 3;
 
     private final StoryMapper storyMapper;
@@ -69,6 +69,10 @@ public final class StoryModule {
         moment.setUpdatedAt(now);
         storyMapper.insertMoment(moment);
         return toVo(moment);
+    }
+
+    public StoryMomentVo createFromDraft(AuthenticatedActor actor, StoryMomentUpsertDto request) {
+        return create(actor, request);
     }
 
     public StoryMomentVo update(AuthenticatedActor actor, Long id, StoryMomentUpsertDto request) {

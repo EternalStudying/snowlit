@@ -26,6 +26,7 @@ class ArchitectureTests {
             "album",
             "auth",
             "diary",
+            "draft",
             "feedback",
             "home",
             "messages",
@@ -70,6 +71,7 @@ class ArchitectureTests {
                         "AlbumModule.java",
                         "AuthModule.java",
                         "DiaryModule.java",
+                        "DraftModule.java",
                         "FeedbackModule.java",
                         "HomeModule.java",
                         "MessageModule.java",
@@ -238,7 +240,8 @@ class ArchitectureTests {
                 "diaries",
                 "diary_uploads",
                 "diary_images",
-                "moments"
+                "moments",
+                "drafts"
         );
         for (String table : targetTables) {
             assertThat(schema).contains("create table if not exists " + table);

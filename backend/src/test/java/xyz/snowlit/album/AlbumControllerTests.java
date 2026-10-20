@@ -4,9 +4,7 @@ import xyz.snowlit.auth.AuthenticatedActor;
 import xyz.snowlit.failure.ApplicationFailure;
 import xyz.snowlit.support.AuthenticatedRequestFixture;
 import xyz.snowlit.web.ApiExceptionHandler;
-import xyz.snowlit.album.AlbumVos.AlbumCurrentDraftVo;
 import xyz.snowlit.album.AlbumVos.AlbumDetailVo;
-import xyz.snowlit.album.AlbumVos.AlbumDraftVo;
 import xyz.snowlit.album.AlbumVos.AlbumLikeVo;
 import xyz.snowlit.album.AlbumVos.AlbumPageVo;
 import xyz.snowlit.album.AlbumVos.AlbumPhotoVo;
@@ -43,11 +41,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AlbumControllerTests {
 
     private final AlbumModule albumService = mock(AlbumModule.class);
-    private final AlbumDrafts drafts = mock(AlbumDrafts.class);
     private final AlbumPrivateAccess privateAccess = mock(AlbumPrivateAccess.class);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
-                    new AlbumController(albumService, drafts, privateAccess, new ObjectMapper().findAndRegisterModules())
+                    new AlbumController(albumService, privateAccess)
             )
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
@@ -181,69 +178,13 @@ class AlbumControllerTests {
     }
 
     @Test
-    void draftEndpointsExposeCreateUploadPublishAndCancelContracts() throws Exception {
-        when(drafts.currentDraft(any(AuthenticatedActor.class))).thenReturn(new AlbumCurrentDraftVo(new AlbumDraftVo(album(false, List.of()), List.of())));
-        when(drafts.createDraft(any(AuthenticatedActor.class), any())).thenReturn(new AlbumDraftVo(album(false, List.of()), List.of()));
-        when(drafts.uploadPhoto(any(AuthenticatedActor.class), eq(1L), any(), any(), any())).thenReturn(photo());
-        when(drafts.uploadMobilePhoto(any(AuthenticatedActor.class), eq(1L), any(), any())).thenReturn(photo());
-        when(drafts.publish(any(AuthenticatedActor.class), eq(1L)))
-                .thenReturn(new AlbumDraftVo(album(false, List.of(photo())), List.of(photo())));
-
-        mockMvc.perform(get("/api/albums/drafts/current")
-                        .header("Authorization", requests.authorization()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.draft.album.title").value("见面出游"));
-
-        mockMvc.perform(post("/api/albums")
-                        .header("Authorization", requests.authorization())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "title":"新相册",
-                                  "description":"周末见面",
-                                  "eventDate":"2026-06-01",
-                                  "location":"尼斯",
-                                  "visibility":"public"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.album.title").value("见面出游"));
-
-        mockMvc.perform(multipart("/api/albums/1/photos")
-                        .file("original", "original".getBytes())
-                        .file("preview", "preview".getBytes())
-                        .param("metadata", """
-                                {"caption":"海边","takenAt":"2026-06-01","location":"尼斯","width":1200,"height":800,"sortOrder":1}
-                                """)
-                        .header("Authorization", requests.authorization()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.previewUrl").value("https://example.com/photo.jpg"))
-                .andExpect(jsonPath("$.originalUrl").value("https://example.com/original.jpg"))
-                .andExpect(jsonPath("$.url").doesNotExist())
-                .andExpect(jsonPath("$.thumbnailUrl").doesNotExist());
-
-        mockMvc.perform(multipart("/api/albums/1/photos/mobile")
-                        .file("file", "mini-program-image".getBytes())
-                        .param("metadata", """
-                                {"caption":"海边","takenAt":"2026-06-01","location":"尼斯","width":1200,"height":800,"sortOrder":1}
-                                """)
-                        .header("Authorization", requests.authorization()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.previewUrl").value("https://example.com/photo.jpg"))
-                .andExpect(jsonPath("$.originalUrl").value("https://example.com/original.jpg"))
-                .andExpect(jsonPath("$.url").doesNotExist())
-                .andExpect(jsonPath("$.thumbnailUrl").doesNotExist());
-
-        mockMvc.perform(post("/api/albums/1/publish")
-                        .header("Authorization", requests.authorization()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.photos[0].caption").value("海边日落"));
-
-        mockMvc.perform(delete("/api/albums/1/draft")
-                        .header("Authorization", requests.authorization()))
-                .andExpect(status().isNoContent());
-
-        verify(drafts).discard(any(AuthenticatedActor.class), eq(1L));
+    void oldDraftEndpointsHaveNoMappings() throws Exception {
+        mockMvc.perform(get("/api/albums/drafts/current")).andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/albums")).andExpect(status().isMethodNotAllowed());
+        for (String path : List.of("/api/albums/1/photos", "/api/albums/1/photos/mobile", "/api/albums/1/publish")) {
+            mockMvc.perform(post(path)).andExpect(status().isNotFound());
+        }
+        mockMvc.perform(delete("/api/albums/1/draft")).andExpect(status().isNotFound());
     }
 
     private AlbumVo album(boolean locked, List<AlbumPhotoVo> previewPhotos) {
