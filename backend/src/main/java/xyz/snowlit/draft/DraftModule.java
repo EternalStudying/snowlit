@@ -218,11 +218,12 @@ public class DraftModule {
         photo.setWidth(image.width()); photo.setHeight(image.height());
         photo.setPreviewUrl(image.url()); photo.setPreviewObjectName(image.objectName());
         photo.setPreviewContentType(image.contentType()); photo.setPreviewSizeBytes(image.sizeBytes());
+        // Every album draft image has an original: mobile uploads store the one file twice.
         ObjectStore.StoredObject original = image.original();
-        photo.setOriginalUrl(original == null ? image.url() : original.url());
-        photo.setOriginalObjectName(original == null ? image.objectName() : original.objectName());
-        photo.setOriginalContentType(original == null ? image.contentType() : original.contentType());
-        photo.setOriginalSizeBytes(original == null ? image.sizeBytes() : original.sizeBytes());
+        photo.setOriginalUrl(original.url());
+        photo.setOriginalObjectName(original.objectName());
+        photo.setOriginalContentType(original.contentType());
+        photo.setOriginalSizeBytes(original.sizeBytes());
         return photo;
     }
 

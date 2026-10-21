@@ -52,7 +52,7 @@ public final class AlbumPublisher {
         album.setPrivatePasswordHash("private".equals(request.visibility()) ? passwords.encode(Text.trim(request.privatePassword())) : null);
         album.setCreatedByUserId(actor.userId()); album.setAuthorName(actor.displayName());
         album.setCreatedAt(now); album.setPublishedAt(now); album.setStatus("published");
-        album.setSortOrder(100); album.setViewCount(0L); album.setLikeCount(0L);
+        album.setSortOrder(Boolean.TRUE.equals(request.pinned()) ? 10 : 100); album.setViewCount(0L); album.setLikeCount(0L);
         album.setPhotoCount(photos.size()); album.setCoverPhotoUrl(photos.get(0).getPreviewUrl());
         mapper.insertAlbum(album);
         for (int i = 0; i < photos.size(); i++) {

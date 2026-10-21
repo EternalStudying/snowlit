@@ -29,4 +29,12 @@ describe('album draft gateway', () => {
     expect(metadata).toEqual({caption:'Photo',takenAt:'2026-05-20',location:'',width:1,height:1});
     expect(JSON.parse(String(adapter.mock.calls[3][1]?.body))).toEqual({fields:{title:'Private',description:'',eventDate:'2026-05-20',location:'',visibility:'private'},privatePassword:'test-password'});
   });
+
+  it('leaves a cleared album date out of the saved fields', async () => {
+    setAuthToken('test-token');
+    const adapter = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse(currentDraft));
+    const gateway = createHttpAlbumGateway({ adapter, privateAccessStore: { get: () => null, set: vi.fn(), clear: vi.fn() } });
+    await gateway.createDraft({ title:'Untitled', description:'', eventDate:'', location:'', visibility:'public' as const, privatePassword:'' });
+    expect(JSON.parse(String(adapter.mock.calls[0][1]?.body)).fields).not.toHaveProperty('eventDate');
+  });
 });

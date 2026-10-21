@@ -178,5 +178,6 @@ function privateAccessHeaders(
 
 function draftFields(payload: import('../model').AlbumDraftFields) {
   const { title, description, eventDate, location, visibility, pinned } = payload;
-  return { title, description, eventDate, location, visibility, pinned };
+  // A cleared date input is "not set yet": the server accepts a missing date, not an empty one.
+  return { title, description, ...(eventDate ? { eventDate } : {}), location, visibility, pinned };
 }

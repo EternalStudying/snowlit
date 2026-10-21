@@ -189,6 +189,14 @@ class DraftModuleTests {
         assertThat(rows.rows).isEmpty(); assertThat(objects.stored()).hasSize(4);
     }
 
+    @Test void pinnedAlbumPublishesWithThePinnedSortOrder() {
+        doAnswer(i -> { ((Album)i.getArgument(0)).setId(19L); return 1; }).when(albumMapper).insertAlbum(any());
+        upload(DraftKind.ALBUM);
+        var pinned = albumFields().deepCopy(); ((com.fasterxml.jackson.databind.node.ObjectNode) pinned).put("pinned", true);
+        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(pinned, null));
+        verify(albumMapper).insertAlbum(argThat(a -> a.isPinned() && a.getSortOrder() == 10));
+    }
+
     @Test void olderOverLimitAlbumStaysIntactUntilReducedToFiftyPhotos() throws Exception {
         upload(DraftKind.ALBUM);
         var row = rows.find(1L, "album");
