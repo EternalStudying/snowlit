@@ -6,7 +6,7 @@ Implement server drafts for albums, diaries and moments from `docs/specs/2026-10
 
 ## Current Phase
 
-Implementation, regression review and documentation are complete. Backend/Web/native commits are recorded in [the report](docs/drafts-implementation-report.md). Simulator acceptance is explicitly skipped; retained-database rollout remains outside this task.
+Implementation, regression review and documentation are complete. Backend/Web/native commits are recorded in [the report](docs/drafts-implementation-report.md). Simulator acceptance is explicitly skipped. The local retained database has the drafts table (2026-10-21).
 
 ### Phase 1: Backend
 - **Status:** complete
@@ -35,6 +35,10 @@ Implementation, regression review and documentation are complete. Backend/Web/na
 ### Phase 7: Review fixes (2026-10-21)
 - **Status:** complete
 - Queued uploads now finish after a creation page closes; pinned albums keep sort order 10; the Web omits a cleared album date. Drafts API smoke-tested against throwaway MySQL/Redis (34/34). See the review section of [the report](docs/drafts-implementation-report.md).
+
+### Phase 8: Local database rollout (2026-10-21)
+- **Status:** complete
+- Backed up `snowlit_dev`, created the drafts table and converted the one legacy album draft (9205) in one transaction; other tables unchanged. The running service still needs a restart from main with SQL_INIT_MODE=never. See the report.
 
 ## Owner Clarifications
 

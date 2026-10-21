@@ -181,3 +181,21 @@ After the fixes: backend 302, Web 451 plus typecheck and build, mini program 184
 
 Still not verified: simulator and devices (native picking, WXML/WXSS compilation), MinIO for draft objects, and the rollout on the retained database (table creation and conversion of old album drafts), which needs the owner's go-ahead and a backup.
 
+## Local database rollout (2026-10-21)
+
+Done on the developer's retained `snowlit_dev` with the owner's go-ahead. The service was not restarted and `schema.sql` was not run.
+
+1. A full `mysqldump` backup was taken first: 41,881 bytes, 16 tables, SHA-256 prefix `66529833d0fbf492`. It is kept in the git-ignored `codex-work/drafts-rollout-20261021/`.
+2. A read-only count found one legacy album draft: id 9205, member 2, private, no photos, no activity or lock rows. It is the demo seed row.
+3. The `create table if not exists drafts` statement, copied verbatim from `schema.sql`, was run on its own, because DDL commits implicitly in MySQL.
+4. The conversion ran in one transaction: insert the album draft (fields only, password hash not carried over, `pinned` stored as a JSON boolean), then delete album 9205. State-checking guards abort the session unless exactly one draft exists and the album is gone.
+   - Two earlier attempts aborted on faulty guards and rolled back, leaving no change.
+   - A constant error expression is folded at prepare time.
+   - `ROW_COUNT()` read 0 after comment lines.
+5. Verification:
+   - per-table row counts differ only in `albums` (7 → 6) and the new `drafts` (1);
+   - the draft's fields pass the draft field rules;
+   - no album has status `draft`.
+
+The running service on port 8080 still runs the previous build. Restart it from `main` with `SQL_INIT_MODE=never` to serve the drafts API.
+
