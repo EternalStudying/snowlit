@@ -151,3 +151,33 @@ All 14 changed/new context documents are English. A relative-link audit found 99
 - WXML/WXSS compilation, live browser acceptance, native photo/camera picking, physical devices, real MySQL transactions/concurrency, Redis/MinIO integration and production were not run for this feature. Unit/mocked checks do not establish those results.
 - No retained database was inspected, initialized or given a drafts table. The reviewer rollout remains required before deploying this code against retained data. Never run the destructive whole schema.sql on a retained database.
 - No production domain/TLS, WeChat permission/privacy-backend settings or release/review approval was verified. No new native permission API was introduced; the existing media disclosure identifies active image selection and upload.
+
+## Review (2026-10-21)
+
+Independent review of the branch against the specification. All reported numbers reproduced: backend 301, Web 450 plus typecheck and build, mini program 180 in four timezones, 133 syntax checks. The backend design (row-locked image changes, server-only object names, post-commit deletion, publish failures that keep the newest fields because every target validates before writing) matches the spec.
+
+Fixed on this branch by the reviewer:
+
+- **Queued uploads stopped when the page closed** (`75df8e4`). Photos still waiting in the queue were dropped on exit, the case drafts exist for. Only a member change stops uploads now. The album waits on a plain counter, not page data, so an upload queued behind photo reading cannot loop after unload. A diary upload that finishes after unload is written into the saved text before the final save. Handlers drop closed-page guards that could not fire. Four new tests fail on the previous page code.
+- **Pinned albums sorted after older pinned ones** (`f461b82`). Publishing wrote sort order 100; pinned albums get 10 again. New test fails without the fix.
+- **The Web sent an empty `eventDate`** when the date input was cleared, which the server rejects (`f461b82`). It now leaves the date out, as the mini program does.
+- Album draft images always carry an original, so publishing drops the fallback for a missing one.
+
+Verified against real MySQL 8.4 and Redis 7.4 (throwaway containers, `SQL_INIT_MODE=always`, local-disk storage, packaged jar on port 18080, started outside the repository so `config/local.properties` could not load): 34/34 HTTP checks in `codex-work/drafts/smoke-drafts-api.py`, including:
+- concurrent first saves leaving one row;
+- five parallel uploads all landing;
+- object names absent from responses;
+- member isolation;
+- a failed publish keeping the newest fields;
+- album, diary and moment publish;
+- diary image promotion, and the same-date conflict keeping the draft;
+- discard;
+- the removed old endpoints;
+- the unknown-kind error.
+
+Stored files matched the database after image removal, diary publish and discard. Containers were stopped afterwards; the developer's own services were not touched.
+
+After the fixes: backend 302, Web 451 plus typecheck and build, mini program 184 in four timezones.
+
+Still not verified: simulator and devices (native picking, WXML/WXSS compilation), MinIO for draft objects, and the rollout on the retained database (table creation and conversion of old album drafts), which needs the owner's go-ahead and a backup.
+

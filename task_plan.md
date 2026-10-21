@@ -32,6 +32,10 @@ Implementation, regression review and documentation are complete. Backend/Web/na
 - **Status:** complete
 - Reproduced and repaired pending deletion racing with unload. Fields flush immediately, then a final cleaned snapshot is saved after successful deletion; failed deletion preserves references and token changes stop writes. Four new controlled exit tests pass; latest native suites each pass 180 tests.
 
+### Phase 7: Review fixes (2026-10-21)
+- **Status:** complete
+- Queued uploads now finish after a creation page closes; pinned albums keep sort order 10; the Web omits a cleared album date. Drafts API smoke-tested against throwaway MySQL/Redis (34/34). See the review section of [the report](docs/drafts-implementation-report.md).
+
 ## Owner Clarifications
 
 1. Keep the 60,000-character diary cap; additionally limit text and complete serialized fields_json to 65,535 UTF-8 bytes. DRAFT_FIELDS_INVALID on overflow; existing table definitions unchanged.
