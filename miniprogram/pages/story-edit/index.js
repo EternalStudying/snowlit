@@ -63,6 +63,7 @@ Page({
     this.autosave = createDraftAutosave({ page: this, kind: 'moment', read: () => storyDraftFields(this.data.form),
       view: (draftStatus) => { if (!this.disposed) this.setData({ draftStatus }); },
       sessionChanged: () => {
+        this.sessionEnded = true;
         this.disposed = true;
         this.setData({ form: createInitialStoryForm(), images: [], draftStatus: '', removingImage: false, draftLocked: true, submitting: false, uploading: false, message: '', dateSheetVisible: false, timeSheetVisible: false, activePickerField: '', activePickerValue: '', activePickerTitle: '' });
       }
@@ -121,7 +122,7 @@ Page({
   },
 
   handleInput(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
@@ -134,7 +135,7 @@ Page({
   },
 
   openStoryDateSheet(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
@@ -158,7 +159,7 @@ Page({
   },
 
   confirmStoryDateFromSheet(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = this.data.activePickerField;
     if (!field) {
       return;
@@ -175,7 +176,7 @@ Page({
   },
 
   openStoryTimeSheet(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
@@ -199,7 +200,7 @@ Page({
   },
 
   confirmStoryTimeFromSheet(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = this.data.activePickerField;
     if (!field) {
       return;
@@ -216,7 +217,7 @@ Page({
   },
 
   clearEndTime() {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       'form.endDate': '',
       'form.endTime': '',
@@ -226,7 +227,7 @@ Page({
   },
 
   handleCategoryTap(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const value = event.currentTarget.dataset.value;
     this.setData({
       'form.category': value,
@@ -237,8 +238,7 @@ Page({
   },
 
   chooseImages() {
-    if (this.data.removingImage) return;
-    if (this.data.submitting || this.data.loadingMoment || this.data.draftLocked || this.disposed) {
+    if (this.data.removingImage || this.data.submitting || this.data.loadingMoment || this.data.draftLocked) {
       return;
     }
     if (!this.data.canAddImage) {
@@ -251,7 +251,7 @@ Page({
       count: MAX_STORY_IMAGES - this.data.images.length,
       title: '选择图片',
       message: '需要读取你选中的照片，用于添加点滴图片。',
-      isBlocked: () => this.data.submitting || this.data.loadingMoment || this.data.draftLocked || this.disposed || this.data.uploading
+      isBlocked: () => this.data.submitting || this.data.loadingMoment || this.data.draftLocked || this.data.uploading
     }).then((files) => {
       if (!files.length) {
         return;
@@ -268,7 +268,7 @@ Page({
   },
 
   removeImage(event) {
-    if (this.data.removingImage || this.data.submitting || this.data.loadingMoment || this.data.uploading || this.data.draftLocked || this.disposed) return;
+    if (this.data.removingImage || this.data.submitting || this.data.loadingMoment || this.data.uploading || this.data.draftLocked) return;
     const index = Number(event.currentTarget.dataset.index);
     const image = this.data.images[index];
     if (!Number.isInteger(index) || !image) return;
@@ -299,8 +299,7 @@ Page({
   },
 
   submitMoment() {
-    if (this.data.removingImage) return;
-    if (this.data.submitting || this.data.loadingMoment || this.data.draftLocked || this.disposed) {
+    if (this.data.removingImage || this.data.submitting || this.data.loadingMoment || this.data.draftLocked) {
       return;
     }
 
@@ -357,7 +356,8 @@ Page({
   uploadImages() {
     if (this.uploadTask) return this.uploadTask;
     const isCurrent = beginRequest(this, 'draft-upload');
-    const active = () => isCurrent() && !this.disposed;
+    // Uploads continue after the page closes; only a member change stops them.
+    const active = () => isCurrent() && !this.sessionEnded;
     this.setData({ uploading: true });
     this.uploadTask = uploadQueue({
       read: () => active() ? this.data.images : [],
@@ -367,7 +367,7 @@ Page({
       onUploaded: (response, index) => { if (active() && !this.data.isEditing) this.updateImages(patchItem(this.data.images, index, { serverId: response.id })); }
     }).finally(() => {
       this.uploadTask = null;
-      if (active()) this.setData({ uploading: false });
+      if (active() && !this.disposed) this.setData({ uploading: false });
     });
     return this.uploadTask;
   },

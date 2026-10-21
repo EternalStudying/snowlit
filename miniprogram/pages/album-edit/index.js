@@ -25,10 +25,6 @@ const NO_PHOTO_DETAILS_HINT = '照片里没有拍摄时间和地点，可以手�
 // Originals are picked so their EXIF can be read; what gets uploaded is re-encoded without it.
 function compressForUpload(path) {
   return new Promise((resolve, reject) => {
-    if (typeof wx.compressImage !== 'function') {
-      reject(new Error('照片处理失败，请重试'));
-      return;
-    }
     wx.compressImage({
       src: path,
       quality: 80,
@@ -61,7 +57,7 @@ Page({
     this.startAutosave();
     this.setData({ draftLocked: true });
     return loadDraft(this, 'album').then((result) => {
-      if (!result.current || this.metadataDisposed) return;
+      if (!result.current || this.closed) return;
       if (result.draft) {
         this.setData({ form: mapAlbumDraft(result.draft) });
         this.settledFields = { eventDate: Boolean(this.data.form.eventDate), location: Boolean(this.data.form.location) };
@@ -70,15 +66,16 @@ Page({
         })));
       }
       this.setData({ draftLocked: false });
-    }).catch((error) => { if (!this.metadataDisposed) this.setData({ message: error.message || '草稿加载失败，请重新打开页面' }); });
+    }).catch((error) => { if (!this.closed) this.setData({ message: error.message || '草稿加载失败，请重新打开页面' }); });
   },
 
   startAutosave() {
     if (this.autosave) this.autosave.stop();
     this.autosave = createDraftAutosave({ page: this, kind: 'album', read: () => albumDraftFields(this.data.form),
-      view: (draftStatus) => { if (!this.metadataDisposed) this.setData({ draftStatus }); },
+      view: (draftStatus) => { if (!this.closed) this.setData({ draftStatus }); },
       sessionChanged: () => {
-        this.metadataDisposed = true;
+        this.sessionEnded = true;
+        this.closed = true;
         this.setData({ form: createInitialAlbumForm(), photos: [], draftStatus: '', removingImage: false, draftLocked: true, submitting: false, uploading: false, metadataReading: false, metadataHint: '', message: '', dateSheetVisible: false, visibilitySheetVisible: false });
       }
     });
@@ -93,7 +90,7 @@ Page({
   },
 
   onUnload() {
-    this.metadataDisposed = true;
+    this.closed = true;
     if (this.autosave) return this.autosave.flush().finally(() => this.autosave.stop());
     return Promise.resolve();
   },
@@ -107,7 +104,7 @@ Page({
   },
 
   handleInput(event) {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
     if (!field) {
       return;
@@ -123,7 +120,7 @@ Page({
   },
 
   openVisibilitySheet() {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       visibilitySheetVisible: true,
       message: ''
@@ -137,7 +134,7 @@ Page({
   },
 
   selectVisibilityFromSheet(event) {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const value = event.detail && event.detail.value;
     const option = VISIBILITY_OPTIONS.find((item) => item.value === value) || VISIBILITY_OPTIONS[0];
     this.setData({
@@ -151,7 +148,7 @@ Page({
   },
 
   togglePinned() {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       'form.pinned': !this.data.form.pinned,
       message: ''
@@ -160,7 +157,7 @@ Page({
   },
 
   openDateSheet() {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       dateSheetVisible: true,
       message: ''
@@ -174,7 +171,7 @@ Page({
   },
 
   confirmDateFromSheet(event) {
-    if (this.data.draftLocked || this.metadataDisposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const value = event.detail && event.detail.value;
     if (!value) {
       return;
@@ -190,8 +187,7 @@ Page({
   },
 
   choosePhotos() {
-    if (this.data.removingImage) return;
-    if (this.data.submitting || this.queuedSave || this.data.draftLocked || this.data.uploading || this.metadataDisposed) {
+    if (this.data.removingImage || this.data.submitting || this.queuedSave || this.data.draftLocked || this.data.uploading) {
       return;
     }
     if (!this.data.canAddPhoto) {
@@ -205,7 +201,7 @@ Page({
       message: '需要读取你选中的照片及其中的拍摄时间和地点，用于添加相册照片并自动填写日期和地点。',
       noun: '照片',
       sizeType: ['original'],
-      isBlocked: () => this.data.submitting || Boolean(this.queuedSave) || this.data.draftLocked || this.data.uploading || this.metadataDisposed
+      isBlocked: () => this.data.submitting || Boolean(this.queuedSave) || this.data.draftLocked || this.data.uploading
     }).then((files) => {
       if (!files.length) {
         return;
@@ -218,11 +214,13 @@ Page({
       }
       this.changed();
       return this.fillFromPhotos(result.photos.slice(before)).then(() => {
-        if (!this.metadataDisposed) return this.uploadPhotos().catch((error) => {
+        // Uploads continue after the page closes; only a member change stops them.
+        if (this.sessionEnded) return undefined;
+        return this.uploadPhotos().catch((error) => {
+          if (this.closed) return;
           this.setData({ message: error.message || '照片上传失败，请重试' });
           showInfo(error.message || '照片上传失败，请重试');
         });
-        return undefined;
       });
     });
   },
@@ -241,7 +239,7 @@ Page({
    * take the earliest date and the place of the first photo with GPS.
    */
   fillFromPhotos(photos) {
-    const active = () => !this.metadataDisposed;
+    const active = () => !this.closed;
     const retained = (id) => active() && this.data.photos.some((photo) => photo.id === id);
     const updateHint = () => {
       if (!active()) return;
@@ -304,7 +302,7 @@ Page({
       if (active()) this.setData({ metadataHint: '未能读取照片拍摄信息，请手动填写' });
     }).finally(() => {
       this.metadataPending -= 1;
-      if (active() && this.metadataPending === 0) this.setData({ metadataReading: false });
+      if (this.metadataPending === 0) this.setData({ metadataReading: false });
     });
     this.metadataTask = Promise.all([this.metadataTask || Promise.resolve(), task]).then(() => undefined);
     return task;
@@ -323,7 +321,7 @@ Page({
   },
 
   removePhoto(event) {
-    if (this.data.removingImage || this.data.submitting || this.data.uploading || this.data.draftLocked || this.metadataDisposed) return;
+    if (this.data.removingImage || this.data.submitting || this.data.uploading || this.data.draftLocked) return;
     const index = Number(event.currentTarget.dataset.index);
     const photo = this.data.photos[index];
     if (!Number.isInteger(index) || !photo) return;
@@ -335,8 +333,8 @@ Page({
     this.setData({ removingImage: true });
     const remove = removeDraftImage('album', photo.serverId);
     return remove.then(() => {
-      if (isCurrent() && !this.metadataDisposed) this.updatePhotos(this.data.photos.filter((item) => item.id !== photo.id));
-    }).catch((error) => { if (isCurrent() && !this.metadataDisposed) { this.setData({ message: error.message }); showInfo(error.message); } }).finally(() => { if (isCurrent() && !this.metadataDisposed) this.setData({ removingImage: false }); });
+      if (isCurrent() && !this.closed) this.updatePhotos(this.data.photos.filter((item) => item.id !== photo.id));
+    }).catch((error) => { if (isCurrent() && !this.closed) { this.setData({ message: error.message }); showInfo(error.message); } }).finally(() => { if (isCurrent() && !this.closed) this.setData({ removingImage: false }); });
   },
 
   updatePhotos(photos) {
@@ -379,10 +377,11 @@ Page({
   },
 
   uploadPhotos() {
-    if (this.data.metadataReading) return this.metadataTask.then(() => this.uploadPhotos());
+    // Wait on the plain counter, not page data: setData may no longer apply once the page has closed.
+    if (this.metadataPending > 0) return this.metadataTask.then(() => this.uploadPhotos());
     if (this.uploadTask) return this.uploadTask;
     const isCurrent = beginRequest(this, 'draft-upload');
-    const active = () => isCurrent() && !this.metadataDisposed;
+    const active = () => isCurrent() && !this.sessionEnded;
     if (!active()) return Promise.resolve();
     this.setData({ uploading: true });
     this.uploadTask = uploadQueue({
@@ -401,7 +400,7 @@ Page({
       onUploaded: (response, index) => { if (active()) this.patchPhoto(index, { serverId: response.id }); }
     }).finally(() => {
       this.uploadTask = null;
-      if (active()) this.setData({ uploading: false });
+      if (active() && !this.closed) this.setData({ uploading: false });
     });
     return this.uploadTask;
   },
@@ -421,15 +420,14 @@ Page({
   },
 
   saveAlbum() {
-    if (this.data.removingImage) return;
-    if (this.data.submitting || this.metadataDisposed || this.data.draftLocked) {
+    if (this.data.removingImage || this.data.submitting || this.data.draftLocked) {
       return;
     }
     if (this.data.metadataReading) {
       if (!this.queuedSave) {
         this.queuedSave = this.metadataTask.then(() => {
           this.queuedSave = null;
-          if (!this.metadataDisposed) return this.saveAlbum();
+          if (!this.closed) return this.saveAlbum();
           return undefined;
         });
       }
@@ -453,12 +451,12 @@ Page({
     return this.uploadPhotos()
       .then(() => this.autosave ? this.autosave.flush() : undefined)
       .then(() => {
-        if (!isCurrent() || this.metadataDisposed) return null;
+        if (!isCurrent() || this.closed) return null;
         if (this.autosave) this.autosave.pause();
         return publishDraft('album', albumDraftFields(this.data.form), { privatePassword: validation.payload.privatePassword });
       })
       .then((result) => {
-        if (!result || !isCurrent() || this.metadataDisposed) return;
+        if (!result || !isCurrent() || this.closed) return;
         this.published = true;
         if (this.autosave) this.autosave.stop();
         this.refreshAlbumPages();
@@ -466,7 +464,7 @@ Page({
         setTimeout(() => this.goBack(), 700);
       })
       .catch((error) => {
-        if (!isCurrent() || this.metadataDisposed) return;
+        if (!isCurrent() || this.closed) return;
         if (this.autosave) this.autosave.resume();
         else this.startAutosave();
         this.changed();
@@ -474,6 +472,6 @@ Page({
         this.setData({ message });
         showInfo(message);
       })
-      .finally(() => { if (isCurrent() && !this.metadataDisposed) this.setData({ submitting: false }); });
+      .finally(() => { if (isCurrent() && !this.closed) this.setData({ submitting: false }); });
   }
 });

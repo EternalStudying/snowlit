@@ -429,3 +429,31 @@ test('diary exit: pending removal and an earlier field save serialize the final 
   c.finish(c.saves()[1], { updatedAt: '2026-05-20T21:21:00' }); await hiding; await unloading;
   assert.equal(unloadedWrites, 0);
 });
+
+for (const kind of Object.keys(routes)) {
+  test(`${kind} exit: photos still queued when the page closes keep uploading into the draft`, async () => {
+    const c = createPage(kind, { fullBatch: true, waitUpload: true });
+    await c.page.onLoad({});
+    c.page[inputs[kind]](); await settle();
+    assert.equal(c.uploads.length, 1, 'uploads run one at a time');
+    const unload = c.page.onUnload();
+    c.finish(c.uploads[0], JSON.stringify({ id: 'image-1', url: '/uploads/picked-1.jpg' })); await settle();
+    assert.equal(c.uploads.length, 2, 'the next queued photo still uploads after the page closed');
+    c.setToken('member-b'); await settle();
+    c.finish(c.uploads[1], JSON.stringify({ id: 'image-2', url: '/uploads/picked-2.jpg' })); await settle();
+    assert.equal(c.uploads.length, 2, 'a member change stops the remaining uploads');
+    await Promise.race([unload, settle()]);
+  });
+}
+
+test('diary exit: an upload that finishes after the page closed is saved into the draft text', async () => {
+  const c = createPage('diary', { waitUpload: true });
+  await c.page.onLoad({});
+  c.page.chooseImages(); await settle();
+  const unload = c.page.onUnload(); await settle();
+  c.finish(c.uploads[0], JSON.stringify({ id: 'image-1', url: '/uploads/late-photo.jpg' }));
+  await unload;
+  const last = c.saves().at(-1);
+  assert.ok(last, 'the page saved its fields on exit');
+  assert.match(last.data.fields.contentMarkdown, /\/uploads\/late-photo\.jpg/);
+});

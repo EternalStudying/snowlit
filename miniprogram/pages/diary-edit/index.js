@@ -77,6 +77,7 @@ Page({
       view: (draftStatus) => { if (!this.disposed) this.setData({ draftStatus }); },
       sessionChanged: () => {
         const wasDisposed = this.disposed;
+        this.sessionEnded = true;
         this.disposed = true;
         this.unloadedDraftFields = null;
         if (!wasDisposed) this.setData({ form: createInitialDiaryForm(), images: [], previewBlocks: [], previewEmpty: true, cursor: 0, draftStatus: '', removingImage: false, draftLocked: true, submitting: false, message: '', moodPanelOpen: false, diaryDateSheetVisible: false });
@@ -96,7 +97,11 @@ Page({
 
   onUnload() {
     this.disposed = true;
-    return this.onHide().finally(() => { if (this.autosave) this.autosave.stop(); });
+    const settled = (task) => (task ? task.catch(() => {}) : undefined);
+    return this.onHide()
+      .then(() => Promise.all([settled(this.uploadTask), settled(this.removalTask)]))
+      .then(() => this.autosave && this.autosave.flush())
+      .finally(() => { if (this.autosave) this.autosave.stop(); });
   },
 
   loadDiaryForEdit(diaryId) {
@@ -138,7 +143,7 @@ Page({
   },
 
   openDiaryDateSheet() {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     if (this.data.isEditing) {
       return;
     }
@@ -155,7 +160,7 @@ Page({
   },
 
   confirmDiaryDateFromSheet(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     if (this.data.isEditing) {
       return;
     }
@@ -170,7 +175,7 @@ Page({
   },
 
   handleTitleInput(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       'form.title': event.detail.value,
       message: ''
@@ -179,7 +184,7 @@ Page({
   },
 
   toggleVisibility(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const value = event.currentTarget.dataset.value || 'shared';
     this.setData({
       'form.visibility': value,
@@ -200,14 +205,14 @@ Page({
   },
 
   toggleMoodPanel() {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     this.setData({
       moodPanelOpen: !this.data.moodPanelOpen
     });
   },
 
   selectMood(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const value = event.currentTarget.dataset.value || 'happy';
     this.setData({
       'form.moodKey': value,
@@ -220,7 +225,7 @@ Page({
   },
 
   updateContent(content, cursor, changed = true) {
-    if (this.data.draftLocked && changed || this.disposed || this.data.submitting && changed) return;
+    if (this.data.draftLocked && changed || this.data.submitting && changed) return;
     const previewEmpty = !String(content || '').trim();
     this.setData({
       'form.content': content,
@@ -233,7 +238,7 @@ Page({
   },
 
   handleToolTap(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const action = event.currentTarget.dataset.action;
     if (action === 'image') {
       this.chooseImages();
@@ -261,7 +266,7 @@ Page({
   },
 
   switchMode(event) {
-    if (this.data.draftLocked || this.disposed || this.data.submitting) return;
+    if (this.data.draftLocked || this.data.submitting) return;
     const mode = event.currentTarget.dataset.mode || 'edit';
     const previewEmpty = !String(this.data.form.content || '').trim();
     this.setData({
@@ -273,7 +278,7 @@ Page({
 
   chooseImages() {
     if (this.data.removingImage) return;
-    if (this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.disposed) {
+    if (this.data.submitting || this.data.loadingDiary || this.data.draftLocked) {
       return;
     }
     if (this.hasPendingImageUploads()) {
@@ -285,7 +290,7 @@ Page({
       return;
     }
 
-    const isBlocked = () => this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.disposed || this.hasPendingImageUploads();
+    const isBlocked = () => this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.hasPendingImageUploads();
     return pickImages({
       count: MAX_DIARY_IMAGES - this.data.images.length,
       title: '选择图片',
@@ -330,7 +335,8 @@ Page({
   uploadImagesFrom(startIndex) {
     if (this.uploadTask) return this.uploadTask;
     const isCurrent = beginRequest(this, 'draft-upload');
-    const active = () => isCurrent() && !this.disposed;
+    // Uploads continue after the page closes; only a member change stops them.
+    const active = () => isCurrent() && !this.sessionEnded;
     this.uploadTask = uploadQueue({
       read: () => active() ? this.data.images : [],
       patch: (index, patch) => { if (active()) this.patchImage(index, patch); },
@@ -340,11 +346,19 @@ Page({
         : uploadDraftImage('diary', image.path, null, onProgress),
       onUploaded: (response, index) => {
         if (!active()) return;
+        if (this.disposed) {
+          // The page is gone: put the image into the saved snapshot so the final save keeps it.
+          const fields = this.unloadedDraftFields || diaryDraftFields(this.data.form);
+          const content = insertDiaryImageMarkdown(fields.contentMarkdown, response.url, fields.contentMarkdown.length).content;
+          this.unloadedDraftFields = { ...fields, contentMarkdown: content };
+          this.autosave.changed();
+          return;
+        }
         this.patchImage(index, { preview: resolveMediaUrl(response.url), serverId: response.id });
         this.applyMarkdownInsertion(insertDiaryImageMarkdown(this.data.form.content, response.url, this.data.cursor));
       }
     }).catch((error) => {
-      if (active()) this.updateImages(this.data.images.filter((item) => item.status !== 'failed'));
+      if (active() && !this.disposed) this.updateImages(this.data.images.filter((item) => item.status !== 'failed'));
       throw error || new Error('有图片没上传成功');
     }).finally(() => { this.uploadTask = null; });
     return this.uploadTask;
@@ -355,7 +369,7 @@ Page({
   },
 
   removeImage(event) {
-    if (this.data.removingImage || this.data.isEditing || this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.disposed || this.hasPendingImageUploads()) return;
+    if (this.data.removingImage || this.data.isEditing || this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.hasPendingImageUploads()) return;
     const index = Number(event.currentTarget.dataset.index);
     const image = this.data.images[index];
     if (!Number.isInteger(index) || !image || !image.serverId) return;
@@ -388,7 +402,7 @@ Page({
 
   saveDiary() {
     if (this.data.removingImage) return;
-    if (this.data.submitting || this.data.loadingDiary || this.data.draftLocked || this.disposed) {
+    if (this.data.submitting || this.data.loadingDiary || this.data.draftLocked) {
       return;
     }
     if (this.uploadTask) {
