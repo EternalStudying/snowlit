@@ -197,5 +197,5 @@ Done on the developer's retained `snowlit_dev` with the owner's go-ahead. The se
    - the draft's fields pass the draft field rules;
    - no album has status `draft`.
 
-The running service on port 8080 still runs the previous build. Restart it from `main` with `SQL_INIT_MODE=never` to serve the drafts API.
+Afterwards, the local backend on 8080 was restarted from `main` (`mvn spring-boot:run` in `backend/`, `SQL_INIT_MODE=never`, existing local settings and MinIO). `/api/drafts/album` answers 401 without a session, and the removed `/api/albums/drafts/current` answers 404. An authenticated read of the converted draft was not done: the retained account does not use the seed password.
 

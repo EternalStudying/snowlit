@@ -38,7 +38,7 @@ Implementation, regression review and documentation are complete. Backend/Web/na
 
 ### Phase 8: Local database rollout (2026-10-21)
 - **Status:** complete
-- Backed up `snowlit_dev`, created the drafts table and converted the one legacy album draft (9205) in one transaction; other tables unchanged. The running service still needs a restart from main with SQL_INIT_MODE=never. See the report.
+- Backed up `snowlit_dev`, created the drafts table and converted the one legacy album draft (9205) in one transaction; other tables unchanged. The local backend on 8080 was restarted from main (`mvn spring-boot:run`, SQL_INIT_MODE=never, existing local settings and MinIO); `/api/drafts/album` answers 401 without a session while the removed `/api/albums/drafts/current` answers 404. An authenticated read was not done (the seed password is not the account's). See the report.
 
 ## Owner Clarifications
 
