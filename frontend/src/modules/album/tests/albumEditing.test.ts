@@ -54,6 +54,15 @@ describe('album editing', () => {
     expect(adapter.mock.calls.some(([path]) => path.startsWith('/api/drafts'))).toBe(false);
   });
 
+  it('reloads the catalog after saving so pinning and privacy show as the server lists them', async () => {
+    const { adapter, lifecycle } = setup();
+    await lifecycle.loadInitialCatalog(); await lifecycle.startEdit(1);
+    const before = adapter.mock.calls.length;
+    await lifecycle.saveAlbum(payload);
+    const paths = adapter.mock.calls.slice(before).map(([path, init]) => `${init?.method ?? 'GET'} ${path.split('?')[0]}`);
+    expect(paths).toEqual(['PUT /api/albums/1', 'GET /api/albums']);
+  });
+
   it('discard cancels editing and a 404 delete still removes the catalog item', async () => {
     const { adapter, lifecycle } = setup();
     await lifecycle.loadInitialCatalog(); await lifecycle.startEdit(1); await lifecycle.cancelEdit();

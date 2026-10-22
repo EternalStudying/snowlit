@@ -45,7 +45,7 @@ public class AlbumEditor {
                                         MultipartFile original, MultipartFile preview, JsonNode metadata) {
         authorize(actor);
         lock(albumId);
-        return drafts.uploadEdit(actor, albumId, mapper.countPhotosByAlbumId(albumId), file, original, preview, metadata);
+        return drafts.uploadEdit(actor, albumId, file, original, preview, metadata);
     }
 
     @Transactional

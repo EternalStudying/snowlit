@@ -106,9 +106,20 @@ class AlbumEditorTests {
         fails("ALBUM_EDIT_EXPIRED", this::upload);
         assertThat(draftRows).hasSize(1);
     }
-    @Test void uploadLimitCountsPublishedAndEditPhotos() {
-        start(); when(mapper.countPhotosByAlbumId(1L)).thenReturn(49); upload();
-        fails("ALBUM_PHOTO_LIMIT_EXCEEDED", this::upload); assertThat(objects.stored()).hasSize(2);
+    @Test void fullAlbumStillTakesUploadsBecauseSaveDecidesTheFinalCount() {
+        // The member may have removed photos on screen; only the saved list is held to 50.
+        for (long id = 13; id <= 60; id++) {
+            AlbumPhoto copy = json.convertValue(photos.get(12L), AlbumPhoto.class); copy.setId(id); copy.setSortOrder((int) id - 10); photos.put(id, copy);
+        }
+        start(); var image = upload();
+        var order = new ArrayList<AlbumDtos.AlbumPhotoEntryDto>();
+        for (long id = 12; id <= 60; id++) order.add(existing(id));
+        order.add(added(image.id()));
+        assertThat(save(order).photos()).hasSize(50);
+    }
+    @Test void editDraftHoldsAtMostFiftyUploads() {
+        start(); for (int i = 0; i < 50; i++) upload();
+        fails("ALBUM_PHOTO_LIMIT_EXCEEDED", this::upload); assertThat(objects.stored()).hasSize(100);
     }
     @Test void saveUpdatesFieldsOrdersPhotosCoverAndPreservesProvenanceCountsAndTimes() {
         start(); var image = upload(); var unused = upload();

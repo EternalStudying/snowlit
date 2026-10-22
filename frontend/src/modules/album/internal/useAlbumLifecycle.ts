@@ -416,13 +416,13 @@ export function useAlbumLifecycle({
     draftPublishing.value = false;
   }
 
-  async function refreshCatalogAfterPublish() {
+  async function refreshCatalogAfterPublish(failureNotice = '相册已发布，但列表刷新失败，请稍后刷新页面') {
     isCatalogCurrent = latestCatalog.begin();
     catalogNotice.value = '';
     loadingMore.value = false;
     await loadPage(1, isCatalogCurrent, false);
     if (catalogError.value) {
-      catalogNotice.value = '相册已发布，但列表刷新失败，请稍后刷新页面';
+      catalogNotice.value = failureNotice;
       catalogError.value = '';
     }
   }
@@ -512,7 +512,8 @@ export function useAlbumLifecycle({
       const photos: AlbumPhotoEntry[] = photoGrid.value.map(photo => photo.photoId ? { photoId: photo.photoId } : { draftImageId: photo.draftImageId! });
       const result = await gateway.saveAlbum(edit.id, { ...payload, photos });
       if (edit.visibility !== payload.visibility || payload.privatePassword?.trim()) privateAccessStore.clear(edit.id);
-      albums.value = albums.value.map(album => album.id === edit.id ? { ...result.album, previewPhotos: result.photos.slice(0, 9) } : album);
+      // Reload rather than patch: pinning moves the album, and private albums list without previews.
+      await refreshCatalogAfterPublish('相册已保存，但列表刷新失败，请稍后刷新页面');
       editingAlbum.value = null; editingPhotos.value = []; gridKeys.value = []; uploadQueue.clear();
       return collectionFromDetail(result);
     } catch (error) { draftNotice.value = editError(error, '保存相册失败'); return null; }

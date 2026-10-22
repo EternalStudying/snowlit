@@ -8,20 +8,13 @@ import xyz.snowlit.album.AlbumVos.AlbumPageVo;
 import xyz.snowlit.album.AlbumVos.AlbumUnlockVo;
 import xyz.snowlit.album.AlbumVos.AlbumViewVo;
 import xyz.snowlit.web.CurrentActor;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import xyz.snowlit.draft.DraftVos;
 import xyz.snowlit.failure.ApplicationFailure;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/albums")
@@ -34,11 +27,14 @@ public final class AlbumController {
 
     public AlbumController(
             AlbumModule albums,
-            AlbumPrivateAccess privateAccess, AlbumEditor editor, ObjectMapper json
+            AlbumPrivateAccess privateAccess,
+            AlbumEditor editor,
+            ObjectMapper json
     ) {
         this.albums = albums;
         this.privateAccess = privateAccess;
-        this.editor = editor; this.json = json;
+        this.editor = editor;
+        this.json = json;
     }
 
     @GetMapping
@@ -87,7 +83,6 @@ public final class AlbumController {
                                           @RequestParam(required = false) MultipartFile original,
                                           @RequestParam(required = false) MultipartFile preview,
                                           @RequestParam(required = false) String metadata) {
-        actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
         JsonNode node = null;
         if (metadata != null) {
             try { node = json.readTree(metadata); }

@@ -69,12 +69,11 @@ public class DraftModule {
 
     public DraftVos.DraftImageVo upload(AuthenticatedActor actor, DraftKind kind, MultipartFile file,
                                         MultipartFile original, MultipartFile preview, JsonNode metadata) {
-        return upload(actor, kind, file, original, preview, metadata, 0, null);
+        return upload(actor, kind, file, original, preview, metadata, null);
     }
 
     private DraftVos.DraftImageVo upload(AuthenticatedActor actor, DraftKind kind, MultipartFile file,
-                                       MultipartFile original, MultipartFile preview, JsonNode metadata,
-                                       int existingPhotoCount, Long albumId) {
+                                       MultipartFile original, MultipartFile preview, JsonNode metadata, Long albumId) {
         authorize(actor, kind);
         AlbumDtos.AlbumPhotoMetadataDto albumMetadata = isAlbum(kind) ? albumMetadata(metadata) : null;
         List<ObjectStore.StoredObject> stored = new ArrayList<>();
@@ -82,7 +81,7 @@ public class DraftModule {
             return transaction(() -> {
                 Draft draft = kind == DraftKind.ALBUM_EDIT ? requireEdit(actor, albumId) : ensure(actor, kind);
                 List<DraftImage> owned = new ArrayList<>(readImages(draft));
-                limit(kind, owned.size() + existingPhotoCount);
+                limit(kind, owned.size());
                 ObjectStore.StoredObject display;
                 ObjectStore.StoredObject source = null;
                 if (isAlbum(kind)) {
@@ -210,9 +209,10 @@ public class DraftModule {
         return mapper.lock(actor.userId(), DraftKind.ALBUM_EDIT.path());
     }
 
-    public DraftVos.DraftImageVo uploadEdit(AuthenticatedActor actor, Long albumId, int photoCount,
+    public DraftVos.DraftImageVo uploadEdit(AuthenticatedActor actor, Long albumId,
                                            MultipartFile file, MultipartFile original, MultipartFile preview, JsonNode metadata) {
-        return upload(actor, DraftKind.ALBUM_EDIT, file, original, preview, metadata, photoCount, albumId);
+        // Photos removed on screen still exist until save, so only save checks the album's total.
+        return upload(actor, DraftKind.ALBUM_EDIT, file, original, preview, metadata, albumId);
     }
 
     public void removeEditImage(AuthenticatedActor actor, Long albumId, String imageId) {
