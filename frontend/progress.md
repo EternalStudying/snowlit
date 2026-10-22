@@ -1,5 +1,22 @@
 # Web Progress Baseline
 
+## Motion redesign (2026-10-22, branch `feature/motion-redesign`, not merged)
+
+The GSAP motion system is described in findings.md under Motion System. It was built in one commit per module: the kit, Home, Album, Diary, Wishes, Messages, Login and About, plus an overflow fix. Story's existing map choreography was left as it was.
+
+- **Checks.**
+  - Vitest: 72 files / 461 tests passed, clean three runs in a row after the ScrollTrigger test fix.
+  - `npm run typecheck` and `npm run build` passed.
+- **Browser.** The built-in browser ran against the throwaway stack (backend 15182, worktree Vite 15184).
+  - Home: pinned chapter, odometer, thread, fan, and phone layout.
+  - Album: title, lamplight, like spark.
+  - Diary: title per month switch, date points, chapter tabs, mood pop.
+  - Wishes: badge morph and ring draw, run by hand on the pending badge.
+  - Messages: a thrown bubble glides and doesn't open; a click opens.
+  - Login and About: titles.
+- **Overflow.** The scripted check found Home overflowing by 30px at 1280 and 84px at 1024, and Diary by 5px at 375; all three fixed. After the fix, Home at 1440/1280/1024/820/375 and Diary at 375 read 0 at three scroll depths. The other pages read 0 before the fix.
+- **Not checked.** Reduced motion in a real browser (code-gated and covered by unit tests only). A real wish completion with an image upload. Album publish. Real devices.
+
 ## Code-first visual redesign (2026-10-22, `feature/code-first-ui`, merged into local main)
 
 The owner chose "snow and lamplight", kept the hero paintings, ships the light theme only (tokens are ready for a night theme), and wanted SVG mood faces. Decorative bitmaps were replaced with tokens, CSS paper pieces, SVG components and Lucide icons, module by module: foundation + Home + shell, Album, Diary, Wishes, Story, then a phone-layout and QA commit. Images: 72 files / 7.48 MB → 8 files / 1.90 MB (hero art, avatars, WebGL weather textures).

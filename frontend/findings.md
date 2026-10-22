@@ -35,6 +35,32 @@ The Web UI is drawn in code, not bitmaps. The direction, chosen by the owner, is
   - A wish with no photo shows a placeholder instead of the hero banner.
   - Diary card tint and tape position come from the entry id, not randomness.
 
+## Motion System (GSAP, 2026-10-22)
+
+- **One kit.** [motionKit.ts](src/motionKit.ts) registers every GSAP plugin once (ScrollTrigger, SplitText, Flip, DrawSVG, MorphSVG, CustomEase). Draggable and Inertia register on first use through `useThrowables()`, because Draggable reads the user agent when it registers. Pages import from the kit and never register plugins themselves.
+- **Shared vocabulary.**
+  - Eases: `EASE_SETTLE` for arrivals; `EASE_LIFT` for pick-up and release.
+  - Helpers: `revealTitle` (per-character SplitText behind a mask), `settleOnScroll` (ScrollTrigger.batch), `drawStroke`.
+  - Directives: `vTilt` (pointer tilt plus lamplight) and `vMagnetic`, in [pointer.ts](src/directives/pointer.ts).
+  - Sparks: `sparkAt` / `sparkFrom` in [sparks.ts](src/sparks.ts) mark a save, publish, like or completion that succeeded.
+- **Where it is used.**
+  - Route changes: a GSAP hand-off in App.vue.
+  - Hero: sinks as the page scrolls past it ([useHeroParallax](src/shell/useHeroParallax.ts)).
+  - Home ([useHomeStory](src/modules/home/internal/useHomeStory.ts)):
+    - On wide screens the "days" chapter is pinned, with odometer reels and a DrawSVG thread through four stops. Phones play it once, unpinned.
+    - The recent cards form a fan that spreads toward the pointer.
+    - The next-wish tick is drawn.
+  - Album: per-character title, a scrubbed postmark, card lamplight and sparks.
+  - Diary ([useDiaryMotion](src/modules/diary/internal/useDiaryMotion.ts)): per-character month titles, spine points that light up, month tabs dealt in, and a mood-face pop.
+  - Wishes: the completion ring inks in (DrawSVG), the dash bends into a tick (MorphSVG), then sparks.
+  - Messages: bubbles can be thrown (Draggable + Inertia), and a press without a drag still opens the message.
+  - Login and About: the titles are written out.
+- **Rules.**
+  - Every helper returns early when `shouldSkipMotion()` (reduced motion or test instant mode), leaving the end state.
+  - GSAP work lives in a `gsap.context` or `gsap.matchMedia` that is reverted on unmount.
+  - A page's root element must not overflow sideways while things fly in: Home clips with `.journal-route-content > .home { overflow-x: clip }`, because the shell sets `overflow: visible` on route content.
+- **Tests.** [tests/setup.ts](tests/setup.ts) imports the kit and calls `ScrollTrigger.disable()`. If ScrollTrigger stays on, its always-on requestAnimationFrame loop recurses under synchronous rAF stubs and eats fake-timer time; that was the cause of the earlier "flaky" topbar timeouts.
+
 ## Shared and Visual Boundaries
 
 - [SessionRequest](src/http/sessionRequest.ts) handles tokens, JSON/FormData/204, errors, and session expiry. Private-album business failures must not accidentally clear the login session.
