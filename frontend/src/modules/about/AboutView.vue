@@ -3,6 +3,7 @@ import { useReducedMotion } from '../../motion';
 import './about.css';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { revealTitle } from '../../motionKit';
 
 type AboutStation = {
   id: 'album' | 'diary' | 'wishes' | 'messages' | 'anniversary';
@@ -129,6 +130,7 @@ function handlePendingStation(station: AboutStation) {
 }
 
 onMounted(() => {
+  revealTitle(document.getElementById('about-starmap-title'), 0.2);
   updateFromScroll();
   window.addEventListener('scroll', updateFromScroll, { passive: true });
   window.addEventListener('resize', updateFromScroll);

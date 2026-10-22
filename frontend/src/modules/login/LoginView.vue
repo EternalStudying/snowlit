@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { gsap } from 'gsap';
-import { Draggable } from 'gsap/Draggable';
-import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Draggable } from 'gsap/Draggable';
+import { gsap, revealTitle, useThrowables } from '../../motionKit';
 import { NAlert, NButton, NInput } from 'naive-ui';
 import SiteRecordLink from '../../components/SiteRecordLink.vue';
 import type { LoginSession } from './model';
 import { useLoginLifecycle } from './internal/useLoginLifecycle';
 
-gsap.registerPlugin(Draggable, MorphSVGPlugin);
 
 const props = defineProps<{
   onAuthenticated: (
@@ -253,6 +251,7 @@ function pullByClick() {
 }
 
 function setupDraggable() {
+  const { Draggable } = useThrowables();
   if (!pullKnob.value) {
     return;
   }
@@ -287,6 +286,14 @@ function setupDraggable() {
     }
   });
 }
+
+// The greeting writes itself once, the first time the lamp comes on.
+const stopTitleWatch = watch(lampOn, (on) => {
+  if (on) {
+    stopTitleWatch();
+    revealTitle(document.getElementById('login-title'), 0.25);
+  }
+});
 
 onMounted(() => {
   setupDraggable();
