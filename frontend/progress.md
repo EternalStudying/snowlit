@@ -1,6 +1,6 @@
 # Web Progress Baseline
 
-## Code-first visual redesign (2026-10-22, branch `feature/code-first-ui`)
+## Code-first visual redesign (2026-10-22, `feature/code-first-ui`, merged into local main)
 
 The owner chose "snow and lamplight", kept the hero paintings, ships the light theme only (tokens are ready for a night theme), and wanted SVG mood faces. Decorative bitmaps were replaced with tokens, CSS paper pieces, SVG components and Lucide icons, module by module: foundation + Home + shell, Album, Diary, Wishes, Story, then a phone-layout and QA commit. Images: 72 files / 7.48 MB → 8 files / 1.90 MB (hero art, avatars, WebGL weather textures).
 
