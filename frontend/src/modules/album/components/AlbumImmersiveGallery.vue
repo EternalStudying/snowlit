@@ -348,7 +348,7 @@ onBeforeUnmount(() => {
     <section
       ref="rootRef"
       class="album-immersive-gallery"
-      :class="{ 'album-immersive-gallery--ready': galleryReady }"
+      :class="{ 'album-immersive-gallery--ready': galleryReady, 'album-immersive-gallery--manager': collection.canManage }"
       :data-layout="isStacked ? 'stacked' : 'timeline'"
       role="dialog"
       aria-modal="true"

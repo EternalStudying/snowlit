@@ -497,7 +497,7 @@ onMounted(() => {
       />
 
       <AlbumImmersiveGallery
-        v-if="shouldShowImmersiveGallery && selectedCollection"
+        v-if="shouldShowImmersiveGallery && selectedCollection && !createDialogOpen"
         :collection="selectedCollection"
         :photos="selectedCollection.photos"
         @close="closeCollection"

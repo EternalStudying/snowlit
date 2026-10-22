@@ -2344,6 +2344,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
     top: auto;
     left: auto;
     margin: 92px 28px 26px;
+    width: auto;
   }
 
   .album-create-dialog__header h2 {
@@ -2398,4 +2399,10 @@ body.is-album-immersive .album-photo-preview__backdrop {
 .album-create-form .album-create-pinned input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; border-radius: 4px; }
 @media (min-width: 761px) {
   .album-create-form__main { flex: 1; overflow-y: auto; margin-bottom: 24px; padding-right: 10px; }
+}
+
+.album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__header { position: relative; inset: auto; width: calc(100% - 48px); margin: 20px auto 24px; }
+.album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__stage { margin-top: 0; }
+@media (max-width: 760px) {
+  .album-create-dialog { background: #f8efdf; border-radius: 12px; }
 }
