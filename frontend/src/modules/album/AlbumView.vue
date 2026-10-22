@@ -664,34 +664,48 @@ onMounted(() => {
                         v-model:value="draftForm.description"
                         type="textarea"
                         maxlength="500"
-                        :autosize="{ minRows: 4, maxRows: 5 }"
+                        :autosize="{ minRows: 3, maxRows: 4 }"
                         :disabled="draftSaving || draftPublishing"
                       />
                     </label>
 
-                    <label class="album-create-field">
-                      <span>相册日期 <b aria-hidden="true">*</b></span>
-                      <input
-                        v-model="draftForm.eventDate"
-                        data-album-event-date-input
-                        class="album-create-date-input"
-                        type="date"
-                        required
-                        :disabled="draftSaving || draftPublishing"
-                      />
-                    </label>
+                    <div class="album-create-row">
+                      <label class="album-create-field">
+                        <span>相册日期 <b aria-hidden="true">*</b></span>
+                        <input
+                          v-model="draftForm.eventDate"
+                          data-album-event-date-input
+                          class="album-create-date-input"
+                          type="date"
+                          required
+                          :disabled="draftSaving || draftPublishing"
+                        />
+                      </label>
 
-                    <label class="album-create-field">
-                      <span>相册地点</span><NInput v-model:value="draftForm.location" maxlength="120" :disabled="draftPublishing" />
-                    </label>
-                    <label class="album-create-field album-create-pinned">
-                      <span>置顶相册</span><input v-model="draftForm.pinned" type="checkbox" :disabled="draftPublishing" />
-                    </label>
+                      <label class="album-create-field">
+                        <span>相册地点</span><NInput v-model:value="draftForm.location" maxlength="120" :disabled="draftPublishing" />
+                      </label>
+                    </div>
                     <div class="album-create-options">
+                      <div class="album-create-private">
+                        <span class="album-create-private__label">置顶相册</span>
+                        <button
+                          class="album-create-switch"
+                          data-album-pinned-switch
+                          type="button"
+                          aria-label="置顶相册"
+                          :aria-pressed="draftForm.pinned"
+                          :disabled="draftSaving || draftPublishing"
+                          @click="draftForm.pinned = !draftForm.pinned"
+                        >
+                          <span></span>
+                        </button>
+                      </div>
                       <div class="album-create-private">
                         <span class="album-create-private__label">私密相册 <i aria-hidden="true">i</i></span>
                         <button
                           class="album-create-switch"
+                          data-album-private-switch
                           type="button"
                           :aria-pressed="draftForm.visibility === 'private'"
                           :disabled="draftSaving || draftPublishing"
@@ -731,6 +745,7 @@ onMounted(() => {
                     <div
                       class="album-create-upload"
                       :data-upload-has-items="albumUploadItems.length ? 'true' : undefined"
+                      :data-upload-compact="photoGrid.length ? 'true' : undefined"
                       @dragover.prevent
                       @drop.prevent="handleDraftDrop"
                     >

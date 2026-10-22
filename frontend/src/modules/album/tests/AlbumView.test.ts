@@ -420,13 +420,18 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(dialog.find('[data-album-publish]').exists()).toBe(true);
     expect(dialog.get('[data-album-private-password-input]').attributes('disabled')).toBeDefined();
 
-    await dialog.get('.album-create-switch').trigger('click');
+    await dialog.get('[data-album-private-switch]').trigger('click');
     await flushPromises();
 
-    expect(dialog.get('.album-create-switch').attributes('aria-pressed')).toBe('true');
+    expect(dialog.get('[data-album-private-switch]').attributes('aria-pressed')).toBe('true');
     expect(
       dialog.get('[data-album-private-password-input]').attributes('disabled')
     ).toBeUndefined();
+
+    const pinned = dialog.get('[data-album-pinned-switch]');
+    expect(pinned.attributes('aria-pressed')).toBe('false');
+    await pinned.trigger('click');
+    expect(pinned.attributes('aria-pressed')).toBe('true');
   });
 
   it('appends the next page on bottom scroll and renders no additional page at the end', async () => {

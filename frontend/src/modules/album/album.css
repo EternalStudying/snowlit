@@ -1778,7 +1778,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
 .album-create-form__left {
   display: grid;
   align-content: start;
-  gap: clamp(24px, 2.1vw, 34px);
+  gap: clamp(16px, 1.6vw, 26px);
   padding-top: clamp(12px, 1.2vw, 18px);
 }
 
@@ -1817,7 +1817,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
 
 .album-create-field {
   display: grid;
-  gap: 13px;
+  gap: clamp(8px, 0.9vw, 13px);
   margin: 0;
   font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
   font-size: clamp(13px, 1.05vw, 17px);
@@ -1868,7 +1868,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
 
 .album-create-form textarea:not(.n-input__textarea-el),
 .album-create-form .n-input--textarea {
-  min-height: clamp(112px, 12vw, 142px);
+  min-height: clamp(76px, 8.4vw, 132px);
 }
 
 .album-create-form textarea:not(.n-input__textarea-el) {
@@ -1902,10 +1902,16 @@ body.is-album-immersive .album-photo-preview__backdrop {
   padding: 12px 14px;
 }
 
+.album-create-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(14px, 1.6vw, 24px);
+}
+
 .album-create-options {
   display: grid;
-  grid-template-columns: minmax(160px, 0.72fr) minmax(220px, 1fr);
-  gap: clamp(26px, 3vw, 42px);
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: clamp(14px, 1.6vw, 24px);
   align-items: start;
 }
 
@@ -2324,9 +2330,23 @@ body.is-album-immersive .album-photo-preview__backdrop {
     width: calc(100% - 32px);
     margin: 154px auto 82px;
   }
+}
 
+/* Photo order is the cover order in both creation and editing. */
+.album-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; max-height: 380px; overflow-y: auto; }
+.album-photo-grid:empty { display: none; }
+.album-photo-grid__item { position: relative; min-width: 0; padding: 6px; background: #fffaf4; border: 1px solid #d7caba; border-radius: 8px; }
+.album-photo-grid__image { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; cursor: grab; touch-action: pan-y; }
+.album-photo-grid__cover { position: absolute; top: 10px; left: 10px; padding: 2px 6px; background: #725c4b; color: white; border-radius: 4px; font-size: 11px; }
+.album-photo-grid__caption { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.album-photo-grid small { font-size: 11px; }
+.album-photo-grid__actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.album-photo-grid__actions button, .album-immersive-gallery__actions button { padding: 5px 8px; border: 1px solid #a89b8d; border-radius: 5px; background: #fffaf4; color: #514235; font: inherit; font-size: 12px; cursor: pointer; }
+.album-immersive-gallery__actions { display: flex; gap: 10px; margin-top: 12px; pointer-events: auto; }
+/* Below 960px the fixed-ratio paper dialog is too small for the form, so it stacks. */
+@media (max-width: 960px) {
   .album-create-dialog {
-    width: min(430px, calc(100vw - 16px));
+    width: min(560px, calc(100vw - 16px));
     aspect-ratio: auto;
     min-height: calc(100vh - 16px);
     max-height: calc(100vh - 16px);
@@ -2358,9 +2378,16 @@ body.is-album-immersive .album-photo-preview__backdrop {
     gap: 22px;
   }
 
-  .album-create-form__main,
-  .album-create-options {
+  .album-create-form__main {
     grid-template-columns: 1fr;
+  }
+
+  .album-create-options {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .album-create-field--password {
+    grid-column: 1 / -1;
   }
 
   .album-create-form__divider {
@@ -2385,24 +2412,39 @@ body.is-album-immersive .album-photo-preview__backdrop {
   }
 }
 
-/* Photo order is the cover order in both creation and editing. */
-.album-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; list-style: none; max-height: 380px; overflow-y: auto; }
-.album-photo-grid__item { position: relative; min-width: 0; padding: 6px; background: #fffaf4; border: 1px solid #d7caba; border-radius: 8px; }
-.album-photo-grid__image { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; cursor: grab; touch-action: pan-y; }
-.album-photo-grid__cover { position: absolute; top: 10px; left: 10px; padding: 2px 6px; background: #725c4b; color: white; border-radius: 4px; font-size: 11px; }
-.album-photo-grid__caption { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.album-photo-grid small { font-size: 11px; }
-.album-photo-grid__actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.album-photo-grid__actions button, .album-immersive-gallery__actions button { padding: 5px 8px; border: 1px solid #a89b8d; border-radius: 5px; background: #fffaf4; color: #514235; font: inherit; font-size: 12px; cursor: pointer; }
-.album-immersive-gallery__actions { display: flex; gap: 10px; margin-top: 12px; pointer-events: auto; }
-.album-create-pinned { grid-template-columns: auto 1fr; align-items: center; }
-.album-create-form .album-create-pinned input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; border-radius: 4px; }
-@media (min-width: 761px) {
-  .album-create-form__main { flex: 1; overflow-y: auto; margin-bottom: 24px; padding-right: 10px; }
+@media (min-width: 961px) {
+  /* The form body never scrolls: the left column fits above the stamp and the photo grid scrolls itself. */
+  .album-create-form__main { flex: 1; grid-template-rows: minmax(0, 1fr); margin-bottom: 24px; }
+  .album-create-form__right,
+  .album-create-form__divider { min-height: 0; }
+  .album-create-form__right .album-photo-grid { flex: 0 1 auto; min-height: 0; max-height: none; }
 }
+
+/* With photos in the grid, the decorative upload panel becomes a compact add strip. */
+.album-create-upload[data-upload-compact="true"] {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 100%;
+  min-height: 58px;
+  aspect-ratio: auto;
+  margin: 0;
+  border: 1px dashed rgba(126, 75, 58, 0.36);
+  border-radius: 8px;
+  background: rgba(255, 249, 239, 0.58);
+  transform: none;
+}
+.album-create-upload[data-upload-compact="true"] .album-create-upload__panel,
+.album-create-upload[data-upload-compact="true"] .album-create-upload__illustration,
+.album-create-upload[data-upload-compact="true"] .album-create-upload__format { display: none; }
+.album-create-upload[data-upload-compact="true"] .album-create-upload__content { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; clip-path: none; }
+.album-create-upload[data-upload-compact="true"] .album-create-upload__title,
+.album-create-upload[data-upload-compact="true"] .album-create-upload__limit { position: static; width: auto; transform: none; }
+.album-create-upload[data-upload-compact="true"] .album-upload-progress { position: static; display: flex; align-items: center; width: auto; gap: 12px; transform: none; }
+.album-create-upload[data-upload-compact="true"] .album-upload-progress__count { font-size: 20px; }
 
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__header { position: relative; inset: auto; width: calc(100% - 48px); margin: 20px auto 24px; }
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__stage { margin-top: 0; }
-@media (max-width: 760px) {
+@media (max-width: 960px) {
   .album-create-dialog { background: #f8efdf; border-radius: 12px; }
 }

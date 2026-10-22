@@ -54,3 +54,5 @@ The 390px home-page overflow remains unresolved. Found during the 2026-10-18 bro
 ## Production Deployment Snapshot (2026-10-21)
 
 The full current frontend and matching backend were deployed under explicit authorization. All 129 HTTPS static files match the local production build. The login form rendered without captured browser console errors; authenticated production interactions were not tested. Previous release files remain available for rollback. No Web source or dependencies changed during deployment.
+
+Album dialog layout (2026-10-22): above 960px the paper dialog keeps a fixed ratio, the form body never scrolls, the left column (date and place share a row; pinned, private and password share a row) ends above the stamp painted into the background, and the photo grid scrolls inside the right column. Once the grid has photos, the decorative upload panel collapses to a compact add strip. Below 960px the dialog uses the stacked layout. Checked at 1440x900, 1280x800, 1024x768, 820x700 and 375x812.
