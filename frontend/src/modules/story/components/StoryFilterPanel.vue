@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { CalendarDays, SlidersHorizontal, X } from 'lucide-vue-next';
+import { CalendarDays, Coffee, Gift, Heart, LayoutGrid, Luggage, SlidersHorizontal, Star, X } from 'lucide-vue-next';
 import { STORY_CATEGORY_OPTIONS, type StoryCategoryFilter } from '../model';
-import storyFilterPanelArt from '../assets/story-filter-panel-transparent-v1.webp';
 
 const props = defineProps<{
   selectedCategory: StoryCategoryFilter;
@@ -18,6 +17,14 @@ const emit = defineEmits<{
 }>();
 
 const isSheetOpen = ref(false);
+const categoryIcons = {
+  all: LayoutGrid,
+  daily: Coffee,
+  date: Heart,
+  travel: Luggage,
+  anniversary: Gift,
+  surprise: Star
+} as const;
 
 const filterSummary = computed(() => {
   const category = STORY_CATEGORY_OPTIONS.find((option) => option.key === props.selectedCategory)?.label ?? '全部';
@@ -40,10 +47,10 @@ function selectYear(year: number | null) {
     <span>{{ filterSummary }}</span>
   </button>
 
-  <aside class="story-filter-panel story-filter-panel--scrapbook" :class="{ 'is-open': isSheetOpen }" aria-label="点滴筛选">
-    <img class="story-filter-panel__art" :src="storyFilterPanelArt" alt="" aria-hidden="true" draggable="false" decoding="async" />
+  <aside class="story-filter-panel" :class="{ 'is-open': isSheetOpen }" aria-label="点滴筛选">
     <div class="story-filter-panel__overlay">
       <div class="story-filter-panel__sheet-head">
+        <h2 class="story-filter-panel__title">点滴地图</h2>
         <button class="story-icon-button story-filter-panel__close" type="button" aria-label="关闭筛选" @click="isSheetOpen = false">
           <X :size="18" />
         </button>
@@ -62,6 +69,7 @@ function selectYear(year: number | null) {
             :data-story-category="option.key"
             @click="selectCategory(option.key)"
           >
+            <span class="story-filter-option__icon" aria-hidden="true"><component :is="categoryIcons[option.key]" :size="17" :stroke-width="1.7" /></span>
             <span class="story-filter-option__text">{{ option.label }}</span>
           </button>
         </div>

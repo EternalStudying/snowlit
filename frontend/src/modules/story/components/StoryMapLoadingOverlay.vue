@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { gsap } from 'gsap';
 import { isInstantMotion, useMotionSlots } from '../../../motion';
-import loaderTitleArt from '../assets/story-loader-title.webp';
+import HeartMark from '../../../components/paper/HeartMark.vue';
 
 const props = defineProps<{
   progress: number;
@@ -154,7 +154,9 @@ function playLeave() {
     <div class="story-map-loader__texture" aria-hidden="true" />
     <div class="story-map-loader__content">
       <div class="story-map-loader__paper" aria-hidden="true">
-        <img :src="loaderTitleArt" alt="" class="story-map-loader__paper-img" decoding="async" />
+        <span class="washi" />
+        <p class="story-map-loader__paper-title">点滴地图</p>
+        <span class="story-map-loader__paper-heart"><HeartMark /></span>
       </div>
       <div class="story-map-loader__route" aria-hidden="true">
         <span class="story-map-loader__track" />

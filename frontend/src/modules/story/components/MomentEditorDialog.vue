@@ -19,7 +19,6 @@ import {
   searchAmapLocations,
   type AMapLocationSuggestion as LocationSuggestion
 } from '../internal/amapSdk';
-import editorCardArt from '../assets/story-editor-card-transparent-v3.webp';
 
 const props = defineProps<{
   open: boolean;
@@ -449,7 +448,7 @@ function playEditorClose() {
         :aria-label="mode === 'create' ? '添加点滴' : '编辑点滴'"
         @submit.prevent="submitForm"
       >
-        <img class="moment-editor-popover__bg" :src="editorCardArt" alt="" aria-hidden="true" draggable="false" decoding="async" />
+        <h2 class="moment-editor__header">{{ mode === 'create' ? '添加点滴' : '编辑点滴' }}</h2>
 
         <div class="moment-editor__paper-content">
           <NAlert v-if="error || localError" class="moment-editor__error moment-editor__motion-field" type="error" :show-icon="false">
@@ -588,15 +587,16 @@ function playEditorClose() {
         </div>
 
         <footer class="moment-editor__footer" aria-label="点滴编辑操作">
-          <NButton class="moment-editor__paper-action moment-editor__paper-action--cancel" attr-type="button" aria-label="取消" @click="emit('close')" />
+          <NButton class="moment-editor__paper-action moment-editor__paper-action--cancel" attr-type="button" @click="emit('close')">取消</NButton>
           <NButton
             class="moment-editor__paper-action moment-editor__paper-action--save"
             attr-type="submit"
             type="primary"
-            :aria-label="saving ? '保存中' : mode === 'create' ? '保存点滴' : '保存修改'"
             :loading="saving"
             :disabled="saving || isUploading"
-          />
+          >
+            {{ saving ? '保存中' : mode === 'create' ? '保存点滴' : '保存修改' }}
+          </NButton>
         </footer>
       </form>
     </div>

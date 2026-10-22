@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { hasStoryCoordinates } from './internal/storyMapModel';
 import './story.css';
+import './story-night.css';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { Clock3, MapPin, Maximize2, RotateCcw } from 'lucide-vue-next';
+import { Clock3, MapPin, Maximize2, Plus, RotateCcw } from 'lucide-vue-next';
 import { NButton } from 'naive-ui';
 import MomentDetailPopover from './components/MomentDetailPopover.vue';
 import MomentEditorDialog from './components/MomentEditorDialog.vue';
@@ -15,7 +16,7 @@ import { useHomeLifecycle } from '../home';
 import { playStoryExitTransition } from './internal/storyRouteTransition';
 import { useStoryLifecycle } from './internal/useStoryLifecycle';
 import { useStoryMotion } from './internal/useStoryMotion';
-import addMomentButtonArt from './assets/add-moment-button.webp';
+import StickerButton from '../../components/paper/StickerButton.vue';
 import type {
   StoryCategoryFilter,
   StoryDraftLocation,
@@ -440,15 +441,16 @@ function formatKilometers(value: number) {
       @clear="clearFilters"
     />
 
-    <button
+    <StickerButton
       v-if="canManage && !isEditorOpen"
       class="story-add-button"
-      type="button"
+      tone="camellia"
       aria-label="添加点滴"
       @click="startCreate"
     >
-      <img :src="addMomentButtonArt" alt="" draggable="false" decoding="async" />
-    </button>
+      <template #icon><Plus :stroke-width="2" /></template>
+      添加点滴
+    </StickerButton>
 
     <section v-if="isLoading && hasPreloaderRevealed" class="story-state story-state--loading" aria-live="polite">
       <div class="story-filter-loader" aria-hidden="true">

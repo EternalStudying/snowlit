@@ -183,7 +183,9 @@ function markViewerImageFailed(src: string) {
 
 <template>
   <article v-if="renderedMoment" ref="detailRoot" class="moment-detail moment-detail--motion" role="dialog" aria-modal="false" :aria-label="renderedMoment.title">
-    <button class="moment-detail__close" type="button" aria-label="关闭点滴详情" @click="emit('close')" />
+    <button class="moment-detail__close" type="button" aria-label="关闭点滴详情" @click="emit('close')">
+      <X :size="18" />
+    </button>
 
     <div class="moment-detail__paper-content">
       <p class="moment-detail__category">

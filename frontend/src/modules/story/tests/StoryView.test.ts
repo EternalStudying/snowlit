@@ -176,7 +176,7 @@ describe('点滴地图页', () => {
     document.body.innerHTML = '';
   });
 
-  it('详情弹窗使用透明底图热区布局，不重复渲染纸卡视觉', () => {
+  it('详情弹窗是代码绘制的纸卡，关闭按钮带图标', () => {
     const wrapper = mount(MomentDetailPopover, {
       props: {
         canManage: true,
@@ -192,7 +192,7 @@ describe('点滴地图页', () => {
     expect(wrapper.find('.moment-detail__cover').exists()).toBe(false);
     expect(wrapper.find('.moment-detail__tape').exists()).toBe(false);
     expect(wrapper.find('.moment-detail__close').attributes('aria-label')).toBe('关闭点滴详情');
-    expect(wrapper.find('.moment-detail__close svg').exists()).toBe(false);
+    expect(wrapper.find('.moment-detail__close svg').exists()).toBe(true);
     expect(wrapper.findAll('.moment-detail__thumbs img')).toHaveLength(2);
     expect(wrapper.find('.moment-detail__edit').exists()).toBe(true);
     expect(wrapper.find('.moment-detail__delete').exists()).toBe(true);
@@ -643,7 +643,8 @@ describe('点滴地图页', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.get('.story-map-loader__paper-img').attributes('src')).toContain('story-loader-title');
+    expect(wrapper.get('.story-map-loader__paper-title').text()).toBe('点滴地图');
+    expect(wrapper.get('.story-map-loader').find('img').exists()).toBe(false);
     expect(wrapper.get('.story-map-loader').text()).toContain('正在铺开我们的点滴地图');
     expect(wrapper.get('.story-map-loader').text()).toContain('读取点滴列表');
     expect(wrapper.get('.story-map-loader').text()).toMatch(/\d+%/);
@@ -660,18 +661,18 @@ describe('点滴地图页', () => {
     expect(wrapper.get('.story-map-page').classes()).toContain('has-entered-motion');
   });
 
-  it('左侧筛选板按参考图结构展示文字、分隔线、年份和选中态', async () => {
+  it('左侧筛选板展示标题、类型、分隔线、年份和选中态', async () => {
     const fetcher = createStoryFetch(false);
     const wrapper = await mountStoryView(fetcher);
 
     const panel = wrapper.get('.story-filter-panel');
-    const art = panel.get('img.story-filter-panel__art');
     const firstCategory = panel.get('[data-story-category="all"]');
     const divider = panel.get('.story-filter-panel__divider');
     const years = panel.get('.story-filter-panel__years');
 
-    expect(panel.classes()).toContain('story-filter-panel--scrapbook');
-    expect(art.attributes('src')).toContain('story-filter-panel-transparent-v1');
+    expect(panel.get('.story-filter-panel__title').text()).toBe('点滴地图');
+    expect(panel.find('img').exists()).toBe(false);
+    expect(panel.findAll('.story-filter-option__icon svg')).toHaveLength(6);
     expect(firstCategory.classes()).toContain('is-active');
     expect(firstCategory.get('.story-filter-option__text').text()).toBe('全部');
     expect(panel.findAll('.story-filter-option__text').map((item) => item.text())).toEqual([
@@ -725,10 +726,8 @@ describe('点滴地图页', () => {
     expect(wrapper.get('.moment-editor').classes()).toContain('moment-editor--motion');
     expect(wrapper.find('.story-add-button').exists()).toBe(false);
     expect(wrapper.find('.story-timeline').exists()).toBe(false);
-    expect(wrapper.get('.moment-editor-popover__bg').attributes('src')).toContain('story-editor-card-transparent-v3');
-    expect(wrapper.get('.moment-editor').text()).not.toContain('添加点滴');
-    expect(wrapper.get('.moment-editor').text()).not.toContain('保存点滴');
-    expect(wrapper.get('.moment-editor').text()).not.toContain('取消');
+    expect(wrapper.get('.moment-editor').find('img').exists()).toBe(false);
+    expect(wrapper.get('.moment-editor__header').text()).toBe('添加点滴');
     expect(wrapper.get('.moment-editor').text()).not.toContain('心情');
     expect(wrapper.get('.moment-editor').text()).not.toContain('天气');
     expect(wrapper.find('.moment-editor__close').exists()).toBe(false);
@@ -748,8 +747,8 @@ describe('点滴地图页', () => {
     expect(wrapper.get('.moment-editor').attributes('style')).toContain('--moment-editor-left: 512px');
     expect(wrapper.get('.moment-editor').attributes('style')).toContain('--moment-editor-top: 384px');
     expect((wrapper.get('input[role="combobox"]').element as HTMLInputElement).value).toBe('地图落点');
-    expect(wrapper.find('.moment-editor__paper-action--cancel').attributes('aria-label')).toBe('取消');
-    expect(wrapper.find('.moment-editor__paper-action--save').attributes('aria-label')).toBe('保存点滴');
+    expect(wrapper.get('.moment-editor__paper-action--cancel').text()).toBe('取消');
+    expect(wrapper.get('.moment-editor__paper-action--save').text()).toBe('保存点滴');
 
     await wrapper.get('.moment-editor__paper-action--cancel').trigger('click');
     await wrapper.vm.$nextTick();
@@ -810,7 +809,7 @@ describe('点滴地图页', () => {
     expect(body.endTime).toBe(body.eventTime);
   });
 
-  it('底部贴纸透明按钮可以取消和保存点滴', async () => {
+  it('底部按钮可以取消和保存点滴', async () => {
     const createdMoment: StoryMoment = {
       ...dailyMoment,
       id: 99,
@@ -1130,7 +1129,7 @@ describe('点滴地图页', () => {
     const wrapper = await mountStoryView(fetcher);
 
     expect(wrapper.find('.story-add-button').exists()).toBe(true);
-    expect(wrapper.get('.story-add-button img').attributes('src')).toContain('add-moment-button');
+    expect(wrapper.get('.story-add-button').text()).toContain('添加点滴');
 
     await wrapper.findAll('.story-timeline__node')[1].trigger('click');
     await flushPromises();
