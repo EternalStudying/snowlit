@@ -34,7 +34,7 @@ function createInitialAlbumForm(date) {
   };
 }
 
-function buildAlbumDraftPayload(form) {
+function buildAlbumDraftPayload(form, originalVisibility) {
   const source = form || {};
   const title = clean(source.title);
   const eventDate = clean(source.eventDate);
@@ -47,7 +47,7 @@ function buildAlbumDraftPayload(form) {
   if (!eventDate) {
     return { valid: false, message: '请选择相册日期' };
   }
-  if (visibility === 'private' && !privatePassword) {
+  if (albumPasswordRequired(visibility, originalVisibility) && !privatePassword) {
     return { valid: false, message: '请输入私密相册密码' };
   }
 
@@ -75,6 +75,39 @@ function mapAlbumDraft(draft) {
   form.eventDateText = form.eventDate ? formatAlbumDateText(form.eventDate) : '从照片读取或手动选择';
   form.visibilityText = visibilityLabel(form.visibility);
   return form;
+}
+
+function albumPasswordRequired(visibility, originalVisibility) {
+  return visibility === 'private' && originalVisibility !== 'private';
+}
+
+function canRemoveAlbumPhoto(count, editMode) {
+  return !editMode || count > 1;
+}
+
+function mapAlbumEdit(response) {
+  const form = mapAlbumDraft({ fields: response.album });
+  return {
+    form,
+    photos: response.photos.map((photo) => ({ ...photo, id: `photo-${photo.id}`, photoId: photo.id,
+      path: photo.previewUrl, url: photo.previewUrl, status: 'uploaded', progress: 100, message: '已上传' }))
+  };
+}
+
+function albumPhotoReferences(photos) {
+  return photos.map((photo) => photo.photoId ? { photoId: photo.photoId } : { draftImageId: photo.draftImageId });
+}
+
+function buildAlbumSavePayload(form, photos, originalVisibility) {
+  const result = buildAlbumDraftPayload(form, originalVisibility);
+  if (!result.valid) return result;
+  if (!photos.length) return { valid: false, message: '相册至少保留 1 张照片' };
+  const { privatePassword, ...fields } = result.payload;
+  return { valid: true, payload: { ...fields, ...(privatePassword ? { privatePassword } : {}), photos: albumPhotoReferences(photos) } };
+}
+
+function albumGridItems(photos) {
+  return photos.map((photo, index) => ({ key: photo.id, src: photo.path, badge: index === 0 ? '封面' : '', message: photo.message, progress: photo.progress }));
 }
 
 function createPhoto(path, file) {
@@ -121,6 +154,7 @@ function createAlbumPhotoMetadata(photo, index, form) {
 }
 
 module.exports = {
+  albumPasswordRequired, canRemoveAlbumPhoto, mapAlbumEdit, albumPhotoReferences, buildAlbumSavePayload, albumGridItems,
   MAX_ALBUM_PHOTOS,
   albumDraftFields,
   mapAlbumDraft,

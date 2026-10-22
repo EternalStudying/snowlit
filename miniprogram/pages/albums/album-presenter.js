@@ -120,6 +120,8 @@ function mapAlbumDetail(response) {
     cover,
     hasCover: Boolean(cover),
     photos,
+    canManage: Boolean(response && response.canManage),
+    photoCount: album.photoCount || photos.length,
     photosCountText: `${album.photoCount || photos.length || 0} 张`,
     hasPhotos: photos.length > 0
   };

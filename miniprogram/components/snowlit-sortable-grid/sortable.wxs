@@ -1,0 +1,109 @@
+var pending = false;
+var active = false;
+var awaitingLayout = false;
+var moved = false;
+var suppressTap = false;
+var from = 0;
+var to = 0;
+var startX = 0;
+var startY = 0;
+var fingerX = 0;
+var fingerY = 0;
+var offset = 0;
+var layout = null;
+var direction = 0;
+
+function resetStyles(owner) {
+  if (!layout) return;
+  for (var i = 0; i < layout.rects.length; i++) {
+    owner.selectComponent('#sort-item-' + i).setStyle({ transform: '', 'z-index': '', 'box-shadow': '', transition: '' });
+  }
+}
+function paint(owner) {
+  var rects = layout.rects;
+  var cellWidth = layout.columns > 1 && rects.length > 1 ? rects[1].left - rects[0].left : rects[0].width;
+  var cellHeight = rects.length > layout.columns ? rects[layout.columns].top - rects[0].top : rects[0].height;
+  var column = Math.max(0, Math.min(layout.columns - 1, Math.floor((fingerX - rects[0].left) / cellWidth)));
+  var row = Math.max(0, Math.floor((fingerY + offset - rects[0].top) / cellHeight));
+  to = Math.max(0, Math.min(rects.length - 1, row * layout.columns + column));
+  for (var i = 0; i < rects.length; i++) {
+    var node = owner.selectComponent('#sort-item-' + i);
+    if (i === from) {
+      node.setStyle({ transform: 'translate(' + (fingerX - startX) + 'px,' + (fingerY - startY + offset) + 'px) scale(1.04)', 'z-index': 10, 'box-shadow': '0 8px 24px rgba(29,36,51,.25)', transition: 'none' });
+    } else {
+      var target = i;
+      if (from < to && i > from && i <= to) target = i - 1;
+      if (from > to && i >= to && i < from) target = i + 1;
+      node.setStyle({ transform: 'translate(' + (rects[target].left - rects[i].left) + 'px,' + (rects[target].top - rects[i].top) + 'px)' });
+    }
+  }
+  var nextDirection = fingerY < layout.edge ? -1 : (fingerY > layout.viewportHeight - layout.edge ? 1 : 0);
+  if (nextDirection !== direction) {
+    direction = nextDirection;
+    owner.callMethod('scrollDirection', { direction: direction });
+  }
+}
+function start(event, owner) {
+  if (event.currentTarget.dataset.disabled) return;
+  pending = true;
+  active = false;
+  awaitingLayout = false;
+  moved = false;
+  suppressTap = false;
+  layout = null;
+  offset = 0;
+  startX = event.touches[0].clientX;
+  startY = event.touches[0].clientY;
+  fingerX = startX;
+  fingerY = startY;
+}
+function lift(event, owner) {
+  if (!pending || moved) return;
+  pending = false;
+  from = event.target.dataset.index;
+  if (from === undefined) return;
+  to = from;
+  awaitingLayout = true;
+  owner.callMethod('measureDrag', { index: from });
+}
+function layoutChanged(value, oldValue, owner) {
+  if (!value || !awaitingLayout) return;
+  awaitingLayout = false;
+  layout = value;
+  from = value.index;
+  to = from;
+  active = true;
+  suppressTap = true;
+  paint(owner);
+}
+function move(event, owner) {
+  fingerX = event.touches[0].clientX;
+  fingerY = event.touches[0].clientY;
+  if (!active) {
+    if (Math.abs(fingerX - startX) + Math.abs(fingerY - startY) > 8) { moved = true; pending = false; }
+    return;
+  }
+  paint(owner);
+  return false;
+}
+function scrolled(value, oldValue, owner) { offset = value; if (active) paint(owner); }
+function end(event, owner) {
+  pending = false;
+  awaitingLayout = false;
+  if (!active) return;
+  active = false;
+  resetStyles(owner);
+  direction = 0;
+  owner.callMethod('drop', { from: from, to: to });
+}
+function cancel(event, owner) {
+  pending = false;
+  awaitingLayout = false;
+  if (!active) return;
+  active = false;
+  resetStyles(owner);
+  direction = 0;
+  owner.callMethod('drop', { from: from, to: from });
+}
+function tap(event, owner) { if (!suppressTap) owner.callMethod('itemTap', { index: event.currentTarget.dataset.index }); }
+module.exports = { start: start, lift: lift, move: move, end: end, cancel: cancel, tap: tap, layoutChanged: layoutChanged, scrolled: scrolled };

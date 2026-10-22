@@ -3,9 +3,11 @@ const {
   getAlbumDetail,
   likeAlbum,
   recordAlbumView,
-  unlockAlbum
+  unlockAlbum,
+  deleteAlbum: deleteAlbumEntry
 } = require('../../services/album');
 const { isLoggedIn, redirectToLogin } = require('../../utils/auth');
+const { showConfirm } = require('../../utils/dialog');
 const { showInfo } = require('../../utils/notify');
 const {
   mapAlbumDetail,
@@ -16,6 +18,8 @@ const {
 Page({
   data: {
     albumId: 0,
+    deleting: false,
+    notFound: false,
     album: null,
     loading: false,
     message: '',
@@ -33,6 +37,14 @@ Page({
     }
     this.setData({ albumId });
     this.loadAlbumDetail();
+  },
+
+  onShow() {
+    if (this.albumChanged) {
+      this.albumChanged = false;
+      return this.loadAlbumDetail();
+    }
+    return undefined;
   },
 
   onPullDownRefresh() {
@@ -53,7 +65,8 @@ Page({
 
     this.setData({
       loading: true,
-      message: ''
+      message: '',
+      notFound: false
     });
 
     return getAlbumDetail(this.data.albumId, '', { silent: true }).then((response) => {
@@ -69,10 +82,11 @@ Page({
     }).catch((error) => {
       const privateError = error && String(error.code || '').indexOf('PRIVATE_ALBUM_') === 0;
       this.setData({
-        album: privateError ? null : this.data.album,
+        album: privateError || error.code === 'ALBUM_NOT_FOUND' ? null : this.data.album,
+        notFound: error.code === 'ALBUM_NOT_FOUND',
         loading: false,
         locked: privateError,
-        message: privateError ? '' : (error && error.message ? error.message : '相册详情加载失败')
+        message: privateError ? '' : (error.code === 'ALBUM_NOT_FOUND' ? '相册不存在' : (error && error.message ? error.message : '相册详情加载失败'))
       });
     });
   },
@@ -142,6 +156,34 @@ Page({
         actionLoading: false,
         message: error && error.message ? error.message : '喜欢失败'
       });
+    });
+  },
+
+  editAlbum() {
+    if (!this.data.album || !this.data.album.canManage || this.data.deleting) return;
+    wx.navigateTo({ url: withQuery(ROUTES.ALBUM_EDIT, { albumId: this.data.albumId }) });
+  },
+
+  deleteAlbum() {
+    if (!this.data.album || !this.data.album.canManage || this.data.deleting) return Promise.resolve();
+    const album = this.data.album;
+    return showConfirm({ title: '删除相册', content: `确定删除「${album.title}」吗？其中 ${album.photoCount} 张照片会一起删除，无法恢复。`, confirmText: '删除', cancelText: '取消' })
+      .then((result) => {
+        if (!result.confirm || this.data.deleting) return;
+        this.setData({ deleting: true, message: '' });
+        return deleteAlbumEntry(this.data.albumId).catch((error) => {
+          if (error.code !== 'ALBUM_NOT_FOUND') throw error;
+        }).then(() => {
+          this.refreshAlbumPages();
+          this.goBack();
+        }).catch((error) => this.setData({ deleting: false, message: error.message || '相册删除失败' }));
+      });
+  },
+
+  refreshAlbumPages() {
+    getCurrentPages().forEach((page) => {
+      if (page.route === ROUTES.ALBUMS && typeof page.loadAlbums === 'function') page.loadAlbums({ reset: true });
+      if (page.route === ROUTES.INDEX && typeof page.loadHome === 'function') page.loadHome();
     });
   },
 

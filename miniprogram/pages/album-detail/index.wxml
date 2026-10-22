@@ -24,7 +24,7 @@
     <view class="unlock-message" wx:if="{{message}}">{{message}}</view>
   </view>
 
-  <view class="album-state" wx:elif="{{message}}">{{message}}</view>
+  <view class="album-state" wx:elif="{{message}}">{{message}}<view wx:if="{{notFound}}" class="detail-action" bindtap="goBack">返回相册列表</view></view>
 
   <block wx:elif="{{album}}">
     <view class="album-head snowlit-subpage-heading">
@@ -108,6 +108,10 @@
       </view>
     </view>
     <view class="photo-empty" wx:else>这个相册还没有照片</view>
+    <view class="detail-actions" wx:if="{{album.canManage}}">
+      <view class="detail-action" bindtap="editAlbum">编辑相册</view>
+      <view class="detail-action detail-action--delete" bindtap="deleteAlbum">{{deleting ? '删除中…' : '删除'}}</view>
+    </view>
     <view class="snowlit-end-tip">没有更多了哦~</view>
   </block>
 </view>

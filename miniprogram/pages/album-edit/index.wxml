@@ -1,9 +1,10 @@
 <view class="album-edit-page">
-  <view class="draft-loading" wx:if="{{draftLocked}}">{{message || '正在读取草稿…'}}</view>
+  <view class="draft-loading" wx:if="{{draftLocked}}">{{message || (editMode ? '正在读取相册…' : '正在读取草稿…')}}</view>
   <view class="album-edit-top">
     <view class="back-button" bindtap="goBack">
       <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
     </view>
+    <view class="edit-page-title" wx:if="{{editMode}}">编辑相册</view>
   </view>
 
   <view class="album-edit-section album-edit-basic">
@@ -18,7 +19,7 @@
           class="basic-input"
           value="{{form.title}}"
           placeholder="给相册起个名字"
-          maxlength="60"
+          maxlength="120"
           data-field="title"
           bindinput="handleInput"
         />
@@ -34,13 +35,13 @@
       <view class="basic-row" wx:if="{{form.visibility === 'private'}}">
         <image class="basic-icon" src="../../assets/icons/diary-edit/lock-keyhole.svg" mode="aspectFit" />
         <view class="basic-label">私密密码</view>
-        <view class="required-star">*</view>
+        <view class="required-star" wx:if="{{!editMode || !hasPassword}}">*</view>
         <input
           disabled="{{draftLocked || submitting}}"
           class="basic-input"
           password="{{true}}"
           value="{{form.privatePassword}}"
-          placeholder="写下访问密码"
+          placeholder="{{passwordPlaceholder}}"
           maxlength="32"
           data-field="privatePassword"
           bindinput="handleInput"
@@ -70,7 +71,7 @@
           class="basic-input"
           value="{{form.location}}"
           placeholder="写下拍摄地点"
-          maxlength="80"
+          maxlength="120"
           data-field="location"
           bindinput="handleInput"
         />
@@ -99,24 +100,10 @@
       <view class="photos-limit">最多 {{maxAlbumPhotos}} 张</view>
     </view>
     <view class="photo-list">
+      <snowlit-sortable-grid items="{{gridItems}}" disabled="{{draftLocked || submitting || removingImage}}" bindreorder="reorderPhotos" binditemtap="openPhotoOptions" />
       <view class="photo-add" wx:if="{{canAddPhoto}}" bindtap="choosePhotos">
         <image class="photo-add-icon" src="../../assets/icons/diary-edit/image-plus.svg" mode="aspectFit" />
         <view class="photo-add-text">添加照片</view>
-      </view>
-      <view
-        class="photo-wrap"
-        wx:for="{{photos}}"
-        wx:key="id"
-      >
-        <image
-          class="photo-item"
-          src="{{item.path}}"
-          mode="aspectFill"
-          data-index="{{index}}"
-          bindtap="previewPhoto"
-        />
-        <view class="photo-remove" data-index="{{index}}" catchtap="removePhoto">×</view>
-        <view class="photo-status" wx:if="{{item.message}}">{{item.message}}</view>
       </view>
     </view>
     <view class="metadata-hint" wx:if="{{metadataHint}}">{{metadataHint}}</view>
@@ -129,7 +116,7 @@
 
   <view class="album-edit-footer">
     <view class="cancel-button" bindtap="goBack">取消</view>
-    <button class="save-button" loading="{{submitting || metadataReading}}" disabled="{{submitting || metadataReading || draftLocked || removingImage}}" bindtap="saveAlbum">{{metadataReading ? '读取照片信息中' : (submitting ? '保存中' : '保存相册')}}</button>
+    <button class="save-button" loading="{{submitting || metadataReading}}" disabled="{{submitting || metadataReading || draftLocked || removingImage}}" bindtap="saveAlbum">{{metadataReading ? '读取照片信息中' : (submitting ? '保存中' : (editMode ? '保存' : '保存相册'))}}</button>
   </view>
 </view>
 
@@ -151,3 +138,5 @@
   bindconfirm="confirmDateFromSheet"
   bindcancel="closeDateSheet"
 />
+
+<snowlit-option-sheet visible="{{photoSheetVisible}}" title="照片" options="{{photoOptions}}" bindselect="selectPhotoOption" bindcancel="closePhotoOptions" />

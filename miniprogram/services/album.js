@@ -1,3 +1,4 @@
+const { uploadFile } = require('../utils/upload');
 const { request, buildQuery } = require('../utils/request');
 const { saveAlbumPrivateToken, getAlbumPrivateToken, clearAlbumPrivateToken } = require('../utils/auth');
 
@@ -73,7 +74,32 @@ function recordAlbumView(albumId) {
   });
 }
 
+function startAlbumEdit(albumId) {
+  return request({ url: `/api/albums/${albumId}/edit`, method: 'POST', silent: true, errorMessage: '相册编辑加载失败' });
+}
+
+function uploadAlbumEditPhoto(albumId, filePath, metadata, onProgress) {
+  return uploadFile({ url: `/api/albums/${albumId}/edit/photos`, filePath, name: 'file', formData: { metadata: JSON.stringify(metadata) }, onProgress, silent: true, errorMessage: '相册照片上传失败' });
+}
+
+function removeAlbumEditPhoto(albumId, draftImageId) {
+  return request({ url: `/api/albums/${albumId}/edit/photos/${encodeURIComponent(draftImageId)}`, method: 'DELETE', silent: true, errorMessage: '照片删除失败' });
+}
+
+function cancelAlbumEdit(albumId) {
+  return request({ url: `/api/albums/${albumId}/edit`, method: 'DELETE', silent: true, errorMessage: '取消修改失败' });
+}
+
+function saveAlbum(albumId, payload) {
+  return request({ url: `/api/albums/${albumId}`, method: 'PUT', data: payload, silent: true, errorMessage: '相册保存失败' });
+}
+
+function deleteAlbum(albumId) {
+  return request({ url: `/api/albums/${albumId}`, method: 'DELETE', silent: true, errorMessage: '相册删除失败' });
+}
+
 module.exports = {
+  startAlbumEdit, uploadAlbumEditPhoto, removeAlbumEditPhoto, cancelAlbumEdit, saveAlbum, deleteAlbum,
   getAlbums,
   getAlbumDetail,
   unlockAlbum,

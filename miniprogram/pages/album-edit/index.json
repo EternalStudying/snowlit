@@ -1,4 +1,7 @@
 {
   "navigationStyle": "custom",
-  "navigationBarTitleText": "新增相册"
+  "navigationBarTitleText": "新增相册",
+  "usingComponents": {
+    "snowlit-sortable-grid": "../../components/snowlit-sortable-grid/index"
+  }
 }

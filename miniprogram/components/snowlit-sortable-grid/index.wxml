@@ -1,0 +1,9 @@
+<wxs module="drag" src="./sortable.wxs" />
+<view class="sortable-grid" style="grid-template-columns: repeat({{columns}}, minmax(0, 1fr));" data-disabled="{{disabled}}" layout="{{dragLayout}}" change:layout="{{drag.layoutChanged}}" scroll-offset="{{scrollOffset}}" change:scroll-offset="{{drag.scrolled}}" bindtouchstart="{{drag.start}}" bindlongpress="{{drag.lift}}" bindtouchmove="{{drag.move}}" bindtouchend="{{drag.end}}" bindtouchcancel="{{drag.cancel}}">
+  <view wx:for="{{items}}" wx:key="key" id="sort-item-{{index}}" class="sortable-item" data-index="{{index}}" bindtap="{{drag.tap}}">
+    <image data-index="{{index}}" class="sortable-image" src="{{item.src}}" mode="aspectFill" />
+    <view data-index="{{index}}" class="sortable-badge" wx:if="{{item.badge}}">{{item.badge}}</view>
+    <view data-index="{{index}}" class="sortable-message" wx:if="{{item.message}}">{{item.message}}</view>
+    <view data-index="{{index}}" class="sortable-progress" wx:if="{{item.progress > 0 && item.progress < 100}}" style="width: {{item.progress}}%;"></view>
+  </view>
+</view>

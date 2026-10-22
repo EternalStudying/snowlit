@@ -122,9 +122,9 @@ function runProportionTest() {
   assert.match(rule(css, '.pin-switch'), /width:\s*94rpx;/);
   assert.match(rule(css, '.details-panel'), /min-height:\s*210rpx;/);
   assert.match(rule(css, '.details-textarea'), /font-size:\s*29rpx;/);
-  assert.match(rule(css, '.photo-list'), /grid-template-columns:\s*repeat\(3,\s*1fr\);/);
+  assert.match(read('components/snowlit-sortable-grid/index.wxml'), /grid-template-columns: repeat/);
   assert.match(rule(css, '.photo-add'), /aspect-ratio:\s*1 \/ 1;/);
-  assert.match(rule(css, '.photo-item'), /aspect-ratio:\s*1 \/ 1;/);
+  assert.match(rule(read('components/snowlit-sortable-grid/index.wxss'), '.sortable-item'), /aspect-ratio:\s*1 \/ 1;/);
   assert.match(rule(css, '.album-edit-footer'), /position:\s*fixed;/);
   assert.match(rule(css, '.cancel-button'), /font-size:\s*29rpx;/);
   assert.match(rule(css, '.save-button'), /font-size:\s*29rpx;/);
