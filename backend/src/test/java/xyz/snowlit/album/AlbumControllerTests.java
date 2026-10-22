@@ -44,7 +44,7 @@ class AlbumControllerTests {
     private final AlbumPrivateAccess privateAccess = mock(AlbumPrivateAccess.class);
     private final AuthenticatedRequestFixture requests = new AuthenticatedRequestFixture();
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
-                    new AlbumController(albumService, privateAccess)
+                    new AlbumController(albumService, privateAccess, mock(AlbumEditor.class), new ObjectMapper())
             )
             .setCustomArgumentResolvers(requests.actorResolver())
             .setControllerAdvice(new ApiExceptionHandler())
@@ -102,7 +102,7 @@ class AlbumControllerTests {
                 eq(2L),
                 eq("private-token")
         )).thenReturn(
-                new AlbumDetailVo(album(false, List.of()), List.of(photo()))
+                new AlbumDetailVo(album(false, List.of()), List.of(photo()), true)
         );
 
         mockMvc.perform(get("/api/albums/2")
@@ -185,6 +185,13 @@ class AlbumControllerTests {
             mockMvc.perform(post(path)).andExpect(status().isNotFound());
         }
         mockMvc.perform(delete("/api/albums/1/draft")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void editStartRouteExists() throws Exception {
+        mockMvc.perform(post("/api/albums/1/edit")
+                        .header("Authorization", requests.authorization()))
+                .andExpect(status().isOk());
     }
 
     private AlbumVo album(boolean locked, List<AlbumPhotoVo> previewPhotos) {

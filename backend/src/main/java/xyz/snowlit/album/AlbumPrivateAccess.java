@@ -75,7 +75,7 @@ public class AlbumPrivateAccess {
 
         albumMapper.clearUnlockFailure(album.getId(), actor.userId());
         AlbumPrivateAccessTokenStore.CreatedToken created =
-                tokenStore.create(album.getId(), actor.userId(), TOKEN_TTL, now.plus(TOKEN_TTL));
+                tokenStore.create(album.getId(), actor.userId(), passwordStamp(album), TOKEN_TTL, now.plus(TOKEN_TTL));
         return new AlbumUnlockVo(created.token(), created.expiresAt());
     }
 
@@ -86,7 +86,7 @@ public class AlbumPrivateAccess {
         if (token == null || token.isBlank()) {
             throw ApplicationFailure.forbidden("PRIVATE_ALBUM_LOCKED", "请输入私密相册密码");
         }
-        switch (tokenStore.validate(token, album.getId(), userId)) {
+        switch (tokenStore.validate(token, album.getId(), userId, passwordStamp(album))) {
             case VALID -> {
             }
             case EXPIRED -> throw ApplicationFailure.forbidden(
@@ -94,6 +94,14 @@ public class AlbumPrivateAccess {
             case INVALID -> throw ApplicationFailure.forbidden(
                     "PRIVATE_ALBUM_TOKEN_INVALID", "私密相册访问无效，请重新输入密码");
         }
+    }
+
+    static String passwordStamp(Album album) {
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(album.getPrivatePasswordHash().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest).substring(0, 16);
+        } catch (java.security.NoSuchAlgorithmException exception) { throw new IllegalStateException(exception); }
     }
 
     private static ApplicationFailure locked() {

@@ -70,7 +70,7 @@ public class AlbumModule {
                 .map(Albums::toPhotoVo)
                 .toList();
         boolean likedToday = Boolean.TRUE.equals(albumMapper.findDailyLikeActive(album.getId(), actor.userId(), today()));
-        return new AlbumDetailVo(Albums.toAlbumVo(album, false, List.of(), likedToday), photos);
+        return new AlbumDetailVo(Albums.toAlbumVo(album, false, List.of(), likedToday), photos, actor.manager());
     }
 
     /**

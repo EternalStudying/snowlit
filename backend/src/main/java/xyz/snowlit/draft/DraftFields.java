@@ -17,9 +17,9 @@ final class DraftFields {
     private DraftFields() {}
 
     static String validate(ObjectMapper json, DraftKind kind, JsonNode fields) {
-        keys(fields, switch (kind) { case ALBUM -> ALBUM; case DIARY -> DIARY; case MOMENT -> MOMENT; });
+        keys(fields, switch (kind) { case ALBUM, ALBUM_EDIT -> ALBUM; case DIARY -> DIARY; case MOMENT -> MOMENT; });
         switch (kind) {
-            case ALBUM -> {
+            case ALBUM, ALBUM_EDIT -> {
                 text(fields, "title", 120); text(fields, "description", 500); text(fields, "location", 120);
                 date(fields, "eventDate", false); enumeration(fields, "visibility", Set.of("public", "private"));
                 if (present(fields, "pinned") && !fields.get("pinned").isBoolean()) throw invalid();

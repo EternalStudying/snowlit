@@ -111,11 +111,11 @@ class DraftModuleTests {
             fails(code, () -> drafts.discard(guest, kind));
             fails(code, () -> drafts.upload(guest, kind, TestImages.jpeg("file", "x.jpg"), null, null, metadata()));
             fails(code, () -> drafts.removeImage(guest, kind, "id"));
-            fails(code, () -> drafts.publish(guest, kind, new DraftDtos.PublishDto(fields("{}"), null)));
+            fails(code, () -> drafts.publish(guest, kind, new DraftDtos.PublishDto(fields("{}"), null, null)));
         }
     }
 
-    @ParameterizedTest @EnumSource(DraftKind.class) void uploadCreatesDraftAndNeverReturnsObjectNames(DraftKind kind) throws Exception {
+    @ParameterizedTest @EnumSource(value = DraftKind.class, names = "ALBUM_EDIT", mode = EnumSource.Mode.EXCLUDE) void uploadCreatesDraftAndNeverReturnsObjectNames(DraftKind kind) throws Exception {
         var image = upload(kind);
         assertThat(drafts.current(OWNER, kind).draft().images()).containsExactly(image);
         String response = json.writeValueAsString(drafts.current(OWNER, kind));
@@ -123,7 +123,7 @@ class DraftModuleTests {
         verify(diaryMapper, never()).insertImage(any());
     }
 
-    @ParameterizedTest @EnumSource(DraftKind.class) void uploadEnforcesLimits(DraftKind kind) throws Exception {
+    @ParameterizedTest @EnumSource(value = DraftKind.class, names = "ALBUM_EDIT", mode = EnumSource.Mode.EXCLUDE) void uploadEnforcesLimits(DraftKind kind) throws Exception {
         int max = kind == DraftKind.ALBUM ? 50 : kind == DraftKind.DIARY ? 20 : 3;
         var image = upload(kind);
         Draft row = rows.find(1L, kind.path());
@@ -181,7 +181,7 @@ class DraftModuleTests {
     @Test void albumPublishesPhotosInOrderCoverAndDateAndDeletesDraft() {
         doAnswer(i -> { ((Album)i.getArgument(0)).setId(19L); return 1; }).when(albumMapper).insertAlbum(any());
         var first = upload(DraftKind.ALBUM); var second = upload(DraftKind.ALBUM);
-        var result = (AlbumVos.AlbumDetailVo) drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null));
+        var result = (AlbumVos.AlbumDetailVo) drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null, null));
         assertThat(result.photos()).extracting(AlbumVos.AlbumPhotoVo::previewUrl).containsExactly(first.url(), second.url());
         assertThat(result.photos()).extracting(AlbumVos.AlbumPhotoVo::sortOrder).containsExactly(1, 2);
         assertThat(result.photos()).extracting(AlbumVos.AlbumPhotoVo::takenAt).containsOnly(LocalDate.of(2026, 5, 20));
@@ -193,7 +193,7 @@ class DraftModuleTests {
         doAnswer(i -> { ((Album)i.getArgument(0)).setId(19L); return 1; }).when(albumMapper).insertAlbum(any());
         upload(DraftKind.ALBUM);
         var pinned = albumFields().deepCopy(); ((com.fasterxml.jackson.databind.node.ObjectNode) pinned).put("pinned", true);
-        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(pinned, null));
+        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(pinned, null, null));
         verify(albumMapper).insertAlbum(argThat(a -> a.isPinned() && a.getSortOrder() == 10));
     }
 
@@ -204,26 +204,26 @@ class DraftModuleTests {
         var list = json.createArrayNode();
         for (int i = 0; i < 51; i++) list.add(source.deepCopy());
         row.setImagesJson(json.writeValueAsString(list));
-        fails("ALBUM_PHOTO_LIMIT_EXCEEDED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null)));
+        fails("ALBUM_PHOTO_LIMIT_EXCEEDED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null, null)));
         assertThat(drafts.current(OWNER, DraftKind.ALBUM).draft().images()).hasSize(51);
         verify(albumMapper, never()).insertAlbum(any());
     }
 
     @Test void albumValidationFailureCommitsNewestFieldsAndPrivatePasswordNeverStored() {
         upload(DraftKind.ALBUM);
-        fails("ALBUM_TITLE_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(fields("{\"description\":\"Newest\"}"), null)));
+        fails("ALBUM_TITLE_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(fields("{\"description\":\"Newest\"}"), null, null)));
         assertThat(drafts.current(OWNER, DraftKind.ALBUM).draft().fields().path("description").asText()).isEqualTo("Newest");
         var privateFields = albumFields().deepCopy(); ((com.fasterxml.jackson.databind.node.ObjectNode) privateFields).put("visibility", "private");
-        fails("ALBUM_PRIVATE_PASSWORD_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(privateFields, null)));
-        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(privateFields, "test-password"));
+        fails("ALBUM_PRIVATE_PASSWORD_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(privateFields, null, null)));
+        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(privateFields, "test-password", null));
         verify(albumMapper).insertAlbum(argThat(a -> new BCryptPasswordEncoder().matches("test-password", a.getPrivatePasswordHash())));
         verify(albumMapper, times(1)).insertAlbum(any());
     }
 
     @Test void emptyAlbumAndMissingDraftAreRejected() {
-        fails("DRAFT_NOT_FOUND", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null)));
+        fails("DRAFT_NOT_FOUND", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null, null)));
         drafts.save(OWNER, DraftKind.ALBUM, fields("{}"));
-        fails("ALBUM_PHOTO_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null)));
+        fails("ALBUM_PHOTO_REQUIRED", () -> drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null, null)));
     }
 
     @Test void convertedMobileImageCanUseSameOriginalAndPreview() throws Exception {
@@ -234,7 +234,7 @@ class DraftModuleTests {
         var original = (com.fasterxml.jackson.databind.node.ObjectNode) stored.get("original");
         original.put("url", stored.get("url").asText()).put("objectName", stored.get("objectName").asText());
         row.setImagesJson(json.writeValueAsString(list));
-        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null));
+        drafts.publish(OWNER, DraftKind.ALBUM, new DraftDtos.PublishDto(albumFields(), null, null));
         verify(albumMapper).insertPhoto(argThat(p -> p.getPreviewUrl().equals(p.getOriginalUrl()) && p.getPreviewObjectName().equals(p.getOriginalObjectName())));
     }
 
@@ -246,7 +246,7 @@ class DraftModuleTests {
         doAnswer(i -> { ((DiaryEntry)i.getArgument(0)).setId(24L); return 1; }).when(diaryMapper).insertDiary(any());
         doAnswer(i -> { ((DiaryImage)i.getArgument(0)).setId(42L); return 1; }).when(diaryMapper).insertImage(any());
         tx.beforeCommit = () -> assertThat(objects.deleted()).isEmpty();
-        var result = (DiaryVos.DiarySummaryVo) drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("Hello ![x](" + used.url() + ")"), null));
+        var result = (DiaryVos.DiarySummaryVo) drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("Hello ![x](" + used.url() + ")"), null, null));
         assertThat(result.imageUrls()).containsExactly(used.url());
         verify(diaryMapper).insertImage(argThat(i -> !i.isTemporary() && i.getUrl().equals(used.url())));
         verify(diaryMapper).markImagesPermanent(List.of(42L), LocalDateTime.now(CLOCK));
@@ -257,9 +257,9 @@ class DraftModuleTests {
 
     @Test void diaryConflictAndForeignImageKeepLatestDraftWithoutCreatingRecords() {
         upload(DraftKind.DIARY);
-        fails("DIARY_IMAGE_FORBIDDEN", () -> drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("![x](https://unowned.test/photo.jpg)"), null)));
+        fails("DIARY_IMAGE_FORBIDDEN", () -> drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("![x](https://unowned.test/photo.jpg)"), null, null)));
         when(diaryMapper.existsActiveDiaryForRoleAndDate("boyfriend", LocalDate.of(2026, 5, 20), null)).thenReturn(true);
-        fails("DIARY_DAY_ALREADY_EXISTS", () -> drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("Newest"), null)));
+        fails("DIARY_DAY_ALREADY_EXISTS", () -> drafts.publish(OWNER, DraftKind.DIARY, new DraftDtos.PublishDto(diaryFields("Newest"), null, null)));
         assertThat(drafts.current(OWNER, DraftKind.DIARY).draft().fields().path("contentMarkdown").asText()).isEqualTo("Newest");
         verify(diaryMapper, never()).insertDiary(any()); verify(diaryMapper, never()).insertImage(any());
     }
@@ -267,7 +267,7 @@ class DraftModuleTests {
     @Test void momentUsesDraftImagesInUploadOrder() {
         var a = upload(DraftKind.MOMENT); var b = upload(DraftKind.MOMENT);
         var form = fields("{\"title\":\"Walk\",\"eventTime\":\"2026-05-20T12:00:00\",\"locationName\":\"Park\",\"longitude\":0,\"latitude\":0,\"category\":\"daily\"}");
-        var result = (StoryVos.StoryMomentVo) drafts.publish(OWNER, DraftKind.MOMENT, new DraftDtos.PublishDto(form, null));
+        var result = (StoryVos.StoryMomentVo) drafts.publish(OWNER, DraftKind.MOMENT, new DraftDtos.PublishDto(form, null, null));
         assertThat(result.images()).containsExactly(a.url(), b.url()); assertThat(rows.rows).isEmpty();
     }
 
@@ -276,6 +276,20 @@ class DraftModuleTests {
         assertThat(lock).contains("for update", "user_id = #{userId}", "kind = #{kind}");
         String save = DraftMapper.class.getMethod("saveFields", Long.class, String.class, LocalDateTime.class).getAnnotation(org.apache.ibatis.annotations.Update.class).value()[0];
         assertThat(save).contains("fields_json").doesNotContain("images_json");
+    }
+
+    @Test void reorderKeepsUnlistedUploadsIgnoresUnknownIdsAndPublishUsesFinalOrder() {
+        var a = upload(DraftKind.ALBUM); var b = upload(DraftKind.ALBUM); var c = upload(DraftKind.ALBUM);
+        var reordered = drafts.reorder(OWNER, List.of(b.id(), "unknown", b.id()));
+        assertThat(reordered.images()).extracting(DraftVos.DraftImageVo::id).containsExactly(b.id(),a.id(),c.id());
+        var newest = upload(DraftKind.ALBUM);
+        var result = (AlbumVos.AlbumDetailVo) drafts.publish(OWNER,DraftKind.ALBUM,new DraftDtos.PublishDto(albumFields(),null,List.of(c.id(),a.id())));
+        assertThat(result.photos()).extracting(AlbumVos.AlbumPhotoVo::previewUrl).containsExactly(c.url(),a.url(),b.url(),newest.url());
+        assertThat(result.album().coverPhotoUrl()).isEqualTo(c.url());
+    }
+
+    @Test void internalEditKindCannotResolveThroughEitherPathSpelling() {
+        for (String path : List.of("album_edit","album-edit")) fails("DRAFT_KIND_INVALID",() -> DraftKind.fromPath(path));
     }
 
     static class Rows implements DraftMapper {

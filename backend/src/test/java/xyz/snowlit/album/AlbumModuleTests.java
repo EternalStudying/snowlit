@@ -299,6 +299,12 @@ class AlbumModuleTests {
         verify(albumMapper).incrementView(1L);
     }
 
+    @Test void detailReportsManagementPermissionForEachActor() {
+        when(albumMapper.findAlbumById(1L)).thenReturn(publicAlbum());
+        assertThat(albumService.getAlbumDetail(MANAGER,1L,null).canManage()).isTrue();
+        assertThat(albumService.getAlbumDetail(GUEST,1L,null).canManage()).isFalse();
+    }
+
     private Album publicAlbum() {
         Album album = new Album();
         album.setId(1L);
@@ -427,13 +433,13 @@ class AlbumModuleTests {
         Duration ttl;
 
         @Override
-        public CreatedToken create(Long albumId, Long userId, Duration ttl, LocalDateTime expiresAt) {
+        public CreatedToken create(Long albumId, Long userId, String passwordStamp, Duration ttl, LocalDateTime expiresAt) {
             this.ttl = ttl;
             return new CreatedToken("issued-private-token", expiresAt);
         }
 
         @Override
-        public ValidationStatus validate(String token, Long albumId, Long userId) {
+        public ValidationStatus validate(String token, Long albumId, Long userId, String passwordStamp) {
             return status;
         }
     }

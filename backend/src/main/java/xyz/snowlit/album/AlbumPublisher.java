@@ -38,9 +38,7 @@ public final class AlbumPublisher {
 
     public AlbumVos.AlbumDetailVo create(AuthenticatedActor actor, AlbumDtos.AlbumCreateDto request, List<AlbumPhoto> photos) {
         actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
-        if (Text.trim(request.title()).isBlank()) throw ApplicationFailure.invalidInput("ALBUM_TITLE_REQUIRED", "相册标题不能为空");
-        if (request.eventDate() == null) throw ApplicationFailure.invalidInput("ALBUM_EVENT_DATE_REQUIRED", "相册日期不能为空");
-        if (!Set.of("public", "private").contains(Text.trim(request.visibility()))) throw ApplicationFailure.invalidInput("ALBUM_VISIBILITY_INVALID", "相册可见性不正确");
+        validateFields(request);
         if ("private".equals(request.visibility()) && Text.trim(request.privatePassword()).isBlank()) throw ApplicationFailure.invalidInput("ALBUM_PRIVATE_PASSWORD_REQUIRED", "私密相册密码不能为空");
         if (photos.isEmpty()) throw ApplicationFailure.invalidInput("ALBUM_PHOTO_REQUIRED", "发布相册前至少上传 1 张照片");
         if (photos.size() > MAX_PHOTOS) throw ApplicationFailure.invalidInput("ALBUM_PHOTO_LIMIT_EXCEEDED", "每本相册最多 50 张照片");
@@ -58,12 +56,29 @@ public final class AlbumPublisher {
         for (int i = 0; i < photos.size(); i++) {
             AlbumPhoto photo = photos.get(i);
             photo.setAlbumId(album.getId()); photo.setSortOrder(i + 1);
-            if (photo.getTakenAt() == null) photo.setTakenAt(request.eventDate());
-            photo.setCaption(Text.trim(photo.getCaption()).isBlank() ? "未命名照片" : Text.trim(photo.getCaption()));
-            photo.setDescription(""); photo.setLocation(Text.trim(photo.getLocation()));
+            preparePhoto(photo, request.eventDate());
             mapper.insertPhoto(photo);
         }
         var vos = photos.stream().map(Albums::toPhotoVo).toList();
-        return new AlbumVos.AlbumDetailVo(Albums.toAlbumVo(album, false, vos.stream().limit(9).toList(), false), vos);
+        return new AlbumVos.AlbumDetailVo(Albums.toAlbumVo(album, false, vos.stream().limit(9).toList(), false), vos, actor.manager());
+    }
+    static void validateFields(AlbumDtos.AlbumCreateDto request) {
+        if (Text.trim(request.title()).isBlank()) throw ApplicationFailure.invalidInput("ALBUM_TITLE_REQUIRED", "相册标题不能为空");
+        if (request.eventDate() == null) throw ApplicationFailure.invalidInput("ALBUM_EVENT_DATE_REQUIRED", "相册日期不能为空");
+        if (!Set.of("public", "private").contains(Text.trim(request.visibility()))) throw ApplicationFailure.invalidInput("ALBUM_VISIBILITY_INVALID", "相册可见性不正确");
+        length(request.title(), 120, "ALBUM_TITLE_TOO_LONG", "相册标题最多 120 个字");
+        length(request.description(), 500, "ALBUM_DESCRIPTION_TOO_LONG", "相册描述最多 500 个字");
+        length(request.location(), 120, "ALBUM_LOCATION_TOO_LONG", "相册地点最多 120 个字");
+    }
+
+    private static void length(String value, int max, String code, String message) {
+        String text = Text.trim(value);
+        if (text.codePointCount(0, text.length()) > max) throw ApplicationFailure.invalidInput(code, message);
+    }
+
+    static void preparePhoto(AlbumPhoto photo, LocalDate eventDate) {
+        if (photo.getTakenAt() == null) photo.setTakenAt(eventDate);
+        photo.setCaption(Text.trim(photo.getCaption()).isBlank() ? "未命名照片" : Text.trim(photo.getCaption()));
+        photo.setDescription(""); photo.setLocation(Text.trim(photo.getLocation()));
     }
 }

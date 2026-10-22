@@ -37,7 +37,7 @@ class SpringModuleWiringTests {
         return Stream.of(AlbumModule.class, AuthModule.class, DiaryModule.class, FeedbackModule.class,
                 HomeModule.class, MessageModule.class, NoticeModule.class, StoryModule.class,
                 WeatherModule.class, WishModule.class, ImageIntake.class, AuthSessions.class,
-                AlbumPublisher.class, xyz.snowlit.draft.DraftModule.class, AlbumPrivateAccess.class, MemberLocations.class);
+                AlbumPublisher.class, xyz.snowlit.album.AlbumEditor.class, xyz.snowlit.draft.DraftModule.class, AlbumPrivateAccess.class, MemberLocations.class);
     }
 
     @ParameterizedTest

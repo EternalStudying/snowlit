@@ -48,6 +48,13 @@ public final class DraftController {
     public void remove(@CurrentActor AuthenticatedActor actor, @PathVariable String kind, @PathVariable String imageId) {
         drafts.removeImage(actor, DraftKind.fromPath(kind), imageId);
     }
+    @PutMapping("/images/order")
+    public DraftVos.DraftVo reorder(@CurrentActor AuthenticatedActor actor, @PathVariable String kind,
+                                    @RequestBody DraftDtos.ImageOrderDto request) {
+        DraftKind resolved = DraftKind.fromPath(kind);
+        if (resolved != DraftKind.ALBUM) throw ApplicationFailure.notFound("DRAFT_KIND_INVALID", "草稿类型不存在");
+        return drafts.reorder(actor, request.ids());
+    }
     @PostMapping("/publish")
     public Object publish(@CurrentActor AuthenticatedActor actor, @PathVariable String kind, @RequestBody DraftDtos.PublishDto request) {
         return drafts.publish(actor, DraftKind.fromPath(kind), request);

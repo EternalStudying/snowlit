@@ -24,22 +24,22 @@ public final class RedisAlbumPrivateAccessTokenStore implements AlbumPrivateAcce
     }
 
     @Override
-    public CreatedToken create(Long albumId, Long userId, Duration ttl, LocalDateTime expiresAt) {
+    public CreatedToken create(Long albumId, Long userId, String passwordStamp, Duration ttl, LocalDateTime expiresAt) {
         String token = createToken(albumId, userId, expiresAt);
-        String value = albumId + ":" + userId + ":" + expiresAt.atZone(ZONE).toEpochSecond();
+        String value = albumId + ":" + userId + ":" + expiresAt.atZone(ZONE).toEpochSecond() + ":" + passwordStamp;
         redisTemplate.opsForValue().set(KEY_PREFIX + token, value, ttl);
         return new CreatedToken(token, expiresAt);
     }
 
     @Override
-    public ValidationStatus validate(String token, Long albumId, Long userId) {
+    public ValidationStatus validate(String token, Long albumId, Long userId, String passwordStamp) {
         String value = redisTemplate.opsForValue().get(KEY_PREFIX + token);
         if (value == null) {
             return isExpiredTokenShape(token) ? ValidationStatus.EXPIRED : ValidationStatus.INVALID;
         }
 
         String[] parts = value.split(":");
-        if (!parts[0].equals(String.valueOf(albumId)) || !parts[1].equals(String.valueOf(userId))) {
+        if (parts.length != 4 || !parts[3].equals(passwordStamp) || !parts[0].equals(String.valueOf(albumId)) || !parts[1].equals(String.valueOf(userId))) {
             return ValidationStatus.INVALID;
         }
         long expiresAt = Long.parseLong(parts[2]);

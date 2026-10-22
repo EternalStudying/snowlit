@@ -47,6 +47,30 @@ public interface AlbumMapper {
     })
     List<Album> findPublishedAlbums(@Param("offset") int offset, @Param("size") int size);
 
+    @Select("select * from albums where id = #{albumId} for update")
+    @ResultMap("albumMap")
+    Album lockAlbum(Long albumId);
+
+    @Update("""
+            update albums set title = #{title}, description = #{description}, event_date = #{eventDate},
+                location = #{location}, visibility = #{visibility}, private_password_hash = #{privatePasswordHash},
+                pinned = #{pinned}, sort_order = #{sortOrder}, cover_photo_url = #{coverPhotoUrl}
+            where id = #{id}
+            """)
+    void updateAlbum(Album album);
+
+    @Update("update photos set sort_order = #{sortOrder} where id = #{photoId}")
+    void updatePhotoOrder(@Param("photoId") Long photoId, @Param("sortOrder") int sortOrder);
+
+    @Delete("delete from photos where id = #{photoId}")
+    void deletePhoto(Long photoId);
+
+    @Delete("delete from albums where id = #{albumId}")
+    void deleteAlbum(Long albumId);
+
+    @Delete("delete from album_locks where album_id = #{albumId}")
+    void clearAlbumUnlockFailures(Long albumId);
+
     @Select("select count(*) from albums where status = 'published'")
     long countPublishedAlbums();
 

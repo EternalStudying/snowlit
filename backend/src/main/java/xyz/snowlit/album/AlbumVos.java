@@ -11,9 +11,14 @@ public final class AlbumVos {
 
     public record AlbumDetailVo(
             AlbumVo album,
-            List<AlbumPhotoVo> photos
+            List<AlbumPhotoVo> photos,
+            boolean canManage
     ) {
     }
+
+    public record AlbumEditVo(AlbumEditAlbumVo album, List<AlbumPhotoVo> photos) {}
+    public record AlbumEditAlbumVo(Long id, String title, String description, LocalDate eventDate,
+                                   String location, String visibility, boolean hasPassword, boolean pinned) {}
 
     public record AlbumLikeVo(
             Long albumId,

@@ -8,7 +8,13 @@ import xyz.snowlit.album.AlbumVos.AlbumPageVo;
 import xyz.snowlit.album.AlbumVos.AlbumUnlockVo;
 import xyz.snowlit.album.AlbumVos.AlbumViewVo;
 import xyz.snowlit.web.CurrentActor;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import xyz.snowlit.draft.DraftVos;
+import xyz.snowlit.failure.ApplicationFailure;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,13 +29,16 @@ public final class AlbumController {
 
     private final AlbumModule albums;
     private final AlbumPrivateAccess privateAccess;
+    private final AlbumEditor editor;
+    private final ObjectMapper json;
 
     public AlbumController(
             AlbumModule albums,
-            AlbumPrivateAccess privateAccess
+            AlbumPrivateAccess privateAccess, AlbumEditor editor, ObjectMapper json
     ) {
         this.albums = albums;
         this.privateAccess = privateAccess;
+        this.editor = editor; this.json = json;
     }
 
     @GetMapping
@@ -66,5 +75,43 @@ public final class AlbumController {
                             @RequestHeader(value = "X-Album-Access-Token", required = false) String privateAccessToken) {
         return albums.recordAlbumView(actor, albumId, privateAccessToken);
     }
+
+    @PostMapping("/{albumId}/edit")
+    public AlbumVos.AlbumEditVo startEdit(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId) {
+        return editor.start(actor, albumId);
+    }
+
+    @PostMapping("/{albumId}/edit/photos")
+    public DraftVos.DraftImageVo uploadEdit(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId,
+                                          @RequestParam(required = false) MultipartFile file,
+                                          @RequestParam(required = false) MultipartFile original,
+                                          @RequestParam(required = false) MultipartFile preview,
+                                          @RequestParam(required = false) String metadata) {
+        actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
+        JsonNode node = null;
+        if (metadata != null) {
+            try { node = json.readTree(metadata); }
+            catch (Exception exception) { throw ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确"); }
+        }
+        return editor.upload(actor, albumId, file, original, preview, node);
+    }
+
+    @DeleteMapping("/{albumId}/edit/photos/{draftImageId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEditPhoto(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId, @PathVariable String draftImageId) {
+        editor.remove(actor, albumId, draftImageId);
+    }
+
+    @DeleteMapping("/{albumId}/edit")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelEdit(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId) { editor.cancel(actor, albumId); }
+
+    @PutMapping("/{albumId}")
+    public AlbumDetailVo save(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId,
+                               @RequestBody AlbumDtos.AlbumSaveDto request) { return editor.save(actor, albumId, request); }
+
+    @DeleteMapping("/{albumId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAlbum(@CurrentActor AuthenticatedActor actor, @PathVariable Long albumId) { editor.delete(actor, albumId); }
 
 }

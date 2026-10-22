@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 
 public interface AlbumPrivateAccessTokenStore {
 
-    CreatedToken create(Long albumId, Long userId, Duration ttl, LocalDateTime expiresAt);
+    CreatedToken create(Long albumId, Long userId, String passwordStamp, Duration ttl, LocalDateTime expiresAt);
 
-    ValidationStatus validate(String token, Long albumId, Long userId);
+    ValidationStatus validate(String token, Long albumId, Long userId, String passwordStamp);
 
     record CreatedToken(String token, LocalDateTime expiresAt) {
     }

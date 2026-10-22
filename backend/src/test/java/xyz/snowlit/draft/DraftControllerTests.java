@@ -30,6 +30,18 @@ class DraftControllerTests {
         mvc.perform(get("/api/drafts/other").header("Authorization", requests.authorization()))
                 .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("DRAFT_KIND_INVALID"));
     }
+    @Test void internalKindsAndNonAlbumReorderingReturn404() throws Exception {
+        for (String path : List.of("album_edit","album-edit")) {
+            for (var request : List.of(get("/api/drafts/"+path),put("/api/drafts/"+path).contentType(MediaType.APPLICATION_JSON).content("{\"fields\":{}}"),delete("/api/drafts/"+path))) {
+                mvc.perform(request.header("Authorization",requests.authorization())).andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("DRAFT_KIND_INVALID"));
+            }
+        }
+        mvc.perform(put("/api/drafts/diary/images/order").header("Authorization",requests.authorization()).contentType(MediaType.APPLICATION_JSON).content("{\"ids\":[]}"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("DRAFT_KIND_INVALID"));
+        mvc.perform(put("/api/drafts/album/images/order").header("Authorization",requests.authorization()).contentType(MediaType.APPLICATION_JSON).content("{\"ids\":[\"b\",\"a\"]}"))
+                .andExpect(status().isOk());
+        verify(drafts).reorder(any(),eq(List.of("b","a")));
+    }
     @Test void draftPathsAndPayloads() throws Exception {
         var fields = json.readTree("{\"title\":\"Weekend\"}");
         var saved = new DraftVos.DraftVo("album", fields, List.of(), LocalDateTime.of(2026,5,20,12,0), LocalDateTime.of(2026,5,20,12,0));

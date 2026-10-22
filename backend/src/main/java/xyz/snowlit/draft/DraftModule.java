@@ -69,34 +69,30 @@ public class DraftModule {
 
     public DraftVos.DraftImageVo upload(AuthenticatedActor actor, DraftKind kind, MultipartFile file,
                                         MultipartFile original, MultipartFile preview, JsonNode metadata) {
+        return upload(actor, kind, file, original, preview, metadata, 0, null);
+    }
+
+    private DraftVos.DraftImageVo upload(AuthenticatedActor actor, DraftKind kind, MultipartFile file,
+                                       MultipartFile original, MultipartFile preview, JsonNode metadata,
+                                       int existingPhotoCount, Long albumId) {
         authorize(actor, kind);
-        AlbumDtos.AlbumPhotoMetadataDto albumMetadata = kind == DraftKind.ALBUM ? albumMetadata(metadata) : null;
+        AlbumDtos.AlbumPhotoMetadataDto albumMetadata = isAlbum(kind) ? albumMetadata(metadata) : null;
         List<ObjectStore.StoredObject> stored = new ArrayList<>();
         try {
             return transaction(() -> {
-                Draft draft = ensure(actor, kind);
+                Draft draft = kind == DraftKind.ALBUM_EDIT ? requireEdit(actor, albumId) : ensure(actor, kind);
                 List<DraftImage> owned = new ArrayList<>(readImages(draft));
-                limit(kind, owned.size());
+                limit(kind, owned.size() + existingPhotoCount);
                 ObjectStore.StoredObject display;
                 ObjectStore.StoredObject source = null;
-                if (kind == DraftKind.ALBUM) {
-                    boolean mobile = file != null;
-                    if ((!mobile && (original == null || preview == null)) || (mobile && (original != null || preview != null))) {
-                        throw ApplicationFailure.invalidInput("ALBUM_PHOTO_REQUIRED", "请选择要上传的照片");
-                    }
-                    MultipartFile sourceFile = mobile ? file : original;
-                    MultipartFile displayFile = mobile ? file : preview;
-                    ImagePolicy displayPolicy = mobile ? AlbumPublisher.ORIGINAL_IMAGE : AlbumPublisher.PREVIEW_IMAGE;
-                    images.verify(sourceFile, AlbumPublisher.ORIGINAL_IMAGE);
-                    images.verify(displayFile, displayPolicy);
-                    source = images.store(sourceFile, AlbumPublisher.ORIGINAL_IMAGE, draft.getId(), "original", actor.userId());
-                    stored.add(source);
-                    display = images.store(displayFile, displayPolicy, draft.getId(), "preview", actor.userId());
+                if (isAlbum(kind)) {
+                    source = storeAlbumPhoto(actor, draft, file, original, preview, stored);
+                    display = stored.get(stored.size() - 1);
                 } else {
                     if (file == null) throw ApplicationFailure.invalidInput(kind == DraftKind.DIARY ? "DIARY_IMAGE_REQUIRED" : "STORY_IMAGE_REQUIRED", "请选择要上传的图片");
                     display = images.store(file, kind == DraftKind.DIARY ? DiaryModule.IMAGE : StoryModule.IMAGE, actor.userId());
+                    stored.add(display);
                 }
-                stored.add(display);
                 DraftImage image = new DraftImage(UUID.randomUUID().toString(), display.url(), display.objectName(),
                         display.contentType(), display.sizeBytes(), source,
                         albumMetadata == null ? null : albumMetadata.width(), albumMetadata == null ? null : albumMetadata.height(),
@@ -133,13 +129,14 @@ public class DraftModule {
             Draft draft = mapper.lock(actor.userId(), kind.path());
             if (draft == null) throw ApplicationFailure.notFound("DRAFT_NOT_FOUND", "草稿不存在");
             saveFields(draft, fields);
-            List<DraftImage> owned = readImages(draft);
+            List<DraftImage> owned = kind == DraftKind.ALBUM ? ordered(readImages(draft), request.imageOrder()) : readImages(draft);
             Object published;
             try {
                 published = switch (kind) {
-                    case ALBUM -> albums.createFromDraft(actor, albumRequest(request), owned.stream().map(this::albumPhoto).toList());
+                    case ALBUM -> albums.createFromDraft(actor, albumRequest(request), owned.stream().map(DraftModule::albumPhoto).toList());
                     case DIARY -> diaries.createFromDraft(actor, convert(request.fields(), DiaryDtos.DiaryCreateDto.class), owned.stream().map(image -> diaryImage(actor, image)).toList());
                     case MOMENT -> moments.createFromDraft(actor, momentRequest(request.fields(), owned));
+                    case ALBUM_EDIT -> throw new IllegalArgumentException("Internal edit drafts cannot be published");
                 };
             } catch (ApplicationFailure failure) {
                 // Expected validation/conflict failures happen before domain writes. Commit the latest fields,
@@ -160,9 +157,112 @@ public class DraftModule {
         return result.value();
     }
 
+    public DraftVos.DraftVo reorder(AuthenticatedActor actor, List<String> ids) {
+        authorize(actor, DraftKind.ALBUM);
+        return transaction(() -> {
+            Draft draft = mapper.lock(actor.userId(), "album");
+            if (draft == null) throw ApplicationFailure.notFound("DRAFT_NOT_FOUND", "草稿不存在");
+            draft.setImagesJson(serialize(ordered(readImages(draft), ids)));
+            draft.setUpdatedAt(now());
+            mapper.saveImages(draft.getId(), draft.getImagesJson(), draft.getUpdatedAt());
+            return toVo(draft);
+        });
+    }
+
+    private List<DraftImage> ordered(List<DraftImage> owned, List<String> ids) {
+        if (ids == null) return owned;
+        Map<String, DraftImage> remaining = new LinkedHashMap<>();
+        owned.forEach(image -> remaining.put(image.id(), image));
+        List<DraftImage> result = new ArrayList<>();
+        for (String id : ids) {
+            DraftImage image = remaining.remove(id);
+            if (image != null) result.add(image);
+        }
+        result.addAll(remaining.values());
+        return result;
+    }
+
+    public void startEdit(AuthenticatedActor actor, Long albumId) {
+        transaction(() -> {
+            Draft previous = ensure(actor, DraftKind.ALBUM_EDIT);
+            List<DraftImage> owned = readImages(previous);
+            mapper.delete(previous.getId());
+            afterCommit(() -> cleanup(owned));
+            Draft next = ensure(actor, DraftKind.ALBUM_EDIT);
+            saveFields(next, serialize(Map.of("albumId", albumId)));
+            return null;
+        });
+    }
+
+    public record EditDraft(Long id, List<DraftImage> images) {}
+
+    public EditDraft editDraft(AuthenticatedActor actor, Long albumId, boolean required) {
+        Draft draft = mapper.lock(actor.userId(), DraftKind.ALBUM_EDIT.path());
+        if (draft == null || parse(draft.getFieldsJson()).path("albumId").asLong() != albumId) {
+            if (required) throw editExpired();
+            return null;
+        }
+        return new EditDraft(draft.getId(), readImages(draft));
+    }
+
+    private Draft requireEdit(AuthenticatedActor actor, Long albumId) {
+        editDraft(actor, albumId, true);
+        return mapper.lock(actor.userId(), DraftKind.ALBUM_EDIT.path());
+    }
+
+    public DraftVos.DraftImageVo uploadEdit(AuthenticatedActor actor, Long albumId, int photoCount,
+                                           MultipartFile file, MultipartFile original, MultipartFile preview, JsonNode metadata) {
+        return upload(actor, DraftKind.ALBUM_EDIT, file, original, preview, metadata, photoCount, albumId);
+    }
+
+    public void removeEditImage(AuthenticatedActor actor, Long albumId, String imageId) {
+        transaction(() -> {
+            requireEdit(actor, albumId);
+            removeImage(actor, DraftKind.ALBUM_EDIT, imageId);
+            return null;
+        });
+    }
+
+    public void cancelEdit(AuthenticatedActor actor, Long albumId) {
+        transaction(() -> {
+            EditDraft draft = editDraft(actor, albumId, false);
+            if (draft != null) finishEdit(draft, Set.of());
+            return null;
+        });
+    }
+
+    public void finishEdit(EditDraft draft, Set<String> usedIds) {
+        mapper.delete(draft.id());
+        afterCommit(() -> cleanup(draft.images().stream().filter(image -> !usedIds.contains(image.id())).toList()));
+    }
+
+    private ApplicationFailure editExpired() {
+        return ApplicationFailure.conflict("ALBUM_EDIT_EXPIRED", "编辑已失效，请重新打开相册编辑");
+    }
+
+    private boolean isAlbum(DraftKind kind) { return kind == DraftKind.ALBUM || kind == DraftKind.ALBUM_EDIT; }
+
+    private ObjectStore.StoredObject storeAlbumPhoto(AuthenticatedActor actor, Draft draft, MultipartFile file,
+                                                      MultipartFile original, MultipartFile preview,
+                                                      List<ObjectStore.StoredObject> stored) {
+        boolean mobile = file != null;
+        if ((!mobile && (original == null || preview == null)) || (mobile && (original != null || preview != null))) {
+            throw ApplicationFailure.invalidInput("ALBUM_PHOTO_REQUIRED", "请选择要上传的照片");
+        }
+        MultipartFile sourceFile = mobile ? file : original;
+        MultipartFile displayFile = mobile ? file : preview;
+        ImagePolicy displayPolicy = mobile ? AlbumPublisher.ORIGINAL_IMAGE : AlbumPublisher.PREVIEW_IMAGE;
+        images.verify(sourceFile, AlbumPublisher.ORIGINAL_IMAGE);
+        images.verify(displayFile, displayPolicy);
+        ObjectStore.StoredObject source = images.store(sourceFile, AlbumPublisher.ORIGINAL_IMAGE, draft.getId(), "original", actor.userId());
+        stored.add(source);
+        stored.add(images.store(displayFile, displayPolicy, draft.getId(), "preview", actor.userId()));
+        return source;
+    }
+
     private void authorize(AuthenticatedActor actor, DraftKind kind) {
         switch (kind) {
-            case ALBUM -> actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
+            case ALBUM, ALBUM_EDIT -> actor.requireManager("ALBUM_FORBIDDEN", "只有站点主人可以管理相册");
             case MOMENT -> actor.requireManager("STORY_FORBIDDEN", "只有站点主人可以管理点滴");
             case DIARY -> diaries.resolveRole(actor);
         }
@@ -212,7 +312,7 @@ public class DraftModule {
                 form.locationName(), form.address(), form.longitude(), form.latitude(), form.category(), owned.stream().map(DraftImage::url).toList());
     }
 
-    private AlbumPhoto albumPhoto(DraftImage image) {
+    public static AlbumPhoto albumPhoto(DraftImage image) {
         AlbumPhoto photo = new AlbumPhoto();
         photo.setCaption(image.caption()); photo.setTakenAt(image.takenAt()); photo.setLocation(image.location());
         photo.setWidth(image.width()); photo.setHeight(image.height());
@@ -254,11 +354,11 @@ public class DraftModule {
     private ApplicationFailure metadataInvalid() { return ApplicationFailure.invalidInput("ALBUM_PHOTO_METADATA_INVALID", "照片信息不正确"); }
 
     private void limit(DraftKind kind, int count) {
-        int max = switch (kind) { case ALBUM -> AlbumPublisher.MAX_PHOTOS; case DIARY -> 20; case MOMENT -> 3; };
+        int max = switch (kind) { case ALBUM, ALBUM_EDIT -> AlbumPublisher.MAX_PHOTOS; case DIARY -> 20; case MOMENT -> 3; };
         if (count >= max) throw ApplicationFailure.invalidInput(switch (kind) {
-            case ALBUM -> "ALBUM_PHOTO_LIMIT_EXCEEDED"; case DIARY -> "DIARY_IMAGE_LIMIT_EXCEEDED"; case MOMENT -> "STORY_IMAGE_LIMIT_EXCEEDED";
+            case ALBUM, ALBUM_EDIT -> "ALBUM_PHOTO_LIMIT_EXCEEDED"; case DIARY -> "DIARY_IMAGE_LIMIT_EXCEEDED"; case MOMENT -> "STORY_IMAGE_LIMIT_EXCEEDED";
         }, switch (kind) {
-            case ALBUM -> "每本相册最多 50 张照片";
+            case ALBUM, ALBUM_EDIT -> "每本相册最多 50 张照片";
             case DIARY -> "每篇日记最多 20 张图片";
             case MOMENT -> "每条点滴最多 3 张图片";
         });

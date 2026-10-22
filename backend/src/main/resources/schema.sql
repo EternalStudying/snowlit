@@ -305,7 +305,7 @@ create table if not exists moments (
 create table if not exists drafts (
     id bigint primary key auto_increment comment '草稿主键',
     user_id bigint not null comment '草稿所属用户 ID',
-    kind varchar(20) not null comment '草稿类型：album、diary 或 moment',
+    kind varchar(20) not null comment '草稿类型：album、diary、moment 或 album_edit（编辑相册时的新照片，不对外开放）',
     fields_json text not null comment '客户端可写的表单字段 JSON 对象',
     images_json mediumtext not null comment '服务端维护的草稿图片 JSON 数组',
     created_at datetime not null comment '创建时间',
