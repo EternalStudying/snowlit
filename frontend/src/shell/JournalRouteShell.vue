@@ -2,8 +2,6 @@
 import { computed, ref } from 'vue';
 import partnerAAvatar from '../assets/couple-avatars/partner-a.webp';
 import partnerBAvatar from '../assets/couple-avatars/partner-b.webp';
-import heartSticker from './assets/heart-sticker.webp';
-import navPaperPill from './assets/nav-paper-pill.webp';
 import SiteRecordLink from '../components/SiteRecordLink.vue';
 import TopbarTooltip from '../components/TopbarTooltip.vue';
 import { useHomeLifecycle } from '../modules/home';
@@ -190,7 +188,16 @@ const coupleStatusCards = computed(() => [
 
             <div class="hero-centerpiece" aria-hidden="true">
               <div class="hero-center-heart">
-                <img class="hero-center-heart__image" :src="heartSticker" alt="" draggable="false" />
+                <svg class="hero-center-heart__image" viewBox="0 0 100 92">
+                  <path
+                    d="M50 86C34 74 8 56 8 31 8 16 19 6 32 6c8 0 14 4 18 11 4-7 10-11 18-11 13 0 24 10 24 25 0 25-26 43-42 55z"
+                    fill="var(--camellia)"
+                    stroke="var(--sheet)"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                  />
+                  <path d="M24 26c2-7 8-11 15-10" fill="none" stroke="var(--sheet)" stroke-opacity=".55" stroke-width="5" stroke-linecap="round" />
+                </svg>
               </div>
             </div>
 
@@ -283,13 +290,7 @@ const coupleStatusCards = computed(() => [
           aria-label="首页章节导航"
           @click.capture="handleCozyNavRootClick"
         >
-          <img
-            class="paper-nav-shell__texture"
-            :src="navPaperPill"
-            alt=""
-            aria-hidden="true"
-            draggable="false"
-          />
+          <span class="paper-nav-shell__texture" aria-hidden="true"></span>
           <div ref="navContentRef" class="paper-nav-shell__content">
             <span class="journal-nav__active-track" aria-hidden="true"></span>
             <template v-for="item in cozyNavItems" :key="item.label">

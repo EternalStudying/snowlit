@@ -112,12 +112,12 @@ const handleDelete = () => {
 .author-name {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--ink);
 }
 
 .created-at {
   font-size: 12px;
-  color: #999;
+  color: var(--ink-faint);
 }
 
 .close-btn {
@@ -130,13 +130,13 @@ const handleDelete = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #666;
+  color: var(--ink-soft);
   transition: all 0.2s;
 }
 
 .close-btn:hover {
   background: rgba(0, 0, 0, 0.08);
-  color: #333;
+  color: var(--ink);
 }
 
 .close-btn svg {
@@ -151,7 +151,7 @@ const handleDelete = () => {
 .full-message {
   font-size: 15px;
   line-height: 1.8;
-  color: #444;
+  color: var(--ink-soft);
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0;
@@ -161,7 +161,7 @@ const handleDelete = () => {
   margin: 20px 0 0;
   padding: 8px;
   background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(210, 198, 188, 0.7);
+  border: 1px solid rgba(var(--ink-rgb), 0.7);
   border-radius: 16px;
 }
 
@@ -171,12 +171,12 @@ const handleDelete = () => {
   max-height: min(48vh, 420px);
   object-fit: contain;
   border-radius: 12px;
-  background: rgba(245, 239, 234, 0.86);
+  background: rgba(var(--sheet-rgb), 0.86);
 }
 
 .modal-error {
   margin: 18px 0 0;
-  color: #b65f5a;
+  color: var(--camellia);
   font-size: 13px;
 }
 
@@ -191,7 +191,7 @@ const handleDelete = () => {
 .delete-btn {
   background: transparent;
   border: none;
-  color: #ff6b6b;
+  color: var(--camellia-wash);
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -203,7 +203,7 @@ const handleDelete = () => {
 }
 
 .delete-btn:hover:not(:disabled) {
-  background: rgba(255, 107, 107, 0.1);
+  background: rgba(var(--camellia-rgb), 0.1);
 }
 
 .delete-btn:disabled {

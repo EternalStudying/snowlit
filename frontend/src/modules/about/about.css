@@ -1,12 +1,12 @@
 .about-starmap-page {
   min-height: 540vh;
   margin: 0;
-  color: #fff7df;
+  color: var(--snow);
   background:
-    radial-gradient(circle at 24% 18%, rgba(255, 205, 129, 0.18), transparent 24%),
-    radial-gradient(circle at 78% 34%, rgba(255, 160, 186, 0.14), transparent 24%),
-    radial-gradient(circle at 52% 78%, rgba(120, 204, 255, 0.12), transparent 26%),
-    linear-gradient(180deg, #12152a 0%, #201f3e 48%, #47334c 100%);
+    radial-gradient(circle at 24% 18%, rgba(var(--lamp-rgb), 0.18), transparent 24%),
+    radial-gradient(circle at 78% 34%, rgba(var(--camellia-rgb), 0.14), transparent 24%),
+    radial-gradient(circle at 52% 78%, rgba(var(--ink-rgb), 0.12), transparent 26%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink) 48%, var(--ink-soft) 100%);
   overflow: clip;
 }
 
@@ -41,8 +41,8 @@
   width: 3px;
   height: 3px;
   border-radius: 999px;
-  background: rgba(255, 236, 186, 0.86);
-  box-shadow: 0 0 12px rgba(255, 220, 150, 0.62);
+  background: rgba(var(--lamp-rgb), 0.86);
+  box-shadow: 0 0 12px rgba(var(--lamp-rgb), 0.62);
   animation: about-star-drift 8s ease-in-out infinite alternate;
 }
 
@@ -112,25 +112,25 @@
 .about-starmap__intro p,
 .about-starmap__card p {
   margin: 0;
-  color: #ffd98b;
+  color: var(--lamp-wash);
   font-size: 0.78rem;
   letter-spacing: 0;
 }
 
 .about-starmap__intro h1 {
   margin: 12px 0 16px;
-  color: #fff3d0;
+  color: var(--snow);
   font-family: var(--font-display);
   font-size: 3.45rem;
   line-height: 1.04;
   letter-spacing: 0;
-  text-shadow: 0 0 24px rgba(255, 210, 130, 0.22);
+  text-shadow: 0 0 24px rgba(var(--lamp-rgb), 0.22);
 }
 
 .about-starmap__intro span,
 .about-starmap__card span {
   display: block;
-  color: #e8dcc4;
+  color: var(--frost);
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -140,7 +140,7 @@
   width: min(980px, 84vw);
   height: min(640px, 70vh);
   margin: 18vh auto 0;
-  filter: drop-shadow(0 0 16px rgba(255, 217, 139, 0.42));
+  filter: drop-shadow(0 0 16px rgba(var(--lamp-rgb), 0.42));
 }
 
 .about-starmap__route-base,
@@ -151,13 +151,13 @@
 }
 
 .about-starmap__route-base {
-  stroke: rgba(255, 235, 180, 0.2);
+  stroke: rgba(var(--lamp-rgb), 0.2);
   stroke-width: 1.2;
   stroke-dasharray: 2.4 3.2;
 }
 
 .about-starmap__route-progress {
-  stroke: #ffd98b;
+  stroke: var(--lamp-wash);
   stroke-width: 1.5;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
@@ -182,7 +182,7 @@
   min-height: 72px;
   padding: 0;
   transform: translate(-50%, -50%);
-  color: #fff4cf;
+  color: var(--snow);
   text-decoration: none;
   border: 0;
   background: transparent;
@@ -194,44 +194,44 @@
   width: 18px;
   height: 18px;
   border-radius: 999px;
-  background: #ffe3a3;
-  border: 2px solid rgba(255, 249, 221, 0.92);
+  background: var(--lamp-wash);
+  border: 2px solid rgba(var(--sheet-rgb), 0.92);
   box-shadow:
-    0 0 16px rgba(255, 220, 150, 0.72),
-    0 0 36px rgba(255, 169, 184, 0.28);
+    0 0 16px rgba(var(--lamp-rgb), 0.72),
+    0 0 36px rgba(var(--camellia-rgb), 0.28);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 .about-starmap__station-label {
   margin-top: 7px;
   padding: 4px 8px;
-  color: #f8e6ba;
+  color: var(--lamp-wash);
   font-size: 0.78rem;
   line-height: 1;
-  border: 1px solid rgba(255, 226, 168, 0.28);
+  border: 1px solid rgba(var(--lamp-rgb), 0.28);
   border-radius: 999px;
-  background: rgba(18, 18, 38, 0.62);
+  background: rgba(var(--ink-rgb), 0.62);
 }
 
 .about-starmap__station:hover .about-starmap__station-core,
 .about-starmap__station:focus-visible .about-starmap__station-core,
 .about-starmap__station.is-active .about-starmap__station-core {
   transform: scale(1.32);
-  background: #fff2c4;
+  background: var(--sheet);
   box-shadow:
-    0 0 20px rgba(255, 232, 172, 0.9),
-    0 0 58px rgba(255, 177, 202, 0.42);
+    0 0 20px rgba(var(--lamp-rgb), 0.9),
+    0 0 58px rgba(var(--camellia-rgb), 0.42);
 }
 
 .about-starmap__station:focus-visible,
 .about-starmap__return:focus-visible {
-  outline: 2px solid #ffe3a3;
+  outline: 2px solid var(--lamp-wash);
   outline-offset: 6px;
 }
 
 .about-starmap__station--pending .about-starmap__station-core {
-  background: #cabdca;
-  box-shadow: 0 0 16px rgba(208, 192, 220, 0.45);
+  background: var(--frost);
+  box-shadow: 0 0 16px rgba(var(--ink-rgb), 0.45);
 }
 
 .about-starmap__card {
@@ -241,19 +241,19 @@
   top: 28vh;
   width: min(340px, calc(100% - 48px));
   padding: 22px;
-  border: 1px solid rgba(255, 226, 168, 0.32);
+  border: 1px solid rgba(var(--lamp-rgb), 0.32);
   border-radius: 18px;
-  background: rgba(16, 18, 38, 0.72);
+  background: rgba(var(--ink-rgb), 0.72);
   box-shadow:
     0 20px 58px rgba(0, 0, 0, 0.28),
-    0 0 28px rgba(255, 217, 139, 0.14);
+    0 0 28px rgba(var(--lamp-rgb), 0.14);
   backdrop-filter: blur(12px);
   pointer-events: none;
 }
 
 .about-starmap__card h2 {
   margin: 8px 0 12px;
-  color: #fff2cd;
+  color: var(--snow);
   font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1.1;
@@ -263,7 +263,7 @@
 .about-starmap__card strong {
   display: block;
   margin-bottom: 8px;
-  color: #ffe4a8;
+  color: var(--lamp-wash);
   font-weight: 600;
   line-height: 1.6;
 }
@@ -277,12 +277,12 @@
   align-items: center;
   min-height: 44px;
   padding: 0 18px;
-  color: #fff4d2;
+  color: var(--snow);
   text-decoration: none;
-  border: 1px solid rgba(255, 226, 168, 0.38);
+  border: 1px solid rgba(var(--lamp-rgb), 0.38);
   border-radius: 999px;
-  background: rgba(15, 17, 34, 0.72);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 0 20px rgba(255, 217, 139, 0.12);
+  background: rgba(var(--ink-rgb), 0.72);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 0 20px rgba(var(--lamp-rgb), 0.12);
   backdrop-filter: blur(10px);
 }
 
@@ -294,10 +294,10 @@
   transform: translateX(-50%);
   margin: 0;
   padding: 10px 16px;
-  color: #fff2cd;
-  border: 1px solid rgba(255, 226, 168, 0.34);
+  color: var(--snow);
+  border: 1px solid rgba(var(--lamp-rgb), 0.34);
   border-radius: 999px;
-  background: rgba(21, 20, 40, 0.82);
+  background: rgba(var(--ink-rgb), 0.82);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
 }
 

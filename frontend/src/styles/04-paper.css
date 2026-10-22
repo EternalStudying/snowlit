@@ -1,0 +1,68 @@
+/* Code-drawn paper pieces shared by every page. */
+
+.paper-sheet {
+  position: relative;
+  background: var(--grain), var(--sheet);
+  border-radius: var(--radius-sheet);
+  box-shadow: var(--shadow-sheet);
+}
+
+.paper-sheet--ruled {
+  background: var(--grain), var(--ruled), var(--sheet);
+  background-position: 0 0, 0 14px, 0 0;
+}
+
+/* Washi tape: translucent strip with torn ends. Tone via --washi. */
+.washi {
+  --washi: rgba(var(--lamp-rgb), 0.34);
+  position: absolute;
+  z-index: 3;
+  width: 88px;
+  height: 22px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.2) 6px 7px),
+    var(--washi);
+  mask:
+    linear-gradient(90deg, transparent 0, #000 3px calc(100% - 3px), transparent 100%),
+    repeating-linear-gradient(0deg, #000 0 3px, transparent 3px 4px);
+  mask-composite: add;
+}
+
+.washi--camellia { --washi: rgba(var(--camellia-rgb), 0.24); }
+.washi--pine { --washi: rgba(var(--pine-rgb), 0.28); }
+.washi--top { top: -10px; left: 50%; translate: -50% 0; rotate: -3deg; }
+.washi--corner-left { top: -6px; left: -18px; rotate: -32deg; }
+.washi--corner-right { top: -6px; right: -18px; rotate: 32deg; }
+
+/* A small coloured index tab sitting on a sheet's top edge. */
+.paper-tab {
+  display: inline-block;
+  padding: 2px 16px 4px 14px;
+  color: var(--sheet);
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  background: var(--tab-color, var(--pine));
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+}
+
+/* Small rounded label used for moods, places, weather and counts. */
+.paper-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 9px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  border: 1px solid var(--frost);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--sheet-rgb), 0.7);
+}
+
+.ui-text {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}

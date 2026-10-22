@@ -123,14 +123,14 @@ const handleBurst = (message: FloatingMessage) => {
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 13px;
-  color: #666;
+  color: var(--ink-soft);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .toggle-btn:hover {
   background: rgba(255, 255, 255, 0.7);
-  color: #333;
+  color: var(--ink);
 }
 
 .toggle-btn svg {
@@ -157,13 +157,13 @@ const handleBurst = (message: FloatingMessage) => {
   left: 50%;
   z-index: 2;
   text-align: center;
-  color: rgba(82, 68, 60, 0.72);
+  color: rgba(var(--ink-rgb), 0.72);
   transform: translate(-50%, -50%);
 }
 
 .empty-bubble-state p {
   margin: 0;
-  color: #5a4c45;
+  color: var(--ink-soft);
   font-size: 20px;
   font-weight: 700;
 }

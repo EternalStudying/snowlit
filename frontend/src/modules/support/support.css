@@ -7,7 +7,7 @@
 
 body:has(.update-notice-dialog) .n-modal-mask,
 body:has(.feedback-dialog) .n-modal-mask {
-  background-color: rgba(65, 42, 34, 0.28);
+  background-color: rgba(var(--camellia-rgb), 0.28);
 }
 
 .update-notice-dialog__panel,
@@ -15,13 +15,13 @@ body:has(.feedback-dialog) .n-modal-mask {
   width: 100%;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
-  border: 1px solid rgba(148, 102, 74, 0.2);
+  border: 1px solid rgba(var(--ink-rgb), 0.2);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgba(255, 251, 244, 0.96), rgba(255, 244, 236, 0.96)),
+    linear-gradient(135deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--sheet-rgb), 0.96)),
     var(--paper);
-  box-shadow: 0 22px 70px rgba(73, 43, 30, 0.2);
-  color: #35241d;
+  box-shadow: 0 22px 70px rgba(var(--ink-rgb), 0.2);
+  color: var(--ink);
 }
 
 .update-notice-dialog__panel {
@@ -31,7 +31,7 @@ body:has(.feedback-dialog) .n-modal-mask {
 .update-notice-dialog__eyebrow,
 .feedback-dialog__panel header p {
   margin: 0 0 6px;
-  color: rgba(169, 80, 66, 0.76);
+  color: rgba(var(--camellia-rgb), 0.76);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -87,15 +87,15 @@ body:has(.feedback-dialog) .n-modal-mask {
 .feedback-dialog__panel button {
   padding: 10px 16px;
   background: rgba(255, 255, 255, 0.78);
-  color: #53382d;
-  box-shadow: inset 0 0 0 1px rgba(134, 90, 63, 0.18);
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.18);
 }
 
 .update-notice-dialog__panel button:last-child,
 .feedback-dialog__panel footer button:last-child {
-  background: #d96d5f;
-  color: #fffaf6;
-  box-shadow: 0 8px 18px rgba(217, 109, 95, 0.22);
+  background: var(--camellia);
+  color: var(--sheet);
+  box-shadow: 0 8px 18px rgba(var(--camellia-rgb), 0.22);
 }
 
 .feedback-dialog__panel {
@@ -122,7 +122,7 @@ body:has(.feedback-dialog) .n-modal-mask {
 .feedback-dialog__upload {
   display: grid;
   gap: 6px;
-  color: rgba(64, 43, 36, 0.78);
+  color: rgba(var(--camellia-rgb), 0.78);
   font-size: 0.82rem;
   font-weight: 800;
 }
@@ -140,10 +140,10 @@ body:has(.feedback-dialog) .n-modal-mask {
 .feedback-dialog__panel .n-input,
 .feedback-dialog__panel .n-base-selection {
   width: 100%;
-  border: 1px solid rgba(140, 92, 66, 0.18);
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.78);
-  color: #34251f;
+  color: var(--ink);
   font: inherit;
   letter-spacing: 0;
 }
@@ -226,8 +226,8 @@ body:has(.feedback-dialog) .n-modal-mask {
   max-width: 100%;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(217, 109, 95, 0.12);
-  color: #7a453c;
+  background: rgba(var(--camellia-rgb), 0.12);
+  color: var(--camellia-deep);
   font-size: 0.78rem;
   overflow-wrap: anywhere;
 }
@@ -235,7 +235,7 @@ body:has(.feedback-dialog) .n-modal-mask {
 .app-floating-error,
 .app-floating-toast {
   margin: 0;
-  color: #a93c35;
+  color: var(--camellia);
   font-size: 0.86rem;
   font-weight: 800;
 }
@@ -247,8 +247,8 @@ body:has(.feedback-dialog) .n-modal-mask {
   z-index: 90;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255, 251, 245, 0.96);
-  box-shadow: 0 12px 28px rgba(92, 56, 40, 0.16);
+  background: rgba(var(--sheet-rgb), 0.96);
+  box-shadow: 0 12px 28px rgba(var(--ink-rgb), 0.16);
 }
 
 @media (max-width: 640px) {

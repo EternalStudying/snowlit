@@ -184,12 +184,12 @@ describe('frontend architecture', () => {
 
   it('不保留只服务旧页面的前端工具和样式', () => {
     const wishStyles = readFileSync(resolve(process.cwd(), 'src/modules/wishes/wishes.css'), 'utf8');
-    const paperStyles = readFileSync(resolve(process.cwd(), 'src/modules/home/home-paper.css'), 'utf8');
+    // Home's paper/responsive sheets were folded into home.css; a missing file holds no legacy rules.
+    const readIfPresent = (path: string) =>
+      existsSync(resolve(process.cwd(), path)) ? readFileSync(resolve(process.cwd(), path), 'utf8') : '';
+    const paperStyles = readIfPresent('src/modules/home/home-paper.css');
     const responsiveStyles = readFileSync(resolve(process.cwd(), 'src/styles/99-responsive.css'), 'utf8');
-    const homeResponsiveStyles = readFileSync(
-      resolve(process.cwd(), 'src/modules/home/home-responsive.css'),
-      'utf8'
-    );
+    const homeResponsiveStyles = readIfPresent('src/modules/home/home-responsive.css');
     const homeStyles = readFileSync(resolve(process.cwd(), 'src/modules/home/home.css'), 'utf8');
     const keyframeStyles = readFileSync(resolve(process.cwd(), 'src/styles/90-keyframes.css'), 'utf8');
 

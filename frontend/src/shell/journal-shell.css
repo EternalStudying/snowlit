@@ -12,10 +12,11 @@
   z-index: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill;
   pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 12px 18px rgba(95, 55, 34, 0.13));
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  border-radius: var(--radius-pill);
+  background: var(--grain), var(--sheet);
+  box-shadow: var(--shadow-sheet);
 }
 
 .paper-nav-shell__content {
@@ -37,11 +38,11 @@
   width: min(1600px, calc(100% - 32px));
   min-height: clamp(520px, 68vh, 700px);
   margin: 28px auto 0;
-  border: 1px solid rgba(126, 85, 52, 0.2);
+  border: 1px solid rgba(var(--ink-rgb), 0.2);
   border-radius: 8px;
   overflow: hidden;
   background: var(--paper);
-  box-shadow: 0 24px 46px rgba(82, 43, 26, 0.2);
+  box-shadow: 0 24px 46px rgba(var(--ink-rgb), 0.2);
 }
 
 .journal-hero-carousel::before,
@@ -55,12 +56,12 @@
 
 .journal-hero-carousel::before {
   background:
-    radial-gradient(circle at 50% 39%, rgba(255, 250, 236, 0.36), transparent 35%),
-    linear-gradient(180deg, rgba(255, 252, 244, 0.14), rgba(255, 244, 230, 0.04) 52%, rgba(87, 61, 42, 0.1));
+    radial-gradient(circle at 50% 39%, rgba(var(--sheet-rgb), 0.36), transparent 35%),
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.14), rgba(var(--sheet-rgb), 0.04) 52%, rgba(var(--ink-rgb), 0.1));
 }
 
 .journal-hero-carousel::after {
-  border: 1px solid rgba(255, 253, 249, 0.34);
+  border: 1px solid rgba(var(--sheet-rgb), 0.34);
   border-radius: 7px;
   inset: 12px;
 }
@@ -113,7 +114,7 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: clamp(86px, 10vw, 128px) clamp(18px, 5vw, 68px) clamp(88px, 9vw, 118px);
-  color: #4f3d33;
+  color: var(--ink-soft);
   text-align: center;
   transform: translateY(-18px);
 }
@@ -162,14 +163,14 @@
   place-items: center;
   width: clamp(142px, 16vw, 224px);
   aspect-ratio: 1;
-  border: 2px dashed rgba(112, 78, 58, 0.52);
+  border: 2px dashed rgba(var(--ink-rgb), 0.52);
   border-radius: 50%;
   background:
     radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.72), transparent 28%),
-    linear-gradient(145deg, rgba(255, 253, 247, 0.96), rgba(248, 233, 210, 0.9));
+    linear-gradient(145deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--lamp-rgb), 0.9));
   box-shadow:
-    0 16px 30px rgba(86, 54, 35, 0.2),
-    inset 0 0 0 8px rgba(255, 250, 238, 0.72);
+    0 16px 30px rgba(var(--ink-rgb), 0.2),
+    inset 0 0 0 8px rgba(var(--sheet-rgb), 0.72);
   overflow: hidden;
 }
 
@@ -185,27 +186,27 @@
   left: 50%;
   width: clamp(46px, 5vw, 72px);
   height: 18px;
-  border: 1px solid rgba(126, 85, 52, 0.16);
+  border: 1px solid rgba(var(--ink-rgb), 0.16);
   border-radius: 4px;
   background:
-    repeating-linear-gradient(90deg, rgba(242, 163, 93, 0.4) 0 8px, rgba(255, 247, 214, 0.68) 8px 16px),
-    rgba(255, 244, 212, 0.78);
+    repeating-linear-gradient(90deg, rgba(var(--lamp-rgb), 0.4) 0 8px, rgba(var(--sheet-rgb), 0.68) 8px 16px),
+    rgba(var(--sheet-rgb), 0.78);
   transform: translateX(-50%) rotate(-8deg);
-  box-shadow: 0 4px 10px rgba(82, 43, 26, 0.08);
+  box-shadow: 0 4px 10px rgba(var(--ink-rgb), 0.08);
   z-index: 3;
 }
 
 .hero-avatar-sticker::after {
   inset: 9px;
   z-index: 2;
-  border: 1.5px dashed rgba(112, 78, 58, 0.44);
+  border: 1.5px dashed rgba(var(--ink-rgb), 0.44);
   border-radius: inherit;
 }
 
 .hero-avatar-sticker--right::before {
   background:
-    repeating-linear-gradient(90deg, rgba(37, 85, 66, 0.34) 0 8px, rgba(255, 247, 214, 0.72) 8px 16px),
-    rgba(255, 244, 212, 0.78);
+    repeating-linear-gradient(90deg, rgba(var(--pine-rgb), 0.34) 0 8px, rgba(var(--sheet-rgb), 0.72) 8px 16px),
+    rgba(var(--sheet-rgb), 0.78);
   transform: translateX(-50%) rotate(7deg);
 }
 
@@ -226,12 +227,12 @@
   margin-top: -8px;
   max-width: 86%;
   padding: 8px 25px 9px;
-  border: 1px dashed rgba(214, 90, 78, 0.55);
+  border: 1px dashed rgba(var(--camellia-rgb), 0.55);
   border-radius: 6px;
-  color: #5a4034;
+  color: var(--ink-soft);
   background:
-    linear-gradient(180deg, rgba(255, 253, 246, 0.98), rgba(255, 243, 229, 0.95));
-  box-shadow: 0 9px 18px rgba(86, 54, 35, 0.14);
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.98), rgba(var(--sheet-rgb), 0.95));
+  box-shadow: 0 9px 18px rgba(var(--ink-rgb), 0.14);
   font-size: 1.35rem;
   font-weight: 900;
   line-height: 1.05;
@@ -260,7 +261,7 @@
   place-items: center;
   width: 92px;
   aspect-ratio: 1.08;
-  filter: drop-shadow(0 10px 12px rgba(117, 45, 34, 0.22));
+  filter: drop-shadow(0 10px 12px rgba(var(--camellia-rgb), 0.22));
   --motion-sticker-rest-transform: rotate(-4deg);
   --hero-heart-x: 0px;
   --hero-heart-y: 0px;
@@ -274,10 +275,10 @@
   inset: 2px;
   z-index: 2;
   background:
-    repeating-linear-gradient(26deg, rgba(255, 228, 207, 0.34) 0 1px, transparent 1px 4px),
-    repeating-linear-gradient(116deg, rgba(116, 36, 31, 0.18) 0 1px, transparent 1px 5px),
-    radial-gradient(circle at 31% 36%, rgba(255, 236, 218, 0.3) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 68% 62%, rgba(111, 34, 29, 0.18) 0 1px, transparent 1.5px);
+    repeating-linear-gradient(26deg, rgba(var(--sheet-rgb), 0.34) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(116deg, rgba(var(--camellia-rgb), 0.18) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 31% 36%, rgba(var(--sheet-rgb), 0.3) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 68% 62%, rgba(var(--camellia-rgb), 0.18) 0 1px, transparent 1.5px);
   clip-path: polygon(50% 93%, 23% 72%, 9% 51%, 8% 30%, 18% 12%, 35% 8%, 50% 22%, 65% 8%, 82% 12%, 92% 30%, 91% 51%, 77% 72%);
   mix-blend-mode: soft-light;
   opacity: 0.7;
@@ -301,7 +302,7 @@
   inset: -42%;
   z-index: 1;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 198, 126, 0.34), rgba(255, 198, 126, 0) 66%);
+  background: radial-gradient(circle, rgba(var(--lamp-rgb), 0.34), rgba(var(--lamp-rgb), 0) 66%);
   opacity: 0;
   pointer-events: none;
   transform: scale(0.68);
@@ -318,7 +319,7 @@
 }
 
 .journal-shell[data-hero-expanded="true"] .hero-person-sticker:focus-visible .hero-avatar-sticker {
-  outline: 2px solid rgba(223, 81, 69, 0.58);
+  outline: 2px solid rgba(var(--camellia-rgb), 0.58);
   outline-offset: 5px;
 }
 
@@ -414,18 +415,18 @@
   top: 46%;
   z-index: 6;
   display: block;
-  color: #df5145;
+  color: var(--camellia);
   font-size: clamp(0.78rem, 1.1vw, 1.05rem);
   font-weight: 900;
   line-height: 1;
   pointer-events: none;
-  text-shadow: 0 1px 0 rgba(255, 251, 242, 0.86);
+  text-shadow: 0 1px 0 rgba(var(--sheet-rgb), 0.86);
   transform-origin: center;
   animation: hero-heart-burst-fly 720ms cubic-bezier(0.2, 0.76, 0.24, 1) var(--burst-delay) both;
 }
 
 .journal-shell[data-hero-expanded="true"] .hero-heart-burst-particle--right {
-  color: #d79a25;
+  color: var(--lamp);
 }
 
 @keyframes hero-avatar-soft-breathe {
@@ -558,17 +559,17 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 1px solid rgba(126, 85, 52, 0.22);
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
   border-radius: 999px;
-  background: rgba(255, 250, 240, 0.82);
-  box-shadow: 0 8px 16px rgba(86, 54, 35, 0.12);
+  background: rgba(var(--sheet-rgb), 0.82);
+  box-shadow: 0 8px 16px rgba(var(--ink-rgb), 0.12);
 }
 
 .journal-hero-dot span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(37, 85, 66, 0.42);
+  background: rgba(var(--pine-rgb), 0.42);
   transition: transform 180ms ease, background 180ms ease;
 }
 
@@ -603,7 +604,7 @@
   position: absolute;
   inset: var(--cozy-boundary-top) 0 0;
   z-index: -1;
-  background: #fff8ee;
+  background: var(--sheet);
 }
 
 .journal-stage::after {
@@ -615,20 +616,20 @@
   z-index: 3;
   height: calc(var(--cozy-nav-offset) + 10px);
   background:
-    radial-gradient(ellipse 30px 12px at 16% 52%, rgba(255, 218, 205, 0.26) 0 48%, transparent 52%),
-    radial-gradient(ellipse 26px 11px at 19% 76%, rgba(255, 238, 210, 0.32) 0 48%, transparent 52%),
-    radial-gradient(ellipse 22px 9px at 25% 46%, rgba(236, 145, 126, 0.32) 0 48%, transparent 52%),
-    radial-gradient(ellipse 18px 8px at 39% 64%, rgba(235, 177, 103, 0.28) 0 48%, transparent 52%),
-    radial-gradient(ellipse 26px 11px at 47% 38%, rgba(255, 238, 210, 0.26) 0 48%, transparent 52%),
-    radial-gradient(ellipse 20px 9px at 62% 42%, rgba(236, 145, 126, 0.26) 0 48%, transparent 52%),
-    radial-gradient(ellipse 30px 12px at 69% 80%, rgba(255, 218, 205, 0.22) 0 48%, transparent 52%),
-    radial-gradient(ellipse 18px 8px at 76% 68%, rgba(33, 79, 63, 0.13) 0 48%, transparent 52%),
-    radial-gradient(ellipse 28px 12px at 84% 48%, rgba(255, 238, 210, 0.28) 0 48%, transparent 52%),
-    radial-gradient(circle at 32% 82%, rgba(199, 138, 25, 0.34) 0 2px, transparent 2.6px),
-    radial-gradient(circle at 54% 76%, rgba(223, 81, 69, 0.25) 0 2px, transparent 2.6px),
-    radial-gradient(circle at 71% 32%, rgba(33, 79, 63, 0.14) 0 2.5px, transparent 3px),
+    radial-gradient(ellipse 30px 12px at 16% 52%, rgba(var(--sheet-rgb), 0.26) 0 48%, transparent 52%),
+    radial-gradient(ellipse 26px 11px at 19% 76%, rgba(var(--sheet-rgb), 0.32) 0 48%, transparent 52%),
+    radial-gradient(ellipse 22px 9px at 25% 46%, rgba(var(--camellia-rgb), 0.32) 0 48%, transparent 52%),
+    radial-gradient(ellipse 18px 8px at 39% 64%, rgba(var(--lamp-rgb), 0.28) 0 48%, transparent 52%),
+    radial-gradient(ellipse 26px 11px at 47% 38%, rgba(var(--sheet-rgb), 0.26) 0 48%, transparent 52%),
+    radial-gradient(ellipse 20px 9px at 62% 42%, rgba(var(--camellia-rgb), 0.26) 0 48%, transparent 52%),
+    radial-gradient(ellipse 30px 12px at 69% 80%, rgba(var(--sheet-rgb), 0.22) 0 48%, transparent 52%),
+    radial-gradient(ellipse 18px 8px at 76% 68%, rgba(var(--pine-rgb), 0.13) 0 48%, transparent 52%),
+    radial-gradient(ellipse 28px 12px at 84% 48%, rgba(var(--sheet-rgb), 0.28) 0 48%, transparent 52%),
+    radial-gradient(circle at 32% 82%, rgba(var(--lamp-rgb), 0.34) 0 2px, transparent 2.6px),
+    radial-gradient(circle at 54% 76%, rgba(var(--camellia-rgb), 0.25) 0 2px, transparent 2.6px),
+    radial-gradient(circle at 71% 32%, rgba(var(--pine-rgb), 0.14) 0 2.5px, transparent 3px),
     radial-gradient(circle at 82% 38%, rgba(255, 255, 255, 0.74) 0 4px, transparent 4.6px),
-    linear-gradient(180deg, transparent calc(100% - 1px), rgba(126, 85, 52, 0.12) calc(100% - 1px));
+    linear-gradient(180deg, transparent calc(100% - 1px), rgba(var(--ink-rgb), 0.12) calc(100% - 1px));
   opacity: 0.86;
   pointer-events: none;
 }
@@ -640,15 +641,15 @@
   border: 0;
   border-radius: 0;
   overflow: visible;
-  background: #fff7ee;
+  background: var(--sheet);
   box-shadow: none;
 }
 
 .journal-stage .journal-hero-carousel::before {
   z-index: 1;
   background:
-    radial-gradient(circle at 16% 7%, rgba(255, 237, 170, 0.3), transparent 18%),
-    linear-gradient(180deg, rgba(255, 249, 238, 0.18), rgba(255, 246, 236, 0.03) 58%, rgba(100, 64, 42, 0.1));
+    radial-gradient(circle at 16% 7%, rgba(var(--lamp-rgb), 0.3), transparent 18%),
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.18), rgba(var(--sheet-rgb), 0.03) 58%, rgba(var(--ink-rgb), 0.1));
 }
 
 .journal-stage .journal-hero-carousel::after {
@@ -660,16 +661,16 @@
   background:
     radial-gradient(circle at 10% 52%, rgba(255, 255, 255, 0.82) 0 4px, transparent 4.6px),
     radial-gradient(circle at 22% 62%, rgba(255, 255, 255, 0.74) 0 3px, transparent 3.6px),
-    radial-gradient(ellipse 10px 5px at 36% 46%, rgba(236, 145, 126, 0.42) 0 52%, transparent 55%),
-    radial-gradient(ellipse 9px 4px at 55% 34%, rgba(236, 145, 126, 0.36) 0 52%, transparent 55%),
-    radial-gradient(ellipse 8px 4px at 74% 52%, rgba(235, 177, 103, 0.32) 0 52%, transparent 55%),
+    radial-gradient(ellipse 10px 5px at 36% 46%, rgba(var(--camellia-rgb), 0.42) 0 52%, transparent 55%),
+    radial-gradient(ellipse 9px 4px at 55% 34%, rgba(var(--camellia-rgb), 0.36) 0 52%, transparent 55%),
+    radial-gradient(ellipse 8px 4px at 74% 52%, rgba(var(--lamp-rgb), 0.32) 0 52%, transparent 55%),
     radial-gradient(circle at 86% 48%, rgba(255, 255, 255, 0.72) 0 3px, transparent 3.6px),
-    radial-gradient(circle at 18px 18px, rgba(199, 138, 25, 0.075) 0 1px, transparent 1.4px),
-    linear-gradient(180deg, rgba(255, 250, 242, 0.84) 0%, #fff7ee 58%, #fff3e6 100%);
+    radial-gradient(circle at 18px 18px, rgba(var(--lamp-rgb), 0.075) 0 1px, transparent 1.4px),
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.84) 0%, var(--sheet) 58%, var(--sheet) 100%);
   background-size: auto, auto, auto, auto, auto, auto, 24px 24px, auto;
   filter:
-    drop-shadow(0 -1px 0 rgba(160, 113, 76, 0.18))
-    drop-shadow(0 -10px 18px rgba(255, 246, 232, 0.55));
+    drop-shadow(0 -1px 0 rgba(var(--ink-rgb), 0.18))
+    drop-shadow(0 -10px 18px rgba(var(--sheet-rgb), 0.55));
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20viewBox='0%200%201920%20220'%20preserveAspectRatio='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M0%2042Q960%20318%201920%2042V220H0Z'%20fill='black'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg%20viewBox='0%200%201920%20220'%20preserveAspectRatio='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M0%2042Q960%20318%201920%2042V220H0Z'%20fill='black'/%3E%3C/svg%3E");
   -webkit-mask-repeat: no-repeat;
@@ -736,10 +737,10 @@
   max-width: calc(100% - 32px);
   margin: var(--cozy-nav-offset) auto 0;
   padding: 8px 18px;
-  border: 1px solid rgba(126, 85, 52, 0.16);
+  border: 1px solid rgba(var(--ink-rgb), 0.16);
   border-radius: 999px;
-  background: rgba(255, 252, 246, 0.9);
-  box-shadow: 0 13px 26px rgba(95, 55, 34, 0.13);
+  background: rgba(var(--sheet-rgb), 0.9);
+  box-shadow: 0 13px 26px rgba(var(--ink-rgb), 0.13);
   backdrop-filter: blur(10px) saturate(1.06);
 }
 
@@ -757,7 +758,7 @@
   border-radius: 999px;
   appearance: none;
   background: transparent;
-  color: #6f5a4d;
+  color: var(--ink-soft);
   cursor: pointer;
   font: inherit;
   font-weight: 900;
@@ -775,7 +776,7 @@
 
 .journal-nav__link:hover {
   color: var(--deep-coral);
-  background: rgba(223, 81, 69, 0.08);
+  background: rgba(var(--camellia-rgb), 0.08);
   transform: translateY(-1px);
 }
 
@@ -873,10 +874,10 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #fffaf0;
+  background: var(--sheet);
   box-shadow:
-    0 0 0 3px rgba(216, 82, 72, 0.2),
-    0 5px 10px rgba(126, 58, 45, 0.18);
+    0 0 0 3px rgba(var(--camellia-rgb), 0.2),
+    0 5px 10px rgba(var(--camellia-rgb), 0.18);
   transform: translateX(-50%);
 }
 
@@ -956,7 +957,7 @@
 .journal-stage .journal-hero-carousel {
   min-height: calc(var(--cozy-hero-height) + (100svh - var(--cozy-hero-height)) * var(--hero-expansion-progress));
   overflow: hidden;
-  background: #fff4e8;
+  background: var(--sheet);
   transition:
     min-height var(--hero-expansion-duration) var(--hero-expansion-ease),
     filter 320ms ease;
@@ -978,8 +979,8 @@
 .journal-stage .journal-hero-carousel::before {
   z-index: 1;
   background:
-    radial-gradient(circle at 12% 8%, rgba(255, 244, 200, 0.26), transparent 19%),
-    linear-gradient(180deg, rgba(255, 250, 240, 0.08), rgba(101, 67, 43, 0.1));
+    radial-gradient(circle at 12% 8%, rgba(var(--lamp-rgb), 0.26), transparent 19%),
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.08), rgba(var(--ink-rgb), 0.1));
 }
 
 .journal-stage .journal-hero-carousel::after {
@@ -993,15 +994,15 @@
   border-radius: 0;
   background:
     radial-gradient(ellipse 26px 12px at 15% 40%, rgba(255, 255, 255, 0.78) 0 48%, transparent 52%),
-    radial-gradient(ellipse 16px 7px at 28% 62%, rgba(236, 145, 126, 0.22) 0 48%, transparent 52%),
-    radial-gradient(ellipse 20px 9px at 46% 44%, rgba(235, 177, 103, 0.18) 0 48%, transparent 52%),
+    radial-gradient(ellipse 16px 7px at 28% 62%, rgba(var(--camellia-rgb), 0.22) 0 48%, transparent 52%),
+    radial-gradient(ellipse 20px 9px at 46% 44%, rgba(var(--lamp-rgb), 0.18) 0 48%, transparent 52%),
     radial-gradient(ellipse 18px 8px at 68% 58%, rgba(255, 255, 255, 0.7) 0 48%, transparent 52%),
-    radial-gradient(circle at 18px 18px, rgba(199, 138, 25, 0.07) 0 1px, transparent 1.4px),
-    linear-gradient(180deg, rgba(255, 252, 245, 0.94) 0%, var(--snow-ground) 62%, var(--snow-ground) 100%);
+    radial-gradient(circle at 18px 18px, rgba(var(--lamp-rgb), 0.07) 0 1px, transparent 1.4px),
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.94) 0%, var(--snow-ground) 62%, var(--snow-ground) 100%);
   background-size: auto, auto, auto, auto, 24px 24px, auto;
   filter:
-    drop-shadow(0 -1px 0 rgba(160, 113, 76, 0.16))
-    drop-shadow(0 -8px 16px rgba(255, 246, 232, 0.44));
+    drop-shadow(0 -1px 0 rgba(var(--ink-rgb), 0.16))
+    drop-shadow(0 -8px 16px rgba(var(--sheet-rgb), 0.44));
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20viewBox='0%200%201920%20220'%20preserveAspectRatio='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M0%2028Q960%20154%201920%2028V220H0Z'%20fill='black'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg%20viewBox='0%200%201920%20220'%20preserveAspectRatio='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M0%2028Q960%20154%201920%2028V220H0Z'%20fill='black'/%3E%3C/svg%3E");
   -webkit-mask-repeat: no-repeat;
@@ -1021,8 +1022,8 @@
 
 .journal-shell[data-hero-immersive="true"] .journal-stage .journal-hero-carousel::after {
   filter:
-    drop-shadow(0 -1px 0 rgba(160, 113, 76, 0.14))
-    drop-shadow(0 -14px 26px rgba(255, 246, 232, 0.66));
+    drop-shadow(0 -1px 0 rgba(var(--ink-rgb), 0.14))
+    drop-shadow(0 -14px 26px rgba(var(--sheet-rgb), 0.66));
 }
 
 .journal-stage .journal-hero-slide img {
@@ -1051,9 +1052,9 @@
 .journal-stage .journal-hero-dot {
   width: 18px;
   height: 18px;
-  border-color: rgba(126, 85, 52, 0.16);
-  background: rgba(255, 251, 242, 0.76);
-  box-shadow: 0 5px 11px rgba(86, 54, 35, 0.09);
+  border-color: rgba(var(--ink-rgb), 0.16);
+  background: rgba(var(--sheet-rgb), 0.76);
+  box-shadow: 0 5px 11px rgba(var(--ink-rgb), 0.09);
 }
 
 .journal-shell[data-hero-expanded="true"] .journal-stage .journal-hero-dots {
@@ -1080,11 +1081,11 @@
   width: clamp(42px, 4.5vw, 58px);
   aspect-ratio: 1;
   padding: 0;
-  border: 1px solid rgba(126, 85, 52, 0.22);
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
   border-radius: 999px;
-  background: rgba(255, 250, 242, 0.72);
-  color: #8b4f43;
-  box-shadow: 0 16px 28px rgba(82, 43, 26, 0.14);
+  background: rgba(var(--sheet-rgb), 0.72);
+  color: var(--camellia);
+  box-shadow: 0 16px 28px rgba(var(--ink-rgb), 0.14);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-50%) scale(0.94);
@@ -1122,7 +1123,7 @@
 }
 
 .journal-hero-arrow:not(:disabled):hover {
-  background: rgba(255, 253, 248, 0.9);
+  background: rgba(var(--sheet-rgb), 0.9);
   transform: translateY(-50%) scale(1);
 }
 
@@ -1219,7 +1220,7 @@
   border-radius: 999px;
   background:
     radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.9), transparent 58%),
-    radial-gradient(ellipse at 70% 45%, rgba(255, 238, 218, 0.82), transparent 58%),
+    radial-gradient(ellipse at 70% 45%, rgba(var(--sheet-rgb), 0.82), transparent 58%),
     linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.86), transparent);
   filter: blur(0.6px);
   transform: translateY(0) scaleX(1);
@@ -1231,10 +1232,10 @@
   height: 22px;
   background:
     radial-gradient(circle at 12% 60%, rgba(255, 255, 255, 0.95) 0 3px, transparent 3.6px),
-    radial-gradient(circle at 28% 42%, rgba(255, 246, 225, 0.9) 0 2px, transparent 2.6px),
+    radial-gradient(circle at 28% 42%, rgba(var(--sheet-rgb), 0.9) 0 2px, transparent 2.6px),
     radial-gradient(circle at 55% 64%, rgba(255, 255, 255, 0.86) 0 3px, transparent 3.7px),
-    radial-gradient(circle at 79% 38%, rgba(255, 246, 225, 0.82) 0 2px, transparent 2.8px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 236, 0.42));
+    radial-gradient(circle at 79% 38%, rgba(var(--sheet-rgb), 0.82) 0 2px, transparent 2.8px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(var(--sheet-rgb), 0.42));
   clip-path: polygon(0 44%, 9% 30%, 20% 48%, 31% 27%, 45% 46%, 57% 31%, 70% 52%, 83% 29%, 100% 45%, 100% 100%, 0 100%);
   transform: translateY(0) scaleX(1);
 }
@@ -1266,9 +1267,9 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 204, 164, 0.02) 18%,
-    rgba(255, 183, 145, 0.16) 50%,
-    rgba(255, 204, 164, 0.02) 82%,
+    rgba(var(--lamp-rgb), 0.02) 18%,
+    rgba(var(--lamp-rgb), 0.16) 50%,
+    rgba(var(--lamp-rgb), 0.02) 82%,
     transparent
   );
   opacity: 0;
@@ -1289,11 +1290,11 @@
   height: 5px;
   border-radius: 999px;
   background:
-    linear-gradient(90deg, rgba(255, 155, 143, 0.18), rgba(220, 75, 65, 0.9), rgba(255, 155, 143, 0.18)),
+    linear-gradient(90deg, rgba(var(--camellia-rgb), 0.18), rgba(var(--camellia-rgb), 0.9), rgba(var(--camellia-rgb), 0.18)),
     var(--deep-coral);
   box-shadow:
-    0 5px 12px rgba(174, 61, 51, 0.18),
-    0 0 0 1px rgba(255, 245, 236, 0.36);
+    0 5px 12px rgba(var(--camellia-rgb), 0.18),
+    0 0 0 1px rgba(var(--sheet-rgb), 0.36);
   opacity: var(--nav-active-opacity, 0);
   pointer-events: none;
   transform: translate3d(var(--nav-active-x, 0px), 0, 0);
@@ -1430,7 +1431,7 @@
 }
 
 .journal-shell[data-home-motion="warm-journal"] .journal-nav[data-motion-enabled="true"] .journal-nav__link:not(:disabled):hover {
-  filter: drop-shadow(0 8px 10px rgba(130, 66, 48, 0.12));
+  filter: drop-shadow(0 8px 10px rgba(var(--camellia-rgb), 0.12));
   transform: translateY(calc(-2px * var(--motion-scale-intensity, 0.28))) scale(calc(1 + 0.025 * var(--motion-scale-intensity, 0.28)));
 }
 
@@ -1532,8 +1533,8 @@
 
   .journal-hero-carousel::before {
     background:
-      radial-gradient(circle at 50% 38%, rgba(255, 250, 236, 0.4), transparent 38%),
-      linear-gradient(180deg, rgba(255, 252, 244, 0.12), rgba(255, 244, 230, 0.02) 54%, rgba(87, 61, 42, 0.12));
+      radial-gradient(circle at 50% 38%, rgba(var(--sheet-rgb), 0.4), transparent 38%),
+      linear-gradient(180deg, rgba(var(--sheet-rgb), 0.12), rgba(var(--sheet-rgb), 0.02) 54%, rgba(var(--ink-rgb), 0.12));
   }
 
   .journal-hero-slide--spring-snow img,
@@ -1556,8 +1557,8 @@
   .hero-avatar-sticker {
     width: clamp(88px, 25vw, 118px);
     box-shadow:
-      0 11px 20px rgba(86, 54, 35, 0.17),
-      inset 0 0 0 6px rgba(255, 250, 238, 0.72);
+      0 11px 20px rgba(var(--ink-rgb), 0.17),
+      inset 0 0 0 6px rgba(var(--sheet-rgb), 0.72);
   }
 
   .hero-avatar-sticker::before {

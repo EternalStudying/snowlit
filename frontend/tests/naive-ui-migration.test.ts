@@ -37,7 +37,7 @@ describe('Naive UI migration boundaries', () => {
     expect(themeSource).toContain('Modal');
     expect(themeSource).toContain('Upload');
     expect(themeSource).toContain('Tooltip');
-    expect(themeSource).toContain('#f7efe1');
+    expect(themeSource).toContain('#fcfcfa');
     expect(themeSource).not.toContain('#18a058');
   });
 

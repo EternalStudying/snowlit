@@ -12,7 +12,7 @@
     radial-gradient(circle at 86% 18%, rgba(var(--page-bg-warm-rgb), 0.075), transparent 32%),
     linear-gradient(
       180deg,
-      rgba(255, 251, 244, 0.82) 0%,
+      rgba(var(--sheet-rgb), 0.82) 0%,
       rgba(var(--snow-ground-rgb), 0.94) 52%,
       rgba(var(--page-bg-accent-rgb), 0.045) 100%
     );

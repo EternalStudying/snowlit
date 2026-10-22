@@ -1,31 +1,14 @@
 <script setup lang="ts">
-import './home-paper.css';
 import './home.css';
 import './home-motion.css';
-import './home-responsive.css';
 import { computed, ref } from 'vue';
+import { CalendarHeart, Check, Gift, Images, MessageCircleHeart } from 'lucide-vue-next';
 import { prefersReducedMotion } from '../../motion';
 import MotionCountUp from '../../components/motion/MotionCountUp.vue';
 import PageLoader from '../../components/PageLoader.vue';
+import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
 import partnerAAvatar from '../../assets/couple-avatars/partner-a.webp';
 import partnerBAvatar from '../../assets/couple-avatars/partner-b.webp';
-import bowRed from './assets/paper/bow-red.webp';
-import flowerSprig from './assets/paper/flower-sprig.webp';
-import paperCardSmall from './assets/paper/paper-card-small.webp';
-import paperLedgerWide from './assets/paper/paper-ledger-wide.webp';
-import paperMessageNote from './assets/paper/paper-message-note.webp';
-import paperNoteWide from './assets/paper/paper-note-wide.webp';
-import paperStripSage from './assets/paper/paper-strip-sage.webp';
-import paperTicketStrip from './assets/paper/paper-ticket-strip.webp';
-import tapeBeige from './assets/paper/tape-beige.webp';
-import tapeCoral from './assets/paper/tape-coral.webp';
-import tapeSage from './assets/paper/tape-sage.webp';
-import flowerSprigSmall from './assets/paper/flower-sprig-small.webp';
-import memoryLedgerCard from './assets/paper/memory-ledger-card.webp';
-import statIconCalendar from './assets/paper/stat-icon-calendar.webp';
-import statIconGift from './assets/paper/stat-icon-gift.webp';
-import statIconMessage from './assets/paper/stat-icon-message.webp';
-import statIconPhoto from './assets/paper/stat-icon-photo.webp';
 import { useHomeLifecycle } from './internal/useHomeLifecycle';
 import { useHomePaperIntro } from './internal/useHomePaperIntro';
 
@@ -33,27 +16,11 @@ const { overview: home } = useHomeLifecycle().state;
 const isCountUpEnabled = !prefersReducedMotion();
 const { paperIntroRef } = useHomePaperIntro(home);
 
-const paperAssets = {
-  bowRed,
-  flowerSprig,
-  flowerSprigSmall,
-  memoryLedgerCard,
-  paperCardSmall,
-  paperLedgerWide,
-  paperMessageNote,
-  paperNoteWide,
-  paperStripSage,
-  paperTicketStrip,
-  tapeBeige,
-  tapeCoral,
-  tapeSage
-} as const;
-
 const progressStatIcons = {
-  calendar: statIconCalendar,
-  gift: statIconGift,
-  message: statIconMessage,
-  photo: statIconPhoto
+  calendar: CalendarHeart,
+  gift: Gift,
+  message: MessageCircleHeart,
+  photo: Images
 } as const;
 
 const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
@@ -75,10 +42,12 @@ const nextWish = computed(() => home.value?.latest.wish ?? null);
 const messageCount = computed(() => home.value?.stats.messageCount ?? 0);
 const photoCount = computed(() => home.value?.stats.photoCount ?? 0);
 const distanceLabel = computed(() => home.value?.distance.label || '距离正在更新');
-const progressLedgerBackgroundReady = ref(false);
 const progressLedgerRevealFinished = ref(false);
-const progressLedgerCountUpStarted = computed(
-  () => progressLedgerBackgroundReady.value && progressLedgerRevealFinished.value
+const nextWishNote = computed(() => nextWish.value?.note || nextWish.value?.place || '');
+const latestMessageAvatar = computed(() =>
+  latestMessage.value && latestMessage.value.authorName === home.value?.couple.boyfriendName
+    ? partnerAAvatar
+    : partnerBAvatar
 );
 const coupleStatusCards = computed(() => {
   const statuses =
@@ -120,10 +89,10 @@ const coupleStatusCards = computed(() => {
 });
 
 const progressStats = computed(() => [
-  { value: togetherDays.value, unit: '天', label: '我们在一起的日子', icon: 'calendar', iconSrc: progressStatIcons.calendar },
-  { value: anniversary.value.days, unit: '天后', label: '下一个纪念日', icon: 'gift', iconSrc: progressStatIcons.gift },
-  { value: messageCount.value, unit: '条', label: '留下的留言', icon: 'message', iconSrc: progressStatIcons.message },
-  { value: photoCount.value, unit: '张', label: '共同的照片', icon: 'photo', iconSrc: progressStatIcons.photo }
+  { value: togetherDays.value, unit: '天', label: '我们在一起的日子', icon: 'calendar', iconComponent: progressStatIcons.calendar },
+  { value: anniversary.value.days, unit: '天后', label: '下一个纪念日', icon: 'gift', iconComponent: progressStatIcons.gift },
+  { value: messageCount.value, unit: '条', label: '留下的留言', icon: 'message', iconComponent: progressStatIcons.message },
+  { value: photoCount.value, unit: '张', label: '共同的照片', icon: 'photo', iconComponent: progressStatIcons.photo }
 ]);
 
 function formatStatusWeather(weather: string, temperature: number | null) {
@@ -149,10 +118,6 @@ function formatMessageTime(value?: string) {
   return time || formatDate(value);
 }
 
-function markProgressLedgerBackgroundReady() {
-  progressLedgerBackgroundReady.value = true;
-}
-
 function handleProgressLedgerRevealEnd(event: AnimationEvent) {
   if (event.target !== event.currentTarget) {
     return;
@@ -166,71 +131,46 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
 }
 </script>
 
+
 <template>
   <main>
     <template v-if="home">
       <section class="home-cozy-intro" aria-label="首页纪念日信息">
-          <article
-            :ref="paperIntroRef('memoryCard')"
-            class="home-memory-card paper-image-shell memory-ledger-shell"
-            aria-label="纪念日信息"
-            data-motion-module="memoryCard"
-            data-motion-enabled="true"
-          >
-            <img
-              class="paper-image-shell__texture"
-              :src="paperAssets.memoryLedgerCard"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-              loading="lazy"
-              decoding="async"
-            />
-            <img
-              class="memory-ledger-shell__flower memory-ledger-shell__flower--left"
-              :src="paperAssets.flowerSprigSmall"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-              loading="lazy"
-              decoding="async"
-            />
-            <img
-              class="memory-ledger-shell__flower memory-ledger-shell__flower--right"
-              :src="paperAssets.flowerSprigSmall"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-              loading="lazy"
-              decoding="async"
-            />
-            <div class="paper-image-shell__content home-memory-card__content">
-              <div class="home-memory-card__copy">
-                <p class="home-memory-card__line">
-                  朝暮与年岁并往，<br />
-                  与你行至天光。
-                </p>
-                <p class="home-memory-card__anniversary">
-                  <span class="home-memory-card__anniversary-label">下一纪念日</span>
-                  <span class="home-memory-card__anniversary-detail">
-                    <strong>{{ anniversary.days }} 天后</strong> · {{ anniversary.name }} · {{ formatDate(anniversary.date) }}
-                  </span>
-                </p>
-              </div>
-
-              <div class="home-memory-card__stats">
-                <strong class="home-memory-card__days">
-                  <MotionCountUp
-                    :value="togetherDays"
-                    :enabled="isCountUpEnabled"
-                  />
-                </strong>
-                <span>DAYS</span>
-              </div>
+        <article
+          :ref="paperIntroRef('memoryCard')"
+          class="home-memory-card paper-sheet paper-sheet--ruled"
+          aria-label="纪念日信息"
+          data-motion-module="memoryCard"
+          data-motion-enabled="true"
+        >
+          <span class="washi washi--top home-memory-card__tape" aria-hidden="true"></span>
+          <PostmarkStamp class="home-memory-card__postmark" />
+          <div class="home-memory-card__content">
+            <div class="home-memory-card__copy">
+              <p class="home-memory-card__line">
+                朝暮与年岁并往，<br />
+                与你行至天光。
+              </p>
+              <p class="home-memory-card__anniversary">
+                <span class="home-memory-card__anniversary-label">下一纪念日</span>
+                <span class="home-memory-card__anniversary-detail ui-text">
+                  <strong>{{ anniversary.days }} 天后</strong>
+                  <span>{{ anniversary.name }}</span>
+                  <span>{{ formatDate(anniversary.date) }}</span>
+                </span>
+              </p>
             </div>
-          </article>
 
-        </section>
+            <div class="home-memory-card__stats">
+              <span class="home-memory-card__stats-label">在一起</span>
+              <strong class="home-memory-card__days">
+                <MotionCountUp :value="togetherDays" :enabled="isCountUpEnabled" />
+              </strong>
+              <span class="home-memory-card__stats-unit">天</span>
+            </div>
+          </div>
+        </article>
+      </section>
 
       <section class="daily-dashboard" aria-labelledby="daily-dashboard-title">
         <div class="daily-dashboard__top">
@@ -243,19 +183,14 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
           >
             <div class="dashboard-section-heading">
               <h2 id="daily-note-title">今日小纸条</h2>
-              <span aria-hidden="true">♡</span>
             </div>
-            <article class="daily-note-card paper-asset paper-asset--note">
-              <img class="paper-asset__texture" :src="paperAssets.paperNoteWide" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-              <img class="paper-tape paper-tape--coral daily-note-card__tape" :src="paperAssets.tapeCoral" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-              <img class="paper-flower daily-note-card__flower" :src="paperAssets.flowerSprig" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-              <div class="paper-asset__content">
+            <article class="daily-note-card paper-sheet paper-sheet--ruled">
+              <span class="washi washi--camellia daily-note-card__tape" aria-hidden="true"></span>
               <p class="daily-note-card__sentence">{{ dailyNote.sentence }}</p>
               <p class="daily-note-card__meta">
-                <span>{{ dailyNote.weatherHint }}</span>
-                <span>{{ dailyNote.activityHint }}</span>
+                <span class="paper-chip">{{ dailyNote.weatherHint }}</span>
+                <span class="paper-chip">{{ dailyNote.activityHint }}</span>
               </p>
-            </div>
             </article>
           </section>
 
@@ -268,37 +203,33 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
           >
             <div class="dashboard-section-heading">
               <h2 id="couple-status-title">我们的今日状态</h2>
-              <span aria-hidden="true">♧</span>
             </div>
 
             <div class="status-card-grid">
               <article
                 v-for="person in coupleStatusCards"
                 :key="person.name"
-                class="status-person-card paper-piece paper-piece--card"
+                class="status-person-card paper-sheet"
               >
                 <img class="status-person-card__avatar" :src="person.avatar" :alt="`${person.name} 的头像`" loading="lazy" decoding="async" />
                 <div class="status-person-card__body">
                   <h3>
                     {{ person.name }}
-                    <span>{{ person.gender }}</span>
+                    <span aria-hidden="true">{{ person.gender }}</span>
                   </h3>
                   <p class="status-person-card__chips">
-                    <span>{{ person.city }}</span>
-                    <span>☁ {{ person.weather }}</span>
+                    <span class="paper-chip">{{ person.city }}</span>
+                    <span class="paper-chip">{{ person.weather }}</span>
+                    <span class="paper-chip status-person-card__mood">{{ person.mood }}</span>
                   </p>
-                  <p class="status-person-card__mood">☺ {{ person.mood }}</p>
                   <p class="status-person-card__note">{{ person.note }}</p>
                 </div>
               </article>
             </div>
 
-            <p class="distance-ribbon paper-asset paper-asset--ticket">
-              <img class="paper-asset__texture" :src="paperAssets.paperTicketStrip" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-              <img class="paper-bow distance-ribbon__bow" :src="paperAssets.bowRed" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-              <span class="paper-asset__content">
-                {{ distanceLabel }} · 一起看着同一片云 ☁
-              </span>
+            <p class="distance-ribbon">
+              <span class="distance-ribbon__text">{{ distanceLabel }}</span>
+              <span class="distance-ribbon__tail">一起看着同一片云</span>
             </p>
           </section>
         </div>
@@ -313,22 +244,8 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
         >
           <div class="dashboard-section-heading">
             <h2 id="progress-ledger-title">恋爱进度仪表</h2>
-            <span aria-hidden="true">♡</span>
           </div>
-          <div class="progress-ledger paper-asset paper-asset--ledger">
-            <span class="visually-hidden">恋爱进度仪表</span>
-            <img
-              class="paper-asset__texture"
-              :src="paperAssets.paperLedgerWide"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-              loading="lazy"
-              decoding="async"
-              @load="markProgressLedgerBackgroundReady"
-              @error="markProgressLedgerBackgroundReady"
-            />
-            <div class="paper-asset__content">
+          <div class="progress-ledger paper-sheet">
             <div class="progress-stat-grid">
               <article v-for="stat in progressStats" :key="stat.label" class="progress-stat-card">
                 <span
@@ -336,14 +253,14 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
                   :class="`progress-stat-card__icon--${stat.icon}`"
                   aria-hidden="true"
                 >
-                  <img :src="stat.iconSrc" alt="" draggable="false" loading="lazy" decoding="async" />
+                  <component :is="stat.iconComponent" :size="22" :stroke-width="1.6" />
                 </span>
                 <p>
                   <strong>
                     <MotionCountUp
                       :value="stat.value"
                       :enabled="isCountUpEnabled"
-                      :start="progressLedgerCountUpStarted || !isCountUpEnabled"
+                      :start="progressLedgerRevealFinished || !isCountUpEnabled"
                     />
                   </strong>
                   <span>{{ stat.unit }}</span>
@@ -357,10 +274,9 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
               <span></span>
               <span></span>
             </div>
-            <div class="progress-ledger__labels">
-              <span>第一次相遇<br />{{ formatDate(home.couple.startedOn) }}</span>
+            <div class="progress-ledger__labels ui-text">
+              <span>第一次相遇 {{ formatDate(home.couple.startedOn) }}</span>
               <span>未来的每一天</span>
-            </div>
             </div>
           </div>
         </section>
@@ -374,66 +290,48 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
         >
           <div class="dashboard-section-heading dashboard-section-heading--wide">
             <h2 id="recent-moments-title">最近发生的小事</h2>
-            <span aria-hidden="true">☆</span>
           </div>
 
           <div class="recent-grid">
             <article class="recent-paper-item recent-paper-item--memory">
-              <span class="recent-paper-card__label">最新点滴</span>
-              <RouterLink
-                class="recent-paper-card recent-paper-card--memory paper-asset paper-asset--card"
-                to="/story"
-              >
-                <img class="paper-asset__texture" :src="paperAssets.paperCardSmall" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-                <img class="paper-tape paper-tape--beige recent-paper-card__tape recent-paper-card__tape--left" :src="paperAssets.tapeBeige" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-                <div class="paper-asset__content">
-                <figure v-if="latestPhoto" class="recent-paper-card__photo">
-                  <img :src="latestPhoto.previewUrl" :alt="latestPhoto.caption" loading="lazy" decoding="async" />
-                </figure>
+              <span class="recent-paper-card__label">最新日记</span>
+              <RouterLink class="recent-paper-card recent-paper-card--memory paper-sheet" to="/diary">
+                <span class="washi recent-paper-card__tape recent-paper-card__tape--top" aria-hidden="true"></span>
                 <div class="recent-paper-card__copy">
                   <h3>{{ latestDiary?.title ?? '一件很小但发光的事' }}</h3>
                   <p>{{ latestDiary?.content ?? '把最近的小事慢慢收好。' }}</p>
-                  <small>{{ formatDate(latestDiary?.entryDate) }} · {{ latestDiary?.tag ?? '日常' }}</small>
+                  <p class="recent-paper-card__meta ui-text">
+                    <span>{{ formatDate(latestDiary?.entryDate) }}</span>
+                    <span v-if="latestDiary?.tag" class="paper-chip">{{ latestDiary.tag }}</span>
+                  </p>
                 </div>
-              </div>
               </RouterLink>
             </article>
 
             <article class="recent-paper-item recent-paper-item--message">
               <span class="recent-paper-card__label">最新留言</span>
-              <RouterLink
-                class="recent-paper-card recent-paper-card--message paper-asset paper-asset--message"
-                to="/messages"
-              >
-                <img class="paper-asset__texture" :src="paperAssets.paperMessageNote" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-                <div class="paper-asset__content">
+              <RouterLink class="recent-paper-card recent-paper-card--message paper-sheet" to="/messages">
                 <div class="recent-message-author">
                   <img
                     class="recent-message-author__avatar"
-                    :src="partnerBAvatar"
+                    :src="latestMessageAvatar"
                     :alt="`${latestMessage?.authorName ?? home.couple.girlfriendName} 的头像`"
                     loading="lazy"
                     decoding="async"
                   />
                   <div>
                     <h3>{{ latestMessage?.authorName ?? home.couple.girlfriendName }}</h3>
-                    <small>{{ formatDate(latestMessage?.createdAt) }} {{ formatMessageTime(latestMessage?.createdAt) }}</small>
+                    <small class="ui-text">{{ formatDate(latestMessage?.createdAt) }} {{ formatMessageTime(latestMessage?.createdAt) }}</small>
                   </div>
                 </div>
                 <p>{{ latestMessage?.content ?? '还没有留言，去写下第一张小纸条吧。' }}</p>
-              </div>
               </RouterLink>
             </article>
 
             <article class="recent-paper-item recent-paper-item--album">
               <span class="recent-paper-card__label">最新相册</span>
-              <RouterLink
-                class="recent-paper-card recent-paper-card--album paper-asset paper-asset--card"
-                to="/album"
-              >
-                <img class="paper-asset__texture" :src="paperAssets.paperCardSmall" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-                <img class="paper-tape paper-tape--coral recent-paper-card__tape recent-paper-card__tape--right" :src="paperAssets.tapeCoral" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-                <div class="paper-asset__content">
+              <RouterLink class="recent-paper-card recent-paper-card--album paper-sheet" to="/album">
+                <span class="washi washi--camellia recent-paper-card__tape recent-paper-card__tape--right" aria-hidden="true"></span>
                 <div class="album-preview-strip">
                   <img
                     v-for="photo in latestAlbumPreviewPhotos"
@@ -446,9 +344,8 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
                 </div>
                 <div class="album-preview-footer">
                   <h3>{{ latestPhoto?.caption ?? '最近一张照片' }}</h3>
-                  <small>共 {{ photoCount }} 张照片 ›</small>
+                  <small class="ui-text">共 {{ photoCount }} 张照片</small>
                 </div>
-              </div>
               </RouterLink>
             </article>
           </div>
@@ -463,32 +360,20 @@ function handleProgressLedgerRevealEnd(event: AnimationEvent) {
         >
           <div class="dashboard-section-heading dashboard-section-heading--wide">
             <h2 id="next-plan-title">下一件想一起完成的事</h2>
-            <span aria-hidden="true">♡</span>
           </div>
-          <div class="next-plan-strip paper-asset paper-asset--strip">
-            <span class="visually-hidden">下一件想一起完成的事</span>
-            <img class="paper-asset__texture" :src="paperAssets.paperStripSage" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-            <img class="paper-tape next-plan-strip__tape" :src="paperAssets.tapeSage" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-            <div class="paper-asset__content next-plan-strip__content">
-            <span class="next-plan-strip__check" aria-hidden="true">✓</span>
-            <div>
-              <h2>{{ nextWish?.title ?? '一起去看海' }}</h2>
-              <span>吹海风、踩沙滩、看日落 🌊</span>
-            </div>
-            <p class="next-plan-strip__date">
-              目标时间
-              <strong>{{ formatDate(anniversary.date) }}</strong>
-            </p>
-            <img class="paper-flower next-plan-strip__flower" :src="paperAssets.flowerSprig" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />
-            <RouterLink class="next-plan-strip__link" to="/wishes">
-              去清单看看
-              <span aria-hidden="true">→</span>
-            </RouterLink>
+          <div class="next-plan-strip paper-sheet">
+            <span class="washi washi--pine next-plan-strip__tape" aria-hidden="true"></span>
+            <div class="next-plan-strip__content">
+              <span class="next-plan-strip__check" aria-hidden="true"><Check :size="20" :stroke-width="2" /></span>
+              <div>
+                <h3>{{ nextWish?.title ?? '一起去看海' }}</h3>
+                <span v-if="nextWishNote">{{ nextWishNote }}</span>
+              </div>
+              <RouterLink class="next-plan-strip__link" to="/wishes">去清单看看</RouterLink>
             </div>
           </div>
         </section>
       </section>
-
     </template>
 
     <PageLoader :loading="!home" />

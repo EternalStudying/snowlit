@@ -119,7 +119,7 @@ function enterStory(event: MouseEvent | KeyboardEvent) {
 
 <style scoped>
 .app-topbar__weather-summary { right: 52px; }
-.app-topbar__weather-entry { position: absolute; right: 0; top: 50%; border: 0; border-radius: 8px; background: transparent; padding: 8px; color: #554437; font: inherit; font-size: 12px; }
+.app-topbar__weather-entry { position: absolute; right: 0; top: 50%; border: 0; border-radius: 8px; background: transparent; padding: 8px; color: var(--ink-soft); font: inherit; font-size: 12px; }
 .weather-settings { overflow-wrap: anywhere; font-size: 13px; }
 .weather-settings p { margin: 8px 0; }
 .weather-settings button { margin: 3px 12px 3px 0; padding: 5px 8px; }

@@ -153,7 +153,7 @@ const formatBubbleTime = (dateStr: string) => {
   width: 100%;
   text-align: center;
   position: relative;
-  color: #4a4a4a;
+  color: var(--ink-soft);
 }
 
 .message-text {
@@ -171,12 +171,12 @@ const formatBubbleTime = (dateStr: string) => {
   display: grid;
   gap: 2px;
   font-size: 11px;
-  color: #888;
+  color: var(--ink-faint);
   opacity: 0.8;
 }
 
 .author {
-  color: #6b5a52;
+  color: var(--ink-soft);
   font-weight: 700;
 }
 
@@ -184,7 +184,7 @@ const formatBubbleTime = (dateStr: string) => {
   position: absolute;
   top: -12px;
   right: -6px;
-  color: #9aa0a6;
+  color: var(--frost);
 }
 
 .attachment-mark svg {

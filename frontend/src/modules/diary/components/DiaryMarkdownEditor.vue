@@ -26,6 +26,7 @@ import type {
   DiaryVisibility
 } from '../model';
 import { DIARY_MOODS } from '../moods';
+import MoodFace from './MoodFace.vue';
 import {
   deriveDiaryTitle,
   diaryMarkdownCharacterCount,
@@ -392,7 +393,7 @@ onBeforeUnmount(() => {
                 @click="toggleMoodPicker"
                 @keydown.esc.stop="closeMoodPicker"
               >
-                <img :src="activeMood.icon" :alt="activeMood.label" />
+                <span class="diary-mood-face"><MoodFace :mood="activeMood.key" /></span>
                 <span>{{ activeMood.label }}</span>
                 <ChevronDown :size="14" />
               </button>
@@ -410,7 +411,7 @@ onBeforeUnmount(() => {
                   :title="mood.label"
                   @click="selectMood(mood.key)"
                 >
-                  <img :src="mood.icon" :alt="mood.label" />
+                  <span class="diary-mood-face"><MoodFace :mood="mood.key" /></span>
                   <span>{{ mood.label }}</span>
                 </button>
               </div>

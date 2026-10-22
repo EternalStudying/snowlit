@@ -72,7 +72,7 @@ export function useHomePaperIntro(
       });
 
       timeline
-        .from('.paper-image-shell__texture', {
+        .from('.home-memory-card__tape', {
           autoAlpha: 0,
           y: 14,
           scale: 0.985,
@@ -82,18 +82,6 @@ export function useHomePaperIntro(
           ease: 'back.out(1.18)',
           clearProps: 'all'
         })
-        .from(
-          '.memory-ledger-shell__flower',
-          {
-            autoAlpha: 0,
-            y: 12,
-            scale: 0.86,
-            rotation: (index) => (index === 0 ? -7 : 7),
-            stagger: 0.08,
-            clearProps: 'all'
-          },
-          '<0.12'
-        )
         .from(
           '.home-memory-card__line, .home-memory-card__anniversary',
           {
@@ -162,19 +150,6 @@ export function useHomePaperIntro(
             clearProps: 'all'
           },
           '<0.22'
-        )
-        .from(
-          '.daily-note-card__flower',
-          {
-            autoAlpha: 0,
-            y: 18,
-            scale: 0.86,
-            rotation: 7,
-            duration: 0.52,
-            ease: 'back.out(1.35)',
-            clearProps: 'all'
-          },
-          '<0.06'
         )
         .from(
           '.daily-note-card__sentence',
@@ -268,19 +243,6 @@ export function useHomePaperIntro(
             clearProps: 'all'
           },
           '<0.08'
-        )
-        .from(
-          '.distance-ribbon__bow',
-          {
-            autoAlpha: 0,
-            y: -10,
-            scale: 0.8,
-            rotation: -6,
-            duration: 0.34,
-            ease: 'back.out(1.7)',
-            clearProps: 'all'
-          },
-          '<0.22'
         );
     }, element);
 
@@ -331,7 +293,7 @@ export function useHomePaperIntro(
           '<0.18'
         )
         .from(
-          '.progress-stat-card__icon img',
+          '.progress-stat-card__icon svg',
           {
             autoAlpha: 0,
             scale: 0.72,
@@ -511,25 +473,12 @@ export function useHomePaperIntro(
           '<0.08'
         )
         .from(
-          '.next-plan-strip__content > div, .next-plan-strip__date',
+          '.next-plan-strip__content > div',
           {
             autoAlpha: 0,
             y: 8,
             stagger: 0.08,
             duration: 0.36,
-            clearProps: 'all'
-          },
-          '<0.06'
-        )
-        .from(
-          '.next-plan-strip__flower',
-          {
-            autoAlpha: 0,
-            y: 18,
-            scale: 0.85,
-            rotation: 8,
-            duration: 0.42,
-            ease: 'back.out(1.45)',
             clearProps: 'all'
           },
           '<0.06'

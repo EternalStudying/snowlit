@@ -15,7 +15,6 @@ export type DiaryMoodKey =
 export interface DiaryMoodOption {
   key: DiaryMoodKey;
   label: string;
-  icon: string;
 }
 
 export interface DiaryMonthStatDto {

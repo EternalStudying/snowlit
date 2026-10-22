@@ -7,12 +7,12 @@
   align-items: center;
   min-height: 58px;
   padding: 7px 0;
-  border-bottom: 1px solid rgba(126, 85, 52, 0.14);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.14);
   background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.94), rgba(255, 244, 232, 0.82)),
-    rgba(255, 253, 249, 0.82);
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.94), rgba(var(--sheet-rgb), 0.82)),
+    rgba(var(--sheet-rgb), 0.82);
   backdrop-filter: blur(10px) saturate(1.05);
-  box-shadow: 0 4px 14px rgba(111, 58, 35, 0.07);
+  box-shadow: 0 4px 14px rgba(var(--ink-rgb), 0.07);
   transition: box-shadow 220ms cubic-bezier(0.645, 0.045, 0.355, 1);
   animation: app-topbar-enter 420ms ease both;
 }
@@ -63,14 +63,14 @@
   place-items: center;
   min-height: 28px;
   padding: 7px 11px;
-  border: 1px solid rgba(211, 111, 130, 0.34);
+  border: 1px solid rgba(var(--camellia-rgb), 0.34);
   border-radius: 8px;
-  color: #74404a;
+  color: var(--camellia-deep);
   background:
-    linear-gradient(180deg, rgba(255, 242, 246, 0.98), rgba(255, 229, 235, 0.96)),
-    rgba(255, 229, 235, 0.96);
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.98), rgba(var(--sheet-rgb), 0.96)),
+    rgba(var(--sheet-rgb), 0.96);
   box-shadow:
-    0 12px 26px rgba(132, 58, 73, 0.16),
+    0 12px 26px rgba(var(--camellia-rgb), 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.48);
   font-size: 0.74rem;
   font-weight: 800;
@@ -90,9 +90,9 @@
   position: absolute;
   width: 9px;
   height: 9px;
-  border-right: 1px solid rgba(211, 111, 130, 0.34);
-  border-bottom: 1px solid rgba(211, 111, 130, 0.34);
-  background: rgba(255, 229, 235, 0.96);
+  border-right: 1px solid rgba(var(--camellia-rgb), 0.34);
+  border-bottom: 1px solid rgba(var(--camellia-rgb), 0.34);
+  background: rgba(var(--sheet-rgb), 0.96);
   transform: rotate(45deg);
 }
 
@@ -137,13 +137,13 @@
   width: 36px;
   min-height: 34px;
   padding: 0;
-  border: 1px solid rgba(126, 85, 52, 0.18);
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
   border-radius: 999px;
-  color: #5b4033;
+  color: var(--ink-soft);
   background:
-    linear-gradient(180deg, rgba(255, 253, 247, 0.9), rgba(255, 244, 232, 0.72)),
-    rgba(255, 250, 241, 0.88);
-  box-shadow: 0 8px 16px rgba(111, 58, 35, 0.08);
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.9), rgba(var(--sheet-rgb), 0.72)),
+    rgba(var(--sheet-rgb), 0.88);
+  box-shadow: 0 8px 16px rgba(var(--ink-rgb), 0.08);
   font: inherit;
   line-height: 1;
   letter-spacing: 0;
@@ -178,18 +178,18 @@
 .app-topbar__story-entry:focus-visible,
 .app-topbar__feedback-entry:hover,
 .app-topbar__feedback-entry:focus-visible {
-  border-color: rgba(223, 81, 69, 0.34);
+  border-color: rgba(var(--camellia-rgb), 0.34);
   color: var(--deep-coral);
   background:
-    linear-gradient(180deg, rgba(255, 253, 247, 0.94), rgba(255, 235, 222, 0.76)),
-    rgba(255, 247, 237, 0.94);
+    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.94), rgba(var(--sheet-rgb), 0.76)),
+    rgba(var(--sheet-rgb), 0.94);
   transform: translateY(-1px);
 }
 
 .app-topbar__about-entry,
 .app-topbar__about-entry:disabled {
-  color: rgba(91, 64, 51, 0.48);
-  background: rgba(126, 85, 52, 0.06);
+  color: rgba(var(--ink-rgb), 0.48);
+  background: rgba(var(--ink-rgb), 0.06);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -201,7 +201,7 @@
   max-width: calc(100vw - var(--topbar-edge-gap) * 2);
   padding: 0 clamp(10px, 2vw, 24px);
   border: 0;
-  color: #5b4033;
+  color: var(--ink-soft);
   background: transparent;
   box-shadow: none;
   font-family: "Lobster", "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive;
@@ -222,14 +222,14 @@
 .app-topbar__brand-text {
   display: block;
   max-width: 100%;
-  color: #211814;
+  color: var(--ink);
   letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow:
-    0 1px 0 rgba(255, 253, 247, 0.95),
-    0 5px 12px rgba(111, 58, 35, 0.12);
+    0 1px 0 rgba(var(--sheet-rgb), 0.95),
+    0 5px 12px rgba(var(--ink-rgb), 0.12);
 }
 
 .app-topbar__weather-summary {
@@ -240,8 +240,8 @@
   gap: 3px;
   max-width: clamp(168px, 20vw, 270px);
   padding-left: 14px;
-  border-left: 1px solid rgba(126, 85, 52, 0.18);
-  color: rgba(57, 40, 32, 0.82);
+  border-left: 1px solid rgba(var(--ink-rgb), 0.18);
+  color: rgba(var(--ink-rgb), 0.82);
   font-size: 0.76rem;
   line-height: 1.14;
   text-align: right;
@@ -257,12 +257,12 @@
 }
 
 .app-topbar__weather-primary {
-  color: rgba(33, 24, 20, 0.9);
+  color: rgba(var(--ink-rgb), 0.9);
   font-weight: 800;
 }
 
 .app-topbar__weather-secondary {
-  color: rgba(85, 68, 55, 0.72);
+  color: rgba(var(--ink-rgb), 0.72);
   font-size: 0.69rem;
 }
 
@@ -389,13 +389,13 @@ body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
   z-index: 2147483647;
   display: grid;
   place-items: center;
-  background-color: rgba(255, 253, 249, 0.96);
+  background-color: rgba(var(--sheet-rgb), 0.96);
   transition: background-color 160ms ease;
 }
 
 .page-loader--complete {
   pointer-events: none;
-  background-color: rgba(255, 253, 249, 0);
+  background-color: rgba(var(--sheet-rgb), 0);
 }
 
 .page-loader__progress {
@@ -414,7 +414,7 @@ body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
       rgba(var(--gold-rgb), 0.28)
     );
   box-shadow:
-    0 1px 0 rgba(126, 85, 52, 0.22),
+    0 1px 0 rgba(var(--ink-rgb), 0.22),
     0 4px 10px rgba(var(--accent-rgb), 0.16);
 }
 

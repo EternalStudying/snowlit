@@ -4,10 +4,10 @@
   --page-bg-warm-rgb: 116, 145, 136;
   --page-bg-dot-rgb: 91, 74, 52;
   --message-bg: var(--page-bg-base);
-  --message-ink: #332c27;
-  --message-muted: #86796e;
-  --message-line: rgba(84, 72, 62, 0.18);
-  --message-red: #b66663;
+  --message-ink: var(--ink);
+  --message-muted: var(--ink-faint);
+  --message-line: rgba(var(--ink-rgb), 0.18);
+  --message-red: var(--camellia);
   --messages-fusion-top-offset: 64px;
   position: relative;
   isolation: isolate;
@@ -52,7 +52,7 @@
   min-height: 320px;
   margin-top: 20px;
   background: rgba(255, 255, 255, 0.48);
-  border: 1px dashed rgba(98, 82, 65, 0.2);
+  border: 1px dashed rgba(var(--ink-rgb), 0.2);
   backdrop-filter: blur(10px);
 }
 

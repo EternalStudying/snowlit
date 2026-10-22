@@ -5,38 +5,38 @@
   --page-bg-dot-rgb: 126, 85, 52;
   --list-bg: var(--page-bg-base);
   --list-bg-rgb: var(--snow-ground-rgb);
-  --list-paper: #fff8eb;
+  --list-paper: var(--sheet);
   --list-paper-rgb: 255, 248, 235;
-  --list-paper-warm: #f2dfc3;
-  --list-paper-muted: #ead8bd;
-  --list-card: #fffaf0;
+  --list-paper-warm: var(--lamp-wash);
+  --list-paper-muted: var(--frost);
+  --list-card: var(--sheet);
   --list-card-rgb: 255, 250, 240;
-  --list-card-hover: #fffdf7;
-  --list-border: #dcc5a5;
-  --list-border-soft: #eadac2;
-  --list-border-hover: #c99d78;
-  --list-ink: #4f3527;
+  --list-card-hover: var(--sheet);
+  --list-border: var(--frost);
+  --list-border-soft: var(--frost);
+  --list-border-hover: var(--frost);
+  --list-ink: var(--ink);
   --list-ink-rgb: 79, 53, 39;
-  --list-text: #6f5140;
+  --list-text: var(--ink-soft);
   --list-text-rgb: 111, 81, 64;
-  --list-muted: #9b7d67;
-  --list-faint: #c7ab92;
-  --list-red: #c56554;
+  --list-muted: var(--ink-faint);
+  --list-faint: var(--frost);
+  --list-red: var(--camellia);
   --list-red-rgb: 197, 101, 84;
-  --list-red-soft: #f0b6a4;
-  --list-red-paper: #f6d1c7;
-  --list-green: #637c56;
+  --list-red-soft: var(--camellia-wash);
+  --list-red-paper: var(--sheet);
+  --list-green: var(--pine);
   --list-green-rgb: 99, 124, 86;
-  --list-green-soft: #b9c7a8;
-  --list-green-paper: #dce4cf;
-  --list-gold: #b88642;
+  --list-green-soft: var(--pine-wash);
+  --list-green-paper: var(--pine-wash);
+  --list-gold: var(--ink-faint);
   --list-gold-rgb: 184, 134, 66;
-  --list-gold-soft: #e7c587;
-  --list-gold-paper: #efd8b3;
-  --status-focus: #8f513f;
-  --paper-shadow: 0 18px 42px rgba(104, 70, 42, 0.16);
-  --card-shadow: 0 7px 18px rgba(91, 61, 40, 0.13);
-  --lift-shadow: 0 12px 28px rgba(91, 61, 40, 0.18);
+  --list-gold-soft: var(--lamp-wash);
+  --list-gold-paper: var(--lamp-wash);
+  --status-focus: var(--camellia);
+  --paper-shadow: 0 18px 42px rgba(var(--ink-rgb), 0.16);
+  --card-shadow: 0 7px 18px rgba(var(--ink-rgb), 0.13);
+  --lift-shadow: 0 12px 28px rgba(var(--ink-rgb), 0.18);
   --font-list-display: "Ma Shan Zheng", "ZCOOL XiaoWei", "Noto Serif SC", serif;
   --font-list-serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
   position: relative;
@@ -101,7 +101,7 @@
   height: auto;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 18px 32px rgba(104, 70, 42, 0.16));
+  filter: drop-shadow(0 18px 32px rgba(var(--ink-rgb), 0.16));
 }
 
 .list-hero__copy {
@@ -169,7 +169,7 @@
   height: auto;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 14px 24px rgba(104, 70, 42, 0.14));
+  filter: drop-shadow(0 14px 24px rgba(var(--ink-rgb), 0.14));
 }
 
 .list-note-card__copy {
@@ -247,7 +247,7 @@
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 18px 34px rgba(104, 70, 42, 0.16));
+  filter: drop-shadow(0 18px 34px rgba(var(--ink-rgb), 0.16));
   transform: translateX(-50%);
 }
 
@@ -257,19 +257,19 @@
 }
 
 .wish-board[data-group="wantToGo"] {
-  --board-paper: #f7ded5;
+  --board-paper: var(--snow);
   --board-border: rgba(var(--list-red-rgb), 0.34);
   --board-title: var(--list-red);
 }
 
 .wish-board[data-group="wantToDo"] {
-  --board-paper: #dde6d1;
+  --board-paper: var(--sheet);
   --board-border: rgba(var(--list-green-rgb), 0.34);
   --board-title: var(--list-green);
 }
 
 .wish-board[data-group="done"] {
-  --board-paper: #efd8b3;
+  --board-paper: var(--lamp-wash);
   --board-border: rgba(var(--list-gold-rgb), 0.34);
   --board-title: var(--list-gold);
 }
@@ -322,11 +322,11 @@
   font: inherit;
   text-align: left;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 249, 235, 0.82)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(var(--sheet-rgb), 0.82)),
     rgba(var(--list-paper-rgb), 0.7);
-  border: 1px solid rgba(151, 107, 73, 0.18);
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
   border-radius: 6px;
-  box-shadow: 0 6px 12px rgba(93, 62, 38, 0.08);
+  box-shadow: 0 6px 12px rgba(var(--ink-rgb), 0.08);
   cursor: pointer;
   transform: rotate(var(--wish-lane-item-tilt, -0.12deg));
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
@@ -338,10 +338,10 @@
 
 .wish-lane-item:hover {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 252, 242, 0.92)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(var(--sheet-rgb), 0.92)),
     rgba(var(--list-paper-rgb), 0.82);
   border-color: rgba(var(--list-ink-rgb), 0.22);
-  box-shadow: 0 9px 18px rgba(93, 62, 38, 0.13);
+  box-shadow: 0 9px 18px rgba(var(--ink-rgb), 0.13);
   transform: translateY(-2px) scale(1.018) rotate(0deg);
 }
 
@@ -373,7 +373,7 @@
   background: transparent;
   cursor: pointer;
   opacity: 1;
-  filter: drop-shadow(0 14px 20px rgba(109, 68, 46, 0.2));
+  filter: drop-shadow(0 14px 20px rgba(var(--ink-rgb), 0.2));
   transform: rotate(-2deg);
   transition:
     opacity 220ms ease,
@@ -391,7 +391,7 @@
 }
 
 .wish-create-fab:hover {
-  filter: drop-shadow(0 18px 26px rgba(109, 68, 46, 0.26));
+  filter: drop-shadow(0 18px 26px rgba(var(--ink-rgb), 0.26));
   transform: rotate(-0.5deg) translateY(-5px) scale(1.03);
 }
 
@@ -404,7 +404,7 @@
 .journal-shell[data-hero-immersive="true"] .wish-create-fab {
   opacity: 0;
   pointer-events: none;
-  filter: blur(2px) drop-shadow(0 8px 14px rgba(109, 68, 46, 0.08));
+  filter: blur(2px) drop-shadow(0 8px 14px rgba(var(--ink-rgb), 0.08));
   transform: rotate(-0.5deg) translate3d(16px, 22px, 0) scale(0.92);
 }
 
@@ -425,7 +425,7 @@
   display: grid;
   place-items: center;
   padding: 48px;
-  background: rgba(104, 70, 42, 0.38);
+  background: rgba(var(--ink-rgb), 0.38);
 }
 
 .wish-detail-dialog {
@@ -436,29 +436,29 @@
   height: min(480px, calc(100vh - 96px));
   color: var(--list-ink);
   background: var(--wish-detail-dialog-bg, var(--list-paper));
-  border: 1px solid rgba(126, 85, 52, 0.24);
+  border: 1px solid rgba(var(--ink-rgb), 0.24);
   border-radius: 8px;
-  box-shadow: 0 28px 64px rgba(76, 47, 29, 0.28);
+  box-shadow: 0 28px 64px rgba(var(--ink-rgb), 0.28);
   overflow: hidden;
   will-change: transform, opacity;
 }
 
 .wish-detail-dialog[data-wish-lane="wantToGo"] {
   --wish-detail-dialog-bg:
-    linear-gradient(135deg, rgba(255, 246, 238, 0.96), rgba(248, 221, 211, 0.92)),
-    #f8e7de;
+    linear-gradient(135deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--lamp-rgb), 0.92)),
+    var(--snow);
 }
 
 .wish-detail-dialog[data-wish-lane="wantToDo"] {
   --wish-detail-dialog-bg:
-    linear-gradient(135deg, rgba(252, 250, 236, 0.96), rgba(224, 237, 211, 0.92)),
-    #e9f0dd;
+    linear-gradient(135deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--pine-rgb), 0.92)),
+    var(--snow);
 }
 
 .wish-detail-dialog[data-wish-lane="done"] {
   --wish-detail-dialog-bg:
-    linear-gradient(135deg, rgba(255, 251, 238, 0.96), rgba(241, 220, 181, 0.9)),
-    #f3e2c3;
+    linear-gradient(135deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--lamp-rgb), 0.9)),
+    var(--lamp-wash);
 }
 
 .wish-detail-dialog::before {
@@ -468,7 +468,7 @@
   content: "";
   background:
     radial-gradient(circle at 1px 1px, rgba(var(--list-ink-rgb), 0.06) 1px, transparent 0) 0 0 / 16px 16px,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.24), transparent 46%, rgba(180, 127, 74, 0.08));
+    linear-gradient(90deg, rgba(255, 255, 255, 0.24), transparent 46%, rgba(var(--ink-rgb), 0.08));
   opacity: 0.72;
 }
 
@@ -481,8 +481,8 @@
 .wish-detail-dialog__image-panel {
   height: 100%;
   min-height: 0;
-  background: rgba(98, 61, 39, 0.08);
-  border-right: 1px solid rgba(126, 85, 52, 0.18);
+  background: rgba(var(--ink-rgb), 0.08);
+  border-right: 1px solid rgba(var(--ink-rgb), 0.18);
 }
 
 .wish-detail-dialog__image-button {
@@ -588,7 +588,7 @@
   gap: 16px;
   align-items: baseline;
   padding: 0 0 10px;
-  border-bottom: 1px dashed rgba(126, 85, 52, 0.18);
+  border-bottom: 1px dashed rgba(var(--ink-rgb), 0.18);
 }
 
 .wish-detail-dialog__details dt {
@@ -608,7 +608,7 @@
 
 .wish-detail-dialog__error {
   margin: 14px 0 0;
-  color: #a23f2c;
+  color: var(--camellia);
   font-size: 13px;
   font-weight: 800;
 }
@@ -630,8 +630,8 @@
   overflow: visible;
   border: 0;
   background: transparent;
-  color: #302017;
-  filter: drop-shadow(0 28px 62px rgba(55, 35, 23, 0.34));
+  color: var(--ink);
+  filter: drop-shadow(0 28px 62px rgba(var(--ink-rgb), 0.34));
 }
 
 .wish-create-dialog::after {
@@ -643,8 +643,8 @@
   width: 5.9%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: #fbf4e9;
-  box-shadow: inset 0 0 18px rgba(130, 94, 58, 0.06);
+  background: var(--snow);
+  box-shadow: inset 0 0 18px rgba(var(--ink-rgb), 0.06);
   pointer-events: none;
 }
 
@@ -660,7 +660,7 @@
 }
 
 body:has(.wish-dialog-backdrop--create) .n-modal-mask {
-  background-color: rgba(42, 35, 30, 0.52);
+  background-color: rgba(var(--ink-rgb), 0.52);
   backdrop-filter: blur(8px);
 }
 
@@ -679,7 +679,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 .wish-create-popup-portal .n-date-panel-month__prev,
 .wish-create-popup-portal .n-date-panel-month__next,
 .wish-create-popup-portal .n-date-panel-month__fast-next {
-  color: rgba(79, 48, 34, 0.72) !important;
+  color: rgba(var(--ink-rgb), 0.72) !important;
 }
 
 .wish-create-dialog__background {
@@ -707,7 +707,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   grid-template-columns: minmax(0, 58%) 1px minmax(0, 1fr);
   gap: 3.2%;
   min-width: 0;
-  color: #302017;
+  color: var(--ink);
 }
 
 .wish-create-dialog__left {
@@ -733,7 +733,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   gap: clamp(5px, 0.62vw, 8px);
   min-width: 0;
   margin: 0;
-  color: #302017;
+  color: var(--ink);
   font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-list-serif);
   font-size: clamp(12px, 1vw, 15px);
   font-weight: 700;
@@ -745,7 +745,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 }
 
 .wish-create-field b {
-  color: #b8342c;
+  color: var(--camellia);
 }
 
 .wish-create-dialog__category {
@@ -753,16 +753,16 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: min(296px, 66%);
   overflow: hidden;
-  border: 1px solid rgba(128, 82, 50, 0.22);
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
   border-radius: 9px;
-  background: rgba(255, 253, 247, 0.2);
+  background: rgba(var(--sheet-rgb), 0.2);
 }
 
 .wish-create-dialog__category button {
   min-width: 0;
   min-height: clamp(31px, 2.8vw, 38px);
   padding: 0 clamp(9px, 0.95vw, 12px);
-  color: #4f3022;
+  color: var(--ink);
   background: transparent;
   border: 0;
   font: inherit;
@@ -771,12 +771,12 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 }
 
 .wish-create-dialog__category button + button {
-  border-left: 1px solid rgba(128, 82, 50, 0.18);
+  border-left: 1px solid rgba(var(--ink-rgb), 0.18);
 }
 
 .wish-create-dialog__category button[aria-pressed="true"] {
-  color: #fff7ea;
-  background: linear-gradient(135deg, #bd665c, #ad5047);
+  color: var(--sheet);
+  background: linear-gradient(135deg, var(--camellia), var(--camellia));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -797,9 +797,9 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 .wish-create-dialog textarea:not(.n-input__textarea-el),
 .wish-create-dialog .n-input {
   width: 100%;
-  border: 1px solid rgba(112, 76, 47, 0.28);
+  border: 1px solid rgba(var(--ink-rgb), 0.28);
   border-radius: 10px;
-  background: rgba(255, 253, 247, 0.42);
+  background: rgba(var(--sheet-rgb), 0.42);
   color: inherit;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
   font: inherit;
@@ -832,22 +832,22 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 
 .wish-create-field--note :is(textarea:not(.n-input__textarea-el), .n-input--textarea) {
   min-height: clamp(60px, 6.2vw, 78px);
-  background: rgba(255, 253, 247, 0.72);
+  background: rgba(var(--sheet-rgb), 0.72);
 }
 
 .wish-create-dialog input::placeholder,
 .wish-create-dialog textarea::placeholder {
-  color: rgba(83, 69, 57, 0.68);
+  color: rgba(var(--ink-rgb), 0.68);
 }
 
 .wish-create-dialog input:not(.n-input__input-el):focus,
 .wish-create-dialog textarea:not(.n-input__textarea-el):focus,
 .wish-create-dialog .n-input:not(.n-input--disabled):focus-within {
-  border-color: rgba(146, 82, 50, 0.48);
-  background: rgba(255, 253, 248, 0.64);
+  border-color: rgba(var(--ink-rgb), 0.48);
+  background: rgba(var(--sheet-rgb), 0.64);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 3px rgba(173, 103, 65, 0.1);
+    0 0 0 3px rgba(var(--ink-rgb), 0.1);
 }
 
 .wish-create-dialog .n-date-picker {
@@ -889,7 +889,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   position: absolute;
   right: 12px;
   bottom: 9px;
-  color: #6f635b;
+  color: var(--ink-soft);
   font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 500;
   line-height: 1;
@@ -922,7 +922,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   position: absolute;
   top: 50%;
   left: 14px;
-  color: rgba(83, 69, 57, 0.68);
+  color: rgba(var(--ink-rgb), 0.68);
   font: inherit;
   transform: translateY(-50%);
   pointer-events: none;
@@ -931,7 +931,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 .wish-create-field--date .n-input__suffix svg {
   width: 1em;
   height: 1em;
-  color: #4f3022;
+  color: var(--ink);
   pointer-events: none;
 }
 
@@ -942,7 +942,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   z-index: 4;
   max-width: 44%;
   margin: 0;
-  color: #a23f2c;
+  color: var(--camellia);
   font-size: clamp(12px, 0.92vw, 14px);
   font-weight: 800;
   line-height: 1.4;
@@ -1019,7 +1019,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   background: var(--completion-badge-bg);
   border: 2px solid var(--completion-badge-border);
   border-radius: 50%;
-  box-shadow: 0 10px 24px rgba(82, 52, 35, 0.14);
+  box-shadow: 0 10px 24px rgba(var(--ink-rgb), 0.14);
   transform: rotate(-7deg);
 }
 
@@ -1038,7 +1038,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 
 .wish-completion-badge--pending {
   --completion-badge-color: rgba(var(--list-green-rgb), 0.68);
-  --completion-badge-bg: rgba(255, 252, 244, 0.42);
+  --completion-badge-bg: rgba(var(--sheet-rgb), 0.42);
   --completion-badge-border: rgba(var(--list-green-rgb), 0.36);
   border-style: dashed;
   cursor: pointer;
@@ -1048,7 +1048,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 .wish-completion-badge--pending:hover,
 .wish-completion-badge--pending:focus-visible {
   --completion-badge-color: var(--list-green);
-  --completion-badge-bg: rgba(255, 252, 244, 0.74);
+  --completion-badge-bg: rgba(var(--sheet-rgb), 0.74);
   --completion-badge-border: rgba(var(--list-green-rgb), 0.58);
   transform: translateY(-2px) rotate(-4deg);
 }
@@ -1059,11 +1059,11 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 }
 
 .wish-completion-badge--done {
-  --completion-badge-color: #f8fbff;
+  --completion-badge-color: var(--sheet);
   --completion-badge-bg:
     radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.24), transparent 42%),
-    #668fb6;
-  --completion-badge-border: rgba(56, 97, 134, 0.72);
+    var(--ink-faint);
+  --completion-badge-border: rgba(var(--ink-rgb), 0.72);
   cursor: pointer;
 }
 
@@ -1071,7 +1071,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
 .wish-completion-badge--done:focus-visible {
   --completion-badge-bg:
     radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.28), transparent 42%),
-    #5b83ab;
+    var(--ink-faint);
 }
 
 .wish-completion-wave,
@@ -1101,7 +1101,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   margin-bottom: -3.5px;
   background: var(--particle-hue, var(--list-gold));
   border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(80, 48, 30, 0.16);
+  box-shadow: 0 1px 3px rgba(var(--ink-rgb), 0.16);
 }
 
 .wish-image-preview {
@@ -1111,7 +1111,7 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   display: grid;
   place-items: center;
   padding: 48px;
-  background: rgba(61, 39, 26, 0.72);
+  background: rgba(var(--ink-rgb), 0.72);
 }
 
 .wish-image-preview__image {
@@ -1119,14 +1119,14 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   max-width: min(1100px, calc(100vw - 96px));
   max-height: calc(100vh - 96px);
   object-fit: contain;
-  box-shadow: 0 30px 70px rgba(20, 12, 7, 0.42);
+  box-shadow: 0 30px 70px rgba(var(--ink-rgb), 0.42);
 }
 
 .wish-image-preview__close {
   position: fixed;
   top: 24px;
   right: 34px;
-  color: #fff9ef;
+  color: var(--sheet);
   font: inherit;
   font-size: 38px;
   line-height: 1;
@@ -1143,9 +1143,9 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   margin: 28px auto 0;
   padding: 15px 24px;
   color: var(--list-text);
-  background: rgba(255, 248, 235, 0.5);
-  border-top: 1px dashed rgba(126, 85, 52, 0.22);
-  border-bottom: 1px dashed rgba(126, 85, 52, 0.16);
+  background: rgba(var(--sheet-rgb), 0.5);
+  border-top: 1px dashed rgba(var(--ink-rgb), 0.22);
+  border-bottom: 1px dashed rgba(var(--ink-rgb), 0.16);
 }
 
 .list-legend span {
@@ -1303,14 +1303,14 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   }
 
   .wish-create-dialog__actions button {
-    color: #4f3022 !important;
-    border: 1px solid rgba(126, 75, 58, 0.24) !important;
-    background: rgba(255, 249, 239, 0.6) !important;
+    color: var(--ink) !important;
+    border: 1px solid rgba(var(--camellia-rgb), 0.24) !important;
+    background: rgba(var(--sheet-rgb), 0.6) !important;
   }
 
   .wish-create-dialog__submit {
-    color: #fff7ea !important;
-    background: linear-gradient(135deg, #b76055, #a84b42) !important;
+    color: var(--sheet) !important;
+    background: linear-gradient(135deg, var(--camellia), var(--camellia)) !important;
   }
 
   .wish-create-dialog__actions button .n-button__content {

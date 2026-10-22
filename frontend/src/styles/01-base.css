@@ -6,11 +6,9 @@ body {
   margin: 0;
   min-width: 320px;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 12px 12px, rgba(199, 138, 25, 0.12) 0 1px, transparent 1.5px),
-    linear-gradient(90deg, rgba(223, 81, 69, 0.12), transparent 42%),
-    linear-gradient(180deg, #fff3e5 0%, #fffdf9 48%, #f8e5d1 100%);
-  background-size: 22px 22px, auto, auto;
+  color: var(--ink);
+  background: var(--page-bg-root);
+  background-size: var(--page-bg-root-size);
 }
 
 button,
@@ -68,7 +66,7 @@ h1 {
   font-size: clamp(3rem, 8vw, 7.5rem);
   line-height: 0.98;
   letter-spacing: 0;
-  color: #8f342d;
+  color: var(--ink);
 }
 
 .section {
@@ -81,7 +79,7 @@ h1 {
 
 .section-heading h2 {
   margin: 0;
-  color: #8f342d;
+  color: var(--ink);
   font-size: clamp(1.9rem, 4vw, 3.2rem);
   letter-spacing: 0;
 }
@@ -130,7 +128,7 @@ figcaption {
   height: auto;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 7px 10px rgba(111, 58, 35, 0.12));
+  filter: drop-shadow(0 7px 10px rgba(var(--ink-rgb), 0.12));
 }
 
 .memory-ledger-shell__flower {
@@ -160,11 +158,11 @@ label {
 input,
 textarea {
   width: 100%;
-  border: 1px solid #dfc3ad;
-  border-radius: 6px;
+  border: 1px solid var(--frost);
+  border-radius: var(--radius-control);
   padding: 10px 12px;
-  color: #37231f;
-  background: #fffaf5;
+  color: var(--ink);
+  background: var(--sheet);
 }
 
 textarea {
@@ -173,9 +171,9 @@ textarea {
 
 button {
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   padding: 11px 16px;
-  color: #fff;
+  color: var(--sheet);
   background: var(--coral);
   cursor: pointer;
 }
@@ -192,4 +190,14 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--lamp-wash);
+  color: var(--ink);
 }

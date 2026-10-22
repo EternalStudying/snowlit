@@ -147,7 +147,7 @@ const submit = () => {
   resize: none;
   font-size: 15px;
   line-height: 1.55;
-  color: #333;
+  color: var(--ink);
   outline: none;
   font-family: inherit;
   margin: 0;
@@ -155,7 +155,7 @@ const submit = () => {
 }
 
 .input-area::placeholder {
-  color: #a0a0a0;
+  color: var(--frost);
 }
 
 .composer-actions {
@@ -181,7 +181,7 @@ const submit = () => {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #888;
+  color: var(--ink-faint);
   padding: 6px;
   border-radius: 8px;
   display: flex;
@@ -190,7 +190,7 @@ const submit = () => {
 
 .icon-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #555;
+  color: var(--ink-soft);
 }
 
 .icon-btn svg {
@@ -205,7 +205,7 @@ const submit = () => {
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
-  color: #555;
+  color: var(--ink-soft);
   border: 1px solid rgba(0, 0, 0, 0.05);
   max-width: 150px;
 }
@@ -221,13 +221,13 @@ const submit = () => {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #999;
+  color: var(--ink-faint);
   padding: 0;
   display: flex;
 }
 
 .remove-file-btn:hover {
-  color: #ff5252;
+  color: var(--camellia-wash);
 }
 
 .remove-file-btn svg {
@@ -236,20 +236,20 @@ const submit = () => {
 }
 
 .submit-btn {
-  background: #fdfaf8;
-  border: 1px solid #e8e0db;
-  color: #8b7a70;
+  background: var(--sheet);
+  border: 1px solid var(--snow);
+  color: var(--ink-faint);
   padding: 8px 20px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(139, 122, 112, 0.1);
+  box-shadow: 0 2px 8px rgba(var(--ink-rgb), 0.1);
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #f5ebe6;
-  border-color: #d1c1b7;
+  background: var(--snow);
+  border-color: var(--frost);
   transform: translateY(-1px);
 }
 
@@ -264,7 +264,7 @@ const submit = () => {
 .composer-error {
   grid-column: 1 / -1;
   margin: 10px 0 0;
-  color: #b65f5a;
+  color: var(--camellia);
   font-size: 13px;
   line-height: 1.5;
 }
