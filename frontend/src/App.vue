@@ -24,6 +24,8 @@ import LoginView, {
 } from './modules/login';
 import WeatherAtmosphere from './modules/weather';
 import { snowlitNaiveTheme } from './styles/naive-theme';
+import { shouldSkipMotion } from './motion';
+import { EASE_SETTLE, gsap } from './motionKit';
 
 const router = useRouter();
 const route = useRoute();
@@ -35,6 +37,27 @@ const isLoggedIn = ref(Boolean(getAuthToken()));
 let stopSessionInvalidation: (() => void) | undefined;
 
 useSmoothScroll(() => route.fullPath);
+
+// Page hand-off inside the shell: the old page lifts away, the next one settles in under the nav.
+function leavePage(el: Element, done: () => void) {
+  if (shouldSkipMotion()) {
+    done();
+    return;
+  }
+  gsap.to(el, { autoAlpha: 0, y: -18, duration: 0.22, ease: 'power2.in', onComplete: done });
+}
+
+function enterPage(el: Element, done: () => void) {
+  if (shouldSkipMotion()) {
+    done();
+    return;
+  }
+  gsap.fromTo(
+    el,
+    { autoAlpha: 0, y: 28 },
+    { autoAlpha: 1, y: 0, duration: 0.7, ease: EASE_SETTLE, clearProps: 'opacity,visibility,transform', onComplete: done }
+  );
+}
 
 async function handleAuthenticated(session: LoginSession) {
   setAuthToken(session.token);
@@ -70,7 +93,11 @@ onUnmounted(() => {
             <template v-else>
               <AppTopBar :show-feedback="isLoggedIn" />
               <JournalRouteShell>
-                <RouterView />
+                <RouterView v-slot="{ Component, route: viewRoute }">
+                  <Transition :css="false" mode="out-in" @leave="leavePage" @enter="enterPage">
+                    <component :is="Component" :key="viewRoute.path" />
+                  </Transition>
+                </RouterView>
               </JournalRouteShell>
             </template>
           </template>

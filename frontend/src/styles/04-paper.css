@@ -64,3 +64,28 @@
   font-family: var(--font-ui);
   font-variant-numeric: tabular-nums;
 }
+
+/* Lamplight that follows the pointer across a card (set by the v-tilt directive). */
+.lamp-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.lamp-glow > .lamp-glow__light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--lamp-x, 50%) var(--lamp-y, 50%), rgba(var(--lamp-rgb), 0.24), transparent 58%);
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.lamp-glow.is-lamp-lit > .lamp-glow__light {
+  opacity: 1;
+}
+
+.title-char {
+  will-change: transform;
+}
