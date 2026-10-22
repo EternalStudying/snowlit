@@ -431,9 +431,9 @@
 }
 
 .recent-paper-card__tape--right {
-  top: 6px;
-  right: -22px;
-  rotate: 38deg;
+  top: -8px;
+  right: 12px;
+  rotate: 14deg;
 }
 
 .recent-message-author {

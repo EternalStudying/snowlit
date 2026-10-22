@@ -2,7 +2,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Ma+Shan+Zheng&display=swap");
 @import "lenis/dist/lenis.css";
 @import "./styles/00-tokens.css";
-@import "./styles/05-page-background.css";
 @import "./styles/01-base.css";
 @import "./styles/04-paper.css";
 @import "./styles/02-app-shell.css";

@@ -13,7 +13,7 @@
   padding: 0;
   overflow: hidden;
   color: var(--message-ink);
-  font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  font-family: var(--font-body);
   background: var(--page-bg-root);
   background-size: var(--page-bg-root-size);
 }

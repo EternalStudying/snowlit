@@ -1773,3 +1773,65 @@
   }
 
 }
+
+/* Phones: dates sit in a left rail and both partners' entries stack beside it. */
+@media (max-width: 720px) {
+  .diary-page {
+    padding-inline: 16px;
+  }
+
+  .diary-chapter-picker {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: 0;
+    padding: 18px 18px 18px 56px;
+  }
+
+  .diary-chapter-picker__kicker {
+    position: static;
+    transform: none;
+  }
+
+  .diary-chapter-trigger {
+    position: static;
+    width: auto;
+    padding: 0;
+    translate: none;
+    text-align: left;
+  }
+
+  .diary-timeline--centered::before {
+    left: 27px;
+  }
+
+  .diary-date-row {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 12px 8px;
+  }
+
+  .diary-date-row__center {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+
+  .diary-date-row__side {
+    grid-column: 2;
+    min-height: 0;
+  }
+
+  .diary-date-row__side:empty {
+    display: none;
+  }
+
+  .diary-date-row__side--boyfriend,
+  .diary-date-row__side--girlfriend {
+    justify-items: stretch;
+  }
+
+  .diary-entry-card {
+    width: 100%;
+    padding: 30px 20px 20px;
+  }
+}

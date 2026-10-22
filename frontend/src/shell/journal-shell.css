@@ -1716,6 +1716,46 @@
   .journal-stage .hero-center-heart {
     width: 48px;
   }
+
+  /* All five sections fit on a phone without a sideways-scrolling nav. */
+  .journal-nav {
+    justify-content: center;
+    padding: 6px 4px;
+    overflow-x: visible;
+  }
+
+  .journal-nav .paper-nav-shell__content {
+    gap: 0;
+  }
+
+  .journal-nav__link {
+    flex: 0 0 auto;
+    min-width: 0;
+    gap: 4px;
+    padding: 7px 6px;
+    font-size: 0.86rem;
+  }
+
+  .journal-nav__label {
+    flex-shrink: 0;
+  }
+
+  /* Docked into the top bar: icons only, sitting between the left buttons and the weather control. */
+  .journal-nav[data-nav-fusion="docked"] .paper-nav-shell__content {
+    gap: 4px;
+    translate: 32px 0;
+  }
+
+  .journal-nav[data-nav-fusion="docked"] .journal-nav__link,
+  .journal-nav[data-nav-compact="true"][data-nav-fusion="docked"] .journal-nav__link {
+    min-width: 36px;
+    width: 36px;
+    padding: 6px 0;
+  }
+
+  .journal-nav[data-nav-fusion="docked"] .journal-nav__label {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
