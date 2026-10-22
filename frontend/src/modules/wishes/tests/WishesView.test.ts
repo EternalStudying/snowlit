@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -421,19 +419,19 @@ describe('WishesView 清单交互', () => {
     expect(wrapper.find('[data-wish-create-open]').exists()).toBe(false);
   });
 
-  it('右下角新增清单入口使用 WebP 贴纸，并保留分类切换', async () => {
+  it('右下角新增清单入口是代码绘制的贴纸，并保留分类切换', async () => {
     const wrapper = await mountWishesView(createWishRequestAdapter());
 
-    expect(existsSync(resolve(process.cwd(), 'src/modules/wishes/assets/wish-create-entry.webp'))).toBe(true);
-    expect(existsSync(resolve(process.cwd(), 'src/modules/wishes/assets/wish-create-dialog-background.webp'))).toBe(true);
     expect(wrapper.get('.wish-create-fab').attributes('aria-label')).toBe('新增清单');
-    expect(wrapper.find('.wish-create-fab__image').exists()).toBe(true);
+    expect(wrapper.get('.wish-create-fab').text()).toContain('新增清单');
+    expect(wrapper.get('.wish-create-fab').find('img').exists()).toBe(false);
 
     await wrapper.get('[data-wish-create-open]').trigger('click');
 
     expect(wrapper.find('[data-wish-create-form]').exists()).toBe(true);
     const dialog = wrapper.get('[data-wish-create-form]');
-    expect(dialog.find('.wish-create-dialog__background').exists()).toBe(true);
+    expect(dialog.find('img').exists()).toBe(false);
+    expect(dialog.get('.wish-create-dialog__title').text()).toBe('新增清单');
     expect(dialog.get('[data-wish-category-select="want_go"]').attributes('aria-pressed')).toBe('true');
 
     await wrapper.get('[data-wish-category-select="want_do"]').trigger('click');
@@ -441,7 +439,7 @@ describe('WishesView 清单交互', () => {
     expect(wrapper.get('[data-wish-category-select="want_do"]').attributes('aria-pressed')).toBe('true');
   });
 
-  it('新增清单弹窗使用背景图并按参考图比例分为左表单和右装饰区', async () => {
+  it('新增清单弹窗分为左表单和右侧实时预览', async () => {
     const wrapper = await mountWishesView(createWishRequestAdapter());
 
     await wrapper.get('[data-wish-create-open]').trigger('click');

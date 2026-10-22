@@ -3,16 +3,12 @@ import { IMAGE_ACCEPT, pickImages } from '../../imageFiles';
 import './wishes.css';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type InputHTMLAttributes } from 'vue';
 import { NAlert, NButton, NDatePicker, NInput, NModal, NUpload, type UploadFileInfo } from 'naive-ui';
+import { ImageOff, ListPlus } from 'lucide-vue-next';
 import PageLoader from '../../components/PageLoader.vue';
+import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
+import StickerButton from '../../components/paper/StickerButton.vue';
 import { useModalWheelGuard } from '../../composables/useModalWheelGuard';
 import { createCloseOnce } from '../../motion';
-import boardDone from './assets/board-done.webp';
-import heroListBanner from './assets/hero-list-banner.webp';
-import boardWantDo from './assets/board-want-do.webp';
-import boardWantGo from './assets/board-want-go.webp';
-import noteCardCorner from './assets/note-card-corner.webp';
-import wishCreateDialogBackground from './assets/wish-create-dialog-background.webp';
-import wishCreateEntry from './assets/wish-create-entry.webp';
 import { useWishBoardMotion } from './internal/useWishBoardMotion';
 import { useWishLifecycle } from './internal/useWishLifecycle';
 import type {
@@ -25,7 +21,6 @@ import type {
 interface WishBoardDefinition {
   laneKey: WishLaneKey;
   title: string;
-  boardImage: string;
   legend: string;
 }
 
@@ -36,7 +31,7 @@ interface WishBoardGroup extends WishBoardDefinition {
 }
 
 const wishPageRef = ref<HTMLElement | null>(null);
-const wishLifecycle = useWishLifecycle({ fallbackImageUrl: heroListBanner });
+const wishLifecycle = useWishLifecycle();
 const wishBoardLoaded = wishLifecycle.state.loaded;
 const wishBoardError = wishLifecycle.state.loadError;
 const wishActionError = wishLifecycle.state.actionError;
@@ -101,19 +96,16 @@ const wishBoardDefinitions: WishBoardDefinition[] = [
   {
     laneKey: 'wantToGo',
     title: '想去',
-    boardImage: boardWantGo,
     legend: '想去：去看世界'
   },
   {
     laneKey: 'wantToDo',
     title: '想做',
-    boardImage: boardWantDo,
     legend: '想做：一起成长'
   },
   {
     laneKey: 'done',
     title: '已完成',
-    boardImage: boardDone,
     legend: '已完成：回忆收藏'
   }
 ];
@@ -468,9 +460,8 @@ onBeforeUnmount(() => {
   <main ref="wishPageRef" class="list-page" :data-wish-gsap="wishGsapMotionAttr">
     <section class="list-hero" aria-labelledby="wish-page-title">
       <div class="list-hero__sheet">
-        <img class="list-hero__banner" :src="heroListBanner" alt="" aria-hidden="true" />
+        <PostmarkStamp class="list-hero__stamp" />
         <div class="list-hero__copy">
-          <p class="list-hero__label">COUPLE LIST</p>
           <h1 id="wish-page-title" class="list-hero__title">
             我们的<span class="list-hero__title-accent">共同</span>清单
           </h1>
@@ -479,7 +470,7 @@ onBeforeUnmount(() => {
       </div>
 
       <aside class="list-note-card" aria-label="一起的小约定">
-        <img class="list-note-card__asset" :src="noteCardCorner" alt="" aria-hidden="true" />
+        <span class="washi washi--top" aria-hidden="true"></span>
         <div class="list-note-card__copy">
           <p class="list-note-card__title">一起的小约定</p>
           <p>用心收藏每一刻。未来的我们，一定会感谢现在一起努力的自己。</p>
@@ -510,7 +501,10 @@ onBeforeUnmount(() => {
           :data-group="group.laneKey"
           :aria-label="group.title"
         >
-          <img class="wish-board__asset" :src="group.boardImage" alt="" aria-hidden="true" />
+          <header class="wish-board__head">
+            <h2 class="paper-tab wish-board__tab">{{ group.title }}</h2>
+            <span class="wish-board__count">{{ group.items.length }} 项</span>
+          </header>
           <div class="wish-board__content">
             <ul
               class="wish-lane-list"
@@ -537,10 +531,10 @@ onBeforeUnmount(() => {
 
     <PageLoader :loading="!isWishPageReady" />
 
-    <button v-if="canManageWishes" class="wish-create-fab" data-wish-create-open type="button" aria-label="新增清单" @click="openCreateWish()">
-      <img class="wish-create-fab__image" :src="wishCreateEntry" alt="" draggable="false" />
-      <span class="visually-hidden">新增清单</span>
-    </button>
+    <StickerButton v-if="canManageWishes" class="wish-create-fab" data-wish-create-open tone="camellia" :tilt="-3" aria-label="新增清单" @click="openCreateWish()">
+      <template #icon><ListPlus :stroke-width="1.8" /></template>
+      新增清单
+    </StickerButton>
 
     <Teleport to="body">
       <div
@@ -558,9 +552,13 @@ onBeforeUnmount(() => {
           :data-wish-lane="selectedWish.lane"
         >
           <div class="wish-detail-dialog__image-panel">
-            <button class="wish-detail-dialog__image-button" type="button" aria-label="查看完整图片" @click.stop="openImagePreview">
+            <button v-if="selectedWish.imageUrl" class="wish-detail-dialog__image-button" type="button" aria-label="查看完整图片" @click.stop="openImagePreview">
               <img ref="wishDetailImageRef" class="wish-detail-dialog__image" :src="selectedWish.imageUrl" :alt="selectedWish.title" />
             </button>
+            <div v-else class="wish-detail-dialog__no-image">
+              <ImageOff :size="28" :stroke-width="1.5" aria-hidden="true" />
+              <span>还没有照片，完成时可以贴一张</span>
+            </div>
           </div>
 
           <div class="wish-detail-dialog__info">
@@ -666,15 +664,7 @@ onBeforeUnmount(() => {
             aria-label="新增清单"
             @submit.prevent="submitCreateWish"
           >
-            <img
-              class="wish-create-dialog__background"
-              :src="wishCreateDialogBackground"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-              decoding="async"
-            />
-            <h2 class="visually-hidden">新增清单</h2>
+            <h2 class="wish-create-dialog__title">新增清单</h2>
 
           <div class="wish-create-dialog__content">
             <div class="wish-create-dialog__left">
@@ -770,7 +760,20 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="wish-create-dialog__divider" aria-hidden="true"></div>
-            <div class="wish-create-dialog__right" aria-hidden="true"></div>
+            <div class="wish-create-dialog__right" aria-hidden="true">
+              <article class="wish-create-preview" :data-category="createWishCategory">
+                <span class="paper-tab">{{ createWishCategory === 'want_do' ? '想做' : '想去' }}</span>
+                <p class="wish-create-preview__title" :data-placeholder="createWishForm.title ? undefined : 'true'">
+                  {{ createWishForm.title || '给这件事起个名字吧' }}
+                </p>
+                <p v-if="createWishForm.description" class="wish-create-preview__body">{{ createWishForm.description }}</p>
+                <div v-if="createWishForm.locationName || createWishForm.expectedCompletedAt" class="wish-create-preview__meta">
+                  <span v-if="createWishForm.locationName" class="paper-chip">{{ createWishForm.locationName }}</span>
+                  <span v-if="createWishForm.expectedCompletedAt" class="paper-chip">{{ createWishForm.expectedCompletedAt }}</span>
+                </div>
+              </article>
+              <p class="wish-create-preview__hint">保存后会贴在「{{ createWishCategory === 'want_do' ? '想做' : '想去' }}」板子最上面</p>
+            </div>
           </div>
 
           <NAlert v-if="wishCreateError" class="wish-create-dialog__error" type="error" :show-icon="false">
