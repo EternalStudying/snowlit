@@ -21,6 +21,7 @@ import {
   stripLeadingDiaryTitle
 } from './internal/markdown';
 import { useDiaryLifecycle } from './internal/useDiaryLifecycle';
+import { useDiaryMotion } from './internal/useDiaryMotion';
 import type {
   DiaryEditorValue,
   DiaryEntry,
@@ -52,6 +53,7 @@ const diaryMotionReady = ref(false);
 const pendingMonthScroll = ref(false);
 const monthSectionRefs = new Map<string, HTMLElement>();
 let diaryCardObserver: IntersectionObserver | null = null;
+const diaryMotion = useDiaryMotion(timelineRef);
 
 const editorInitialValue = computed<DiaryEditorValue>(() =>
   diaryLifecycle.createEditorValue(
@@ -208,6 +210,7 @@ function scrollToSelectedMonth() {
 
 function handleMonthPageAfterEnter() {
   observeDiaryEntryCards();
+  diaryMotion.playMonth();
   if (!pendingMonthScroll.value) {
     return;
   }
@@ -318,6 +321,7 @@ onMounted(async () => {
   void nextTick(() => {
     diaryMotionReady.value = true;
     observeDiaryEntryCards();
+    diaryMotion.playMonth();
   });
 });
 
@@ -347,7 +351,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <Transition name="diary-chapter">
+      <Transition name="diary-chapter" @enter="(panel) => diaryMotion.dealChapters(panel)">
         <div v-if="isChapterOpen" id="diary-chapter-panel" class="diary-chapter-panel">
           <div v-for="chapter in yearChapters" :key="chapter.year" class="diary-year-chapter">
             <h3>{{ chapter.year }} 年</h3>

@@ -26,6 +26,7 @@ import type {
 } from '../model';
 import { DIARY_MOODS } from '../moods';
 import MoodFace from './MoodFace.vue';
+import { popMoodFace } from '../internal/useDiaryMotion';
 import {
   deriveDiaryTitle,
   diaryMarkdownCharacterCount,
@@ -68,6 +69,7 @@ const form = reactive<DiaryEditorValue>({
 });
 
 const textarea = ref<HTMLTextAreaElement | null>(null);
+const moodTriggerFace = ref<HTMLElement | null>(null);
 const imageUploadHost = ref<HTMLElement | null>(null);
 const diaryPopupPortal = ref<HTMLElement>();
 const imageFileList = ref<UploadFileInfo[]>([]);
@@ -257,6 +259,7 @@ function selectMood(key: DiaryMoodKey) {
   form.moodKey = key;
   isMoodPickerOpen.value = false;
   markTouched();
+  void nextTick(() => popMoodFace(moodTriggerFace.value));
 }
 
 function onImageInput(payload: Event | { fileList: UploadFileInfo[] }) {
@@ -391,7 +394,7 @@ onBeforeUnmount(() => {
                 @click="toggleMoodPicker"
                 @keydown.esc.stop="closeMoodPicker"
               >
-                <span class="diary-mood-face"><MoodFace :mood="activeMood.key" /></span>
+                <span ref="moodTriggerFace" class="diary-mood-face"><MoodFace :mood="activeMood.key" /></span>
                 <span>{{ activeMood.label }}</span>
                 <ChevronDown :size="14" />
               </button>
