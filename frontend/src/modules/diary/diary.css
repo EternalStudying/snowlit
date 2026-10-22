@@ -1,28 +1,25 @@
 .diary-page,
 .diary-editor-backdrop,
 .diary-detail-backdrop {
-  --diary-ink: var(--ink-soft);
-  --diary-muted: var(--ink-faint);
-  --diary-line: rgba(var(--ink-rgb), 0.2);
-  --diary-paper: rgba(var(--sheet-rgb), 0.96);
+  --diary-ink: var(--ink);
+  --diary-muted: var(--ink-soft);
+  --diary-line: rgba(var(--ink-rgb), 0.14);
+  --diary-paper: var(--sheet);
   --diary-boyfriend: var(--sheet);
   --diary-girlfriend: var(--sheet);
-  --diary-coral: var(--camellia-wash);
-  --diary-green: var(--ink-faint);
-  --diary-gold: var(--ink-faint);
-  --diary-blue: var(--ink-faint);
+  --diary-coral: var(--camellia);
+  --diary-green: var(--pine);
+  --diary-gold: var(--lamp-deep);
+  --diary-blue: var(--ink-soft);
   --diary-motion-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
   --diary-motion-ease-page: cubic-bezier(0.645, 0.045, 0.355, 1);
-  --diary-font-serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
-  --diary-font-hand: "Ma Shan Zheng", "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  --diary-font-serif: var(--font-body);
+  --diary-font-hand: var(--font-display);
   --diary-editor-meta-chip-width: 104px;
 }
 
 .diary-page {
   --page-bg-base: var(--snow-ground);
-  --page-bg-accent-rgb: 217, 135, 120;
-  --page-bg-warm-rgb: 199, 154, 82;
-  --page-bg-dot-rgb: 121, 86, 65;
   position: relative;
   isolation: isolate;
   min-height: 100vh;
@@ -52,13 +49,17 @@
   width: min(1240px, 100%);
 }
 
-.diary-chapter-picker__kicker,
 .diary-detail__author {
   margin: 0 0 8px;
   color: var(--diary-gold);
   font-weight: 700;
   letter-spacing: 0;
-  text-transform: uppercase;
+}
+
+.diary-chapter-picker__kicker {
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
 }
 
 .diary-chapter-picker__kicker {
@@ -90,17 +91,23 @@
 .diary-chapter-picker {
   position: relative;
   display: flex;
-  min-height: 154px;
+  min-height: 112px;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 44px 86px 46px 72px;
-  background: url("./assets/diary-chapter-index-transparent.webp") center / 100% 100% no-repeat;
+  padding: 24px 40px 24px 72px;
+  background:
+    linear-gradient(90deg, transparent 0 40px, rgba(var(--camellia-rgb), 0.24) 40px 41px, transparent 41px),
+    var(--grain),
+    var(--sheet);
+  border-radius: var(--radius-sheet);
+  box-shadow: var(--shadow-sheet);
 }
 
 .diary-chapter-trigger {
   position: absolute;
-  top: 42px;
+  top: 50%;
+  translate: 0 -50%;
   right: 58px;
   width: 250px;
   min-width: 0;
@@ -430,21 +437,16 @@
   --diary-card-entry-tilt: -1deg;
   position: relative;
   display: block;
-  width: min(520px, 100%);
-  min-height: 368px;
-  padding: 88px 66px 64px;
+  width: min(460px, 100%);
+  min-height: 0;
+  padding: 36px 32px 26px;
   border: 0;
-  border-radius: 0;
-  background: var(--diary-card-bg, var(--diary-girlfriend));
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  box-shadow: none;
+  border-radius: var(--radius-sheet);
+  background: var(--grain), var(--diary-card-tint, var(--sheet));
+  box-shadow: var(--shadow-sheet);
   color: var(--diary-ink);
-  filter: drop-shadow(0 13px 22px rgba(var(--ink-rgb), 0.12));
   font: inherit;
   text-align: left;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.52);
   cursor: pointer;
   transform-origin: center;
   will-change: transform, opacity;
@@ -495,8 +497,48 @@
   transition-duration: 120ms;
 }
 
+.diary-entry-card[data-card-variant="1"] {
+  --diary-card-tint: color-mix(in srgb, var(--lamp-wash) 42%, var(--sheet));
+}
+
+.diary-entry-card[data-card-variant="2"] {
+  --diary-card-tint: color-mix(in srgb, var(--pine-wash) 48%, var(--sheet));
+}
+
 .diary-entry-card__tape {
-  display: none;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 92px;
+  height: 22px;
+  translate: -50% 0;
+  rotate: -3deg;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.2) 6px 7px),
+    rgba(var(--lamp-rgb), 0.34);
+  mask:
+    linear-gradient(90deg, transparent 0, #000 3px calc(100% - 3px), transparent 100%),
+    repeating-linear-gradient(0deg, #000 0 3px, transparent 3px 4px);
+}
+
+.diary-entry-card[data-card-variant="1"] .diary-entry-card__tape {
+  left: 18px;
+  translate: 0 0;
+  rotate: -24deg;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.2) 6px 7px),
+    rgba(var(--camellia-rgb), 0.26);
+}
+
+.diary-entry-card[data-card-variant="2"] .diary-entry-card__tape {
+  left: auto;
+  right: -12px;
+  translate: 0 0;
+  rotate: 26deg;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.2) 6px 7px),
+    rgba(var(--pine-rgb), 0.26);
 }
 
 .diary-entry-card__header {
@@ -612,46 +654,17 @@
   right: clamp(16px, 2.4vw, 34px);
   bottom: clamp(18px, 3vw, 34px);
   z-index: 10;
-  width: clamp(104px, 11vw, 150px);
-  aspect-ratio: 1106 / 1039;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
   opacity: 1;
-  filter: drop-shadow(0 14px 20px rgba(var(--ink-rgb), 0.18));
-  transform: rotate(-4deg);
   transition:
     opacity 220ms ease,
-    transform 220ms ease,
-    filter 220ms ease;
-}
-
-.diary-compose-fab__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-}
-
-.diary-compose-fab:hover {
-  filter: drop-shadow(0 18px 26px rgba(var(--ink-rgb), 0.23));
-  transform: rotate(-2deg) translateY(-5px) scale(1.03);
-}
-
-.diary-compose-fab:focus-visible {
-  border-radius: 24px;
-  outline: 2px solid rgba(var(--ink-rgb), 0.48);
-  outline-offset: 5px;
+    rotate 220ms ease,
+    translate 220ms ease;
 }
 
 .journal-shell[data-hero-immersive="true"] .diary-compose-fab {
   opacity: 0;
   pointer-events: none;
-  filter: blur(2px) drop-shadow(0 8px 14px rgba(var(--ink-rgb), 0.08));
-  transform: rotate(-2deg) translate3d(16px, 22px, 0) scale(0.92);
+  translate: 16px 22px;
 }
 
 .diary-editor-backdrop,
@@ -705,22 +718,13 @@
   padding: clamp(28px, 3vw, 44px) clamp(32px, 3.6vw, 54px) clamp(24px, 2.4vw, 34px);
   overflow: hidden;
   border: 0;
-  border-radius: 18px;
-  background: var(--snow);
-  box-shadow: 0 28px 60px rgba(var(--ink-rgb), 0.24);
+  border-radius: var(--radius-sheet);
+  background:
+    linear-gradient(90deg, transparent 0 22px, rgba(var(--camellia-rgb), 0.22) 22px 23px, transparent 23px),
+    var(--grain),
+    var(--sheet);
+  box-shadow: 0 30px 70px -20px rgba(var(--night-rgb), 0.55);
   transform-origin: 50% 54%;
-}
-
-.diary-markdown-editor__background {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-  user-select: none;
 }
 
 .diary-editor-enter-active .diary-markdown-editor-modal {
@@ -1137,15 +1141,12 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   flex: 1;
   min-height: 0;
-  border: 1px solid rgba(var(--ink-rgb), 0.15);
-  border-radius: 12px;
+  border: 1px solid var(--frost);
+  border-radius: var(--radius-sheet);
   background:
-    linear-gradient(90deg, rgba(var(--ink-rgb), 0.07), transparent 47%, rgba(var(--ink-rgb), 0.13) 50%, transparent 53%, rgba(var(--ink-rgb), 0.07)),
-    rgba(var(--lamp-rgb), 0.68);
-  box-shadow:
-    inset 0 0 0 8px rgba(var(--sheet-rgb), 0.34),
-    0 14px 30px rgba(var(--ink-rgb), 0.14);
-  backdrop-filter: blur(1px);
+    linear-gradient(90deg, transparent 47%, rgba(var(--ink-rgb), 0.08) 50%, transparent 53%),
+    var(--sheet);
+  box-shadow: var(--shadow-sheet);
 }
 
 .diary-markdown-editor__book::before {
@@ -1155,10 +1156,8 @@
   bottom: 14px;
   left: 50%;
   z-index: 1;
-  width: 18px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(var(--ink-rgb), 0.22), rgba(var(--sheet-rgb), 0.35), rgba(var(--ink-rgb), 0.18));
-  box-shadow: 0 0 18px rgba(var(--ink-rgb), 0.14);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, rgba(var(--camellia-rgb), 0.35) 0 6px, transparent 6px 12px);
   transform: translateX(-50%);
   pointer-events: none;
 }

@@ -1,8 +1,5 @@
 .list-page {
   --page-bg-base: var(--snow-ground);
-  --page-bg-accent-rgb: 99, 124, 86;
-  --page-bg-warm-rgb: 184, 134, 66;
-  --page-bg-dot-rgb: 126, 85, 52;
   --list-bg: var(--page-bg-base);
   --list-bg-rgb: var(--snow-ground-rgb);
   --list-paper: var(--sheet);

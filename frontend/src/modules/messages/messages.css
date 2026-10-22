@@ -1,8 +1,5 @@
 .messages-page {
   --page-bg-base: var(--snow-ground);
-  --page-bg-accent-rgb: 82, 109, 125;
-  --page-bg-warm-rgb: 116, 145, 136;
-  --page-bg-dot-rgb: 91, 74, 52;
   --message-bg: var(--page-bg-base);
   --message-ink: var(--ink);
   --message-muted: var(--ink-faint);

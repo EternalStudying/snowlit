@@ -603,7 +603,8 @@ describe('日记页 /api/diary 用户侧接口联调', () => {
     const { fetcher } = createFetchMock();
     const wrapper = await mountDiaryView(fetcher as unknown as typeof fetch);
     expect(wrapper.get('.diary-compose-fab').attributes('aria-label')).toBe('写日记');
-    expect(wrapper.find('.diary-compose-fab__image').exists()).toBe(true);
+    expect(wrapper.get('.diary-compose-fab').text()).toContain('写日记');
+    expect(wrapper.get('.diary-compose-fab').find('img').exists()).toBe(false);
 
     await wrapper.get('.diary-compose-fab').trigger('click');
     expect(wrapper.find('form.diary-markdown-editor__form').exists()).toBe(true);

@@ -9,21 +9,12 @@ import {
   ref
 } from 'vue';
 import { NButton } from 'naive-ui';
+import { PenLine } from 'lucide-vue-next';
 import PageLoader from '../../components/PageLoader.vue';
 import { useWeatherAtmosphereData } from '../weather';
 import DiaryMarkdownEditor from './components/DiaryMarkdownEditor.vue';
 import DiaryTimelineGlow from './components/DiaryTimelineGlow.vue';
-import diaryCardBackground01 from './assets/cards/diary-card-imagegen-v01.webp';
-import diaryCardBackground02 from './assets/cards/diary-card-imagegen-v02.webp';
-import diaryCardBackground03 from './assets/cards/diary-card-imagegen-v03.webp';
-import diaryCardBackground04 from './assets/cards/diary-card-imagegen-v04.webp';
-import diaryCardBackground05 from './assets/cards/diary-card-imagegen-v05.webp';
-import diaryCardBackground06 from './assets/cards/diary-card-imagegen-v06.webp';
-import diaryCardBackground07 from './assets/cards/diary-card-imagegen-v07.webp';
-import diaryCardBackground08 from './assets/cards/diary-card-imagegen-v08.webp';
-import diaryCardBackground09 from './assets/cards/diary-card-imagegen-v09.webp';
-import diaryCardBackground10 from './assets/cards/diary-card-imagegen-v10.webp';
-import diaryComposeEntry from './assets/diary-compose-entry.webp';
+import StickerButton from '../../components/paper/StickerButton.vue';
 import {
   diaryMarkdownExcerpt,
   renderDiaryMarkdown,
@@ -36,19 +27,6 @@ import type {
   DiaryVisibility
 } from './model';
 
-const diaryCardBackgrounds = [
-  diaryCardBackground01,
-  diaryCardBackground02,
-  diaryCardBackground03,
-  diaryCardBackground04,
-  diaryCardBackground05,
-  diaryCardBackground06,
-  diaryCardBackground07,
-  diaryCardBackground08,
-  diaryCardBackground09,
-  diaryCardBackground10
-];
-const diaryCardBackgroundIndexes = new Map<string, number>();
 const { weather, lastCoordinates, loadWeather } =
   useWeatherAtmosphereData();
 const diaryLifecycle = useDiaryLifecycle();
@@ -105,32 +83,17 @@ function formatDateTime(date: string) {
   }).format(new Date(date));
 }
 
-function getDiaryCardBackgroundIndex(entry: DiaryEntry) {
-  const key = String(entry.id);
-  const existingIndex = diaryCardBackgroundIndexes.get(key);
-  if (typeof existingIndex === 'number') {
-    return existingIndex;
+// Paper tint and tape position come from the entry id, so a diary looks the same on every visit.
+function getDiaryCardVariant(entry: DiaryEntry) {
+  let hash = 0;
+  for (const char of String(entry.id)) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   }
-
-  const index = Math.floor(
-    Math.random() * diaryCardBackgrounds.length
-  );
-  diaryCardBackgroundIndexes.set(key, index);
-  return index;
+  return hash % 3;
 }
 
-function getDiaryCardBackgroundStyle(entry: DiaryEntry) {
+function getDiaryCardStyle(motionIndex: number) {
   return {
-    '--diary-card-bg': `url("${diaryCardBackgrounds[getDiaryCardBackgroundIndex(entry)]}")`
-  };
-}
-
-function getDiaryCardStyle(
-  entry: DiaryEntry,
-  motionIndex: number
-) {
-  return {
-    ...getDiaryCardBackgroundStyle(entry),
     '--diary-card-motion-index': String(motionIndex)
   };
 }
@@ -370,7 +333,7 @@ onBeforeUnmount(() => {
     <template v-if="diaryPageLoaded">
     <section class="diary-controls" aria-label="日记年份章节选择">
       <div class="diary-chapter-picker">
-        <p class="diary-chapter-picker__kicker">Chapter Index</p>
+        <p class="diary-chapter-picker__kicker">日记目录</p>
         <button
           class="diary-chapter-trigger"
           :class="{ 'diary-chapter-trigger--open': isChapterOpen }"
@@ -443,8 +406,8 @@ onBeforeUnmount(() => {
                 :data-role="day.entriesByRole.boyfriend.role"
                 data-diary-card-visible="false"
                 :data-has-images="day.entriesByRole.boyfriend.images.length > 0"
-                :data-card-background-index="getDiaryCardBackgroundIndex(day.entriesByRole.boyfriend)"
-                :style="getDiaryCardStyle(day.entriesByRole.boyfriend, dayIndex * 2)"
+                :data-card-variant="getDiaryCardVariant(day.entriesByRole.boyfriend)"
+                :style="getDiaryCardStyle(dayIndex * 2)"
                 type="button"
                 @click="openDetail(day.entriesByRole.boyfriend)"
               >
@@ -496,8 +459,8 @@ onBeforeUnmount(() => {
                 :data-role="day.entriesByRole.girlfriend.role"
                 data-diary-card-visible="false"
                 :data-has-images="day.entriesByRole.girlfriend.images.length > 0"
-                :data-card-background-index="getDiaryCardBackgroundIndex(day.entriesByRole.girlfriend)"
-                :style="getDiaryCardStyle(day.entriesByRole.girlfriend, dayIndex * 2 + 1)"
+                :data-card-variant="getDiaryCardVariant(day.entriesByRole.girlfriend)"
+                :style="getDiaryCardStyle(dayIndex * 2 + 1)"
                 type="button"
                 @click="openDetail(day.entriesByRole.girlfriend)"
               >
@@ -550,10 +513,10 @@ onBeforeUnmount(() => {
       :disabled="isEditorOpen || Boolean(selectedEntry)"
     />
 
-    <button class="diary-compose-fab" type="button" aria-label="写日记" @click="openCreateEditor">
-      <img class="diary-compose-fab__image" :src="diaryComposeEntry" alt="" draggable="false" />
-      <span class="visually-hidden">写日记</span>
-    </button>
+    <StickerButton class="diary-compose-fab" tone="pine" :tilt="3" aria-label="写日记" @click="openCreateEditor">
+      <template #icon><PenLine :stroke-width="1.8" /></template>
+      写日记
+    </StickerButton>
 
     <Teleport to="body">
       <Transition name="diary-editor" :duration="{ enter: 840, leave: 260 }">

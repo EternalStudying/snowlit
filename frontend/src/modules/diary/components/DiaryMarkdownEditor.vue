@@ -18,7 +18,6 @@ import {
   UsersRound
 } from 'lucide-vue-next';
 import { NAlert, NButton, NDatePicker, NInput, NSelect, NUpload, type SelectOption, type UploadFileInfo } from 'naive-ui';
-import diaryEditorBackground from '../assets/diary-editor-background.webp';
 import type {
   DiaryEditorValue,
   DiaryImageUploadDto,
@@ -341,7 +340,6 @@ onBeforeUnmount(() => {
 <template>
   <div class="diary-editor-backdrop" data-smooth-scroll-prevent @click.self="closeEditor">
     <section class="diary-markdown-editor-modal" role="dialog" aria-modal="true" aria-label="Markdown 手账编辑器">
-      <img class="diary-markdown-editor__background" :src="diaryEditorBackground" alt="" draggable="false" />
       <form class="diary-markdown-editor__form" @submit.prevent="submitEditor">
         <div class="diary-markdown-editor__toolbar" aria-label="Markdown 手账工具栏">
           <div class="diary-markdown-editor__tool-group">
