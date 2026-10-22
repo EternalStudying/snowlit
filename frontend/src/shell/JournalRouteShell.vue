@@ -1,327 +1,181 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import partnerAAvatar from '../assets/couple-avatars/partner-a.webp';
 import partnerBAvatar from '../assets/couple-avatars/partner-b.webp';
 import SiteRecordLink from '../components/SiteRecordLink.vue';
-import TopbarTooltip from '../components/TopbarTooltip.vue';
+import { scrollToWithSmoothScroll } from '../composables/useSmoothScroll';
+import { shouldSkipMotion } from '../motion';
 import { useHomeLifecycle } from '../modules/home';
-import './journal-shell.css';
-import { useJournalHero } from './useJournalHero';
-import { useJournalNavFusion } from './useJournalNavFusion';
-import { useMotionReveal } from './useMotionReveal';
-import { useHeroParallax } from './useHeroParallax';
+import { preserveNextRouteScrollPosition } from '../navigation/routeScrollPolicy';
+import { journalHeroSlides } from './journalHeroSlides';
+import './snow-shell.css';
+import { burstPetals, startAmbientDrift, type AmbientDrift } from './world/ambientDrift';
+import { useEveningWorld } from './world/useEveningWorld';
 
-interface CozyNavItem {
-  to: string;
-  icon: string;
-  label: string;
-}
+/*
+ * The frame every page sits in: the painted cover, a wooden plaque of links hanging from it, the evening
+ * sky behind the page and petals drifting over it. The plaque docks at the top by itself (position: sticky).
+ */
 
 const { overview: home } = useHomeLifecycle().state;
-// The warm-journal reveal: the shell and every module marked data-motion-enabled play it (see journal-shell.css).
-const motionRootAttrs = {
-  'data-home-motion': 'warm-journal',
-  'data-motion-image-drift': 'true',
-  'data-motion-paper-float': 'true',
-  'data-motion-count-up': 'true',
-  'data-motion-sticker-pop': 'true',
-  'data-motion-paper-lift': 'true'
-};
-const motionRootStyle = {
-  '--motion-duration-scale': '1.087',
-  '--motion-stagger': '105ms',
-  '--motion-softness': '0.82',
-  '--motion-float-intensity': '0.32',
-  '--motion-scale-intensity': '0.28'
-};
-const {
-  slides: heroSlides,
-  activeSlide,
-  activeSlideIndex,
-  paused: heroPaused,
-  isExpanded: isHeroExpanded,
-  isImmersive: isHeroImmersive,
-  immersiveAttr: heroImmersiveAttr,
-  expandedAttr: heroExpandedAttr,
-  style: heroExpansionStyle,
-  activeStickerSide: activeHeroStickerSide,
-  isHeartBeating: isHeroHeartBeating,
-  isSyncing: isHeroSyncing,
-  burstParticles: heroBurstParticles,
-  shouldRenderSlideImage: shouldRenderHeroSlideImage,
-  showSlide: showHeroSlide,
-  showNextSlide: showNextHeroSlide,
-  showPreviousSlide: showPreviousHeroSlide,
-  setStickerTarget: setHeroStickerTarget,
-  clearStickerTarget: clearHeroStickerTarget,
-  triggerStickerInteraction: triggerHeroStickerInteraction
-} = useJournalHero();
+const route = useRoute();
+
 const shellRef = ref<HTMLElement | null>(null);
-const { requestRevealCheck: requestMotionRevealCheck } =
-  useMotionReveal(shellRef);
-useHeroParallax(shellRef);
-const {
-  navAnchorRef,
-  navRef,
-  navContentRef,
-  navFusionState,
-  navLabelState,
-  navDensityState,
-  navFusionCompactAttr,
-  navSwitchingAttr,
-  navActiveTrackSettlingAttr,
-  navRestoringAttr,
-  style: navFusionStyle,
-  handleCozyNavRootClick
-} = useJournalNavFusion({
-  isHeroImmersive,
-  requestMotionRevealCheck
-});
+const coverRef = ref<HTMLElement | null>(null);
+const plaqueRef = ref<HTMLElement | null>(null);
+const boardRef = ref<HTMLElement | null>(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const heartRef = ref<HTMLElement | null>(null);
 
-const shellStyle = computed(() => ({
-  ...motionRootStyle,
-  ...heroExpansionStyle.value,
-  ...navFusionStyle.value
-}));
-
-const navIcons = {
-  messages:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path fill="currentColor" d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092a10 10 0 1 0-4.777-4.719"/><path fill="currentColor" d="M7.828 13.07A3 3 0 0 1 12 8.764a3 3 0 0 1 5.004 2.224a3 3 0 0 1-.832 2.083l-3.447 3.62a1 1 0 0 1-1.45-.001z"/></g></svg>',
-  diary:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v14m4-9h2m-2-4h2M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4a4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3a3 3 0 0 0-3-3zm3-6h2M6 8h2"/></svg>',
-  home:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path fill="currentColor" d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path fill="currentColor" d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></g></svg>',
-  album:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path fill="currentColor" d="m22 11l-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16"/><path fill="currentColor" d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2"/><circle cx="13" cy="7" r="1" fill="currentColor"/><rect fill="currentColor" width="14" height="14" x="8" y="2" rx="2"/></g></svg>',
-  list:
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></svg>'
-};
-
-const cozyNavItems: CozyNavItem[] = [
-  { to: '/messages', icon: navIcons.messages, label: '留言' },
-  { to: '/diary', icon: navIcons.diary, label: '日记' },
-  { to: '/', icon: navIcons.home, label: '首页' },
-  { to: '/album', icon: navIcons.album, label: '相册' },
-  { to: '/wishes', icon: navIcons.list, label: '清单' }
+const navItems = [
+  { to: '/messages', label: '留言', icon: 'M4 5h16v11H9l-5 4z' },
+  { to: '/diary', label: '日记', icon: 'M12 6v14M4 5h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5v13h-6a2 2 0 0 0-2 2 2 2 0 0 0-2-2H4z' },
+  { to: '/', label: '首页', icon: 'M3 11 12 4l9 7v9h-6v-6H9v6H3z' },
+  { to: '/album', label: '相册', icon: 'M3 5h18v14H3zM3 16l5-5 5 5 3-3 5 5' },
+  { to: '/wishes', label: '清单', icon: 'M5 4h14v16l-7-4-7 4z' }
 ];
 
-const coupleStatusCards = computed(() => [
-  {
-    name: home.value?.couple.boyfriendName ?? '伴侣 A',
-    avatar: partnerAAvatar
-  },
-  {
-    name: home.value?.couple.girlfriendName ?? '伴侣 B',
-    avatar: partnerBAvatar
-  }
+const couple = computed(() => [
+  { name: home.value?.couple.boyfriendName || '伴侣 A', avatar: partnerAAvatar },
+  { name: home.value?.couple.girlfriendName || '伴侣 B', avatar: partnerBAvatar }
 ]);
+
+// Home is the first page rebuilt for the evening; the others keep their light ground until their turn.
+const isHome = computed(() => route.path === '/');
+const isEvening = isHome;
+
+const world = useEveningWorld({ shell: shellRef, cover: coverRef, board: boardRef, isEvening });
+
+let drift: AmbientDrift | null = null;
+onMounted(() => {
+  if (!shouldSkipMotion() && canvasRef.value) {
+    drift = startAmbientDrift(canvasRef.value);
+  }
+});
+onBeforeUnmount(() => drift?.stop());
+
+function isPlainClick(event: MouseEvent) {
+  return (event.button ?? 0) === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey;
+}
+
+/** Where the page starts once the plaque has docked: just past the cover. */
+function dockScrollTarget() {
+  const cover = coverRef.value;
+  return cover ? Math.max(0, cover.offsetTop + cover.offsetHeight - 76) : 0;
+}
+
+function scrollToDock() {
+  scrollToWithSmoothScroll(dockScrollTarget(), 0, {
+    immediate: shouldSkipMotion(),
+    behavior: shouldSkipMotion() ? 'auto' : 'smooth',
+    duration: 0.9
+  });
+}
+
+let scrollAfterRoute = false;
+function handleNavClick(to: string, event: MouseEvent) {
+  if (!isPlainClick(event)) {
+    return;
+  }
+  if (to === route.path) {
+    event.preventDefault();
+    scrollToDock();
+    return;
+  }
+  // Keep the reader where they are while the page changes underneath, then settle just below the plaque.
+  preserveNextRouteScrollPosition();
+  scrollAfterRoute = true;
+}
+
+watch(
+  () => route.path,
+  async () => {
+    await nextTick();
+    world.moveLantern();
+    if (scrollAfterRoute) {
+      scrollAfterRoute = false;
+      scrollToDock();
+    }
+  }
+);
+
+function scatterFromHeart() {
+  const rect = heartRef.value?.getBoundingClientRect();
+  if (rect) {
+    burstPetals(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+  world.beatHeart(heartRef.value);
+}
 </script>
 
 <template>
-  <div
-    ref="shellRef"
-    class="journal-shell"
-    v-bind="motionRootAttrs"
-    :style="shellStyle"
-    :data-hero-immersive="heroImmersiveAttr"
-    :data-hero-expanded="heroExpandedAttr"
-  >
-    <section class="journal-stage" aria-label="我们的日常封面">
-      <section
-        class="journal-hero-carousel"
-        :class="`journal-hero-carousel--${activeSlide.tone}`"
-        :data-hero-immersive="heroImmersiveAttr"
-        aria-label="情侣纪念册插画封面"
-        data-motion-module="hero"
-        data-motion-enabled="true"
-        @mouseenter="heroPaused = true"
-        @mouseleave="heroPaused = false"
-      >
-        <div class="journal-hero-slides" aria-hidden="true">
-          <figure
-            v-for="(slide, index) in heroSlides"
-            :key="slide.image"
-            class="journal-hero-slide"
-            :class="[`journal-hero-slide--${slide.tone}`, { 'is-active': index === activeSlideIndex }]"
-          >
-            <img
-              v-if="shouldRenderHeroSlideImage(index)"
-              :src="slide.image"
-              alt=""
-              :loading="index === activeSlideIndex ? 'eager' : 'lazy'"
-              :fetchpriority="index === activeSlideIndex ? 'high' : 'low'"
-              decoding="async"
-            />
+  <div ref="shellRef" class="snow-shell" :data-world="isEvening ? 'evening' : 'paper'">
+    <div v-if="isEvening" class="snow-sky" aria-hidden="true">
+      <div class="snow-sky__wash snow-sky__wash--dusk"></div>
+      <div class="snow-sky__wash snow-sky__wash--late"></div>
+      <div class="snow-sky__wash snow-sky__wash--night"></div>
+    </div>
+    <canvas ref="canvasRef" class="snow-drift" aria-hidden="true"></canvas>
+
+    <section ref="coverRef" class="snow-cover" :class="{ 'snow-cover--short': !isHome }" aria-label="我们的封面">
+      <div class="snow-cover__frame">
+        <img
+          v-for="(slide, index) in journalHeroSlides"
+          :key="slide.image"
+          class="snow-cover__painting"
+          :class="{ 'is-active': index === 0 }"
+          :src="slide.image"
+          alt=""
+          :loading="index === 0 ? 'eager' : 'lazy'"
+          :fetchpriority="index === 0 ? 'high' : 'low'"
+          decoding="async"
+        />
+        <div class="snow-cover__couple">
+          <figure class="snow-cover__person">
+            <img :src="couple[0].avatar" :alt="`${couple[0].name} 的头像`" draggable="false" />
+            <figcaption>{{ couple[0].name }}</figcaption>
+          </figure>
+          <button ref="heartRef" type="button" class="snow-cover__heart" aria-label="撒一把花瓣" @click="scatterFromHeart">
+            <svg viewBox="0 0 100 92" aria-hidden="true">
+              <path d="M50 86C34 74 8 56 8 31 8 16 19 6 32 6c8 0 14 4 18 11 4-7 10-11 18-11 13 0 24 10 24 25 0 25-26 43-42 55z" />
+              <path class="snow-cover__heart-shine" d="M24 26c2-7 8-11 15-10" />
+            </svg>
+          </button>
+          <figure class="snow-cover__person">
+            <img :src="couple[1].avatar" :alt="`${couple[1].name} 的头像`" draggable="false" />
+            <figcaption>{{ couple[1].name }}</figcaption>
           </figure>
         </div>
-
-        <div class="journal-hero-content">
-          <div
-            class="hero-sticker-cluster"
-            :data-heart-target="activeHeroStickerSide ?? 'none'"
-            :data-hero-heart-beating="isHeroHeartBeating ? 'true' : undefined"
-            :data-hero-sync-pulse="isHeroSyncing ? 'true' : undefined"
-          >
-            <button
-              type="button"
-              class="hero-person-sticker hero-person-sticker--left"
-              :aria-label="`轻触${coupleStatusCards[0].name}的头像`"
-              :aria-disabled="isHeroExpanded ? 'false' : 'true'"
-              :tabindex="isHeroExpanded ? 0 : -1"
-              @mouseenter="setHeroStickerTarget('left')"
-              @mouseleave="clearHeroStickerTarget('left')"
-              @focus="setHeroStickerTarget('left')"
-              @blur="clearHeroStickerTarget('left')"
-              @click="triggerHeroStickerInteraction('left')"
-              @keydown.enter.prevent="triggerHeroStickerInteraction('left')"
-              @keydown.space.prevent="triggerHeroStickerInteraction('left')"
-            >
-              <div class="hero-avatar-sticker hero-avatar-sticker--left">
-                <img
-                  class="hero-avatar-image"
-                  :src="coupleStatusCards[0].avatar"
-                  :alt="`${coupleStatusCards[0].name} 的头像`"
-                  draggable="false"
-                  decoding="async"
-                />
-              </div>
-              <span class="hero-avatar-name">{{ coupleStatusCards[0].name }}</span>
-            </button>
-
-            <div class="hero-centerpiece" aria-hidden="true">
-              <div class="hero-center-heart">
-                <svg class="hero-center-heart__image" viewBox="0 0 100 92">
-                  <path
-                    d="M50 86C34 74 8 56 8 31 8 16 19 6 32 6c8 0 14 4 18 11 4-7 10-11 18-11 13 0 24 10 24 25 0 25-26 43-42 55z"
-                    fill="var(--camellia)"
-                    stroke="var(--sheet)"
-                    stroke-width="6"
-                    stroke-linejoin="round"
-                  />
-                  <path d="M24 26c2-7 8-11 15-10" fill="none" stroke="var(--sheet)" stroke-opacity=".55" stroke-width="5" stroke-linecap="round" />
-                </svg>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              class="hero-person-sticker hero-person-sticker--right"
-              :aria-label="`轻触${coupleStatusCards[1].name}的头像`"
-              :aria-disabled="isHeroExpanded ? 'false' : 'true'"
-              :tabindex="isHeroExpanded ? 0 : -1"
-              @mouseenter="setHeroStickerTarget('right')"
-              @mouseleave="clearHeroStickerTarget('right')"
-              @focus="setHeroStickerTarget('right')"
-              @blur="clearHeroStickerTarget('right')"
-              @click="triggerHeroStickerInteraction('right')"
-              @keydown.enter.prevent="triggerHeroStickerInteraction('right')"
-              @keydown.space.prevent="triggerHeroStickerInteraction('right')"
-            >
-              <div class="hero-avatar-sticker hero-avatar-sticker--right">
-                <img
-                  class="hero-avatar-image"
-                  :src="coupleStatusCards[1].avatar"
-                  :alt="`${coupleStatusCards[1].name} 的头像`"
-                  draggable="false"
-                  decoding="async"
-                />
-              </div>
-              <span class="hero-avatar-name">{{ coupleStatusCards[1].name }}</span>
-            </button>
-
-            <span
-              v-for="particle in heroBurstParticles"
-              :key="particle.id"
-              class="hero-heart-burst-particle"
-              :class="`hero-heart-burst-particle--${particle.side}`"
-              :style="particle.style"
-              aria-hidden="true"
-            >
-              {{ particle.symbol }}
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          class="journal-hero-arrow journal-hero-arrow--prev"
-          aria-label="上一张首屏图片"
-          :disabled="!isHeroExpanded"
-          @click="showPreviousHeroSlide"
-        >
-          <span class="journal-hero-arrow__glyph" aria-hidden="true"></span>
-        </button>
-        <button
-          type="button"
-          class="journal-hero-arrow journal-hero-arrow--next"
-          aria-label="下一张首屏图片"
-          :disabled="!isHeroExpanded"
-          @click="showNextHeroSlide"
-        >
-          <span class="journal-hero-arrow__glyph" aria-hidden="true"></span>
-        </button>
-
-        <div class="journal-hero-dots" aria-label="首页封面轮播">
-          <button
-            v-for="(slide, index) in heroSlides"
-            :key="slide.title"
-            type="button"
-            class="journal-hero-dot"
-            :aria-label="`切换到${slide.title}`"
-            :aria-current="index === activeSlideIndex ? 'true' : undefined"
-            @click="showHeroSlide(index)"
-          >
-            <span></span>
-          </button>
-        </div>
-      </section>
-
-      <div ref="navAnchorRef" class="journal-nav-anchor">
-        <nav
-          ref="navRef"
-          class="journal-nav paper-nav-shell"
-          :data-nav-fusion="navFusionState"
-          :data-nav-labels="navLabelState"
-          :data-nav-density="navDensityState"
-          :data-nav-compact="navFusionCompactAttr"
-          :data-nav-switching="navSwitchingAttr"
-          :data-nav-active-settling="navActiveTrackSettlingAttr"
-          :data-nav-restoring="navRestoringAttr"
-          :class="{ 'is-hero-hidden': isHeroImmersive }"
-          :aria-hidden="isHeroImmersive ? 'true' : undefined"
-          aria-label="首页章节导航"
-          @click.capture="handleCozyNavRootClick"
-        >
-          <span class="paper-nav-shell__texture" aria-hidden="true"></span>
-          <div ref="navContentRef" class="paper-nav-shell__content">
-            <span class="journal-nav__active-track" aria-hidden="true"></span>
-            <template v-for="item in cozyNavItems" :key="item.label">
-              <TopbarTooltip
-                :label="item.label"
-                :enabled="navFusionState === 'docked'"
-              >
-                <RouterLink
-                  class="journal-nav__link"
-                  exact-active-class="journal-nav__link--home"
-                  :to="item.to"
-                  :data-label="item.label"
-                >
-                  <span class="journal-nav__icon" aria-hidden="true" v-html="item.icon"></span>
-                  <span class="journal-nav__label">{{ item.label }}</span>
-                </RouterLink>
-              </TopbarTooltip>
-            </template>
-          </div>
-        </nav>
       </div>
-
-      <div class="journal-route-content">
-        <slot />
-      </div>
-
-      <footer class="site-record-footer" aria-label="网站备案信息">
-        <SiteRecordLink />
-      </footer>
     </section>
+
+    <nav ref="plaqueRef" class="snow-plaque" aria-label="主导航">
+      <span class="snow-plaque__cord snow-plaque__cord--l" aria-hidden="true"></span>
+      <span class="snow-plaque__cord snow-plaque__cord--r" aria-hidden="true"></span>
+      <div ref="boardRef" class="snow-plaque__board">
+        <span class="snow-plaque__lantern" aria-hidden="true"><i></i></span>
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          class="snow-plaque__link"
+          :to="item.to"
+          exact-active-class="is-active"
+          :data-label="item.label"
+          @click="handleNavClick(item.to, $event)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg>
+          <span class="snow-plaque__label">{{ item.label }}</span>
+        </RouterLink>
+      </div>
+    </nav>
+
+    <div class="snow-shell__page">
+      <slot />
+    </div>
+
+    <footer class="site-record-footer" aria-label="网站备案信息">
+      <SiteRecordLink />
+    </footer>
   </div>
 </template>

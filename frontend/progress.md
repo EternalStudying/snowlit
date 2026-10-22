@@ -1,5 +1,17 @@
 # Web Progress Baseline
 
+## Evening world: shell and Home rebuilt (2026-10-22, `feature/warm-rebuild`, not merged)
+
+- **Checks.**
+  - Vitest: 72 files / 442 tests passed, clean 3 of 3 full runs. The scrapped hero and nav-fusion tests were replaced by shell tests for the cover, the evening opt-in, petals, nav order and the current page, dock scrolling, and route scroll preservation; the Story top-bar tests were kept.
+  - `npm run typecheck` and `npm run build` passed.
+- **Browser.** Built-in browser against the throwaway stack (backend 15182, worktree Vite 15184), signed in as demo_a.
+  - Home was checked section by section at 1440 and 375.
+  - Diary was checked inside the new frame.
+  - The plaque was confirmed clickable above the top bar.
+  - No sideways overflow on Home or Diary at 1440/1280/1024/820/375, at three scroll depths each.
+- **Not checked.** Reduced motion in a real browser (gated in code and CSS). Real devices and frame rate on a low-end phone. The other pages, which have not been rebuilt yet.
+
 ## Motion redesign (2026-10-22, branch `feature/motion-redesign`, not merged)
 
 The GSAP motion system is described in findings.md under Motion System. It was built in one commit per module: the kit, Home, Album, Diary, Wishes, Messages, Login and About, plus an overflow fix. Story's existing map choreography was left as it was.

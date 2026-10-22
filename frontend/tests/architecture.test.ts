@@ -87,44 +87,19 @@ describe('frontend architecture', () => {
     expect(`${mapCanvas}\n${editor}\n${globalTypes}`).not.toMatch(/\bany\b/);
   });
 
-  it('Journal 路由壳只组合首屏、模块显隐和导航融合边界', () => {
-    const shell = readFileSync(
-      resolve(process.cwd(), 'src/shell/JournalRouteShell.vue'),
-      'utf8'
-    );
-    const heroExperience = readFileSync(
-      resolve(
-        process.cwd(),
-        'src/shell/useJournalHero.ts'
-      ),
-      'utf8'
-    );
-    const motionReveal = readFileSync(
-      resolve(
-        process.cwd(),
-        'src/shell/useMotionReveal.ts'
-      ),
-      'utf8'
-    );
-    const navFusion = readFileSync(
-      resolve(
-        process.cwd(),
-        'src/shell/useJournalNavFusion.ts'
-      ),
-      'utf8'
-    );
+  it('Journal 路由壳只组合封面、导航牌与夜色，滚动效果交给 GSAP，导航停靠交给 sticky', () => {
+    const shell = readFileSync(resolve(process.cwd(), 'src/shell/JournalRouteShell.vue'), 'utf8');
+    const world = readFileSync(resolve(process.cwd(), 'src/shell/world/useEveningWorld.ts'), 'utf8');
+    const styles = readFileSync(resolve(process.cwd(), 'src/shell/snow-shell.css'), 'utf8');
 
-    expect(shell).toContain('useJournalHero');
-    expect(shell).toContain('useMotionReveal');
-    expect(shell).toContain('useJournalNavFusion');
+    expect(shell).toContain('useEveningWorld');
+    expect(shell).toContain('preserveNextRouteScrollPosition');
     expect(shell).not.toContain('addEventListener(');
     expect(shell).not.toContain('requestAnimationFrame(');
-    expect(shell).not.toContain('MutationObserver');
-    expect(heroExperience).toContain(
-      "window.addEventListener('wheel', handleExpansionWheel"
-    );
-    expect(motionReveal).toContain('IntersectionObserver');
-    expect(navFusion).toContain('preserveNextRouteScrollPosition');
+    // The plaque docks with position: sticky; nothing measures layout on scroll.
+    expect(styles).toMatch(/\.snow-plaque \{[^}]*position: sticky/);
+    expect(world).not.toContain("addEventListener('scroll'");
+    expect(world).not.toContain('requestAnimationFrame(');
   });
 
   it('Album 路由视图只组合目录呈现、弹层动效和沉浸式会话边界', () => {
