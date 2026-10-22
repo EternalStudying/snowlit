@@ -15,6 +15,7 @@
     }"
     :data-message-bubble-wrapper="message.id"
   >
+    <div ref="throwRef" class="bubble-throw">
     <button
       class="bubble-content"
       :class="{
@@ -43,10 +44,15 @@
         </div>
       </div>
     </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { shouldSkipMotion } from '../../../motion';
+import { EASE_LIFT, gsap, useThrowables } from '../../../motionKit';
+import type { Draggable } from 'gsap/Draggable';
 import type { FloatingMessage } from '../internal/useMessageBubbleLayout';
 
 const props = defineProps<{
@@ -67,7 +73,51 @@ const emit = defineEmits<{
   (e: 'burst', message: FloatingMessage): void;
 }>();
 
+// Bubbles can be picked up and flicked; they glide to a stop inside the wall and keep floating from there.
+// A press without a drag still opens the message.
+const throwRef = ref<HTMLElement | null>(null);
+let throwable: Draggable | null = null;
+
+onMounted(() => {
+  const element = throwRef.value;
+  if (!element || shouldSkipMotion()) {
+    return;
+  }
+  const { Draggable } = useThrowables();
+  const tilt = gsap.quickTo(element, 'rotation', { duration: 0.4, ease: 'power3.out' });
+  [throwable] = Draggable.create(element, {
+    type: 'x,y',
+    inertia: true,
+    dragClickables: true,
+    minimumMovement: 6,
+    edgeResistance: 0.7,
+    bounds: element.closest('.bubbles-area') ?? undefined,
+    zIndexBoost: false,
+    onPress() {
+      emit('hover', props.message.id);
+    },
+    onDrag() {
+      tilt(gsap.utils.clamp(-18, 18, this.deltaX * 1.6));
+    },
+    onThrowUpdate() {
+      tilt(gsap.utils.clamp(-18, 18, this.deltaX * 1.6));
+    },
+    onRelease() {
+      emit('hover', null);
+    },
+    onThrowComplete() {
+      gsap.to(element, { rotation: 0, duration: 0.8, ease: EASE_LIFT });
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  throwable?.kill();
+  throwable = null;
+});
+
 const handleBurst = () => {
+  if (throwable?.isDragging || throwable?.isThrowing) return;
   if (props.bursting) return;
   emit('burst', props.message);
 };
@@ -103,6 +153,11 @@ const formatBubbleTime = (dateStr: string) => {
 
 .bubble-wrapper.is-paused {
   animation-play-state: paused;
+}
+
+.bubble-throw {
+  width: 100%;
+  height: 100%;
 }
 
 .bubble-content {
