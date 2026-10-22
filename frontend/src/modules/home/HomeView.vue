@@ -1,27 +1,19 @@
 <script setup lang="ts">
 import './home.css';
-import './home-motion.css';
 import { computed, ref } from 'vue';
-import { CalendarHeart, Check, Gift, Images, MessageCircleHeart } from 'lucide-vue-next';
-import { prefersReducedMotion } from '../../motion';
-import MotionCountUp from '../../components/motion/MotionCountUp.vue';
+import { Images, MessageCircleHeart, NotebookPen } from 'lucide-vue-next';
 import PageLoader from '../../components/PageLoader.vue';
 import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
 import partnerAAvatar from '../../assets/couple-avatars/partner-a.webp';
 import partnerBAvatar from '../../assets/couple-avatars/partner-b.webp';
+import { vTilt } from '../../directives/pointer';
+import HomeOdometer from './components/HomeOdometer.vue';
 import { useHomeLifecycle } from './internal/useHomeLifecycle';
-import { useHomePaperIntro } from './internal/useHomePaperIntro';
+import { useHomeStory } from './internal/useHomeStory';
 
 const { overview: home } = useHomeLifecycle().state;
-const isCountUpEnabled = !prefersReducedMotion();
-const { paperIntroRef } = useHomePaperIntro(home);
-
-const progressStatIcons = {
-  calendar: CalendarHeart,
-  gift: Gift,
-  message: MessageCircleHeart,
-  photo: Images
-} as const;
+const root = ref<HTMLElement | null>(null);
+useHomeStory(root, home);
 
 const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
 const anniversary = computed(() => ({
@@ -42,13 +34,13 @@ const nextWish = computed(() => home.value?.latest.wish ?? null);
 const messageCount = computed(() => home.value?.stats.messageCount ?? 0);
 const photoCount = computed(() => home.value?.stats.photoCount ?? 0);
 const distanceLabel = computed(() => home.value?.distance.label || '距离正在更新');
-const progressLedgerRevealFinished = ref(false);
 const nextWishNote = computed(() => nextWish.value?.note || nextWish.value?.place || '');
 const latestMessageAvatar = computed(() =>
   latestMessage.value && latestMessage.value.authorName === home.value?.couple.boyfriendName
     ? partnerAAvatar
     : partnerBAvatar
 );
+
 const coupleStatusCards = computed(() => {
   const statuses =
     home.value?.personStatuses.length
@@ -88,16 +80,16 @@ const coupleStatusCards = computed(() => {
   }));
 });
 
-const progressStats = computed(() => [
-  { value: togetherDays.value, unit: '天', label: '我们在一起的日子', icon: 'calendar', iconComponent: progressStatIcons.calendar },
-  { value: anniversary.value.days, unit: '天后', label: '下一个纪念日', icon: 'gift', iconComponent: progressStatIcons.gift },
-  { value: messageCount.value, unit: '条', label: '留下的留言', icon: 'message', iconComponent: progressStatIcons.message },
-  { value: photoCount.value, unit: '张', label: '共同的照片', icon: 'photo', iconComponent: progressStatIcons.photo }
+// The stops the thread passes on its way from the first meeting to the next anniversary.
+const threadStops = computed(() => [
+  { key: 'met', value: formatDate(home.value?.couple.startedOn), label: '第一次相遇' },
+  { key: 'messages', value: `${messageCount.value} 条`, label: '留下的留言' },
+  { key: 'photos', value: `${photoCount.value} 张`, label: '共同的照片' },
+  { key: 'next', value: `${anniversary.value.days} 天后`, label: anniversary.value.name }
 ]);
 
 function formatStatusWeather(weather: string, temperature: number | null) {
   const temperatureText = temperature === null ? '' : `${Math.round(temperature)}°C`;
-
   return [weather, temperatureText].filter(Boolean).join(' ') || '天气待更新';
 }
 
@@ -105,7 +97,6 @@ function formatDate(value?: string) {
   if (!value) {
     return '今天';
   }
-
   return value.split('T')[0].replaceAll('-', '.');
 }
 
@@ -113,266 +104,161 @@ function formatMessageTime(value?: string) {
   if (!value) {
     return '刚刚';
   }
-
   const time = value.split('T')[1]?.slice(0, 5);
   return time || formatDate(value);
 }
-
-function handleProgressLedgerRevealEnd(event: AnimationEvent) {
-  if (event.target !== event.currentTarget) {
-    return;
-  }
-
-  if (event.animationName && event.animationName !== 'home-motion-module-reveal') {
-    return;
-  }
-
-  progressLedgerRevealFinished.value = true;
-}
 </script>
 
-
 <template>
-  <main>
+  <main ref="root" class="home">
     <template v-if="home">
-      <section class="home-cozy-intro" aria-label="首页纪念日信息">
-        <article
-          :ref="paperIntroRef('memoryCard')"
-          class="home-memory-card paper-sheet paper-sheet--ruled"
-          aria-label="纪念日信息"
-          data-motion-module="memoryCard"
-          data-motion-enabled="true"
-        >
-          <span class="washi washi--top home-memory-card__tape" aria-hidden="true"></span>
-          <PostmarkStamp class="home-memory-card__postmark" />
-          <div class="home-memory-card__content">
-            <div class="home-memory-card__copy">
-              <p class="home-memory-card__line">
-                朝暮与年岁并往，<br />
-                与你行至天光。
-              </p>
-              <p class="home-memory-card__anniversary">
-                <span class="home-memory-card__anniversary-label">下一纪念日</span>
-                <span class="home-memory-card__anniversary-detail ui-text">
-                  <strong>{{ anniversary.days }} 天后</strong>
-                  <span>{{ anniversary.name }}</span>
-                  <span>{{ formatDate(anniversary.date) }}</span>
-                </span>
-              </p>
-            </div>
+      <section class="home-days" aria-label="我们在一起的日子">
+        <div class="home-days__stage">
+          <PostmarkStamp class="home-days__postmark" />
+          <p class="home-days__lead">在一起的第</p>
+          <h1 class="home-days__numeral">
+            <HomeOdometer :value="togetherDays" :delay="0.3" />
+            <span class="home-days__unit">天</span>
+          </h1>
+          <p class="home-days__quote">
+            <span class="home-days__quote-line">朝暮与年岁并往，</span>
+            <span class="home-days__quote-line">与你行至天光。</span>
+          </p>
+          <p class="home-days__anniversary ui-text">
+            <span>下一纪念日</span>
+            <strong>{{ anniversary.name }}</strong>
+            <span>{{ formatDate(anniversary.date) }}</span>
+          </p>
 
-            <div class="home-memory-card__stats">
-              <span class="home-memory-card__stats-label">在一起</span>
-              <strong class="home-memory-card__days">
-                <MotionCountUp :value="togetherDays" :enabled="isCountUpEnabled" />
-              </strong>
-              <span class="home-memory-card__stats-unit">天</span>
-            </div>
+          <div class="home-thread">
+            <svg class="home-thread__svg" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true">
+              <path class="home-thread__ghost" d="M10 70 C 160 20, 260 110, 380 64 S 620 18, 740 66 S 920 104, 990 52" />
+              <path class="home-thread__path" d="M10 70 C 160 20, 260 110, 380 64 S 620 18, 740 66 S 920 104, 990 52" />
+            </svg>
+            <ol class="home-thread__stops" aria-label="一路走来">
+              <li v-for="stop in threadStops" :key="stop.key" class="home-stop" :data-stop="stop.key">
+                <span class="home-stop__dot" aria-hidden="true"></span>
+                <strong class="home-stop__value ui-text">{{ stop.value }}</strong>
+                <span class="home-stop__label">{{ stop.label }}</span>
+              </li>
+            </ol>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section class="daily-dashboard" aria-labelledby="daily-dashboard-title">
-        <div class="daily-dashboard__top">
-          <section
-            :ref="paperIntroRef('dailyNote')"
-            class="daily-note-block"
-            aria-labelledby="daily-note-title"
-            data-motion-module="dailyNote"
-            data-motion-enabled="true"
-          >
-            <div class="dashboard-section-heading">
-              <h2 id="daily-note-title">今日小纸条</h2>
-            </div>
-            <article class="daily-note-card paper-sheet paper-sheet--ruled">
-              <span class="washi washi--camellia daily-note-card__tape" aria-hidden="true"></span>
-              <p class="daily-note-card__sentence">{{ dailyNote.sentence }}</p>
-              <p class="daily-note-card__meta">
-                <span class="paper-chip">{{ dailyNote.weatherHint }}</span>
-                <span class="paper-chip">{{ dailyNote.activityHint }}</span>
-              </p>
+      <section class="home-today" aria-labelledby="home-today-title">
+        <h2 id="home-today-title" class="home-section-title">今天</h2>
+        <div class="home-today__grid">
+          <article class="daily-note-card paper-sheet paper-sheet--ruled">
+            <span class="washi washi--camellia daily-note-card__tape" aria-hidden="true"></span>
+            <p class="daily-note-card__label">今日小纸条</p>
+            <p class="daily-note-card__sentence">{{ dailyNote.sentence }}</p>
+            <p class="daily-note-card__meta">
+              <span class="paper-chip">{{ dailyNote.weatherHint }}</span>
+              <span class="paper-chip">{{ dailyNote.activityHint }}</span>
+            </p>
+          </article>
+
+          <div class="home-today__people">
+            <article v-for="person in coupleStatusCards" :key="person.name" class="status-person-card paper-sheet">
+              <img class="status-person-card__avatar" :src="person.avatar" :alt="`${person.name} 的头像`" loading="lazy" decoding="async" />
+              <div class="status-person-card__body">
+                <h3>
+                  {{ person.name }}
+                  <span aria-hidden="true">{{ person.gender }}</span>
+                </h3>
+                <p class="status-person-card__chips">
+                  <span class="paper-chip">{{ person.city }}</span>
+                  <span class="paper-chip">{{ person.weather }}</span>
+                  <span class="paper-chip status-person-card__mood">{{ person.mood }}</span>
+                </p>
+                <p class="status-person-card__note">{{ person.note }}</p>
+              </div>
             </article>
-          </section>
-
-          <section
-            :ref="paperIntroRef('statusCards')"
-            class="couple-status-panel"
-            aria-labelledby="couple-status-title"
-            data-motion-module="statusCards"
-            data-motion-enabled="true"
-          >
-            <div class="dashboard-section-heading">
-              <h2 id="couple-status-title">我们的今日状态</h2>
-            </div>
-
-            <div class="status-card-grid">
-              <article
-                v-for="person in coupleStatusCards"
-                :key="person.name"
-                class="status-person-card paper-sheet"
-              >
-                <img class="status-person-card__avatar" :src="person.avatar" :alt="`${person.name} 的头像`" loading="lazy" decoding="async" />
-                <div class="status-person-card__body">
-                  <h3>
-                    {{ person.name }}
-                    <span aria-hidden="true">{{ person.gender }}</span>
-                  </h3>
-                  <p class="status-person-card__chips">
-                    <span class="paper-chip">{{ person.city }}</span>
-                    <span class="paper-chip">{{ person.weather }}</span>
-                    <span class="paper-chip status-person-card__mood">{{ person.mood }}</span>
-                  </p>
-                  <p class="status-person-card__note">{{ person.note }}</p>
-                </div>
-              </article>
-            </div>
-
             <p class="distance-ribbon">
               <span class="distance-ribbon__text">{{ distanceLabel }}</span>
               <span class="distance-ribbon__tail">一起看着同一片云</span>
             </p>
-          </section>
+          </div>
         </div>
+      </section>
 
-        <section
-          :ref="paperIntroRef('progressLedger')"
-          class="progress-ledger-section"
-          aria-labelledby="progress-ledger-title"
-          data-motion-module="progressLedger"
-          data-motion-enabled="true"
-          @animationend="handleProgressLedgerRevealEnd"
-        >
-          <div class="dashboard-section-heading">
-            <h2 id="progress-ledger-title">恋爱进度仪表</h2>
-          </div>
-          <div class="progress-ledger paper-sheet">
-            <div class="progress-stat-grid">
-              <article v-for="stat in progressStats" :key="stat.label" class="progress-stat-card">
-                <span
-                  class="progress-stat-card__icon"
-                  :class="`progress-stat-card__icon--${stat.icon}`"
-                  aria-hidden="true"
-                >
-                  <component :is="stat.iconComponent" :size="22" :stroke-width="1.6" />
-                </span>
-                <p>
-                  <strong>
-                    <MotionCountUp
-                      :value="stat.value"
-                      :enabled="isCountUpEnabled"
-                      :start="progressLedgerRevealFinished || !isCountUpEnabled"
-                    />
-                  </strong>
-                  <span>{{ stat.unit }}</span>
+      <section class="home-recent" aria-labelledby="home-recent-title">
+        <h2 id="home-recent-title" class="home-section-title">最近发生的小事</h2>
+        <div class="recent-fan">
+          <article class="recent-paper-item recent-paper-item--memory" data-fan="0">
+            <RouterLink v-tilt class="recent-paper-card lamp-glow paper-sheet paper-sheet--ruled" to="/diary">
+              <span class="lamp-glow__light" aria-hidden="true"></span>
+              <span class="recent-paper-card__label"><NotebookPen :size="15" aria-hidden="true" />最新日记</span>
+              <div class="recent-paper-card__copy">
+                <h3>{{ latestDiary?.title ?? '一件很小但发光的事' }}</h3>
+                <p>{{ latestDiary?.content ?? '把最近的小事慢慢收好。' }}</p>
+                <p class="recent-paper-card__meta ui-text">
+                  <span>{{ formatDate(latestDiary?.entryDate) }}</span>
+                  <span v-if="latestDiary?.tag" class="paper-chip">{{ latestDiary.tag }}</span>
                 </p>
-                <small>{{ stat.label }}</small>
-              </article>
-            </div>
-            <div class="progress-thread" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <div class="progress-ledger__labels ui-text">
-              <span>第一次相遇 {{ formatDate(home.couple.startedOn) }}</span>
-              <span>未来的每一天</span>
-            </div>
-          </div>
-        </section>
-
-        <section
-          :ref="paperIntroRef('recentCards')"
-          class="recent-moments"
-          aria-labelledby="recent-moments-title"
-          data-motion-module="recentCards"
-          data-motion-enabled="true"
-        >
-          <div class="dashboard-section-heading dashboard-section-heading--wide">
-            <h2 id="recent-moments-title">最近发生的小事</h2>
-          </div>
-
-          <div class="recent-grid">
-            <article class="recent-paper-item recent-paper-item--memory">
-              <span class="recent-paper-card__label">最新日记</span>
-              <RouterLink class="recent-paper-card recent-paper-card--memory paper-sheet" to="/diary">
-                <span class="washi recent-paper-card__tape recent-paper-card__tape--top" aria-hidden="true"></span>
-                <div class="recent-paper-card__copy">
-                  <h3>{{ latestDiary?.title ?? '一件很小但发光的事' }}</h3>
-                  <p>{{ latestDiary?.content ?? '把最近的小事慢慢收好。' }}</p>
-                  <p class="recent-paper-card__meta ui-text">
-                    <span>{{ formatDate(latestDiary?.entryDate) }}</span>
-                    <span v-if="latestDiary?.tag" class="paper-chip">{{ latestDiary.tag }}</span>
-                  </p>
-                </div>
-              </RouterLink>
-            </article>
-
-            <article class="recent-paper-item recent-paper-item--message">
-              <span class="recent-paper-card__label">最新留言</span>
-              <RouterLink class="recent-paper-card recent-paper-card--message paper-sheet" to="/messages">
-                <div class="recent-message-author">
-                  <img
-                    class="recent-message-author__avatar"
-                    :src="latestMessageAvatar"
-                    :alt="`${latestMessage?.authorName ?? home.couple.girlfriendName} 的头像`"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div>
-                    <h3>{{ latestMessage?.authorName ?? home.couple.girlfriendName }}</h3>
-                    <small class="ui-text">{{ formatDate(latestMessage?.createdAt) }} {{ formatMessageTime(latestMessage?.createdAt) }}</small>
-                  </div>
-                </div>
-                <p>{{ latestMessage?.content ?? '还没有留言，去写下第一张小纸条吧。' }}</p>
-              </RouterLink>
-            </article>
-
-            <article class="recent-paper-item recent-paper-item--album">
-              <span class="recent-paper-card__label">最新相册</span>
-              <RouterLink class="recent-paper-card recent-paper-card--album paper-sheet" to="/album">
-                <span class="washi washi--camellia recent-paper-card__tape recent-paper-card__tape--right" aria-hidden="true"></span>
-                <div class="album-preview-strip">
-                  <img
-                    v-for="photo in latestAlbumPreviewPhotos"
-                    :key="photo.id"
-                    :src="photo.previewUrl"
-                    :alt="photo.caption"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div class="album-preview-footer">
-                  <h3>{{ latestPhoto?.caption ?? '最近一张照片' }}</h3>
-                  <small class="ui-text">共 {{ photoCount }} 张照片</small>
-                </div>
-              </RouterLink>
-            </article>
-          </div>
-        </section>
-
-        <section
-          :ref="paperIntroRef('nextPlan')"
-          class="next-plan-section"
-          aria-labelledby="next-plan-title"
-          data-motion-module="nextPlan"
-          data-motion-enabled="true"
-        >
-          <div class="dashboard-section-heading dashboard-section-heading--wide">
-            <h2 id="next-plan-title">下一件想一起完成的事</h2>
-          </div>
-          <div class="next-plan-strip paper-sheet">
-            <span class="washi washi--pine next-plan-strip__tape" aria-hidden="true"></span>
-            <div class="next-plan-strip__content">
-              <span class="next-plan-strip__check" aria-hidden="true"><Check :size="20" :stroke-width="2" /></span>
-              <div>
-                <h3>{{ nextWish?.title ?? '一起去看海' }}</h3>
-                <span v-if="nextWishNote">{{ nextWishNote }}</span>
               </div>
-              <RouterLink class="next-plan-strip__link" to="/wishes">去清单看看</RouterLink>
-            </div>
-          </div>
-        </section>
+            </RouterLink>
+          </article>
+
+          <article class="recent-paper-item recent-paper-item--message" data-fan="1">
+            <RouterLink v-tilt class="recent-paper-card recent-paper-card--message lamp-glow paper-sheet" to="/messages">
+              <span class="lamp-glow__light" aria-hidden="true"></span>
+              <span class="recent-paper-card__label"><MessageCircleHeart :size="15" aria-hidden="true" />最新留言</span>
+              <div class="recent-message-author">
+                <img
+                  class="recent-message-author__avatar"
+                  :src="latestMessageAvatar"
+                  :alt="`${latestMessage?.authorName ?? home.couple.girlfriendName} 的头像`"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div>
+                  <h3>{{ latestMessage?.authorName ?? home.couple.girlfriendName }}</h3>
+                  <small class="ui-text">{{ formatDate(latestMessage?.createdAt) }} {{ formatMessageTime(latestMessage?.createdAt) }}</small>
+                </div>
+              </div>
+              <p>{{ latestMessage?.content ?? '还没有留言，去写下第一张小纸条吧。' }}</p>
+            </RouterLink>
+          </article>
+
+          <article class="recent-paper-item recent-paper-item--album" data-fan="2">
+            <RouterLink v-tilt class="recent-paper-card recent-paper-card--album lamp-glow paper-sheet" to="/album">
+              <span class="lamp-glow__light" aria-hidden="true"></span>
+              <span class="recent-paper-card__label"><Images :size="15" aria-hidden="true" />最新相册</span>
+              <div class="album-preview-strip">
+                <img
+                  v-for="photo in latestAlbumPreviewPhotos"
+                  :key="photo.id"
+                  :src="photo.previewUrl"
+                  :alt="photo.caption"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="album-preview-footer">
+                <h3>{{ latestPhoto?.caption ?? '最近一张照片' }}</h3>
+                <small class="ui-text">共 {{ photoCount }} 张照片</small>
+              </div>
+            </RouterLink>
+          </article>
+        </div>
+      </section>
+
+      <section class="home-next" aria-labelledby="home-next-title">
+        <h2 id="home-next-title" class="home-section-title">下一件想一起完成的事</h2>
+        <RouterLink v-tilt="3" class="next-plan-strip lamp-glow" to="/wishes">
+          <span class="lamp-glow__light" aria-hidden="true"></span>
+          <svg class="next-plan-strip__check" viewBox="0 0 48 48" aria-hidden="true">
+            <rect class="next-plan-strip__box" x="4" y="4" width="40" height="40" rx="7" />
+            <path class="next-plan-strip__tick" d="M13 25 L21 33 L36 15" />
+          </svg>
+          <span class="next-plan-strip__copy">
+            <strong>{{ nextWish?.title ?? '一起去看海' }}</strong>
+            <span v-if="nextWishNote">{{ nextWishNote }}</span>
+          </span>
+          <span class="next-plan-strip__go ui-text">去清单看看</span>
+        </RouterLink>
       </section>
     </template>
 

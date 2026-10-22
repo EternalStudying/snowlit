@@ -14,14 +14,28 @@ import { shouldSkipMotion } from './motion';
  * module instead of registering their own. All helpers return immediately (leaving content in its end state)
  * when motion should be skipped: reduced motion, or the test runner's instant mode.
  */
-gsap.registerPlugin(ScrollTrigger, SplitText, Flip, DrawSVGPlugin, MorphSVGPlugin, Draggable, InertiaPlugin, CustomEase);
+gsap.registerPlugin(ScrollTrigger, SplitText, Flip, DrawSVGPlugin, MorphSVGPlugin, CustomEase);
+
+let draggableReady = false;
+
+/**
+ * Draggable reads the user agent when it registers, so it (and Inertia) register on first use rather than at
+ * import: pages that never throw anything never pay for it.
+ */
+export function useThrowables() {
+  if (!draggableReady) {
+    gsap.registerPlugin(Draggable, InertiaPlugin);
+    draggableReady = true;
+  }
+  return { Draggable, InertiaPlugin };
+}
 
 /** Things arriving: a soft landing with no overshoot. */
 export const EASE_SETTLE = CustomEase.create('snowlit-settle', 'M0,0 C0.14,0.86 0.26,1 1,1');
 /** Things picked up or released: a small lift past the target, then rest. */
 export const EASE_LIFT = CustomEase.create('snowlit-lift', 'M0,0 C0.22,0.9 0.32,1.08 0.56,1.04 0.74,1.01 0.86,1 1,1');
 
-export { gsap, ScrollTrigger, SplitText, Flip, DrawSVGPlugin, MorphSVGPlugin, Draggable, InertiaPlugin };
+export { gsap, ScrollTrigger, SplitText, Flip, DrawSVGPlugin, MorphSVGPlugin };
 
 /** True when the pointer can hover precisely (pointer tilt, magnetic controls). */
 export function hasFinePointer() {

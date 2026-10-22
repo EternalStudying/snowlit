@@ -23,5 +23,11 @@ if (typeof window.matchMedia !== 'function') {
   });
 }
 
+// Register the GSAP plugins now, against jsdom's own requestAnimationFrame, then switch ScrollTrigger off.
+// Left on, it keeps a requestAnimationFrame loop alive: tests that stub requestAnimationFrame synchronously
+// recurse forever, and fake-timer tests that advance minutes spend them running that loop.
+const { ScrollTrigger } = await import('../src/motionKit');
+ScrollTrigger.disable();
+
 URL.createObjectURL = vi.fn(() => 'blob:fixture-photo');
 URL.revokeObjectURL = vi.fn();

@@ -282,7 +282,7 @@ describe('App auth flow', () => {
     await flushPromises();
 
     expect(router.currentRoute.value.path).toBe('/');
-    expect(wrapper.find('.daily-dashboard').exists()).toBe(true);
+    expect(wrapper.find('.home-days').exists()).toBe(true);
     expect(wrapper.find('.directory-grid').exists()).toBe(false);
   });
 

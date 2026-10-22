@@ -9,6 +9,7 @@ import './journal-shell.css';
 import { useJournalHero } from './useJournalHero';
 import { useJournalNavFusion } from './useJournalNavFusion';
 import { useMotionReveal } from './useMotionReveal';
+import { useHeroParallax } from './useHeroParallax';
 
 interface CozyNavItem {
   to: string;
@@ -58,6 +59,7 @@ const {
 const shellRef = ref<HTMLElement | null>(null);
 const { requestRevealCheck: requestMotionRevealCheck } =
   useMotionReveal(shellRef);
+useHeroParallax(shellRef);
 const {
   navAnchorRef,
   navRef,
