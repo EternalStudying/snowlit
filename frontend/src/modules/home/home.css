@@ -6,6 +6,12 @@
   padding-bottom: var(--space-8);
 }
 
+/* The recent cards swing out past the page edge while they rise in; clip sideways only.
+   (The shell sets overflow: visible on its route content, so this needs the extra class.) */
+.journal-route-content > .home {
+  overflow-x: clip;
+}
+
 .home-section-title {
   margin: 0 0 var(--space-5);
   color: var(--ink);

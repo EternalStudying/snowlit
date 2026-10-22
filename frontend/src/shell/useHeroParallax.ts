@@ -22,7 +22,7 @@ export function useHeroParallax(shell: Ref<HTMLElement | null>) {
         return;
       }
       const scrub = { trigger: hero, start: 'top top', end: 'bottom top', scrub: true };
-      gsap.to(root.querySelector('.journal-hero-slides'), { yPercent: 16, scale: 1.06, ease: 'none', scrollTrigger: scrub });
+      gsap.to(root.querySelector('.journal-hero-slides'), { yPercent: 16, ease: 'none', scrollTrigger: scrub });
       gsap.to(root.querySelector('.journal-hero-content'), { opacity: 0.15, ease: 'power1.in', scrollTrigger: { ...scrub } });
     });
   });
