@@ -1,5 +1,6 @@
 import { nextTick, onBeforeUnmount, ref, type Ref } from 'vue';
-import { gsap } from 'gsap';
+import { EASE_SETTLE, gsap, revealTitle } from '../../../motionKit';
+import { sparkFrom } from '../../../sparks';
 import { shouldSkipMotion, useMotionSlots } from '../../../motion';
 import type { WishLaneKey, WishLaneTransition } from '../model';
 
@@ -26,6 +27,12 @@ const wishLaneMoveTweenDefaults = {
  * asks this module to animate changes that already happened (or, for a lane move, that `commit` makes).
  * Everything it starts is stopped when the owning component unmounts.
  */
+/** The completion mark: a flat dash while a wish waits, a tick once it is done (MorphSVG moves between them). */
+export const WISH_MARK_PATH = {
+  pending: 'M12 21 L20.5 21 L29 21',
+  done: 'M12 21 L18 27 L29 14'
+} as const;
+
 export function useWishBoardMotion(elements: WishBoardElements) {
   const {
     wishPageRef,
@@ -78,7 +85,8 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       const find = gsap.utils.selector(wishPageRef.value);
       const heroSheet = find('.list-hero__sheet');
       const heroBanner = find('.list-hero__banner');
-      const heroCopy = find('.list-hero__label, .list-hero__title, .list-hero__subtitle');
+      const heroCopy = find('.list-hero__label, .list-hero__subtitle');
+      const heroTitle = find('.list-hero__title')[0] ?? null;
       const noteCard = find('.list-note-card');
       const noteAsset = find('.list-note-card__asset');
       const noteLines = find('.list-note-card__title, .list-note-card__copy p:last-child');
@@ -142,6 +150,7 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           },
           0.04
         )
+        .add(() => revealTitle(heroTitle), 0.12)
         .from(
           heroCopy,
           {
@@ -702,10 +711,14 @@ export function useWishBoardMotion(elements: WishBoardElements) {
       return particle;
     });
 
+    const ring = badge.querySelector('.wish-completion-badge__ring');
+    const tick = badge.querySelector('.wish-completion-badge__tick');
+
     return new Promise<void>((resolve) => {
       const finish = () => {
         wave.remove();
         particles.forEach((particle) => particle.remove());
+        sparkFrom(badge, 'camellia');
         resolve();
       };
       const timeline = slots.hold('stamp', gsap.timeline({ onComplete: finish, onInterrupt: finish }));
@@ -721,6 +734,14 @@ export function useWishBoardMotion(elements: WishBoardElements) {
           0.12
         )
         .to(wishDetailDialogRef.value, { x: 3, duration: 0.04, yoyo: true, repeat: 3, ease: 'power1.inOut' }, 0.12);
+
+      // The dashed ring inks itself in and the waiting dash bends into a tick.
+      if (ring) {
+        timeline.fromTo(ring, { drawSVG: '0% 0%' }, { drawSVG: '0% 100%', duration: 0.36, ease: 'power2.inOut' }, 0.04);
+      }
+      if (tick) {
+        timeline.to(tick, { morphSVG: WISH_MARK_PATH.done, duration: 0.34, ease: EASE_SETTLE }, 0.18);
+      }
 
       particles.forEach((particle, index) => {
         const angle = (Math.PI * 2 * index) / particles.length - Math.PI / 2;

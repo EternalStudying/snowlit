@@ -980,6 +980,18 @@ body:has(.wish-dialog-backdrop--create) .n-modal-mask {
   line-height: 1;
 }
 
+.wish-completion-badge__mark {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+  overflow: visible;
+}
+
+.wish-completion-badge--pending .wish-completion-badge__ring {
+  stroke-dasharray: 3 4;
+  opacity: 0.7;
+}
+
 .wish-completion-badge strong {
   font-size: 14px;
   font-weight: 900;

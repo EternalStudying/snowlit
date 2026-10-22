@@ -7,6 +7,7 @@ import { ImageOff, ListPlus } from 'lucide-vue-next';
 import PageLoader from '../../components/PageLoader.vue';
 import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
 import StickerButton from '../../components/paper/StickerButton.vue';
+import { WISH_MARK_PATH } from './internal/useWishBoardMotion';
 import { useModalWheelGuard } from '../../composables/useModalWheelGuard';
 import { createCloseOnce } from '../../motion';
 import { useWishBoardMotion } from './internal/useWishBoardMotion';
@@ -613,7 +614,7 @@ onBeforeUnmount(() => {
                 :disabled="isCompletionAnimating"
                 @click="requestWishCompletionImage"
               >
-                <span aria-hidden="true">✓</span>
+                <span aria-hidden="true"><svg class="wish-completion-badge__mark" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path class="wish-completion-badge__ring" d="M20 5a15 15 0 1 1 0 30a15 15 0 1 1 0-30" stroke-width="2" /><path class="wish-completion-badge__tick" :d="WISH_MARK_PATH.pending" stroke-width="3.4" /></svg></span>
                 <strong>待完成</strong>
               </button>
               <button
@@ -625,7 +626,7 @@ onBeforeUnmount(() => {
                 :disabled="isCompletionAnimating"
                 @click="reopenSelectedWish"
               >
-                <span aria-hidden="true">✓</span>
+                <span aria-hidden="true"><svg class="wish-completion-badge__mark" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path class="wish-completion-badge__ring" d="M20 5a15 15 0 1 1 0 30a15 15 0 1 1 0-30" stroke-width="2" /><path class="wish-completion-badge__tick" :d="WISH_MARK_PATH.done" stroke-width="3.4" /></svg></span>
                 <strong>撤回完成</strong>
               </button>
             </div>
