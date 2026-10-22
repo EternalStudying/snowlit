@@ -120,22 +120,10 @@ export function useAlbumDialogMotion({
           '<'
         )
         .from(
-          '.album-create-dialog__background',
-          {
-            autoAlpha: 0,
-            scale: 1.015,
-            duration: 0.46,
-            clearProps: 'all'
-          },
-          '<0.04'
-        )
-        .from(
           '.album-create-dialog__header',
           {
             autoAlpha: 0,
             y: -12,
-            scale: 0.96,
-            rotation: -6,
             duration: 0.42,
             ease: 'back.out(1.45)',
             clearProps: 'all'
@@ -198,16 +186,6 @@ export function useAlbumDialogMotion({
           '<0.04'
         )
         .from(
-          '.album-create-upload__panel',
-          {
-            autoAlpha: 0,
-            scale: 0.97,
-            duration: 0.3,
-            clearProps: 'all'
-          },
-          '<0.02'
-        )
-        .from(
           '.album-create-dialog__actions button',
           {
             autoAlpha: 0,
@@ -215,7 +193,8 @@ export function useAlbumDialogMotion({
             scale: 0.97,
             stagger: { each: 0.035, from: 'start' },
             duration: 0.28,
-            clearProps: 'all'
+            // Naive UI keeps its theme variables in the inline style, so only clear what this tween set.
+            clearProps: 'opacity,visibility,transform'
           },
           '<0.06'
         );

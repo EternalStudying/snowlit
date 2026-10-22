@@ -231,7 +231,7 @@
   width: 28px;
   height: 4px;
   border-radius: 0 0 999px 999px;
-  background: rgba(var(--ink-rgb), 0.45);
+  background: rgba(var(--ink-rgb), 0.27);
 }
 
 .diary-month-chapter__button:hover,

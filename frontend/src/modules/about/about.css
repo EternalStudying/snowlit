@@ -5,7 +5,7 @@
   background:
     radial-gradient(circle at 24% 18%, rgba(var(--lamp-rgb), 0.18), transparent 24%),
     radial-gradient(circle at 78% 34%, rgba(var(--camellia-rgb), 0.14), transparent 24%),
-    radial-gradient(circle at 52% 78%, rgba(var(--ink-rgb), 0.12), transparent 26%),
+    radial-gradient(circle at 52% 78%, rgba(var(--ink-rgb), 0.06), transparent 26%),
     linear-gradient(180deg, var(--ink) 0%, var(--ink) 48%, var(--ink-soft) 100%);
   overflow: clip;
 }
@@ -231,7 +231,7 @@
 
 .about-starmap__station--pending .about-starmap__station-core {
   background: var(--frost);
-  box-shadow: 0 0 16px rgba(var(--ink-rgb), 0.45);
+  box-shadow: 0 0 16px rgba(var(--ink-rgb), 0.14);
 }
 
 .about-starmap__card {

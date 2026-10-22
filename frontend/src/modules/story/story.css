@@ -2325,7 +2325,7 @@
   height: 13px;
   content: "";
   border-radius: 2px;
-  background: rgba(var(--ink-rgb), 0.82);
+  background: rgba(var(--ink-rgb), 0.46);
   transform: rotate(1.5deg);
 }
 

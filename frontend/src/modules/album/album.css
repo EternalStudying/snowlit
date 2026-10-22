@@ -1,10 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=LXGW+WenKai&display=swap");
-
 .album-page {
   --page-bg-base: var(--snow-ground);
-  --page-bg-accent-rgb: 184, 72, 61;
-  --page-bg-warm-rgb: 147, 92, 62;
-  --page-bg-dot-rgb: 122, 79, 54;
   --album-bg: var(--page-bg-base);
   --album-paper: var(--sheet);
   --album-paper-strong: var(--sheet);
@@ -19,7 +14,6 @@
   --album-shadow: 0 18px 36px rgba(var(--ink-rgb), 0.13);
   --album-shadow-hover: 0 24px 44px rgba(var(--ink-rgb), 0.18);
   --album-ring: 0 0 0 3px rgba(var(--camellia-rgb), 0.18);
-  --album-collection-card-bg: url("./assets/album-collection-card-background.webp");
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -77,9 +71,7 @@
 
 .album-page[data-album-gsap="true"] .album-hero-row,
 .album-page[data-album-gsap="true"] .album-hero,
-.album-page[data-album-gsap="true"] .album-dry-flower,
-.album-page[data-album-gsap="true"] .album-postmark,
-.album-page[data-album-gsap="true"] .album-hero__underline {
+.album-page[data-album-gsap="true"] .album-postmark {
   animation: none;
 }
 
@@ -89,25 +81,13 @@
   min-height: 218px;
 }
 
-.album-dry-flower {
-  position: absolute;
-  top: -4px;
-  right: 0;
-  z-index: 2;
-  width: 152px;
-  transform: rotate(2deg);
-  filter: drop-shadow(0 15px 18px rgba(var(--ink-rgb), 0.13));
-  animation: album-hero-sticker-settle 620ms cubic-bezier(0.23, 1, 0.32, 1) 130ms both;
-}
-
 .album-postmark {
   position: absolute;
-  top: 82px;
-  left: 0;
+  top: 40px;
+  right: 24px;
   z-index: 2;
-  width: 148px;
-  opacity: 0.6;
-  transform: rotate(10deg);
+  width: 132px;
+  rotate: 10deg;
   animation: album-hero-sticker-settle 620ms cubic-bezier(0.23, 1, 0.32, 1) 210ms both;
 }
 
@@ -119,25 +99,14 @@
   animation: album-paper-rise 520ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
-.album-hero p {
-  margin: 0 0 12px;
-  color: var(--album-green);
-  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  font-size: 20px;
-  font-style: italic;
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
-
 .album-hero h1 {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 0;
-  color: var(--album-red);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-serif, serif);
-  font-size: clamp(40px, 4.2vw, 48px);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(34px, 4.2vw, 50px);
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: 0;
@@ -146,10 +115,9 @@
 
 .album-title-heart {
   flex: 0 0 auto;
-  width: 40px;
-  height: auto;
-  object-fit: contain;
-  transform: rotate(8deg);
+  width: 30px;
+  height: 30px;
+  rotate: 8deg;
 }
 
 .album-hero__copy {
@@ -157,8 +125,8 @@
   max-width: 36em;
   margin-top: 12px;
   color: var(--album-muted);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", cursive;
-  font-size: 18px;
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
   line-height: 1.7;
   letter-spacing: 0;
 }
@@ -194,55 +162,17 @@
   right: clamp(16px, 2.4vw, 34px);
   bottom: clamp(18px, 3vw, 34px);
   z-index: 12;
-  width: clamp(118px, 12vw, 168px);
-  aspect-ratio: 936 / 915;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
   opacity: 1;
-  filter: drop-shadow(0 14px 20px rgba(var(--ink-rgb), 0.2));
-  transform: rotate(3deg);
   transition:
     opacity 220ms ease,
-    transform 220ms ease,
-    filter 220ms ease;
-}
-
-.album-create-fab__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-}
-
-.album-create-fab:hover {
-  filter: drop-shadow(0 18px 26px rgba(var(--ink-rgb), 0.26));
-  transform: rotate(1deg) translateY(-5px) scale(1.03);
-}
-
-.album-create-fab:focus-visible {
-  border-radius: 24px;
-  outline: 2px solid rgba(var(--camellia-rgb), 0.46);
-  outline-offset: 5px;
+    rotate 220ms ease,
+    translate 220ms ease;
 }
 
 .journal-shell[data-hero-immersive="true"] .album-create-fab {
   opacity: 0;
   pointer-events: none;
-  filter: blur(2px) drop-shadow(0 8px 14px rgba(var(--ink-rgb), 0.08));
-  transform: rotate(1deg) translate3d(16px, 22px, 0) scale(0.92);
-}
-
-.album-hero__underline {
-  width: 220px;
-  height: auto;
-  margin-top: 8px;
-  object-fit: contain;
-  transform-origin: left center;
-  animation: album-underline-draw 640ms cubic-bezier(0.23, 1, 0.32, 1) 160ms both;
+  translate: 16px 22px;
 }
 
 .album-catalog-notice {
@@ -277,17 +207,12 @@
   grid-row-end: span var(--album-card-masonry-span, 68);
   min-width: 0;
   padding: 24px;
-  border: 1px solid rgba(var(--ink-rgb), 0.9);
-  border-radius: 8px;
+  border: 0;
+  border-radius: var(--radius-sheet);
   color: var(--album-text);
   cursor: pointer;
-  background-image:
-    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.4), rgba(var(--sheet-rgb), 0.56)),
-    var(--album-collection-card-bg);
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  box-shadow: var(--album-shadow);
+  background: var(--grain), var(--sheet);
+  box-shadow: var(--shadow-sheet);
   opacity: 0;
   transform: translateY(calc(var(--album-card-reveal-y) + var(--album-card-hover-y)))
     scale(var(--album-card-reveal-scale));
@@ -312,20 +237,6 @@
 
 .album-page[data-album-gsap="true"] .album-collection-card[data-album-card-visible="true"] {
   transition-delay: 0ms;
-}
-
-.album-collection-card::after {
-  content: "";
-  position: absolute;
-  right: 22px;
-  bottom: 18px;
-  width: 82px;
-  height: 30px;
-  border: 1px solid rgba(var(--camellia-rgb), 0.16);
-  border-radius: 999px;
-  opacity: 0.32;
-  pointer-events: none;
-  transform: rotate(-8deg);
 }
 
 .album-collection-card:focus-visible {
@@ -360,7 +271,7 @@
   border-radius: 50%;
   color: var(--album-green);
   background: var(--snow);
-  font: 800 18px/1 "Cormorant Garamond", Georgia, serif;
+  font: 600 18px/1 var(--font-body);
   box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.38);
 }
 
@@ -412,7 +323,7 @@
 .album-collection-card__title {
   margin: 0 0 16px;
   color: var(--album-text);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-serif, serif);
+  font-family: var(--font-heading);
   font-size: 31px;
   font-weight: 400;
   line-height: 1.18;
@@ -425,7 +336,7 @@
   gap: 4px;
   overflow: hidden;
   padding: 6px;
-  border: 1px solid rgba(var(--ink-rgb), 0.76);
+  border: 1px solid rgba(var(--ink-rgb), 0.24);
   border-radius: 6px;
   background: rgba(var(--sheet-rgb), 0.74);
 }
@@ -663,7 +574,7 @@ body.is-album-immersive .three-weather-layer {
   height: var(--album-enter-height);
   overflow: hidden;
   padding: 22px;
-  border: 1px solid rgba(var(--ink-rgb), 0.82);
+  border: 1px solid rgba(var(--ink-rgb), 0.26);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--sheet-rgb), 0.94)),
@@ -696,7 +607,7 @@ body.is-album-immersive .three-weather-layer {
 .album-enter-transition__card h2 {
   margin: 0 0 18px;
   color: var(--album-red);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-serif, serif);
+  font-family: var(--font-heading);
   font-size: clamp(32px, 5vw, 72px);
   font-weight: 400;
   letter-spacing: 0;
@@ -874,7 +785,7 @@ body.is-album-immersive .three-weather-layer {
 .album-immersive-gallery__title h2 {
   margin: 5px 0;
   color: var(--sheet);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-serif, serif);
+  font-family: var(--font-heading);
   font-size: clamp(28px, 4vw, 52px);
   font-weight: 400;
   letter-spacing: 0;
@@ -942,7 +853,7 @@ body.is-album-immersive .three-weather-layer {
 
 .album-immersive-gallery__scroll-text p {
   margin: 0;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", var(--font-serif, serif);
+  font-family: var(--font-heading);
   font-size: clamp(36px, 6vw, 82px);
   font-weight: 400;
   line-height: 1.06;
@@ -975,7 +886,7 @@ body.is-album-immersive .three-weather-layer {
 .album-immersive-gallery__paper {
   display: block;
   padding: 14px 14px 22px;
-  border: 1px solid rgba(var(--ink-rgb), 0.78);
+  border: 1px solid rgba(var(--ink-rgb), 0.24);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(var(--sheet-rgb), 0.98), rgba(var(--sheet-rgb), 0.98)),
@@ -1054,7 +965,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
   min-width: 0;
   margin: 0;
   padding: 18px 18px 28px;
-  border: 1px solid rgba(var(--ink-rgb), 0.82);
+  border: 1px solid rgba(var(--ink-rgb), 0.26);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(var(--sheet-rgb), 0.96), rgba(var(--sheet-rgb), 0.98)),
@@ -1085,7 +996,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
   border-radius: 5px;
   object-fit: contain;
   background: rgba(var(--ink-rgb), 0.08);
-  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.42);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.13);
   animation: album-darkroom-photo-develop 820ms cubic-bezier(0.22, 0, 0.16, 1) 90ms both;
 }
 
@@ -1162,7 +1073,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
   gap: 14px;
   width: min(380px, calc(100vw - 42px));
   padding: 34px 28px 30px;
-  border: 1px solid rgba(var(--ink-rgb), 0.82);
+  border: 1px solid rgba(var(--ink-rgb), 0.26);
   border-radius: 8px;
   color: var(--album-text);
   background:
@@ -1190,7 +1101,7 @@ body.is-album-immersive .album-photo-preview__backdrop {
 .album-private-unlock .n-input {
   width: 100%;
   height: 44px;
-  border: 1px solid rgba(var(--ink-rgb), 0.9);
+  border: 1px solid rgba(var(--ink-rgb), 0.28);
   border-radius: 999px;
   color: var(--album-text);
   background: rgba(var(--sheet-rgb), 0.9);
@@ -1607,8 +1518,6 @@ body.is-album-immersive .album-photo-preview__backdrop {
 @media (prefers-reduced-motion: reduce) {
   .album-hero-row,
   .album-hero,
-  .album-hero__underline,
-  .album-dry-flower,
   .album-postmark,
   .album-collection-card,
   .album-collection-preview__cell,
@@ -1700,629 +1609,6 @@ body.is-album-immersive .album-photo-preview__backdrop {
   transform: none !important;
 }
 
-.album-create-dialog {
-  position: relative;
-  width: min(1376px, calc(100vw - 32px));
-  aspect-ratio: 1536 / 1024;
-  max-height: calc(100vh - 28px);
-  overflow: visible;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  filter: drop-shadow(0 32px 70px rgba(var(--ink-rgb), 0.36));
-}
-
-.album-photo-preview__backdrop--create {
-  background: rgba(var(--ink-rgb), 0.56);
-  backdrop-filter: blur(8px);
-}
-
-.album-create-dialog__background {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-  user-select: none;
-}
-
-.album-create-dialog__header {
-  position: absolute;
-  top: 8.6%;
-  left: 6.6%;
-  z-index: 2;
-  width: 34%;
-  text-align: center;
-  transform: rotate(-4deg);
-  transform-origin: center;
-  pointer-events: none;
-}
-
-.album-create-dialog__header h2 {
-  display: block;
-  margin: 0;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(26px, 2.4vw, 35px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-  text-shadow: 0 1px 0 rgba(var(--sheet-rgb), 0.65);
-}
-
-.album-create-form {
-  position: absolute;
-  inset: 18.4% 15% 3.1% 15.2%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  color: var(--ink);
-}
-
-.album-create-form__main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 0.82fr);
-  gap: clamp(26px, 3vw, 42px);
-  min-height: 0;
-}
-
-.album-create-form__left,
-.album-create-form__right {
-  min-width: 0;
-}
-
-.album-create-form__left {
-  display: grid;
-  align-content: start;
-  gap: clamp(16px, 1.6vw, 26px);
-  padding-top: clamp(12px, 1.2vw, 18px);
-}
-
-.album-create-form__divider {
-  width: 1px;
-  min-height: 600px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(var(--ink-rgb), 0.24) 6%,
-    rgba(var(--ink-rgb), 0.3) 88%,
-    transparent
-  );
-}
-
-.album-create-form__right {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.album-create-form__right h3 {
-  margin: 0;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(14px, 1.25vw, 19px);
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: var(--ink);
-}
-
-.album-create-form__right h3 b,
-.album-create-field b {
-  color: var(--camellia);
-}
-
-.album-create-field {
-  display: grid;
-  gap: clamp(8px, 0.9vw, 13px);
-  margin: 0;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(13px, 1.05vw, 17px);
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--ink);
-}
-
-.album-create-field span {
-  line-height: 1;
-}
-
-.album-create-form input:not(.n-input__input-el),
-.album-create-form textarea:not(.n-input__textarea-el),
-.album-create-form .n-input {
-  width: 100%;
-  border: 1px solid rgba(var(--ink-rgb), 0.28);
-  border-radius: 13px;
-  background: rgba(var(--sheet-rgb), 0.42);
-  color: inherit;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  font: inherit;
-  outline: none;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
-}
-
-.album-create-form input:not(.n-input__input-el),
-.album-create-form .n-input:not(.n-input--textarea) {
-  height: clamp(36px, 3.1vw, 44px);
-}
-
-.album-create-form input:not(.n-input__input-el) {
-  padding: 0 14px;
-}
-
-.album-create-form input:not(.n-input__input-el):focus,
-.album-create-form textarea:not(.n-input__textarea-el):focus,
-.album-create-form .n-input:not(.n-input--disabled):focus-within {
-  border-color: rgba(var(--ink-rgb), 0.48);
-  background: rgba(var(--sheet-rgb), 0.64);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    0 0 0 3px rgba(var(--ink-rgb), 0.11);
-}
-
-.album-create-form textarea:not(.n-input__textarea-el),
-.album-create-form .n-input--textarea {
-  min-height: clamp(76px, 8.4vw, 132px);
-}
-
-.album-create-form textarea:not(.n-input__textarea-el) {
-  padding: 12px 14px;
-  resize: vertical;
-}
-
-.album-create-form .n-input .n-input__input-el,
-.album-create-form .n-input .n-input__textarea-el {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: inherit;
-  font: inherit;
-}
-
-.album-create-form .n-input .n-input__input,
-.album-create-form .n-input .n-input__input-el,
-.album-create-form .n-input .n-input-wrapper {
-  height: 100%;
-}
-
-.album-create-form .n-input .n-input-wrapper {
-  box-sizing: border-box;
-  padding: 0 14px;
-}
-
-.album-create-form .n-input .n-input__textarea {
-  box-sizing: border-box;
-  padding: 12px 14px;
-}
-
-.album-create-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(14px, 1.6vw, 24px);
-}
-
-.album-create-options {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  gap: clamp(14px, 1.6vw, 24px);
-  align-items: start;
-}
-
-.album-create-private {
-  display: grid;
-  gap: 15px;
-}
-
-.album-create-private__label,
-.album-create-field--password > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(13px, 1.05vw, 17px);
-  font-weight: 600;
-  line-height: 1;
-  color: var(--ink);
-}
-
-.album-create-private__label i,
-.album-create-field--password i {
-  display: inline-grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1px solid rgba(var(--ink-rgb), 0.55);
-  border-radius: 999px;
-  color: var(--ink-soft);
-  font-family: Georgia, serif;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.album-create-switch {
-  position: relative;
-  width: 52px;
-  height: 30px;
-  border: 1px solid rgba(var(--ink-rgb), 0.22);
-  border-radius: 999px;
-  background: var(--frost);
-  box-shadow:
-    inset 0 2px 5px rgba(var(--ink-rgb), 0.18),
-    0 3px 8px rgba(var(--ink-rgb), 0.12);
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.album-create-switch span {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: var(--sheet);
-  box-shadow: 0 2px 7px rgba(var(--ink-rgb), 0.2);
-  transition: transform 0.2s ease;
-}
-
-.album-create-switch[aria-pressed="true"] {
-  background: var(--camellia);
-}
-
-.album-create-switch[aria-pressed="true"] span {
-  transform: translateX(22px);
-}
-
-.album-create-switch:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
-}
-
-.album-create-password {
-  position: relative;
-  display: block;
-}
-
-.album-create-password svg {
-  position: absolute;
-  top: 50%;
-  right: 18px;
-  color: rgba(var(--ink-rgb), 0.58);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.album-create-password .n-input--disabled {
-  color: rgba(var(--ink-rgb), 0.45);
-  background: rgba(var(--sheet-rgb), 0.24);
-}
-
-.album-create-upload {
-  position: relative;
-  display: block;
-  flex: 0 0 auto;
-  align-self: center;
-  width: min(512px, calc(100% + 156px));
-  aspect-ratio: 1107 / 1421;
-  height: auto;
-  min-height: 0;
-  margin: clamp(-34px, -2vw, -22px) auto 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  cursor: default;
-  isolation: isolate;
-  transform: translate(-38px, -12px);
-}
-
-.album-create-upload[data-upload-has-items="true"] {
-  cursor: default;
-}
-
-.album-create-upload__panel {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 14px 18px rgba(var(--ink-rgb), 0.12));
-  pointer-events: none;
-  user-select: none;
-}
-
-.album-create-upload__content {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  min-width: 0;
-  text-align: center;
-  cursor: pointer;
-  clip-path: inset(6.47% 12.01% 8.3% 15.09%);
-  pointer-events: auto;
-}
-
-.album-create-upload__illustration {
-  position: absolute;
-  top: 49%;
-  left: 50%;
-  display: block;
-  width: min(276px, 56%);
-  height: auto;
-  margin: 0;
-  opacity: 1;
-  mix-blend-mode: multiply;
-  filter:
-    contrast(1.12)
-    saturate(1.08)
-    drop-shadow(0 10px 14px rgba(var(--ink-rgb), 0.14));
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  user-select: none;
-}
-
-.album-create-upload__content span {
-  display: grid;
-  min-width: 0;
-}
-
-.album-create-upload__title {
-  position: absolute;
-  top: 68.5%;
-  left: 50%;
-  width: 66%;
-  margin-top: 0;
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(13px, 1.05vw, 17px);
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: center;
-  transform: translateX(-50%);
-}
-
-.album-create-upload__format,
-.album-create-upload__limit {
-  position: absolute;
-  left: 50%;
-  width: 62%;
-  color: var(--ink-soft);
-  font-size: clamp(11px, 0.8vw, 13px);
-  line-height: 1.1;
-  transform: translateX(-50%);
-}
-
-.album-create-upload__format {
-  top: 74.5%;
-}
-
-.album-create-upload__limit {
-  top: 79%;
-}
-
-.album-create-upload input,
-.album-create-upload__input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.album-create-dialog__notice {
-  margin: -4px 0 0;
-  color: var(--camellia);
-  font-weight: 800;
-  line-height: 1.35;
-}
-
-.album-upload-list {
-  position: absolute;
-  top: 9%;
-  bottom: 11%;
-  left: 50%;
-  z-index: 2;
-  display: grid;
-  align-content: start;
-  width: 65%;
-  gap: 8px;
-  margin: 0;
-  padding: 6px 6px 0;
-  overflow: hidden;
-  list-style: none;
-  box-sizing: border-box;
-  transform: translateX(-50%);
-}
-
-.album-upload-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 28px;
-  gap: 8px;
-  align-items: center;
-  border: 1px solid rgba(var(--ink-rgb), 0.13);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.46);
-  padding: 8px 10px;
-  color: var(--ink);
-  font-size: 0.88rem;
-}
-
-.album-upload-item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.album-upload-item small {
-  color: var(--ink-soft);
-}
-
-.album-upload-item button {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(var(--camellia-rgb), 0.13);
-  color: var(--camellia);
-  cursor: pointer;
-  line-height: 0;
-}
-
-.album-upload-item button svg {
-  display: block;
-}
-
-.album-upload-add-item {
-  display: grid;
-  place-items: center;
-  min-height: 42px;
-}
-
-.album-upload-add {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px dashed rgba(var(--camellia-rgb), 0.36);
-  border-radius: 999px;
-  background: rgba(var(--sheet-rgb), 0.58);
-  color: var(--camellia);
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.album-upload-add svg {
-  display: block;
-}
-
-.album-upload-progress {
-  position: absolute;
-  top: 9%;
-  bottom: 11%;
-  left: 50%;
-  z-index: 2;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  width: 65%;
-  gap: 12px;
-  color: var(--ink);
-  transform: translateX(-50%);
-}
-
-.album-upload-progress__count {
-  font-family: "Cormorant Garamond", "Times New Roman", serif;
-  font-size: clamp(28px, 3.2vw, 42px);
-  font-weight: 800;
-  line-height: 1;
-}
-
-.album-upload-progress__bar {
-  display: block;
-  width: min(188px, 100%);
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(var(--camellia-rgb), 0.14);
-}
-
-.album-upload-progress__bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--camellia) 0%, var(--frost) 100%);
-}
-
-.album-upload-add--progress {
-  margin-top: 2px;
-}
-
-.album-create-dialog__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 0.2%;
-  transform: translate(20px, -14px);
-}
-
-.album-create-dialog__actions button {
-  min-width: clamp(142px, 10.8vw, 178px);
-  min-height: clamp(42px, 3.5vw, 50px);
-  border: 1px solid rgba(var(--camellia-rgb), 0.24);
-  border-radius: 14px;
-  background: rgba(var(--sheet-rgb), 0.42);
-  color: var(--ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  font-family: "LXGW WenKai", "STKaiti", "KaiTi", "Kaiti SC", serif;
-  font-size: clamp(16px, 1.18vw, 19px);
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
-}
-
-.album-create-dialog__actions button:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 10px 18px rgba(var(--ink-rgb), 0.14);
-}
-
-.album-create-dialog__actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.46;
-}
-
-.album-create-dialog__actions [data-album-submit-draft],
-.album-create-dialog__actions [data-album-publish] {
-  border-color: rgba(var(--camellia-rgb), 0.24);
-  background: linear-gradient(135deg, var(--camellia), var(--camellia));
-  color: var(--sheet);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 10px 19px rgba(var(--camellia-rgb), 0.18);
-}
-
-.album-create-dialog__actions .album-create-cancel {
-  background: rgba(var(--sheet-rgb), 0.42);
-  color: var(--ink);
-}
-
-.album-create-dialog__actions .album-create-cancel + [data-album-submit-draft] {
-  background: rgba(var(--sheet-rgb), 0.42);
-  color: var(--ink);
-}
-
-.album-create-dialog__actions .album-create-cancel + [data-album-submit-draft]:not(:disabled) {
-  border-color: rgba(var(--camellia-rgb), 0.24);
-}
-
-.album-create-dialog__actions .album-create-cancel + [data-album-submit-draft] + [data-album-publish] {
-  background: linear-gradient(135deg, var(--camellia), var(--camellia));
-  color: var(--sheet);
-}
-
 @media (max-width: 760px) {
   .album-immersive-gallery[data-layout="stacked"] .album-immersive-gallery__stage {
     grid-template-columns: 1fr;
@@ -2341,110 +1627,11 @@ body.is-album-immersive .album-photo-preview__backdrop {
 .album-photo-grid__caption { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .album-photo-grid small { font-size: 11px; }
 .album-photo-grid__actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.album-photo-grid__actions button, .album-immersive-gallery__actions button { padding: 5px 8px; border: 1px solid var(--ink-faint); border-radius: 5px; background: var(--sheet); color: var(--ink-soft); font: inherit; font-size: 12px; cursor: pointer; }
+.album-photo-grid__actions button { padding: 4px 8px; border: 1px solid var(--frost); border-radius: 6px; background: var(--sheet); color: var(--ink-soft); font: 12px/1.4 var(--font-ui); cursor: pointer; }
+.album-photo-grid__actions button:hover { border-color: rgba(var(--camellia-rgb), 0.4); color: var(--camellia); }
+.album-immersive-gallery__actions button { padding: 6px 14px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.88); font: 13px/1.4 var(--font-ui); cursor: pointer; backdrop-filter: blur(6px); transition: background 160ms ease, border-color 160ms ease; }
+.album-immersive-gallery__actions button:hover { border-color: rgba(var(--lamp-rgb), 0.7); background: rgba(var(--lamp-rgb), 0.16); }
 .album-immersive-gallery__actions { display: flex; gap: 10px; margin-top: 12px; pointer-events: auto; }
-/* Below 960px the fixed-ratio paper dialog is too small for the form, so it stacks. */
-@media (max-width: 960px) {
-  .album-create-dialog {
-    width: min(560px, calc(100vw - 16px));
-    aspect-ratio: auto;
-    min-height: calc(100vh - 16px);
-    max-height: calc(100vh - 16px);
-    overflow: auto;
-    filter: drop-shadow(0 22px 48px rgba(var(--ink-rgb), 0.32));
-  }
-
-  .album-create-dialog__background {
-    position: fixed;
-    object-fit: cover;
-  }
-
-  .album-create-dialog__header {
-    position: relative;
-    top: auto;
-    left: auto;
-    margin: 92px 28px 26px;
-    width: auto;
-  }
-
-  .album-create-dialog__header h2 {
-    font-size: 32px;
-  }
-
-  .album-create-form {
-    position: relative;
-    inset: auto;
-    padding: 0 28px 32px;
-    gap: 22px;
-  }
-
-  .album-create-form__main {
-    grid-template-columns: 1fr;
-  }
-
-  .album-create-options {
-    grid-template-columns: auto auto minmax(0, 1fr);
-  }
-
-  .album-create-field--password {
-    grid-column: 1 / -1;
-  }
-
-  .album-create-form__divider {
-    display: none;
-  }
-
-  .album-create-upload {
-    min-height: 330px;
-    width: 100%;
-    margin-top: 0;
-    transform: none;
-  }
-
-  .album-create-dialog__actions {
-    justify-content: stretch;
-    gap: 12px;
-  }
-
-  .album-create-dialog__actions button {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-}
-
-@media (min-width: 961px) {
-  /* The form body never scrolls: the left column fits above the stamp and the photo grid scrolls itself. */
-  .album-create-form__main { flex: 1; grid-template-rows: minmax(0, 1fr); margin-bottom: 24px; }
-  .album-create-form__right,
-  .album-create-form__divider { min-height: 0; }
-  .album-create-form__right .album-photo-grid { flex: 0 1 auto; min-height: 0; max-height: none; }
-}
-
-/* With photos in the grid, the decorative upload panel becomes a compact add strip. */
-.album-create-upload[data-upload-compact="true"] {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 100%;
-  min-height: 58px;
-  aspect-ratio: auto;
-  margin: 0;
-  border: 1px dashed rgba(var(--camellia-rgb), 0.36);
-  border-radius: 8px;
-  background: rgba(var(--sheet-rgb), 0.58);
-  transform: none;
-}
-.album-create-upload[data-upload-compact="true"] .album-create-upload__panel,
-.album-create-upload[data-upload-compact="true"] .album-create-upload__illustration,
-.album-create-upload[data-upload-compact="true"] .album-create-upload__format { display: none; }
-.album-create-upload[data-upload-compact="true"] .album-create-upload__content { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; clip-path: none; }
-.album-create-upload[data-upload-compact="true"] .album-create-upload__title,
-.album-create-upload[data-upload-compact="true"] .album-create-upload__limit { position: static; width: auto; transform: none; }
-.album-create-upload[data-upload-compact="true"] .album-upload-progress { position: static; display: flex; align-items: center; width: auto; gap: 12px; transform: none; }
-.album-create-upload[data-upload-compact="true"] .album-upload-progress__count { font-size: 20px; }
 
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__header { position: relative; inset: auto; width: calc(100% - 48px); margin: 20px auto 24px; }
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__stage { margin-top: 0; }
-@media (max-width: 960px) {
-  .album-create-dialog { background: var(--snow); border-radius: 12px; }
-}

@@ -402,16 +402,16 @@ describe('AlbumView DOM and interaction behavior', () => {
     expect(wrapper.get('[data-album-id="2"]').text()).toContain('锁定专辑');
     expect(wrapper.get('[data-album-id="2"]').text()).toContain('私密相册');
     expect(wrapper.get('.album-create-fab').attributes('aria-label')).toBe('新增相册');
-    expect(wrapper.get('.album-create-fab__image').attributes('src')).toBeTruthy();
+    expect(wrapper.get('.album-create-fab').text()).toContain('新增相册');
+    expect(wrapper.get('.album-create-fab').find('img').exists()).toBe(false);
 
     await wrapper.get('[data-album-create-open]').trigger('click');
     await flushPromises();
 
     const dialog = wrapper.get('[data-album-create-dialog]');
     expect(dialog.attributes('aria-label')).toBe('新增相册');
-    expect(dialog.find('.album-create-dialog__background').exists()).toBe(true);
-    expect(dialog.find('.album-create-upload__panel').exists()).toBe(true);
-    expect(dialog.find('.album-create-upload__illustration').exists()).toBe(true);
+    expect(dialog.find('img').exists()).toBe(false);
+    expect(dialog.find('.album-create-upload__icon svg').exists()).toBe(true);
     expect(dialog.text()).toContain('相册标题');
     expect(dialog.text()).toContain('私密相册');
     expect(dialog.text()).toContain('访问密码');

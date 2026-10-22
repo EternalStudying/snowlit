@@ -2,6 +2,7 @@
 import { prefersReducedMotion } from '../../motion';
 import { IMAGE_ACCEPT } from '../../imageFiles';
 import './album.css';
+import './album-dialog.css';
 import {
   computed,
   onMounted,
@@ -15,6 +16,7 @@ import {
   Eye,
   EyeOff,
   Heart,
+  ImagePlus,
   Images,
   LockKeyhole,
   MapPin,
@@ -33,18 +35,13 @@ import {
 } from 'naive-ui';
 import AlbumPhotoGrid from './components/AlbumPhotoGrid.vue';
 import PageLoader from '../../components/PageLoader.vue';
+import HeartMark from '../../components/paper/HeartMark.vue';
+import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
+import StickerButton from '../../components/paper/StickerButton.vue';
 import { formatLocalCalendarDate } from '../../calendarDate';
 import { useModalWheelGuard } from '../../composables/useModalWheelGuard';
 import AlbumCollectionEnterTransition from './components/AlbumCollectionEnterTransition.vue';
 import AlbumImmersiveGallery from './components/AlbumImmersiveGallery.vue';
-import albumCreateDialogBackground from './assets/album-create-dialog-background.webp';
-import albumCreateEntry from './assets/album-create-entry.webp';
-import albumCreateUploadIllustration from './assets/album-create-upload-illustration.webp';
-import albumCreateUploadPanel from './assets/album-create-upload-panel.webp';
-import dryFlowerTaped from './assets/dry-flower-taped.webp';
-import heartSketchRed from './assets/heart-sketch-red.webp';
-import heroRedUnderline from './assets/hero-red-underline.webp';
-import lovePostmarkLarge from './assets/love-postmark-large.webp';
 import { useAlbumCatalogPresentation } from './internal/useAlbumCatalogPresentation';
 import { useAlbumDialogMotion } from './internal/useAlbumDialogMotion';
 import { useAlbumImmersiveSession } from './internal/useAlbumImmersiveSession';
@@ -347,10 +344,9 @@ onMounted(() => {
     <section v-if="loaded" ref="albumPageInnerRef" class="album-page__inner" aria-label="照片相册">
       <div class="album-hero-row">
         <header class="album-hero">
-          <p>Photo Keepsakes</p>
           <h1>
             收藏见面与出游的闪亮瞬间
-            <img class="album-title-heart" :src="heartSketchRed" alt="" draggable="false" />
+            <HeartMark class="album-title-heart" />
           </h1>
           <span class="album-hero__copy">每一本相册，都是某段时光的入口。</span>
           <div v-if="canManageAlbums && currentDraft" class="album-hero-actions" aria-label="相册草稿">
@@ -364,12 +360,10 @@ onMounted(() => {
               继续编辑：{{ currentDraft.fields.title || '未命名草稿' }}
             </button>
           </div>
-          <img class="album-hero__underline" :src="heroRedUnderline" alt="" draggable="false" />
         </header>
 
         <div class="album-hero-art" aria-hidden="true">
-          <img class="album-asset album-postmark" :src="lovePostmarkLarge" alt="" draggable="false" />
-          <img class="album-asset album-dry-flower" :src="dryFlowerTaped" alt="" draggable="false" />
+          <PostmarkStamp class="album-asset album-postmark" />
         </div>
       </div>
 
@@ -506,10 +500,10 @@ onMounted(() => {
         @delete="deleteConfirmOpen = true"
       />
 
-      <button v-if="canManageAlbums" class="album-create-fab" data-album-create-open type="button" aria-label="新增相册" @click="openCreateDialog">
-        <img class="album-create-fab__image" :src="albumCreateEntry" alt="" draggable="false" />
-        <span class="visually-hidden">新增相册</span>
-      </button>
+      <StickerButton v-if="canManageAlbums" class="album-create-fab" data-album-create-open aria-label="新增相册" @click="openCreateDialog">
+        <template #icon><ImagePlus :stroke-width="1.8" /></template>
+        新增相册
+      </StickerButton>
 
       <Teleport to="body">
         <Transition v-bind="albumPreviewTransitionHandlers">
@@ -632,15 +626,6 @@ onMounted(() => {
               :aria-label="editingAlbum ? '编辑相册' : '新增相册'"
               @click.stop
             >
-              <img
-                class="album-create-dialog__background"
-                :src="albumCreateDialogBackground"
-                alt=""
-                aria-hidden="true"
-                draggable="false"
-                decoding="async"
-              />
-
               <header class="album-create-dialog__header">
                 <h2>{{ editingAlbum ? '编辑相册' : draftAlbum ? '继续上传未完成相册' : '新增相册' }}</h2>
               </header>
@@ -749,27 +734,12 @@ onMounted(() => {
                       @dragover.prevent
                       @drop.prevent="handleDraftDrop"
                     >
-                      <img
-                        class="album-create-upload__panel"
-                        :src="albumCreateUploadPanel"
-                        alt=""
-                        aria-hidden="true"
-                        draggable="false"
-                        decoding="async"
-                      />
                       <label
                         v-if="!albumUploadItems.length"
                         class="album-create-upload__content"
                         for="album-create-file-input"
                       >
-                        <img
-                          class="album-create-upload__illustration"
-                          :src="albumCreateUploadIllustration"
-                          alt=""
-                          aria-hidden="true"
-                          draggable="false"
-                          decoding="async"
-                        />
+                        <span class="album-create-upload__icon" aria-hidden="true"><ImagePlus :size="28" :stroke-width="1.6" /></span>
                         <span class="album-create-upload__title">点击或拖拽照片到这里上传</span>
                         <span class="album-create-upload__format">支持 JPG / PNG / WEBP</span>
                         <span class="album-create-upload__limit">每个相册最多 50 张</span>

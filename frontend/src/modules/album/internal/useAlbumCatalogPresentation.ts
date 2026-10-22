@@ -120,17 +120,6 @@ export function useAlbumCatalogPresentation({
           '<0.12'
         )
         .from(
-          '.album-hero__underline',
-          {
-            autoAlpha: 0,
-            scaleX: 0,
-            transformOrigin: 'left center',
-            duration: 0.42,
-            clearProps: 'all'
-          },
-          '<0.04'
-        )
-        .from(
           '.album-hero-art .album-asset',
           {
             autoAlpha: 0,
