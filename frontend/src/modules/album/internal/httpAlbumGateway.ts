@@ -6,6 +6,7 @@ import {
 } from '../../../http/sessionRequest';
 import type {
   AlbumApiErrorCode,
+  AlbumEditData,
   AlbumCurrentDraftData,
   AlbumDetailData,
   AlbumDraftData,
@@ -104,11 +105,11 @@ export function createHttpAlbumGateway({
       });
     },
 
-    publishDraft(fields, privatePassword) {
+    publishDraft(fields, privatePassword, imageOrder) {
       return request.json<AlbumDetailData>({
         path: '/api/drafts/album/publish',
         method: 'POST',
-        body: { kind: 'json', value: { fields: draftFields(fields), privatePassword } },
+        body: { kind: 'json', value: { fields: draftFields(fields), privatePassword, imageOrder } },
         failure: ALBUM_FAILURE
       });
     },
@@ -126,6 +127,33 @@ export function createHttpAlbumGateway({
         path: `/api/drafts/album/images/${encodeURIComponent(imageId)}`,
         method: 'DELETE', failure: CANCEL_DRAFT_FAILURE
       });
+    },
+
+    startEdit(albumId) {
+      return request.json<AlbumEditData>({ path: `/api/albums/${albumId}/edit`, method: 'POST', failure: ALBUM_FAILURE });
+    },
+    uploadEditPhoto(albumId, original, preview, metadata) {
+      const form = new FormData();
+      form.append('original', original); form.append('preview', preview);
+      const { sortOrder: _order, ...fields } = metadata;
+      form.append('metadata', JSON.stringify(fields));
+      return request.json<AlbumDraftImage>({ path: `/api/albums/${albumId}/edit/photos`, method: 'POST', body: { kind: 'form', value: form }, failure: ALBUM_FAILURE });
+    },
+    removeEditPhoto(albumId, draftImageId) {
+      return request.noContent({ path: `/api/albums/${albumId}/edit/photos/${encodeURIComponent(draftImageId)}`, method: 'DELETE', failure: ALBUM_FAILURE });
+    },
+    cancelEdit(albumId, keepalive = false) {
+      return request.noContent({ path: `/api/albums/${albumId}/edit`, method: 'DELETE', keepalive, failure: ALBUM_FAILURE });
+    },
+    saveAlbum(albumId, payload) {
+      const { privatePassword, ...fields } = payload;
+      return request.json<AlbumDetailData>({ path: `/api/albums/${albumId}`, method: 'PUT', body: { kind: 'json', value: { ...fields, ...(privatePassword?.trim() ? { privatePassword } : {}) } }, failure: ALBUM_FAILURE });
+    },
+    deleteAlbum(albumId) {
+      return request.noContent({ path: `/api/albums/${albumId}`, method: 'DELETE', failure: ALBUM_FAILURE });
+    },
+    reorderDraftPhotos(ids) {
+      return request.json<AlbumDraftData>({ path: '/api/drafts/album/images/order', method: 'PUT', body: { kind: 'json', value: { ids } }, failure: ALBUM_FAILURE });
     },
 
     fetchDetail(albumId, privateAccessToken) {

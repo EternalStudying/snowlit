@@ -551,7 +551,7 @@ describe('useAlbumLifecycle draft behavior', () => {
     const payload = { ...draft.fields, title: 'Latest title', privatePassword: 'new-password' } as AlbumCreatePayload;
     await expect(lifecycle.publishDraft(payload)).resolves.toBe(true);
     const call = fetcher.mock.calls.find(([input]) => input === '/api/drafts/album/publish');
-    expect(JSON.parse(String(call?.[1]?.body))).toEqual({fields: {...draft.fields, title:'Latest title'}, privatePassword:'new-password'});
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({fields: {...draft.fields, title:'Latest title'}, privatePassword:'new-password',imageOrder:['opaque-photo']});
     expect(lifecycle.state.currentDraft.value).toBeNull();
     expect(lifecycle.state.collections.value[1]).toMatchObject({title:'锁定专辑', locked:true, photos:[]});
   });

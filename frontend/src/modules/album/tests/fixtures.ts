@@ -109,6 +109,7 @@ export const secondPage: AlbumPageData = {
 };
 
 export const publicDetail: AlbumDetailData = {
+  canManage: true,
   album: {
     ...firstPage.items[0],
     previewPhotos: []
@@ -125,6 +126,7 @@ export const publicDetail: AlbumDetailData = {
 };
 
 export const privateDetail: AlbumDetailData = {
+  canManage: true,
   album: {
     ...firstPage.items[1],
     title: '私密时光',

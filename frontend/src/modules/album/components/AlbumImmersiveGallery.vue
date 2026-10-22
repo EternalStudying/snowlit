@@ -48,6 +48,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+  edit: [];
+  delete: [];
   close: [];
   preview: [index: number];
 }>();
@@ -362,6 +364,10 @@ onBeforeUnmount(() => {
           <p>{{ collection.author }} / {{ collection.date }}</p>
           <h2>{{ collection.title }}</h2>
           <span>{{ collection.location }} · {{ galleryPhotos.length }} 张照片</span>
+        </div>
+        <div v-if="collection.canManage" class="album-immersive-gallery__actions">
+          <button type="button" data-album-edit @click="emit('edit')">编辑</button>
+          <button type="button" data-album-delete @click="emit('delete')">删除</button>
         </div>
       </header>
 

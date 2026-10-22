@@ -48,6 +48,7 @@ export interface RequestCall {
   body?: RequestBody;
   headers?: Readonly<Record<string, string>>;
   session?: 'attach' | 'omit';
+  keepalive?: boolean;
   failure: RequestFailurePolicy;
 }
 
@@ -145,6 +146,7 @@ function createRequestInit(call: RequestCall, readToken: () => string): RequestI
   const headers = createHeaders(call, readToken);
   const init: RequestInit = {};
 
+  if (call.keepalive) init.keepalive = true;
   if (call.method) {
     init.method = call.method;
   }

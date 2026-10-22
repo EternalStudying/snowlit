@@ -94,6 +94,17 @@ describe('AlbumImmersiveGallery', () => {
     document.body.innerHTML = '';
   });
 
+  it.each([true, false])('shows management actions only when detail permission is %s', async canManage => {
+    screenWidth = 390;
+    const wrapper = mount(AlbumImmersiveGallery,{props:{collection:{...collection,canManage},photos},attachTo:document.body});
+    await flushPromises();
+    const edit = document.body.querySelector<HTMLButtonElement>('[data-album-edit]');
+    const remove = document.body.querySelector<HTMLButtonElement>('[data-album-delete]');
+    expect(Boolean(edit)).toBe(canManage); expect(Boolean(remove)).toBe(canManage);
+    if (canManage) { edit!.click(); remove!.click(); expect(wrapper.emitted('edit')).toHaveLength(1); expect(wrapper.emitted('delete')).toHaveLength(1); }
+    wrapper.unmount();
+  });
+
   it('shows every photo as a plain list on a phone-width screen', async () => {
     screenWidth = 390;
     const wrapper = await mountGallery();

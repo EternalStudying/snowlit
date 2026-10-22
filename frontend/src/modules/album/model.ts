@@ -46,9 +46,17 @@ export type AlbumPageData = {
 };
 
 export type AlbumDetailData = {
+  canManage: boolean;
   album: AlbumData;
   photos: AlbumPhotoData[];
 };
+
+export type AlbumEditData = {
+  album: Pick<AlbumData, 'id' | 'title' | 'description' | 'eventDate' | 'location' | 'visibility' | 'pinned'> & { hasPassword: boolean };
+  photos: AlbumPhotoData[];
+};
+export type AlbumPhotoEntry = { photoId: number; draftImageId?: never } | { draftImageId: string; photoId?: never };
+export type AlbumSavePayload = AlbumCreatePayload & { photos: AlbumPhotoEntry[] };
 
 export type AlbumUnlockData = {
   privateAccessToken: string;
@@ -129,6 +137,7 @@ export type AlbumPhoto = AlbumPhotoData & {
 };
 
 export type AlbumCollection = {
+  canManage?: boolean;
   id: string;
   albumId: number;
   title: string;

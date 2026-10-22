@@ -2383,3 +2383,19 @@ body.is-album-immersive .album-photo-preview__backdrop {
     min-width: 0;
   }
 }
+
+/* Photo order is the cover order in both creation and editing. */
+.album-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; list-style: none; max-height: 380px; overflow-y: auto; }
+.album-photo-grid__item { position: relative; min-width: 0; padding: 6px; background: #fffaf4; border: 1px solid #d7caba; border-radius: 8px; }
+.album-photo-grid__image { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; cursor: grab; touch-action: pan-y; }
+.album-photo-grid__cover { position: absolute; top: 10px; left: 10px; padding: 2px 6px; background: #725c4b; color: white; border-radius: 4px; font-size: 11px; }
+.album-photo-grid__caption { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.album-photo-grid small { font-size: 11px; }
+.album-photo-grid__actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.album-photo-grid__actions button, .album-immersive-gallery__actions button { padding: 5px 8px; border: 1px solid #a89b8d; border-radius: 5px; background: #fffaf4; color: #514235; font: inherit; font-size: 12px; cursor: pointer; }
+.album-immersive-gallery__actions { display: flex; gap: 10px; margin-top: 12px; pointer-events: auto; }
+.album-create-pinned { grid-template-columns: auto 1fr; align-items: center; }
+.album-create-form .album-create-pinned input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; border-radius: 4px; }
+@media (min-width: 761px) {
+  .album-create-form__main { flex: 1; overflow-y: auto; margin-bottom: 24px; padding-right: 10px; }
+}

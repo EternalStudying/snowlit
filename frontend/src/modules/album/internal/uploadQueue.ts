@@ -11,6 +11,7 @@ export type AlbumUploadStatus = 'waiting' | 'generating' | 'uploading' | 'succes
 export interface AlbumUploadItem {
   id: string;
   file: File;
+  localUrl: string;
   status: AlbumUploadStatus;
   message: string;
   progress: number;
@@ -62,6 +63,7 @@ export function createAlbumUploadQueue({
       ...selected.map((file, index) => ({
         id: `${now().getTime()}-${index}-${file.name}`,
         file,
+        localUrl: URL.createObjectURL(file),
         status: 'waiting' as const,
         message: '等待上传',
         progress: 0,
@@ -94,12 +96,15 @@ export function createAlbumUploadQueue({
   }
 
   function remove(itemId: string) {
+    const removed = items.value.find(item => item.id === itemId);
+    if (removed && removed.status !== 'uploading' && removed.status !== 'generating') URL.revokeObjectURL(removed.localUrl);
     items.value = items.value.filter(
       (item) => item.id !== itemId || item.status === 'uploading' || item.status === 'generating'
     );
   }
 
   function clear() {
+    items.value.forEach(item => URL.revokeObjectURL(item.localUrl));
     items.value = [];
     error.value = '';
     uploading.value = false;

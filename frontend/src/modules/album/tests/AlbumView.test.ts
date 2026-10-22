@@ -200,9 +200,11 @@ async function mountAlbumView(
         AlbumImmersiveGallery: {
           name: 'AlbumImmersiveGallery',
           props: ['collection', 'photos'],
-          emits: ['close', 'preview'],
+          emits: ['close', 'preview', 'edit', 'delete'],
           template: `
             <section class="album-immersive-gallery-stub" role="dialog" aria-label="immersive gallery">
+              <button data-album-edit @click="$emit('edit')">编辑</button>
+              <button data-album-delete @click="$emit('delete')">删除</button>
               <span class="gallery-location">{{ photos[0]?.location }}</span>
               <button class="album-immersive-gallery-stub__preview" type="button" @click="$emit('preview', 0)">preview</button>
               <button class="album-immersive-gallery-stub__close" type="button" @click="$emit('close')">close</button>
@@ -277,6 +279,53 @@ afterEach(() => {
 });
 
 describe('AlbumView DOM and interaction behavior', () => {
+  it('fills edit fields, selects the cover, saves photo ids and asks before discarding', async () => {
+    stubMatchMedia(true);
+    const base = createAlbumRequestAdapter();
+    const request = vi.fn(async (path: RequestInfo | URL, init?: RequestInit) => {
+      if (String(path).endsWith('/edit') && init?.method === 'POST') return jsonResponse({ album:{...publicDetail.album,visibility:'private',hasPassword:true}, photos:publicDetail.photos });
+      if (init?.method === 'DELETE') return new Response(null,{status:204});
+      if (String(path)==='/api/albums/1' && init?.method==='PUT') return jsonResponse(publicDetail);
+      return base(path,init);
+    });
+    const wrapper = await mountAlbumView(request);
+    await wrapper.get('[data-album-id="1"]').trigger('click'); await flushPromises();
+    await wrapper.get('.album-enter-transition-stub__done').trigger('click'); await flushPromises();
+    await wrapper.get('[data-album-edit]').trigger('click'); await flushPromises();
+    expect(wrapper.get('[data-album-create-dialog]').attributes('aria-label')).toBe('编辑相册');
+    expect((wrapper.get('[data-album-title-input]').element as HTMLInputElement).value).toBe(publicDetail.album.title);
+    expect(wrapper.get('[data-album-private-password-input]').attributes('placeholder')).toBe('留空则保持原密码');
+    const coverButton = wrapper.findAll('.album-photo-grid__actions button').find(button => button.text()==='设为封面')!;
+    await coverButton.trigger('click'); await wrapper.get('[data-album-publish]').trigger('click'); await flushPromises();
+    const save = request.mock.calls.find(([path,init]) => path==='/api/albums/1' && init?.method==='PUT');
+    expect(JSON.parse(String(save?.[1]?.body)).photos).toEqual([{photoId:102},{photoId:101}]);
+    expect(JSON.parse(String(save?.[1]?.body))).not.toHaveProperty('privatePassword');
+    await wrapper.get('[data-album-edit]').trigger('click'); await flushPromises();
+    await wrapper.get('[data-album-title-input]').setValue('Unsaved');
+    await wrapper.get('.album-photo-preview__backdrop--create').trigger('click'); await flushPromises();
+    const modal = document.body.querySelector('.n-dialog')!;
+    expect(modal.textContent).toContain('放弃修改？');
+    (modal.querySelector('.n-dialog__action button:last-child') as HTMLButtonElement).click();
+    await flushPromises();
+    expect(request.mock.calls.some(([path,init]) => String(path).endsWith('/edit') && init?.method==='DELETE')).toBe(true);
+  });
+
+  it('confirms deletion with title and photo count before removing the catalog entry', async () => {
+    stubMatchMedia(true);
+    const base = createAlbumRequestAdapter();
+    const request = vi.fn(async (path: RequestInfo | URL, init?: RequestInit) => init?.method==='DELETE' ? new Response(null,{status:204}) : base(path,init));
+    const wrapper = await mountAlbumView(request);
+    await wrapper.get('[data-album-id="1"]').trigger('click'); await flushPromises();
+    await wrapper.get('.album-enter-transition-stub__done').trigger('click'); await flushPromises();
+    await wrapper.get('[data-album-delete]').trigger('click'); await flushPromises();
+    const modal = document.body.querySelector('.n-dialog')!;
+    expect(modal.textContent).toContain('删除「见面出游」？其中 14 张照片会一起删除，无法恢复。');
+    expect(request.mock.calls.some(([,init]) => init?.method==='DELETE')).toBe(false);
+    (modal.querySelector('.n-dialog__action button:last-child') as HTMLButtonElement).click(); await flushPromises();
+    expect(request.mock.calls.some(([path,init]) => path==='/api/albums/1' && init?.method==='DELETE')).toBe(true);
+    expect(wrapper.find('[data-album-id="1"]').exists()).toBe(false);
+  });
+
   it.each([
     { localTime: [2025, 11, 31, 23, 30], date: '2025-12-31' },
     { localTime: [2026, 0, 1, 0, 30], date: '2026-01-01' }
@@ -605,14 +654,12 @@ describe('AlbumView DOM and interaction behavior', () => {
 
     const uploadFrame = dialog.get('.album-create-upload');
     expect(uploadFrame.find('.album-create-upload__content').exists()).toBe(false);
-    expect(uploadFrame.get('.album-upload-list').attributes('aria-label')).toBe(
-      '照片上传队列'
-    );
-    expect(uploadFrame.get('.album-upload-item').attributes('data-upload-status')).toBe(
+    expect(dialog.get('.album-photo-grid').attributes('aria-label')).toBe('相册照片顺序');
+    expect(dialog.get('.album-photo-grid__item').attributes('data-upload-status')).toBe(
       'waiting'
     );
-    expect(uploadFrame.text()).toContain('first-photo.jpg');
-    expect(uploadFrame.get('[data-album-upload-status]').text()).toBe('等待上传');
+    expect(dialog.text()).toContain('first-photo.jpg');
+    expect(dialog.get('[data-album-upload-status]').text()).toBe('等待上传');
     expect(uploadFrame.get('.album-upload-add').attributes('for')).toBe(
       'album-create-file-input'
     );
@@ -623,7 +670,7 @@ describe('AlbumView DOM and interaction behavior', () => {
     await vi.waitFor(() => {
       expect(
         wrapper.get(
-          '[data-album-create-dialog] .album-upload-item [data-album-upload-status]'
+          '[data-album-create-dialog] .album-photo-grid__item [data-album-upload-status]'
         ).text()
       ).toBe('已上传');
     });

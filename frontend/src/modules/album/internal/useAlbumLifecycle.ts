@@ -2,6 +2,8 @@ import { computed, ref } from 'vue';
 import { MAX_ALBUM_PHOTOS } from '../model';
 import type {
   AlbumCollection,
+  AlbumEditData,
+  AlbumPhotoEntry,
   AlbumCreatePayload,
   AlbumData,
   AlbumDetailData,
@@ -13,7 +15,7 @@ import type {
 } from '../model';
 import { createHttpAlbumGateway } from './httpAlbumGateway';
 import { createBrowserPrivateAccessStore } from './browserPrivateAccessStore';
-import type { HttpAdapter } from '../../../http/sessionRequest';
+import { RequestFailure, type HttpAdapter } from '../../../http/sessionRequest';
 import type { AlbumPreviewGenerator } from './ports';
 import { createAlbumUploadQueue } from './uploadQueue';
 import { errorMessage } from '../../../display';
@@ -67,6 +69,10 @@ export function useAlbumLifecycle({
   const canManage = ref(false);
   const pendingLikeAlbumIds = ref<Set<number>>(new Set());
 
+  const editingAlbum = ref<AlbumEditData['album'] | null>(null);
+  const editingPhotos = ref<AlbumPhotoData[]>([]);
+  const gridKeys = ref<string[]>([]);
+  let uploadTask: Promise<void> = Promise.resolve();
   const currentDraft = ref<AlbumDraftData | null>(null);
   const workingDraft = ref<AlbumDraftData | null>(null);
   const draftPhotos = ref<AlbumDraftImage[]>([]);
@@ -82,6 +88,22 @@ export function useAlbumLifecycle({
     isMobileUpload,
     now
   });
+
+  type GridPhoto = { key: string; photoId: number | undefined; draftImageId: string | undefined; src: string; caption: string | undefined; itemId: string | undefined; status: string; message: string };
+  const photoGrid = computed(() => gridKeys.value.flatMap((key): GridPhoto[] => {
+    const [kind, ...parts] = key.split(':');
+    const id = parts.join(':');
+    if (kind === 'photo') {
+      const photo = editingPhotos.value.find(photo => String(photo.id) === id)!;
+      return [{ key, photoId: photo.id, draftImageId: undefined, src: photo.previewUrl, caption: photo.caption, itemId: undefined, status: 'success', message: '已上传' }];
+    }
+    if (kind === 'draft') {
+      const photo = draftPhotos.value.find(photo => photo.id === id)!;
+      return [{ key, photoId: undefined, draftImageId: photo.id, src: photo.url, caption: photo.caption, itemId: undefined, status: 'success', message: '已上传' }];
+    }
+    const item = uploadQueue.items.value.find(item => item.id === id)!;
+    return [{ key, photoId: undefined, draftImageId: item.uploadedPhoto?.id, src: item.uploadedPhoto?.url ?? item.localUrl, caption: item.file.name, itemId: item.id, status: item.status, message: item.message }];
+  }));
 
   const collections = computed<AlbumCollection[]>(() => albums.value.map((album) => toCollection(album)));
 
@@ -251,6 +273,9 @@ export function useAlbumLifecycle({
   }
 
   function beginNewDraft() {
+    editingAlbum.value = null;
+    editingPhotos.value = [];
+    gridKeys.value = [];
     workingDraft.value = null;
     draftPhotos.value = [];
     draftNotice.value = '';
@@ -264,6 +289,7 @@ export function useAlbumLifecycle({
     }
     workingDraft.value = draft;
     draftPhotos.value = [...draft.images];
+    gridKeys.value = draft.images.map(photo => `draft:${photo.id}`);
     draftNotice.value = '';
     uploadQueue.clear();
     return draft;
@@ -274,8 +300,13 @@ export function useAlbumLifecycle({
       return false;
     }
     const uploadedInQueue = uploadQueue.items.value.filter(item => item.status === 'success').length;
-    const existingCount = Math.max(0, draftPhotos.value.length - uploadedInQueue);
-    return uploadQueue.addFiles(files, existingCount);
+    const existingCount = editingAlbum.value ? editingPhotos.value.length : Math.max(0, draftPhotos.value.length - uploadedInQueue);
+    const wasUploading = uploadQueue.uploading.value;
+    const previous = new Set(uploadQueue.items.value.map(item => item.id));
+    const accepted = uploadQueue.addFiles(files, existingCount);
+    gridKeys.value.push(...uploadQueue.items.value.filter(item => !previous.has(item.id)).map(item => `upload:${item.id}`));
+    if (accepted && editingAlbum.value && !wasUploading) uploadTask = uploadQueue.start(editPhotoUploader(editingAlbum.value.id));
+    return accepted;
   }
 
   async function saveAndUpload(payload: AlbumCreatePayload) {
@@ -294,7 +325,10 @@ export function useAlbumLifecycle({
       workingDraft.value = saved;
       currentDraft.value = saved;
       draftPhotos.value = [...saved.images];
-      await uploadQueue.start(createDraftPhotoUploader(workingDraft.value));
+      const draft = workingDraft.value;
+      uploadTask = uploadQueue.start(createDraftPhotoUploader(draft));
+      await uploadTask;
+      if (workingDraft.value === draft) await gateway.reorderDraftPhotos(orderedImageIds());
     } catch (error) {
       draftNotice.value = errorMessage(error, '相册草稿保存失败');
     } finally {
@@ -304,10 +338,10 @@ export function useAlbumLifecycle({
 
   async function retryUpload(itemId: string) {
     const draft = workingDraft.value;
-    if (!draft) {
-      return;
-    }
-    await uploadQueue.retry(itemId, createDraftPhotoUploader(draft));
+    const edit = editingAlbum.value;
+    if (!draft && !edit) return;
+    uploadTask = uploadQueue.retry(itemId, edit ? editPhotoUploader(edit.id) : createDraftPhotoUploader(draft!));
+    await uploadTask;
   }
 
   async function publishDraft(payload?: AlbumCreatePayload) {
@@ -340,11 +374,12 @@ export function useAlbumLifecycle({
     }
     draftPublishing.value = true;
     try {
-      await gateway.publishDraft(fields, payload?.privatePassword);
+      await gateway.publishDraft(fields, payload?.privatePassword, orderedImageIds());
       currentDraft.value = null;
       await refreshCatalogAfterPublish();
       workingDraft.value = null;
       draftPhotos.value = [];
+      gridKeys.value = [];
       uploadQueue.clear();
       return true;
     } catch (error) {
@@ -367,6 +402,7 @@ export function useAlbumLifecycle({
       currentDraft.value = null;
       workingDraft.value = null;
       draftPhotos.value = [];
+      gridKeys.value = [];
       uploadQueue.clear();
       return true;
     } catch (error) {
@@ -406,6 +442,7 @@ export function useAlbumLifecycle({
   async function removeDraftPhoto(imageId: string) {
     try {
       await gateway.removeDraftPhoto(imageId);
+      gridKeys.value = gridKeys.value.filter(key => key !== `draft:${imageId}` && !uploadQueue.items.value.some(item => `upload:${item.id}` === key && item.uploadedPhoto?.id === imageId));
       draftPhotos.value = draftPhotos.value.filter(photo => photo.id !== imageId);
       if (workingDraft.value) workingDraft.value.images = [...draftPhotos.value];
       for (const item of uploadQueue.items.value) {
@@ -421,12 +458,99 @@ export function useAlbumLifecycle({
   async function removeUpload(itemId: string) {
     const item = uploadQueue.items.value.find(candidate => candidate.id === itemId);
     if (item?.uploadedPhoto) return removeDraftPhoto(item.uploadedPhoto.id);
+    gridKeys.value = gridKeys.value.filter(key => key !== `upload:${itemId}`);
     uploadQueue.remove(itemId);
     return true;
   }
 
+  function orderedImageIds() { return photoGrid.value.flatMap(photo => photo.draftImageId ? [photo.draftImageId] : []); }
+
+  async function reorderPhotos(from: number, to: number) {
+    const next = [...gridKeys.value];
+    const [key] = next.splice(from, 1); next.splice(to, 0, key);
+    gridKeys.value = next;
+    if (!editingAlbum.value && workingDraft.value) {
+      try { await gateway.reorderDraftPhotos(orderedImageIds()); }
+      catch (error) { draftNotice.value = errorMessage(error, '照片顺序保存失败'); }
+    }
+  }
+
+  async function startEdit(albumId: number) {
+    draftNotice.value = '';
+    try {
+      const result = await gateway.startEdit(albumId);
+      editingAlbum.value = result.album; editingPhotos.value = result.photos;
+      draftPhotos.value = []; uploadQueue.clear();
+      gridKeys.value = result.photos.map(photo => `photo:${photo.id}`);
+      return result.album;
+    } catch (error) { draftNotice.value = editError(error, '打开相册编辑失败'); return null; }
+  }
+
+  function editPhotoUploader(albumId: number) {
+    return async (original: File, preview: File, metadata: AlbumPhotoUploadMetadata) => gateway.uploadEditPhoto(albumId, original, preview, metadata);
+  }
+
+  async function removeGridPhoto(index: number) {
+    const photo = photoGrid.value[index];
+    if (!editingAlbum.value) return photo.itemId ? removeUpload(photo.itemId) : removeDraftPhoto(photo.draftImageId!);
+    if (photoGrid.value.length === 1) { draftNotice.value = '相册至少保留 1 张照片'; return false; }
+    try {
+      if (photo.draftImageId) await gateway.removeEditPhoto(editingAlbum.value.id, photo.draftImageId);
+      gridKeys.value = gridKeys.value.filter(key => key !== photo.key);
+      if (photo.photoId) editingPhotos.value = editingPhotos.value.filter(item => item.id !== photo.photoId);
+      if (photo.itemId) uploadQueue.remove(photo.itemId);
+      return true;
+    } catch (error) { draftNotice.value = editError(error, '移除照片失败'); return false; }
+  }
+
+  async function saveAlbum(payload: AlbumCreatePayload) {
+    const edit = editingAlbum.value!;
+    draftPublishing.value = true; draftNotice.value = '';
+    try {
+      await uploadTask;
+      if (uploadQueue.blockingCount.value) { draftNotice.value = '还有照片未处理完成，请等待、重试或移除失败项'; return null; }
+      const photos: AlbumPhotoEntry[] = photoGrid.value.map(photo => photo.photoId ? { photoId: photo.photoId } : { draftImageId: photo.draftImageId! });
+      const result = await gateway.saveAlbum(edit.id, { ...payload, photos });
+      if (edit.visibility !== payload.visibility || payload.privatePassword?.trim()) privateAccessStore.clear(edit.id);
+      albums.value = albums.value.map(album => album.id === edit.id ? { ...result.album, previewPhotos: result.photos.slice(0, 9) } : album);
+      editingAlbum.value = null; editingPhotos.value = []; gridKeys.value = []; uploadQueue.clear();
+      return collectionFromDetail(result);
+    } catch (error) { draftNotice.value = editError(error, '保存相册失败'); return null; }
+    finally { draftPublishing.value = false; }
+  }
+
+  async function cancelEdit(keepalive = false) {
+    const edit = editingAlbum.value;
+    if (!edit) return true;
+    try {
+      if (!keepalive) await uploadTask;
+      await gateway.cancelEdit(edit.id, keepalive);
+      editingAlbum.value = null; editingPhotos.value = []; gridKeys.value = []; uploadQueue.clear();
+      return true;
+    } catch (error) { draftNotice.value = editError(error, '取消编辑失败'); return false; }
+  }
+
+  async function deleteAlbum(albumId: number) {
+    try { await gateway.deleteAlbum(albumId); }
+    catch (error) {
+      if (!(error instanceof RequestFailure && error.status === 404)) { catalogNotice.value = errorMessage(error, '删除相册失败'); return false; }
+      catalogNotice.value = '相册已被删除';
+    }
+    albums.value = albums.value.filter(album => album.id !== albumId);
+    privateAccessStore.clear(albumId);
+    return true;
+  }
+
+  function editError(error: unknown, fallback: string) {
+    if (error instanceof RequestFailure && error.code === 'ALBUM_NOT_FOUND') return '相册已被删除';
+    if (error instanceof RequestFailure && error.code === 'ALBUM_EDIT_EXPIRED') return '编辑已失效，请重新打开相册编辑';
+    return errorMessage(error, fallback);
+  }
+
   return {
     state: {
+      editingAlbum,
+      photoGrid,
       collections,
       loaded,
       loading,
@@ -447,6 +571,12 @@ export function useAlbumLifecycle({
       uploadSuccessCount: uploadQueue.successCount,
       uploadBlockingCount: uploadQueue.blockingCount
     },
+    startEdit,
+    saveAlbum,
+    cancelEdit,
+    deleteAlbum,
+    reorderPhotos,
+    removeGridPhoto,
     loadInitialCatalog,
     loadNextPage,
     prepareOpen,
@@ -508,12 +638,12 @@ function toPhoto(photo: AlbumPhotoData): AlbumPhoto {
 }
 
 function collectionFromDetail(detail: AlbumDetailData): AlbumCollection {
-  return toCollection(
+  return { ...toCollection(
     {
       ...detail.album,
       locked: false,
       previewPhotos: detail.album.previewPhotos ?? []
     },
     detail.photos.map(toPhoto)
-  );
+  ), canManage: detail.canManage };
 }

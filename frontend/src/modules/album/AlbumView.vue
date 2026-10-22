@@ -26,10 +26,12 @@ import {
 } from 'lucide-vue-next';
 import {
   NButton,
+  NModal,
   NInput,
   NUpload,
   type UploadFileInfo
 } from 'naive-ui';
+import AlbumPhotoGrid from './components/AlbumPhotoGrid.vue';
 import PageLoader from '../../components/PageLoader.vue';
 import { formatLocalCalendarDate } from '../../calendarDate';
 import { useModalWheelGuard } from '../../composables/useModalWheelGuard';
@@ -46,6 +48,7 @@ import lovePostmarkLarge from './assets/love-postmark-large.webp';
 import { useAlbumCatalogPresentation } from './internal/useAlbumCatalogPresentation';
 import { useAlbumDialogMotion } from './internal/useAlbumDialogMotion';
 import { useAlbumImmersiveSession } from './internal/useAlbumImmersiveSession';
+import { useAlbumEditExit } from './internal/useAlbumEditExit';
 import { useAlbumLifecycle } from './internal/useAlbumLifecycle';
 import type {
   AlbumCollection,
@@ -66,7 +69,8 @@ const {
   currentDraft,
   workingDraft: draftAlbum,
   draftNotice,
-  draftPhotos,
+  photoGrid,
+  editingAlbum,
   draftSaving,
   draftPublishing,
   uploadItems: albumUploadItems,
@@ -76,6 +80,12 @@ const {
 } = albumLifecycle.state;
 
 const createDialogOpen = ref(false);
+const discardEditOpen = ref(false);
+const deleteConfirmOpen = ref(false);
+const deleting = ref(false);
+const initialEditSnapshot = ref('');
+const editSnapshot = computed(() => JSON.stringify({ form: draftForm.value, photos: photoGrid.value.map(photo => photo.key) }));
+
 const albumDraftFileList = ref<UploadFileInfo[]>([]);
 const draftForm = ref<AlbumCreatePayload>({
   title: '',
@@ -115,7 +125,7 @@ const albumPrivatePasswordInputProps = computed(
       'data-album-private-password-input': '',
       autocomplete: 'off',
       required:
-        draftForm.value.visibility === 'private'
+        draftForm.value.visibility === 'private' && !editingAlbum.value?.hasPassword
     }) as unknown as InputHTMLAttributes
 );
 
@@ -142,7 +152,7 @@ const {
   createDialogRef,
   isCreateDialogClosing: albumCreateDialogClosing,
   openCreateDialog: showCreateDialog,
-  closeCreateDialog,
+  closeCreateDialog: finishDialogClose,
   previewTransitionHandlers: albumPreviewTransitionHandlers
 } = useAlbumDialogMotion({
   isCreateDialogOpen: createDialogOpen,
@@ -183,6 +193,41 @@ const {
 });
 
 useModalWheelGuard(createDialogOpen);
+
+async function openEditDialog() {
+  const album = await albumLifecycle.startEdit(selectedCollection.value!.albumId);
+  if (!album) { catalogNotice.value = draftNotice.value; return; }
+  draftForm.value = { title: album.title, description: album.description, eventDate: album.eventDate, location: album.location, visibility: album.visibility, privatePassword: '', pinned: album.pinned };
+  initialEditSnapshot.value = editSnapshot.value;
+  showCreateDialog();
+}
+
+async function closeCreateDialog() {
+  if (draftPublishing.value) return;
+  if (editingAlbum.value) {
+    if (initialEditSnapshot.value !== editSnapshot.value) { discardEditOpen.value = true; return; }
+    if (!(await albumLifecycle.cancelEdit())) return;
+  }
+  finishDialogClose();
+}
+
+async function discardEdit() {
+  if (await albumLifecycle.cancelEdit()) { discardEditOpen.value = false; finishDialogClose(); }
+  return false;
+}
+
+async function confirmDelete() {
+  deleting.value = true;
+  try {
+    if (await albumLifecycle.deleteAlbum(selectedCollection.value!.albumId)) {
+      deleteConfirmOpen.value = false; closeCollection();
+    }
+  } finally { deleting.value = false; }
+  return false;
+}
+
+function cancelEditOnUnload() { if (editingAlbum.value) void albumLifecycle.cancelEdit(true); }
+useAlbumEditExit(cancelEditOnUnload);
 
 function resetDraftForm() {
   draftForm.value = {
@@ -259,6 +304,7 @@ function setDraftPrivate(value: boolean) {
 }
 
 async function submitDraftAndUpload() {
+  if (editingAlbum.value) return;
   await albumLifecycle.saveAndUpload(draftForm.value);
 }
 
@@ -267,8 +313,13 @@ async function retryUploadItem(item: { id: string }) {
 }
 
 async function publishDraftAlbum() {
+  if (editingAlbum.value) {
+    const collection = await albumLifecycle.saveAlbum(draftForm.value);
+    if (collection) { selectedCollection.value = collection; finishDialogClose(); }
+    return;
+  }
   if (await albumLifecycle.publishDraft(draftForm.value)) {
-    closeCreateDialog();
+    finishDialogClose();
   }
 }
 
@@ -451,6 +502,8 @@ onMounted(() => {
         :photos="selectedCollection.photos"
         @close="closeCollection"
         @preview="openPhotoPreview"
+        @edit="openEditDialog"
+        @delete="deleteConfirmOpen = true"
       />
 
       <button v-if="canManageAlbums" class="album-create-fab" data-album-create-open type="button" aria-label="新增相册" @click="openCreateDialog">
@@ -576,7 +629,7 @@ onMounted(() => {
               data-album-create-dialog
               role="dialog"
               aria-modal="true"
-              aria-label="新增相册"
+              :aria-label="editingAlbum ? '编辑相册' : '新增相册'"
               @click.stop
             >
               <img
@@ -589,7 +642,7 @@ onMounted(() => {
               />
 
               <header class="album-create-dialog__header">
-                <h2>{{ draftAlbum ? '继续上传未完成相册' : '新增相册' }}</h2>
+                <h2>{{ editingAlbum ? '编辑相册' : draftAlbum ? '继续上传未完成相册' : '新增相册' }}</h2>
               </header>
 
               <form class="album-create-form" @submit.prevent="submitDraftAndUpload">
@@ -628,6 +681,12 @@ onMounted(() => {
                       />
                     </label>
 
+                    <label class="album-create-field">
+                      <span>相册地点</span><NInput v-model:value="draftForm.location" maxlength="120" :disabled="draftPublishing" />
+                    </label>
+                    <label class="album-create-field album-create-pinned">
+                      <span>置顶相册</span><input v-model="draftForm.pinned" type="checkbox" :disabled="draftPublishing" />
+                    </label>
                     <div class="album-create-options">
                       <div class="album-create-private">
                         <span class="album-create-private__label">私密相册 <i aria-hidden="true">i</i></span>
@@ -650,6 +709,7 @@ onMounted(() => {
                             type="password"
                             autocomplete="off"
                             show-password-on="click"
+                            :placeholder="editingAlbum?.hasPassword ? '留空则保持原密码' : '输入密码'"
                             :input-props="albumPrivatePasswordInputProps"
                             :disabled="draftPublishing || draftForm.visibility !== 'private'"
                           >
@@ -667,12 +727,7 @@ onMounted(() => {
                   <div class="album-create-form__right">
                     <h3>上传照片 <b aria-hidden="true">*</b></h3>
 
-                    <ul v-if="draftPhotos.length" class="album-upload-list" aria-label="已上传草稿照片">
-                      <li v-for="photo in draftPhotos" :key="photo.id" class="album-upload-item">
-                        <span>{{ photo.caption || '未命名照片' }}</span>
-                        <NButton attr-type="button" quaternary aria-label="移除已上传照片" :disabled="draftSaving || albumUploading || draftPublishing" @click="albumLifecycle.removeDraftPhoto(photo.id)">移除</NButton>
-                      </li>
-                    </ul>
+                    <AlbumPhotoGrid :items="photoGrid" :disabled="draftSaving || draftPublishing" @reorder="albumLifecycle.reorderPhotos" @remove="albumLifecycle.removeGridPhoto" @retry="retryUploadItem" />
                     <div
                       class="album-create-upload"
                       :data-upload-has-items="albumUploadItems.length ? 'true' : undefined"
@@ -725,42 +780,7 @@ onMounted(() => {
                         @change="handleDraftFiles"
                       />
 
-                      <ul
-                        v-if="albumUploadItems.length && !shouldShowAlbumUploadProgress"
-                        class="album-upload-list"
-                        aria-label="照片上传队列"
-                      >
-                        <li v-for="item in albumUploadItems" :key="item.id" class="album-upload-item" :data-upload-status="item.status">
-                          <span>{{ item.file.name }}</span>
-                          <small data-album-upload-status>{{ item.message }}</small>
-                          <NButton
-                            v-if="item.status === 'failed'"
-                            attr-type="button"
-                            quaternary
-                            circle
-                            aria-label="重试上传"
-                            @click="retryUploadItem(item)"
-                          >
-                            <RotateCcw :size="16" aria-hidden="true" />
-                          </NButton>
-                          <NButton
-                            v-if="item.status === 'failed' || item.status === 'waiting'"
-                            attr-type="button"
-                            quaternary
-                            circle
-                            aria-label="移除照片"
-                            @click="albumLifecycle.removeUpload(item.id)"
-                          >
-                            <Trash2 :size="16" aria-hidden="true" />
-                          </NButton>
-                        </li>
-                        <li class="album-upload-add-item">
-                          <label class="album-upload-add" for="album-create-file-input" aria-label="继续添加照片">
-                            <Plus :size="18" aria-hidden="true" />
-                          </label>
-                        </li>
-                      </ul>
-
+                      <label v-if="albumUploadItems.length" class="album-upload-add" for="album-create-file-input" aria-label="继续添加照片"><Plus :size="18" /></label>
                       <div
                         v-if="albumUploadItems.length && shouldShowAlbumUploadProgress"
                         class="album-upload-progress"
@@ -784,8 +804,8 @@ onMounted(() => {
                 </div>
 
                 <div class="album-create-dialog__actions">
-                  <NButton v-if="draftAlbum" attr-type="button" class="album-create-cancel" :disabled="draftSaving || albumUploading || draftPublishing" @click="cancelCurrentDraft">取消草稿</NButton>
-                  <NButton data-album-submit-draft attr-type="submit" :loading="draftSaving || albumUploading" :disabled="draftSaving || albumUploading">
+                  <NButton v-if="draftAlbum && !editingAlbum" attr-type="button" class="album-create-cancel" :disabled="draftSaving || albumUploading || draftPublishing" @click="cancelCurrentDraft">取消草稿</NButton>
+                  <NButton v-if="!editingAlbum" data-album-submit-draft attr-type="submit" :loading="draftSaving || albumUploading" :disabled="draftSaving || albumUploading">
                     {{ albumUploading ? '上传中...' : draftAlbum ? '上传新照片' : '保存草稿并上传' }}
                   </NButton>
                   <NButton
@@ -793,10 +813,10 @@ onMounted(() => {
                     attr-type="button"
                     type="primary"
                     :loading="draftPublishing"
-                    :disabled="!draftAlbum || draftPublishing"
+                    :disabled="(!draftAlbum && !editingAlbum) || draftPublishing"
                     @click="publishDraftAlbum"
                   >
-                    {{ draftPublishing ? '发布中...' : '发布相册' }}
+                    {{ editingAlbum ? (draftPublishing ? '保存中…' : '保存') : (draftPublishing ? '发布中...' : '发布相册') }}
                   </NButton>
                 </div>
               </form>
@@ -806,6 +826,10 @@ onMounted(() => {
       </Teleport>
     </section>
 
+    <NModal v-model:show="discardEditOpen" preset="dialog" title="放弃修改？" positive-text="放弃修改" negative-text="继续编辑" @positive-click="discardEdit" />
+    <NModal v-model:show="deleteConfirmOpen" preset="dialog" title="删除相册" positive-text="删除" negative-text="取消" :loading="deleting" @positive-click="confirmDelete">
+      <p>删除「{{ selectedCollection?.title }}」？其中 {{ selectedCollection?.photoCount }} 张照片会一起删除，无法恢复。</p>
+    </NModal>
     <PageLoader :loading="!loaded" />
   </main>
 </template>
