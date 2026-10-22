@@ -32,8 +32,6 @@
 .washi--camellia { --washi: rgba(var(--camellia-rgb), 0.24); }
 .washi--pine { --washi: rgba(var(--pine-rgb), 0.28); }
 .washi--top { top: -10px; left: 50%; translate: -50% 0; rotate: -3deg; }
-.washi--corner-left { top: -6px; left: -18px; rotate: -32deg; }
-.washi--corner-right { top: -6px; right: -18px; rotate: 32deg; }
 
 /* A small coloured index tab sitting on a sheet's top edge. */
 .paper-tab {

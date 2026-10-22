@@ -2,6 +2,8 @@
 
 ## Current Task
 
+2026-10-22 code-first visual redesign: complete on `feature/code-first-ui` (a worktree; not merged, pushed or deployed). The new tokens, shared paper pieces and image rules are in findings.md under Visual System. The verification record is in progress.md.
+
 2026-10-21 album editing/deletion: complete. Implemented manager edit/delete, shared creation/edit SortableJS photo grid, immediate edit uploads, confirmed discard/delete and final order publication. Vitest: 72 files / 460 passed; typecheck/build passed. Direct CUA/Edge drag/save/delete and desktop/390px checks used isolated synthetic APIs. No production acceptance or deployment.
 
 2026-10-21 production deployment: complete under explicit owner authorization. Full current Web and matching backend are active, preserving the previous release. All 129 HTTPS static files match the local build; the online login form renders with no captured browser errors. No production sign-in or write flow was executed. Fresh Vitest: 70 files / 451 tests passed; production build (including vue-tsc) passed. No UI source changes.
@@ -39,4 +41,4 @@ Read root AGENTS.md and task_plan.md, then [findings](findings.md), [progress](p
 
 ## Known Items, Not Scheduled
 
-The 390px home-page overflow, the pre-existing issues listed in findings.md, external maps, and complete write/permission flows. Do not begin fixes or redesigns without a new request.
+The pre-existing issues listed in findings.md, external maps, and complete write/permission flows. Do not begin fixes or redesigns without a new request.

@@ -8,6 +8,33 @@ Ten modules live under src/modules: home, album, wishes, diary, story, messages,
 
 [src/shell](src/shell) holds the journal route shell: the hero carousel, scroll reveal, nav fusion and their styles ([journal-shell.css](src/shell/journal-shell.css)) that wrap every regular route. Its classes are `journal-*` (journal-shell, journal-stage, journal-nav, journal-hero-*); other pages' stylesheets may target them. It reads Home data only through the home module's entry. Home's stylesheets hold only Home's rules and load with HomeView; shared label styles (`.eyebrow`) live in the global base styles.
 
+## Visual System (code-first, 2026-10-22)
+
+The Web UI is drawn in code, not bitmaps. The direction, chosen by the owner, is "snow and lamplight": a snow-white ground, night-blue ink, lamplight amber, camellia red for love and primary actions, and pine green for labels and done states. The paper/journal mood stays, but every surface is HTML, CSS or inline SVG.
+
+- **Tokens** live in [00-tokens.css](src/styles/00-tokens.css):
+  - palette (`--snow`, `--sheet`, `--ink`, `--ink-soft`, `--frost`, `--camellia`, `--lamp`, `--pine`, `--night`, plus `-wash`, `-deep` and `-rgb` variants);
+  - type roles: `--font-display` (Ma Shan Zheng, falling back to Kaiti) for page titles, `--font-heading` (Kaiti) for card and dialog titles, `--font-body` (Noto Serif SC, falling back to Songti) for reading text, `--font-ui` (system sans) for dates, counts and chips;
+  - a 1.25 type scale, spacing, radius, shadow, and the inline `--grain` noise and `--ruled` lines.
+- **Legacy tokens.** Older names (`--coral`, `--paper`, `--line`, `--muted` and so on) point at the palette. Write new styles against the new names, and never add literal colours: use a token or `rgba(var(--x-rgb), a)`.
+- **Shared pieces.**
+  - Classes in [04-paper.css](src/styles/04-paper.css): `.paper-sheet` (+`--ruled`), `.washi` tape (+`--camellia`/`--pine`/`--top`), `.paper-tab`, `.paper-chip`, `.ui-text`.
+  - Components in [src/components/paper](src/components/paper): `StickerButton` (the one "add" control, used by Album, Diary, Wishes and Story), `PostmarkStamp`, `HeartMark`.
+  - Diary moods are one SVG component, [MoodFace](src/modules/diary/components/MoodFace.vue).
+- **Naive UI.** [naive-theme.ts](src/styles/naive-theme.ts) mirrors the palette with literal values, because Naive needs real colours. Animations must not clear the whole inline `style` of Naive components (`clearProps: 'all'`), because Naive keeps its theme variables there; clear only the animated properties.
+- **Story** uses night glass over the map (`--story-glass*` in [story-night.css](src/modules/story/story-night.css), scoped to `.story-map-page` and the teleported `.moment-editor`) and a paper card for moment details.
+- **Images.**
+  - The remaining bitmaps are content or function only: the two hero storybook paintings, the couple avatars, and four WebGL cloud and fog textures.
+  - Before: 72 files, 7,477,660 bytes. After: 8 files, 1,903,544 bytes.
+  - Do not add decorative bitmaps. Titles, buttons and icons must be real elements, never painted into an image behind a transparent hit area.
+- **Dialogs** (album create/edit, wish create, moment editor) are content-sized sheets: a fixed header and action bar, with a scrolling body.
+- **Copy and data fixes made during the redesign.**
+  - Home's latest-diary card links to /diary.
+  - Message avatars follow the author.
+  - The next-wish strip shows the wish's own note, not the anniversary date.
+  - A wish with no photo shows a placeholder instead of the hero banner.
+  - Diary card tint and tape position come from the entry id, not randomness.
+
 ## Shared and Visual Boundaries
 
 - [SessionRequest](src/http/sessionRequest.ts) handles tokens, JSON/FormData/204, errors, and session expiry. Private-album business failures must not accidentally clear the login session.
@@ -49,10 +76,10 @@ Album editing/deletion is implemented on feature/album-edit. `AlbumImmersiveGall
 
 ## Current Limits
 
-The 390px home-page overflow remains unresolved. Found during the 2026-10-18 browser checks and present before the refactor: closing the new-wish dialog logs two Naive UI slot warnings (its content is v-if'd off while the modal's leave transition still renders it; v-show removes the warnings but flashes the dialog for ~300ms, so it stays); the new-wish dialog's background art shows its baked-in text at narrow widths. At 375px the Diary page is 537px wide, which pushes the write-diary button off-screen. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.
+Resolved by the 2026-10-22 redesign: the 375px Home and Diary overflow (Diary has a phone layout; no page overflows at 1440, 1280, 1024, 820 or 375); the new-wish dialog's baked-in background text (there is no background art); the sideways-scrolling phone nav. Still present: closing the new-wish dialog logs two Naive UI slot warnings. Its content is v-if'd off while the modal's leave transition still renders it; v-show removes the warnings but flashes the dialog for ~300ms, so it stays. Weather cloud sprites drift above dialogs. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.
 
 ## Production Deployment Snapshot (2026-10-21)
 
 The full current frontend and matching backend were deployed under explicit authorization. All 129 HTTPS static files match the local production build. The login form rendered without captured browser console errors; authenticated production interactions were not tested. Previous release files remain available for rollback. No Web source or dependencies changed during deployment.
 
-Album dialog layout (2026-10-22): above 960px the paper dialog keeps a fixed ratio, the form body never scrolls, the left column (date and place share a row; pinned, private and password share a row) ends above the stamp painted into the background, and the photo grid scrolls inside the right column. Once the grid has photos, the decorative upload panel collapses to a compact add strip. Below 960px the dialog uses the stacked layout. Checked at 1440x900, 1280x800, 1024x768, 820x700 and 375x812.
+Album dialog layout (code-first redesign, 2026-10-22): the create/edit dialog is a content-sized paper sheet with a fixed header and action bar. Its body scrolls, and the photo grid scrolls on its own (max 360px). It has two columns above 860px and stacks below that. Once the grid has photos, the dashed drop zone collapses to a compact add strip. The earlier fixed-ratio, stamp-avoiding layout is gone.

@@ -1,5 +1,14 @@
 # Web Progress Baseline
 
+## Code-first visual redesign (2026-10-22, branch `feature/code-first-ui`)
+
+The owner chose "snow and lamplight", kept the hero paintings, ships the light theme only (tokens are ready for a night theme), and wanted SVG mood faces. Decorative bitmaps were replaced with tokens, CSS paper pieces, SVG components and Lucide icons, module by module: foundation + Home + shell, Album, Diary, Wishes, Story, then a phone-layout and QA commit. Images: 72 files / 7.48 MB → 8 files / 1.90 MB (hero art, avatars, WebGL weather textures).
+
+- **Checks:** after every commit, Vitest 72 files / 461 tests, `npm run typecheck`, and finally `npm run build` passed. Assertions that pinned the old bitmaps were rewritten to assert the visible text and elements instead: the WebP entry stickers, the painted dialog backgrounds, the transparent painted buttons, the old modal colour, and the files of the folded Home stylesheets. They live in the AlbumView, DiaryView, WishesView, StoryView, naive-ui-migration and architecture tests. Behaviour assertions are unchanged.
+- **Browser:** checked in the built-in browser against the throwaway stack (`codex-work/album-edit-check/stack.sh`, backend 15182) with a Vite server for the worktree on 15184. Pages: Home, Album (page, create dialog, edit dialog with photos, gallery), Diary (timeline, editor, mood picker), Wishes (boards, create dialog with live preview), Story (filter panel, timeline, detail, editor), Messages, About and logged-out Login.
+- **Overflow:** a scripted horizontal-overflow check found none on any page at 1440, 1280, 1024, 820 and 375.
+- **Not checked:** dark mode (not shipped), real AMap, upload/publish writes, real devices, production.
+
 ## Published album management (2026-10-21)
 
 Implemented manager edit/delete, shared creation/edit SortableJS photo grid, immediate edit uploads, confirmed discard/delete and final order publication. Vitest: 72 files / 460 passed; typecheck/build passed. Direct CUA/Edge drag/save/delete and desktop/390px checks used isolated synthetic APIs. No production acceptance or deployment.
