@@ -42,6 +42,13 @@ _Avoid_: gallery, folder
 A member's unpublished album, diary entry or moment, saved on the server as they create it; at most one per member per kind. Publishing turns it into the real record and removes the draft.
 _Avoid_: temporary album, upload session, autosave record
 
+**Edit draft**:
+The photos a manager has uploaded while editing a published album, held on the server until they save or cancel; at most one per member, never offered for resuming. Saving moves the used photos into the album.
+_Avoid_: staging area, edit session, temp upload
+
+**Album cover**:
+The album's first photo. Choosing a cover moves that photo to the front; there is no separate cover setting.
+
 **Draft image**:
 A photo uploaded into a draft before publishing; owned by the draft, deleted with it if the draft is discarded or the image is not used at publish.
 

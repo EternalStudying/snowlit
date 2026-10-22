@@ -2,6 +2,8 @@
 
 ## Current Task
 
+2026-10-21 album editing/deletion: complete. Implemented AlbumEditor, internal edit drafts, atomic save/delete with after-commit cleanup, stamped private tokens and creation order. Maven: 334 tests passed; real throwaway MySQL/Redis/MinIO smoke: 16/16, with all owned resources removed. Only the drafts.kind comment changed in schema.sql. No retained-service access, deployment or push. Old private tokens invalidate once on eventual deployment.
+
 2026-10-21 production mini-program acceptance: complete. Synchronized the verified authorized WeChat secret to production and corrected provider error classification. Full offline suite: 310 passed. The packaged repair is deployed and the owned local backend restarted with SQL_INIT_MODE=never. Real simulator login/weather and three upload flows passed; test resources were cleaned. See backend/progress.md.
 
 2026-10-21 authorized full-stack activation: complete. Local and production backends are running; public DB-backed and production HTTPS endpoints return 200. The full backend package and 129 Web assets match local artifacts; deployed-provider checks passed 16/16. The owner selected the full current backend and matching Web deployment and explicitly approved creating the missing production drafts table; the other sixteen business tables are structurally present. No old production drafts require conversion. Rollback snapshots were taken on the server; SQL_INIT_MODE stays never and other services/data remain preserved.

@@ -21,14 +21,14 @@ Inside features:
 
 | Feature | Modules |
 |---|---|
-| album | `AlbumModule` (published catalog, daily likes/views, highlights), `AlbumPublisher` (publication validation, insertion and upload policies), `AlbumPrivateAccess` (password unlock, failure lock, access tokens); package-private `Albums` holds shared lookups and response mapping |
+| album | `AlbumModule` (published catalog, daily likes/views, highlights), `AlbumPublisher` (creation validation, insertion and upload policies), `AlbumEditor` (published-album editing and deletion), `AlbumPrivateAccess` (password unlock, failure lock, access tokens); package-private `Albums` holds shared lookups and response mapping |
 | diary | `DiaryModule`; package-private `DiaryMarkdown` reads title, summary and image URLs from Markdown |
 | home | `HomeModule` composes the overview from other features' modules; `MemberLocations` owns each member's stored location (Diary uses it for weather snapshots) |
 | weather | `WeatherModule`; `WeatherCondition` is the typed condition (label + state/variant/precipitation) the gateway reports |
 
 Features read each other only through modules: `DiaryModule.latestShared`, `AlbumModule.latestPublicPhoto/photoCount`, `WishModule.latest/totals`, `MessageModule.latest/count`. `ArchitectureTests.mappersOnlyQueryTheirOwnFeature` fails when a mapper imports another feature.
 
-Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. Modules have one constructor and take the shared `Clock` bean; tests pass a fixed clock. `SpringModuleWiringTests` covers every business module plus `ImageIntake`, `AuthSessions`, `DraftModule`, `AlbumPublisher`, `AlbumPrivateAccess` and `MemberLocations`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
+Do not restore retired packages, per-domain image storage classes, or single-implementation service/Impl layers. Modules have one constructor and take the shared `Clock` bean; tests pass a fixed clock. `SpringModuleWiringTests` covers every business module plus `ImageIntake`, `AuthSessions`, `DraftModule`, `AlbumPublisher`, `AlbumEditor`, `AlbumPrivateAccess` and `MemberLocations`. Modules using `@Transactional` (AlbumModule, DiaryModule) must stay non-final.
 
 Defensive style: trust framework guarantees (generated ids, required bodies, injected beans, non-null columns) and let unexpected infrastructure failures surface. Null handling belongs only where data is genuinely optional (nullable columns, optional request fields, absent rows).
 
@@ -51,6 +51,8 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 
 ## Unified Drafts
 
+Published-album edits use the internal `DraftKind.ALBUM_EDIT` value `album_edit`, with `fields_json={"albumId": id}` and the existing album image format. The drafts API does not resolve either album_edit or album-edit. Starting an edit replaces the member's previous edit draft; cancelling is idempotent even after album deletion. Creation drafts remain independent.
+
 `DraftModule` owns one `drafts` row per `(user_id, kind)` for album, diary and moment. Its annotated mapper never writes another domain's tables. Publication enters the narrow `AlbumModule.createFromDraft`, `DiaryModule.createFromDraft` and `StoryModule.createFromDraft` methods. The album helper retains the existing original/WebP-preview policies; diary and story draft uploads share their edit-upload policies.
 
 - `GET/PUT/DELETE /api/drafts/{kind}` read, replace fields, or discard. `POST .../images`, `DELETE .../images/{imageId}`, and `POST .../publish` own media and publication. Kind URLs contain no draft or member id.
@@ -62,7 +64,17 @@ Defensive style: trust framework guarantees (generated ids, required bodies, inj
 - The owner superseded the original 300-Web/9-mini split with a **50-photo album cap everywhere**. Native selection remains at most nine per picker call across batches. Older over-cap drafts remain intact and can be reduced before publication. Diary/moment image limits remain 20/3.
 - Old album draft endpoints, lifecycle methods/VOs and `ALBUM_DRAFT_EXISTS` are removed. Catalog, detail, activity and public highlights remain published-only. Existing diary/story upload endpoints remain available for editing.
 
-Only schema.sql changes SQL: drafts is added after moments; all 16 existing table definitions are unchanged. Retained databases with SQL_INIT_MODE=never need a reviewer-approved, backed-up, one-time table creation and conversion of old album drafts. This implementation did **not** inspect or migrate retained databases, restart services or push.
+The earlier unified-drafts change added drafts after moments; all 16 pre-existing table definitions stayed unchanged. Album editing changes only the drafts.kind column comment and requires no migration. Installations predating the earlier drafts module need its separately approved table creation/legacy-draft conversion; album editing itself needs neither. This implementation did **not** inspect or migrate retained databases, restart services or push.
+
+## Published Album Management
+
+`AlbumEditor` owns manager-only `POST /api/albums/{id}/edit`, `POST /edit/photos`, `DELETE /edit/photos/{draftImageId}`, `DELETE /edit`, `PUT /api/albums/{id}` and `DELETE /api/albums/{id}`. Either manager may manage any published album without a private access token. Responses never expose object names or password hashes; detail includes root-level canManage and edit metadata includes hasPassword.
+
+Save locks the album before its edit draft, validates everything before writes, and atomically updates fields/password, photo membership and contiguous order. The first preview is the cover; pinned uses sort_order 10/100. Provenance, creation/publication times and activity counts remain unchanged. New photos use creation defaults; removed and unused objects are deleted best effort only after commit. Delete locks the album and relies on existing cascades before storage cleanup; another manager's edit draft survives until cancellation/replacement. The shared cap remains 50. Creation/editing share field checks, including the owner-approved ALBUM_TITLE_TOO_LONG, ALBUM_DESCRIPTION_TOO_LONG and ALBUM_LOCATION_TOO_LONG codes.
+
+`PUT /api/drafts/album/images/order` moves listed ids first while retaining unlisted images in relative order and ignoring unknown ids. Album publish accepts imageOrder and applies it under the same draft transaction.
+
+Private tokens carry the first 16 SHA-256 hex characters of the current salted password hash. Changing or clearing the hash clears album_locks and invalidates earlier tokens. **Rollout:** deploying this backend invalidates pre-stamp tokens once; members must re-enter private album passwords. Public albums do not check tokens. This feature has not been deployed.
 
 ## Images and Object Storage
 

@@ -1,5 +1,9 @@
 # Backend Progress Baseline
 
+## Published album management (2026-10-21)
+
+Implemented AlbumEditor, internal edit drafts, atomic save/delete with after-commit cleanup, stamped private tokens and creation order. Maven: 334 tests passed; real throwaway MySQL/Redis/MinIO smoke: 16/16, with all owned resources removed. Only the drafts.kind comment changed in schema.sql. No retained-service access, deployment or push. Old private tokens invalidate once on eventual deployment.
+
 ## Production Mini-program Notice (2026-10-21)
 
 After the owner reviewed the wording and selected title v1.2.0, inserted one enabled miniprogram notice (id 16, version 1.2.0) with five approved items. Existing notices and notice_mutes stayed unchanged; a restricted pre-insert snapshot and guarded rollback are retained on the server. Authenticated HTTPS reads returned the exact mini notice and unchanged Web notice. The expired simulator session initially returned 401; a fresh native WeChat verification session passed and was immediately revoked. No schema, application source, configuration, restart, binding or simulator auth-cache change. Evidence: ignored codex-work/mini-notice-20261021/.

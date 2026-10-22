@@ -6,7 +6,7 @@ This is the current product baseline. See the [technical specification](technica
 
 The native WeChat Mini Program is a lightweight companion to the couple's shared record space. It reuses the Web application's Spring Boot backend, accounts, permissions, and media storage. Its main tasks are browsing updates, diaries, moments, albums, and wishes, plus lightweight editing and feedback. Do not introduce a second business data source or cloud development by default.
 
-Implemented features include WeChat login and existing-account binding, the home dashboard, diaries, a public moments map and list, manager editing, lightweight album creation, wish state changes, profile editing, notices, and feedback.
+Implemented features include WeChat login and existing-account binding, the home dashboard, diaries, a public moments map and list, manager editing, album creation/editing/deletion, wish state changes, profile editing, notices, and feedback.
 Not currently provided: albums above 50 photos or resumable binary uploads, map-based location picking, images when creating/editing wishes, feedback history, notice history, subscription messages, or payments. These are scope boundaries, not scheduled requirements.
 
 ## Identity and Permissions
@@ -15,7 +15,7 @@ Not currently provided: albums above 50 photos or resumable binary uploads, map-
 | --- | --- | --- |
 | Guest | Home introduction and public moments list/details | No private home, album, wish, or notice requests |
 | Signed-in user | Home, albums, wishes, profile, feedback, and permitted diaries | Private diaries are author-only; diary updates/deletion require authorship |
-| Manager | Create/edit/delete moments and wishes; create albums | Current backend manager IDs are 1 and 2; client visibility cannot grant permission |
+| Manager | Create/edit/delete moments, wishes and any published album | Current backend manager IDs are 1 and 2; client visibility cannot grant permission |
 
 WeChat login connects existing Snowlit accounts; it does not register new accounts. Users must actively accept the service agreement and privacy policy before login. A bound account signs in directly; an unbound identity uses a fresh WeChat code plus existing account credentials. Binding conflicts remain explicit errors on the login page.
 The client stores only the business session and necessary display/access caches, never WeChat identity secrets. Logout clears session-related caches. Expired sessions prompt login and return to the intended page afterward.
@@ -32,7 +32,7 @@ There are 17 registered pages and no business subpackages. Five tabs are Home, D
 | `pages/login` | WeChat login and existing-account binding |
 | `pages/diary`, `pages/diary-detail`, `pages/diary-edit` | Signed-in diary browsing/editing, subject to backend visibility and authorship |
 | `pages/story`, `pages/story-detail`, `pages/story-edit` | Public map/details; editing requires management permission |
-| `pages/albums`, `pages/album-detail`, `pages/album-edit` | Signed-in listing, unlocking/previewing, and lightweight creation; creation requires management permission |
+| `pages/albums`, `pages/album-detail`, `pages/album-edit` | Signed-in listing and unlocking/previewing; creation, editing and deletion require management permission |
 | `pages/wishes`, `pages/wish-detail`, `pages/wish-edit` | Signed-in wishes/details; editing requires management permission |
 | `pages/profile`, `pages/profile-edit`, `pages/feedback` | Current account, notices, profile editing, and feedback |
 
@@ -59,14 +59,19 @@ Signed-in users browse published albums with pagination, private locks, pinning,
 
 Managers create albums through server drafts, with a shared 50-photo limit on both clients and the backend (owner decision). Native picking selects up to nine photos each time and supports multiple batches. A shared draft with more than nine photos restores all images without re-upload; older over-cap drafts are never truncated and can be reduced before publishing.
 
-When photos carry shooting dates or GPS, untouched album date/place fields fill from the earliest shot and the first resolved GPS photo, retaining the existing settled-field rules. Every photo keeps its own available date/place. Metadata reading and place lookup finish before its upload. Missing details stay unknown in the draft; publication requires an album date and uses it for a photo without a shooting date, as confirmed by the owner. Missing places stay empty. Removed-photo callbacks cannot fill the form. Existing albums are not rewritten.
+When photos carry shooting dates or GPS, untouched album date/place fields fill from the earliest shot and the first resolved GPS photo, retaining the existing settled-field rules. Every photo keeps its own available date/place. Metadata reading and place lookup finish before its upload. Missing details stay unknown in the draft; publication requires an album date and uses it for a photo without a shooting date, as confirmed by the owner. Missing places stay empty. Removed-photo callbacks cannot fill the form. Existing album fields change only through an explicit save.
+
+Managers edit or delete any published album from its detail action area. Editing reuses the creation page for title, description, date, place, visibility/password and pinned. New photos retain their own EXIF date/place; existing album fields are already settled and are never filled from those photos. Blank passwords retain an existing private password; public-to-private requires one. Save waits for uploads, applies all changes together, refreshes open detail/list/Home pages, and returns. Leaving changed edits asks “放弃修改？”; cancellation removes newly uploaded photos. A save to a deleted album returns to the list.
+
+Both creation and editing use the shared long-press photo grid: drag across rows to reorder; the first photo is always the cover. Tapping opens 预览, 设为封面 (except on the first), and 删除. An edit must retain at least one photo and at most 50. Deletion confirms the title and photo count, removes the album/photos permanently, refreshes list/Home and returns; an already deleted album is treated as success.
 
 ### Creation Drafts
+
+Editing published albums has no resumable draft or field autosave. New photos are held in an internal edit draft until save/cancel; the ordinary creation draft is untouched.
 
 Albums, diary entries and moments each have one server draft per member. On returning to a new-entry page, the form stays locked until the member chooses to continue the saved fields/images or discard the draft. The dialog shows its last save time. Discard deletes the draft and its owned images; failures keep the draft available for retry.
 
 The first field edit or photo pick starts a draft. Fields autosave after 1.5 seconds without typing and immediately when the page hides or unloads. Picked images upload immediately; a quiet footer reports saving, last save time or retryable failure. There are no autosave toasts. Publishing waits for uploads and field saves, submits the newest form, creates the real record and removes the draft. A validation/date conflict retains the latest fields and images. Private album passwords are never autosaved and must be entered again after recovery. Changing account stops autosave and clears the former member's page state. Editing existing diaries/moments retains its original APIs and has no drafts.
-
 
 ### Wishes, Profile, and Feedback
 

@@ -1,5 +1,9 @@
 # Web Progress Baseline
 
+## Published album management (2026-10-21)
+
+Implemented manager edit/delete, shared creation/edit SortableJS photo grid, immediate edit uploads, confirmed discard/delete and final order publication. Vitest: 72 files / 460 passed; typecheck/build passed. Direct CUA/Edge drag/save/delete and desktop/390px checks used isolated synthetic APIs. No production acceptance or deployment.
+
 ## Full Production Deployment (2026-10-21)
 
 Under explicit owner authorization, deployed the complete current backend and matching Web build to the existing server, started the previously stopped local backend, and restarted only snowlit-backend.service. Production now uses the configured Geoapify CDN origin with Open-Meteo unchanged. Both environments retain SQL_INIT_MODE=never. The owner separately approved creating the sole missing drafts table; production had no old drafts to convert. The original sixteen business tables' definitions and data matched the pre-deployment backup. Existing accounts, credentials and media were preserved.
