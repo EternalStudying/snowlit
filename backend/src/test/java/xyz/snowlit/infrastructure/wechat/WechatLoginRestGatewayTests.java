@@ -72,6 +72,38 @@ class WechatLoginRestGatewayTests {
         server.verify();
     }
 
+    @Test
+    void exchangeCodeRejectsAnAlreadyUsedCodeAsUnauthorized() {
+        assertWechatFailure(40163, "WECHAT_LOGIN_CODE_INVALID", ApplicationFailure.Kind.UNAUTHENTICATED);
+    }
+
+    @Test
+    void exchangeCodeReportsInvalidAppCredentialsAsServerConfigurationFailure() {
+        assertWechatFailure(40013, "WECHAT_LOGIN_NOT_CONFIGURED", ApplicationFailure.Kind.INTERNAL);
+        assertWechatFailure(40125, "WECHAT_LOGIN_NOT_CONFIGURED", ApplicationFailure.Kind.INTERNAL);
+    }
+
+    @Test
+    void exchangeCodeReportsProviderErrorsAsDependencyFailures() {
+        assertWechatFailure(-1, "WECHAT_CODE2SESSION_FAILED", ApplicationFailure.Kind.DEPENDENCY_FAILURE);
+        assertWechatFailure(45011, "WECHAT_CODE2SESSION_FAILED", ApplicationFailure.Kind.DEPENDENCY_FAILURE);
+    }
+
+    private void assertWechatFailure(int errcode, String expectedCode, ApplicationFailure.Kind expectedKind) {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.weixin.qq.com/sns/jscode2session?appid=app-id&secret=app-secret&js_code=wx-code&grant_type=authorization_code"))
+                .andRespond(withSuccess("{\"errcode\":" + errcode + ",\"errmsg\":\"example provider error\"}", MediaType.TEXT_PLAIN));
+        WechatLoginRestGateway client = client("app-id", "app-secret", "https://api.weixin.qq.com/sns/jscode2session", builder);
+
+        assertThatThrownBy(() -> client.exchangeCode("wx-code"))
+                .isInstanceOfSatisfying(ApplicationFailure.class, failure -> {
+                    assertThat(failure.code()).isEqualTo(expectedCode);
+                    assertThat(failure.kind()).isEqualTo(expectedKind);
+                });
+        server.verify();
+    }
+
     private WechatLoginRestGateway client(String appId, String appSecret, String url) {
         return client(appId, appSecret, url, RestClient.builder());
     }

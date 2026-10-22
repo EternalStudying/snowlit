@@ -4,6 +4,7 @@ import xyz.snowlit.weather.WeatherCondition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -18,7 +19,39 @@ class GlobalWeatherGatewayTests {
     private final RestClient.Builder builder = RestClient.builder();
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
     private final Coordinates point = new Coordinates(52.52048, 13.40572);
-    private final GlobalWeatherGateway gateway = new GlobalWeatherGateway(builder.build(), "test-key", "");
+    private final GlobalWeatherGateway gateway = new GlobalWeatherGateway(builder.build(), "test-key", "", "https://api.geoapify.com");
+
+    @ParameterizedTest
+    @ValueSource(strings = {"https://geocoder.example", "https://geocoder.example/", "  https://geocoder.example///  "})
+    void configuredOriginRoutesBothGeocodingCallsAndLeavesWeatherUnchanged(String baseUrl) {
+        var configured = new GlobalWeatherGateway(builder.build(), "test-key", "", baseUrl);
+        server.expect(requestTo("https://geocoder.example/v1/geocode/reverse?lat=52.52048&lon=13.40572&type=city&format=json&lang=zh&apiKey=test-key"))
+                .andExpect(headerDoesNotExist("Authorization"))
+                .andRespond(withSuccess("""
+                    {"results":[{"city":"Example Borough","country":"Example Country","result_type":"suburb"}]}
+                    """, MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://geocoder.example/v1/boundaries/part-of?lat=52.52048&lon=13.40572&boundaries=administrative&geometry=point&lang=zh&apiKey=test-key"))
+                .andRespond(withSuccess("""
+                    {"features":[{"properties":{"name":"Example Borough","city":"Example City"}}]}
+                    """, MediaType.APPLICATION_JSON));
+        expectWeather("{\"temperature_2m\":17,\"weather_code\":0}");
+
+        var location = configured.reverseGeocode(point).orElseThrow();
+        assertThat(location.city()).isEqualTo("Example City");
+        assertThat(location.district()).isEqualTo("Example Borough");
+        assertThat(configured.weather(point).orElseThrow().temperature()).isEqualTo(17);
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "  "})
+    void blankOriginRetainsTheOfficialDefault(String baseUrl) {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.geoapify.com/v1/geocode/reverse?")))
+                .andRespond(withSuccess("{\"results\":[{\"city\":\"Example City\"}]}", MediaType.APPLICATION_JSON));
+        assertThat(new GlobalWeatherGateway(builder.build(), "test-key", "", baseUrl)
+                .reverseGeocode(point).orElseThrow().city()).isEqualTo("Example City");
+        server.verify();
+    }
 
     @Test
     void preservesOriginalCoordinatesAndRejectsInvalidValues() {
@@ -99,7 +132,7 @@ class GlobalWeatherGatewayTests {
     @Test
     void missingKeySkipsGeocodingButWeatherStillWorks() {
         expectWeather("{\"temperature_2m\":0,\"weather_code\":0,\"is_day\":0}");
-        var unconfigured = new GlobalWeatherGateway(builder.build(), "", "");
+        var unconfigured = new GlobalWeatherGateway(builder.build(), "", "", "https://geocoder.example");
         assertThat(unconfigured.reverseGeocode(point)).isEmpty();
         assertThat(unconfigured.weather(point).orElseThrow().temperature()).isZero();
         server.verify();
@@ -162,7 +195,7 @@ class GlobalWeatherGatewayTests {
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://customer-api.open-meteo.com/v1/forecast?")))
                 .andExpect(queryParam("apikey", "paid-test-key"))
                 .andRespond(withSuccess("{\"current\":{\"weather_code\":0}}", MediaType.APPLICATION_JSON));
-        assertThat(new GlobalWeatherGateway(builder.build(), "", "paid-test-key").weather(point)).isPresent();
+        assertThat(new GlobalWeatherGateway(builder.build(), "", "paid-test-key", "https://geocoder.example").weather(point)).isPresent();
         server.verify();
     }
 

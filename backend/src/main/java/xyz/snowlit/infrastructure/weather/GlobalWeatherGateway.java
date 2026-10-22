@@ -17,23 +17,28 @@ import java.util.Optional;
 @Component
 public final class GlobalWeatherGateway implements WeatherGateway {
 
+    private static final String DEFAULT_GEOAPIFY_BASE_URL = "https://api.geoapify.com";
     private static final String CURRENT_FIELDS = "temperature_2m,relative_humidity_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m";
     private static final String[] WIND_DIRECTIONS = {"北风", "东北风", "东风", "东南风", "南风", "西南风", "西风", "西北风"};
     private static final double[] BEAUFORT_LIMITS = {0.3, 1.6, 3.4, 5.5, 8.0, 10.8, 13.9, 17.2, 20.8, 24.5, 28.5, 32.7};
 
     private final RestClient client;
+    private final String geoapifyBaseUrl;
     private final String geoapifyKey;
     private final String openMeteoKey;
 
     @Autowired
     public GlobalWeatherGateway(RestClient.Builder builder,
             @Value("${geoapify.key:}") String geoapifyKey,
-            @Value("${open-meteo.key:}") String openMeteoKey) {
-        this(configuredClient(builder), geoapifyKey, openMeteoKey);
+            @Value("${open-meteo.key:}") String openMeteoKey,
+            @Value("${geoapify.base-url:https://api.geoapify.com}") String geoapifyBaseUrl) {
+        this(configuredClient(builder), geoapifyKey, openMeteoKey, geoapifyBaseUrl);
     }
 
-    GlobalWeatherGateway(RestClient client, String geoapifyKey, String openMeteoKey) {
+    GlobalWeatherGateway(RestClient client, String geoapifyKey, String openMeteoKey, String geoapifyBaseUrl) {
         this.client = client;
+        String baseUrl = Text.trim(geoapifyBaseUrl);
+        this.geoapifyBaseUrl = (baseUrl.isBlank() ? DEFAULT_GEOAPIFY_BASE_URL : baseUrl).replaceAll("/+$", "");
         this.geoapifyKey = Text.trim(geoapifyKey);
         this.openMeteoKey = Text.trim(openMeteoKey);
     }
@@ -52,7 +57,7 @@ public final class GlobalWeatherGateway implements WeatherGateway {
         }
         try {
             JsonNode response = client.get()
-                    .uri("https://api.geoapify.com/v1/geocode/reverse?lat={lat}&lon={lon}&type=city&format=json&lang=zh&apiKey={key}",
+                    .uri(geoapifyBaseUrl + "/v1/geocode/reverse?lat={lat}&lon={lon}&type=city&format=json&lang=zh&apiKey={key}",
                             coordinates.latitude(), coordinates.longitude(), geoapifyKey)
                     .retrieve().body(JsonNode.class);
             JsonNode results = response == null ? null : response.get("results");
@@ -85,7 +90,7 @@ public final class GlobalWeatherGateway implements WeatherGateway {
         }
         try {
             JsonNode response = client.get()
-                    .uri("https://api.geoapify.com/v1/boundaries/part-of?lat={lat}&lon={lon}&boundaries=administrative&geometry=point&lang=zh&apiKey={key}",
+                    .uri(geoapifyBaseUrl + "/v1/boundaries/part-of?lat={lat}&lon={lon}&boundaries=administrative&geometry=point&lang=zh&apiKey={key}",
                             coordinates.latitude(), coordinates.longitude(), geoapifyKey)
                     .retrieve().body(JsonNode.class);
             JsonNode features = response == null ? null : response.get("features");

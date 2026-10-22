@@ -27,6 +27,8 @@ npm run dev
 
 Vite defaults to port 5173 and proxies /api to http://localhost:8080. The dev command opens a browser. Infrastructure containers do not start the Web client or backend automatically.
 
+The mini program selects its backend separately in `miniprogram/constants/config.js`. Its current active profile is `dev`, using `http://localhost:8080` for API calls/uploads and relative media. Recompile after changing profiles. Select `prod` and recompile before uploading to use `https://snowlit.xyz`. Server/Web deployment does not alter an already compiled mini-program package.
+
 ```sh
 cd frontend
 npm ls --all
@@ -55,6 +57,7 @@ Configure a suitable MySQL database, Redis, and object storage before starting t
 | WECHAT_MINIPROGRAM_APP_ID / WECHAT_MINIPROGRAM_APP_SECRET | Server-side WeChat login credentials |
 | WECHAT_MINIPROGRAM_DEV_BIND_USER_ID | Optional explicit dev-only automatic binding target |
 | GEOAPIFY_KEY | Global reverse-geocoding credential; missing key leaves location unknown |
+| GEOAPIFY_BASE_URL | Geoapify origin for reverse and boundary lookups; defaults to https://api.geoapify.com |
 | OPEN_METEO_API_KEY | Optional commercial weather credential |
 | SQL_INIT_MODE | Dev defaults always; explicitly use never with retained data |
 
@@ -70,6 +73,7 @@ SQL_INIT_MODE=never
 WECHAT_MINIPROGRAM_APP_ID=
 WECHAT_MINIPROGRAM_APP_SECRET=
 GEOAPIFY_KEY=
+GEOAPIFY_BASE_URL=https://geoapify-api-htz.b-cdn.net
 OPEN_METEO_API_KEY=
 ```
 
@@ -78,6 +82,8 @@ The real file is ignored by Git, mode 600, and outside Maven resources. Dev supp
 With SQL initialization disabled, the server can start listening on 8080 before it first connects to MySQL. A missing or wrong database password therefore causes HTTP 500 on login and public database-backed reads even though startup succeeded. Verify a database-backed endpoint, not just the listening port. Do not enable SQL initialization to diagnose a connection problem.
 
 Geoapify credentials can be created through [MyProjects](https://myprojects.geoapify.com/). Weather and reverse geocoding are independent. Licensing and provider-account terms must be checked for the intended deployment; local code does not establish subscription or commercial-use eligibility. The Web map key is independent of backend weather credentials.
+
+`GEOAPIFY_BASE_URL` (Spring property `geoapify.base-url`) selects the HTTPS origin for both reverse geocoding and administrative-boundary enrichment. Do not append `/v1`; surrounding whitespace and trailing slashes are removed. Omitted or blank configuration retains `https://api.geoapify.com`. This computer's ignored local configuration uses `https://geoapify-api-htz.b-cdn.net`, a public DNS alias of the [official EU endpoint](https://www.geoapify.com/maps-geocoding-routing-apis-gdpr-compliant-application/) that passed direct server checks. The alias is not a separately documented stable API contract and may change; keep the origin configurable. Environment variables override the dev local file, and production must set the variable in its deployment environment. Production WeChat credentials are also independent of dev local.properties: changing the local AppSecret does not synchronize the server. Verify the intended AppID and current secret in the production environment and restart the backend when updating them. Restart the backend after changing it. The existing Geoapify key, original coordinate precision, TLS validation, timeouts and fallback rules still apply. Open-Meteo's free/customer endpoint selection is independent and unchanged.
 
 ### Local MinIO Configuration
 

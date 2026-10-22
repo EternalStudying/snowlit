@@ -1,5 +1,14 @@
 # Web Progress Baseline
 
+## Full Production Deployment (2026-10-21)
+
+Under explicit owner authorization, deployed the complete current backend and matching Web build to the existing server, started the previously stopped local backend, and restarted only snowlit-backend.service. Production now uses the configured Geoapify CDN origin with Open-Meteo unchanged. Both environments retain SQL_INIT_MODE=never. The owner separately approved creating the sole missing drafts table; production had no old drafts to convert. The original sixteen business tables' definitions and data matched the pre-deployment backup. Existing accounts, credentials and media were preserved.
+
+The server jar matches the local packaged artifact SHA-256; all 129 HTTPS static files match the local Web build. Production public story reads pass (200), protected weather/drafts require login (401), and the retired album draft route returns 404. Fresh frontend checks: 451 tests, vue-tsc/build passed. The deployed gateway with live process provider configuration passed 8 location and 8 weather checks in an isolated context. The public login form rendered with no captured browser errors. Other service MainPIDs were unchanged. Root-only rollback material is retained on the server; ignored detailed evidence is under codex-work/geoapify-deploy-20261021/.
+
+Authenticated production write/login/geolocation flows and mini-program simulator/device checks were not run; the owner will upload the mini program. Existing sessions need sign-in again. Changes remain uncommitted on codex/geoapify-configurable-endpoint, with no push; the owner's untracked specification is untouched.
+
+
 ## Unified Drafts (2026-10-20)
 
 The album gateway/lifecycle uses the unified drafts API, explicit save only. Resumed private passwords are re-entered; missing dates default to local today and are editable. Saved pinned state survives recovery. The shared album cap is 50. Latest checks: 70 files / 450 Vitest tests, vue-tsc and production build passed; live browser/device checks were not run. Source changes are committed on `feature/drafts` (`2f17921 / b096289`); no push. Detailed command history and resolved failure outputs are in [the implementation report](../docs/drafts-implementation-report.md).

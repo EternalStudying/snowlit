@@ -75,6 +75,8 @@ Only schema.sql changes SQL: drafts is added after moments; all 16 existing tabl
 
 ## Configuration and Runtime
 
+On 2026-10-21 the owner authorized a full current backend/Web production deployment and separately approved the missing drafts table. Production retains its existing credentials, prod profile, data and media with SQL_INIT_MODE=never. GEOAPIFY_BASE_URL and the existing authorized provider key are now supplied through the mode-600 production environment; the local backend is also running. Backups and receipt paths are recorded in progress.md / ignored deployment evidence.
+
 - Dev defaults: port 8080, MySQL 127.0.0.1:3306/snowlit_dev, Redis 6379, and MinIO 9000. Actual configuration and environment variables remain authoritative.
 - Dev SQL initialization defaults to always and can recreate/reseed tables. Prod defaults to never. Explicitly use never for retained data and perform migrations separately.
 - The [local configuration example](config/local.properties.example) corresponds to ignored local.properties: mode 600, outside resources, imported only by dev from root/backend working directories. Environment variables take precedence.
@@ -89,6 +91,8 @@ Geoapify and Open-Meteo receive the original WGS84 coordinates after finite/rang
 
 Complete results cache for 20 minutes, partial/failure results for 2 minutes, with about 2048 exact-coordinate entries and same-coordinate request coalescing. Expiry uses Instant. Geoapify credentials remain backend-only; an Open-Meteo commercial key is optional.
 
+`GEOAPIFY_BASE_URL` / `geoapify.base-url` selects the origin for both reverse and administrative-boundary requests. Omitted or blank values retain `https://api.geoapify.com`; whitespace and trailing slashes are removed. The ignored dev local configuration currently selects `https://geoapify-api-htz.b-cdn.net`, a public DNS alias of the official EU endpoint that passed direct server checks. It is not a separately guaranteed API hostname and may change. Production sets this variable through its deployment environment; it does not read dev local.properties. Open-Meteo host/key selection, precise coordinates, timeouts and fallback behaviour are unchanged.
+
 HomeVo contains couple, dailyNote, personStatuses, distance, latest, and stats. Seed accounts are demo_a/demo_b with blank location; existing accounts, bindings, and actual content remain preserved.
 
 ## Deliberately Not Done
@@ -100,3 +104,7 @@ HomeVo contains couple, dailyNote, personStatuses, distance, latest, and stats. 
 ## Verification Limits
 
 Recorded results are in progress.md. Local code does not establish real-device behavior, production state, registration ownership, WeChat backend settings, or metadata in existing uploaded photos.
+
+## WeChat Production Configuration and Failures (2026-10-21)
+
+Production configuration is separate from ignored dev local.properties. The stale server AppSecret was synchronized only after the authorized local credential was validated with the official API; AppID and bindings stayed unchanged. Invalid/reused code errors (40029/40163) map to authentication failure, invalid application credentials (40013/40125) map to configuration failure, and other provider errors map to dependency failure. Credentials and complete upstream bodies must remain outside project artifacts.

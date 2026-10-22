@@ -109,7 +109,7 @@ for (const kind of Object.keys(routes)) {
     assert.equal(c.page.data.draftLocked, false);
     assert.equal(c.page.data.form.title, `Saved ${kind === 'diary' ? 'diary' : kind}`);
     assert.equal(c.page.data[lists[kind]][0].serverId, 'saved-image');
-    assert.match(c.page.data[lists[kind]][0].path, /^http:\/\/localhost:8080\/uploads\/saved.jpg$/);
+    assert.equal(c.page.data[lists[kind]][0].path, `${require('../constants/config').config.apiBaseUrl}/uploads/saved.jpg`);
     assert.equal(c.uploads.length, 0, 'resumed photos must never upload again');
     if (kind === 'album') assert.equal(c.page.data.form.privatePassword, '');
     if (kind === 'diary') assert.deepEqual(c.page.data.form.weatherSnapshot, fields.diary.weatherSnapshot);
@@ -136,7 +136,7 @@ for (const kind of Object.keys(routes)) {
     if (kind === 'album') assert.equal(c.uploads[0].filePath, 'wxfile://picked.jpg.compressed');
     if (kind === 'diary') {
       assert.match(c.page.data.form.content, /!\[图片]\(\/uploads\/picked-1.jpg\)/);
-      assert.match(c.page.data.previewBlocks.find((block) => block.type === 'image').url, /^http:\/\/localhost:8080\/uploads\//);
+      assert.equal(c.page.data.previewBlocks.find((block) => block.type === 'image').url, `${require('../constants/config').config.apiBaseUrl}/uploads/picked-1.jpg`);
     }
     fillValid(c, kind); await c.page.onHide();
     assert.equal(c.saves().length, 1);

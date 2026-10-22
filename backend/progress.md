@@ -1,5 +1,44 @@
 # Backend Progress Baseline
 
+## Production Mini-program Notice (2026-10-21)
+
+After the owner reviewed the wording and selected title v1.2.0, inserted one enabled miniprogram notice (id 16, version 1.2.0) with five approved items. Existing notices and notice_mutes stayed unchanged; a restricted pre-insert snapshot and guarded rollback are retained on the server. Authenticated HTTPS reads returned the exact mini notice and unchanged Web notice. The expired simulator session initially returned 401; a fresh native WeChat verification session passed and was immediately revoked. No schema, application source, configuration, restart, binding or simulator auth-cache change. Evidence: ignored codex-work/mini-notice-20261021/.
+
+## Production Mini-program Acceptance (2026-10-21)
+
+Recompiled the mini program and exercised real production WeChat login, native simulator location, Home weather, and album/diary/moment creation uploads. Found a stale production AppSecret: AppID matched local configuration, but the secret differed and WeChat returned 40125. Validated the authorized local secret (invalid-code probe returned 40029), backed up the server environment, synchronized only that secret and restarted the backend. Real UI login and authenticated auth/me passed. No account binding was created or changed.
+
+Fixed WechatLoginRestGateway so invalid/reused codes remain authentication failures, invalid application credentials are configuration failures, and provider errors are dependency failures. Regression tests first reported 2 failures out of 7, then the complete offline backend suite passed 310/310. The packaged fix was deployed with SHA-256 verification and rollback backup, and the owned local backend was restarted with SQL_INIT_MODE=never. A fresh real WeChat exchange against the final production package returned 200; its extra verification session was revoked while the simulator's original session stayed valid.
+
+Native wx.getLocation and the real Home update flow succeeded; the weather endpoint returned 200 with known country/city, condition and temperature, and the page displayed populated weather/place. Normal Home location/weather persistence ran for the current member. Generated images exercised the actual page controls, compression, wx.uploadFile, autosave and native online image decoding for album, diary and moment. Three drafts produced four MinIO objects, verified with signed server-side reads. Public previews matched the MinIO bytes; album originals remained private under the existing policy (anonymous 403). No policy was changed.
+
+All three task-marked drafts were discarded through guarded normal APIs; reads returned no draft and all four signed MinIO reads returned 404. The generated simulator fixture and test memory were removed, chooseMedia was restored, and the simulator was left on Home with auth/me 200. No content was published, no schema initialized, no unrelated service changed, and no mini-program package was uploaded. Fresh native checks passed 184 tests in each of four timezones and syntax checks passed all 133 JS files. Temporary evidence is in ignored codex-work/mini-production-smoke-20261021/.
+
+Native file picking was replaced only with a generated fixture result; physical devices, production WeChat domain/privacy approval and publication were not verified. The existing private developer-tool setting disables legal-domain checking, so these simulator requests do not prove release-domain approval. No commit or push.
+
+
+## Full Production Deployment (2026-10-21)
+
+Under explicit owner authorization, deployed the complete current backend and matching Web build to the existing server, started the previously stopped local backend, and restarted only snowlit-backend.service. Production now uses the configured Geoapify CDN origin with Open-Meteo unchanged. Both environments retain SQL_INIT_MODE=never. The owner separately approved creating the sole missing drafts table; production had no old drafts to convert. The original sixteen business tables' definitions and data matched the pre-deployment backup. Existing accounts, credentials and media were preserved.
+
+The server jar matches the local packaged artifact SHA-256; all 129 HTTPS static files match the local Web build. Production public story reads pass (200), protected weather/drafts require login (401), and the retired album draft route returns 404. Fresh frontend checks: 451 tests, vue-tsc/build passed. The deployed gateway with live process provider configuration passed 8 location and 8 weather checks in an isolated context. The public login form rendered with no captured browser errors. Other service MainPIDs were unchanged. Root-only rollback material is retained on the server; ignored detailed evidence is under codex-work/geoapify-deploy-20261021/.
+
+Authenticated production write/login/geolocation flows and mini-program simulator/device checks were not run; the owner will upload the mini program. Existing sessions need sign-in again. Changes remain uncommitted on codex/geoapify-configurable-endpoint, with no push; the owner's untracked specification is untouched.
+
+
+## Configurable Geoapify Ingress (2026-10-21)
+
+- Started on `codex/geoapify-configurable-endpoint` from main. The tracked tree was clean; the owner's untracked specification remains untouched. No commit or push is authorized.
+- Prior server probes found the default and official EU hostnames unavailable on that route, but the EU endpoint's public CDN alias worked with the existing key. A separate JDK transport probe passed 12 Geoapify and 2 Open-Meteo requests; this does not yet verify the changed application gateway.
+- Implemented one configurable Geoapify origin for reverse/boundary lookups, selected the tested CDN alias in ignored mode-600 local.properties, and updated routing regressions/example/development documentation. Open-Meteo is unchanged. No deployment, retained-service restart or data access.
+- The first Maven invocation ran from the repository root and stopped before tests because that directory has no pom.xml; corrected the working directory to backend.
+- Targeted sandbox run: 101 tests, 0 assertion failures, 58 errors caused by sandbox-blocked Mockito/Byte Buddy JVM attachment; all 43 gateway checks passed. Original XML/text evidence is retained in ignored codex-work/geoapify-config-20261021/sandbox-reports/.
+- Complete `mvn -o test` rerun from backend in the normal host environment: 307 tests, 0 failures/errors/skips. No assertion was weakened or skipped.
+- An initial real-gateway harness bundled all runtime libraries; slow SSH upload was stopped before execution. Its task-owned upload ended with the expected BrokenPipeError. A process-status lookup was also blocked by the sandbox; the permitted host inspection confirmed transfer progress. Changed approach to an 18KB thin jar and read only the already-present public runtime dependencies on the server, verifying all 14 jars against local Maven SHA-256 hashes before use.
+- The actual changed GlobalWeatherGateway and application.yml were wired through an isolated Spring context on the authorized server. Four public city-centre fixtures, two rounds: location 8/8 and weather 8/8 passed. Observed outbound paths: 8 reverse and 6 optional administrative-boundary requests all used the configured CDN; all 8 weather requests used api.open-meteo.com. Country and populated-location checks are not a complete audit of provider hierarchy quality. Structured results and a detailed report are under ignored codex-work/geoapify-config-20261021/.
+- The Java jar/key existed only in remote anonymous memory; no server application configuration or business beans were loaded, and no service/configuration/database/media was changed. No dependency was installed. Local mode-600 settings take effect at the next backend start; no retained backend restart or remote deployment was performed. git diff --check passed. Source changes remain uncommitted and not pushed.
+- A context lookup initially used a nonexistent architecture/SpringModuleWiringTests path; discovery will use the actual file path. No source or verification result was affected.
+
 ## Unified Drafts (2026-10-20)
 
 Unified drafts, narrow publication seams, UTF-8 validation and retired album endpoints are implemented. The 16 previous table definitions are unchanged. The latest complete offline Maven suite passed 301 tests. No retained-service or database rollout checks ran. Source changes are committed on `feature/drafts` (`a77d8e8 / 9af661f / b096289`); no push. Detailed command history and resolved failure outputs are in [the implementation report](../docs/drafts-implementation-report.md).

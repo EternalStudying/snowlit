@@ -2,6 +2,8 @@
 
 ## Current Task
 
+2026-10-21 production deployment: complete under explicit owner authorization. Full current Web and matching backend are active, preserving the previous release. All 129 HTTPS static files match the local build; the online login form renders with no captured browser errors. No production sign-in or write flow was executed. Fresh Vitest: 70 files / 451 tests passed; production build (including vue-tsc) passed. No UI source changes.
+
 2026-10-20 unified drafts: complete on `feature/drafts` (`2f17921 / b096289`). The album gateway/lifecycle uses the unified drafts API, explicit save only. Resumed private passwords are re-entered; missing dates default to local today and are editable. Saved pinned state survives recovery. The shared album cap is 50. Latest checks: 70 files / 450 Vitest tests, vue-tsc and production build passed; live browser/device checks were not run.
 
 2026-10-20 precision disclosure: complete. The top bar now explains that original coordinates reach Geoapify/Open-Meteo, matching the backend change requested by the user. Weather HTTP/refresh checks (11 tests) and the Web production build passed. No Web geolocation/browser interaction was rerun.

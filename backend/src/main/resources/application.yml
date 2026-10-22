@@ -22,6 +22,7 @@ server:
 
 geoapify:
   key: ${GEOAPIFY_KEY:}
+  base-url: ${GEOAPIFY_BASE_URL:https://api.geoapify.com}
 
 open-meteo:
   key: ${OPEN_METEO_API_KEY:}

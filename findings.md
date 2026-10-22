@@ -1,6 +1,14 @@
 # Snowlit Current Findings
 
-## Current Task: Unified Drafts (2026-10-20)
+## Production Mini-program Acceptance (2026-10-21)
+
+Real production login, location/weather and album/diary/moment generated-image uploads passed in the recompiled simulator. Fixed a stale production WeChat secret and misleading provider-error classification; full backend suite now passes 310 tests. Four MinIO objects and their existing public/private access rules were verified, then all task-owned drafts/objects/fixture were cleaned. The simulator retains its valid production session. Native picker, devices and platform domain/privacy approval remain unverified. Detailed results are in progress.md and ignored codex-work/mini-production-smoke-20261021/report.md.
+
+## Current Task: Configurable Geoapify Ingress (2026-10-21)
+
+Implemented GEOAPIFY_BASE_URL for reverse and administrative-boundary requests, retaining the official default. Ignored local configuration selects the previously validated EU CDN alias, which is not a separately guaranteed stable endpoint. Open-Meteo remains unchanged. Full backend suite: 307 passed; the changed Spring gateway and application.yml passed 16 isolated real-provider checks on the authorized server. The owner subsequently authorized full backend/Web deployment, local startup, target backend restart and the sole missing drafts table. These are complete; original sixteen business schemas/data remain unchanged and other services were not restarted. Details and activation instructions are in [development](docs/development.md) and [backend progress](backend/progress.md). Changes are uncommitted on `codex/geoapify-configurable-endpoint`; no push.
+
+## Completed Task: Unified Drafts (2026-10-20)
 
 Implementation is on `feature/drafts`. Backend, Web and native creation drafts are implemented and committed; latest gates passed 301 backend tests, 450 Web tests and 180 native tests in each of four timezones, plus 133 JS syntax checks. The agreed source is `docs/specs/2026-10-20-drafts.md`, intentionally excluded from implementation commits.
 
@@ -37,6 +45,7 @@ Web requests share SessionRequest and drop responses from an earlier session; th
 ## Data, Time, and Configuration
 
 - MySQL and Redis are runtime dependencies; MinIO is used when fully configured, otherwise uploads go to a served local directory. Retained databases require SQL_INIT_MODE=never; dev defaults to always and can recreate/reseed tables.
+- Mini-program constants/config.js currently selects prod: API/upload requests and relative media use https://snowlit.xyz in developer tools and uploaded packages. The retained dev profile is only for intentional local work; source profile changes require recompilation and existing uploaded packages need a new upload.
 - Local database, WeChat and Geoapify credentials are read from backend/config/local.properties: ignored by Git, mode 600, outside application resources. The retained local database also uses SQL_INIT_MODE=never. Environment variables take precedence; prod does not import this file.
 - The retained local MinIO service is fully configured through the same file (all five LOCAL_MINIO_* values). Disk album media and three URL references were migrated on 2026-10-19 with private recovery copies and content verification; new uploads use MinIO. The existing bucket access policy was preserved.
 - Local-disk media URLs are server-relative (`/uploads/...`). Native mini-program image APIs need an absolute origin; album upload responses, list covers and detail photos use `utils/media.js` with mediaBaseUrl or the API origin. Existing absolute CDN URLs are preserved.

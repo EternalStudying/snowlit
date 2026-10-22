@@ -62,7 +62,13 @@ public final class WechatLoginRestGateway implements WechatLoginGateway {
             throw dependencyFailure(null);
         }
         if (response.errcode() != null && response.errcode() != 0) {
-            throw ApplicationFailure.unauthenticated("WECHAT_LOGIN_CODE_INVALID", "微信登录凭证无效");
+            if (response.errcode() == 40029 || response.errcode() == 40163) {
+                throw ApplicationFailure.unauthenticated("WECHAT_LOGIN_CODE_INVALID", "微信登录凭证无效");
+            }
+            if (response.errcode() == 40013 || response.errcode() == 40125) {
+                throw ApplicationFailure.internal("WECHAT_LOGIN_NOT_CONFIGURED", "微信小程序登录配置无效");
+            }
+            throw dependencyFailure(null);
         }
         String openid = Text.trim(response.openid());
         if (openid.isBlank()) {

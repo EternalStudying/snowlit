@@ -2,6 +2,12 @@
 
 ## Current Task
 
+2026-10-21 production mini-program acceptance: complete. Synchronized the verified authorized WeChat secret to production and corrected provider error classification. Full offline suite: 310 passed. The packaged repair is deployed and the owned local backend restarted with SQL_INIT_MODE=never. Real simulator login/weather and three upload flows passed; test resources were cleaned. See backend/progress.md.
+
+2026-10-21 authorized full-stack activation: complete. Local and production backends are running; public DB-backed and production HTTPS endpoints return 200. The full backend package and 129 Web assets match local artifacts; deployed-provider checks passed 16/16. The owner selected the full current backend and matching Web deployment and explicitly approved creating the missing production drafts table; the other sixteen business tables are structurally present. No old production drafts require conversion. Rollback snapshots were taken on the server; SQL_INIT_MODE stays never and other services/data remain preserved.
+
+2026-10-21 configurable Geoapify ingress: complete on `codex/geoapify-configurable-endpoint`, uncommitted and not pushed. GEOAPIFY_BASE_URL controls both geocoding operations; omitted/blank keeps the official default, while ignored local configuration selects the validated CDN alias. Open-Meteo is unchanged. Full offline suite: 307 passed. Isolated changed-gateway server checks: 8 location and 8 weather passed, with both Geoapify request paths observed on the configured host. No existing service was restarted/deployed; retained data was untouched. The alias is not an independently guaranteed stable API endpoint.
+
 2026-10-20 unified drafts: complete on `feature/drafts` (`a77d8e8 / 9af661f / b096289`). Unified drafts, narrow publication seams, UTF-8 validation and retired album endpoints are implemented. The 16 previous table definitions are unchanged. The latest complete offline Maven suite passed 301 tests. No retained-service or database rollout checks ran.
 
 2026-10-20 city hierarchy and original coordinates: complete. Optional Geoapify administrative point lookup corrects a lower-level reverse result mislabeled as a city; failures retain the base result. Original valid WGS84 coordinates now pass unchanged to both providers and key the cache, as requested. Full suite: 263 tests passed; restarted the previously running service with SQL_INIT_MODE=never and verified the requested district/city result for the supplied photo. Existing records, schema and images were not modified.

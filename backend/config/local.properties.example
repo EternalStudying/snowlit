@@ -19,6 +19,9 @@ WECHAT_MINIPROGRAM_APP_SECRET=
 
 # Geoapify reverse geocoding key; blank keeps the location unknown.
 GEOAPIFY_KEY=
+# Geoapify origin only, without /v1. The application default remains https://api.geoapify.com.
+# This DNS-derived EU CDN alias passed server checks; it is not a separately guaranteed API endpoint.
+GEOAPIFY_BASE_URL=https://geoapify-api-htz.b-cdn.net
 
 # Optional: only for the Open-Meteo commercial customer API. Personal non-commercial use needs no key.
 OPEN_METEO_API_KEY=

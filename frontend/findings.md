@@ -44,3 +44,7 @@ The Web flow remains explicit save/upload, resume, retry, publish and discard; i
 ## Current Limits
 
 The 390px home-page overflow remains unresolved. Found during the 2026-10-18 browser checks and present before the refactor: closing the new-wish dialog logs two Naive UI slot warnings (its content is v-if'd off while the modal's leave transition still renders it; v-show removes the warnings but flashes the dialog for ~300ms, so it stays); the new-wish dialog's background art shows its baked-in text at narrow widths. At 375px the Diary page is 537px wide, which pushes the write-diary button off-screen. External maps and complete write/permission acceptance are not established. See [current specification](../docs/product/current-spec.md) for business contracts and progress.md for the recorded verification baseline.
+
+## Production Deployment Snapshot (2026-10-21)
+
+The full current frontend and matching backend were deployed under explicit authorization. All 129 HTTPS static files match the local production build. The login form rendered without captured browser console errors; authenticated production interactions were not tested. Previous release files remain available for rollback. No Web source or dependencies changed during deployment.
