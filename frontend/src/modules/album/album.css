@@ -1635,3 +1635,21 @@ body.is-album-immersive .album-photo-preview__backdrop {
 
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__header { position: relative; inset: auto; width: calc(100% - 48px); margin: 20px auto 24px; }
 .album-immersive-gallery--manager[data-layout="stacked"] .album-immersive-gallery__stage { margin-top: 0; }
+
+/* Lamplight follows the pointer across an open collection card. */
+.album-collection-card > .lamp-glow__light {
+  background: radial-gradient(circle 260px at var(--lamp-x, 50%) var(--lamp-y, 30%), rgba(var(--lamp-rgb), 0.3), transparent 72%);
+}
+
+.album-collection-card[data-album-card-active='true'] > .lamp-glow__light {
+  opacity: 1;
+}
+
+.album-collection-card > :not(.lamp-glow__light) {
+  position: relative;
+  z-index: 1;
+}
+
+.album-hero__title-text {
+  display: inline-block;
+}

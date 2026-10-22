@@ -7,7 +7,7 @@ import {
   watch,
   type Ref
 } from 'vue';
-import { gsap } from 'gsap';
+import { gsap, revealTitle } from '../../../motionKit';
 import type { AlbumCollection } from '../model';
 
 const CARD_REVEAL_RATIO = 0.33;
@@ -96,8 +96,9 @@ export function useAlbumCatalogPresentation({
           duration: 0.58,
           clearProps: 'opacity,transform,visibility'
         })
+        .add(() => revealTitle(root.querySelector('.album-hero__title-text')), '<0.05')
         .from(
-          '.album-hero p, .album-hero h1, .album-hero__copy',
+          '.album-hero p, .album-hero__copy',
           {
             autoAlpha: 0,
             y: 18,
@@ -147,6 +148,17 @@ export function useAlbumCatalogPresentation({
           },
           '<0.06'
         );
+      }
+
+      // The postmark turns a little and drifts down as the hero scrolls away.
+      const heroRow = root.querySelector('.album-hero-row');
+      if (heroRow) {
+        gsap.to('.album-postmark', {
+          rotation: 26,
+          y: 54,
+          ease: 'none',
+          scrollTrigger: { trigger: heroRow, start: 'top 20%', end: 'bottom top', scrub: 0.6 }
+        });
       }
 
       if (createEntry) {
@@ -498,6 +510,8 @@ export function useAlbumCatalogPresentation({
     }
 
     const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty('--lamp-x', `${event.clientX - rect.left}px`);
+    event.currentTarget.style.setProperty('--lamp-y', `${event.clientY - rect.top}px`);
     const xRatio =
       rect.width > 0
         ? (event.clientX - rect.left) / rect.width - 0.5

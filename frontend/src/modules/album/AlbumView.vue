@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { prefersReducedMotion } from '../../motion';
 import { IMAGE_ACCEPT } from '../../imageFiles';
+import { sparkFrom } from '../../sparks';
 import './album.css';
 import './album-dialog.css';
 import {
@@ -309,13 +310,15 @@ async function retryUploadItem(item: { id: string }) {
   await albumLifecycle.retryUpload(item.id);
 }
 
-async function publishDraftAlbum() {
+async function publishDraftAlbum(event?: MouseEvent) {
+  const button = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
   if (editingAlbum.value) {
     const collection = await albumLifecycle.saveAlbum(draftForm.value);
-    if (collection) { selectedCollection.value = collection; finishDialogClose(); }
+    if (collection) { sparkFrom(button, 'pine'); selectedCollection.value = collection; finishDialogClose(); }
     return;
   }
   if (await albumLifecycle.publishDraft(draftForm.value)) {
+    sparkFrom(button, 'lamp');
     finishDialogClose();
   }
 }
@@ -330,8 +333,14 @@ function isAlbumLikePending(albumId: number) {
   return albumLifecycle.isLikePending(albumId);
 }
 
-async function handleLikeCollection(collection: AlbumCollection) {
+async function handleLikeCollection(collection: AlbumCollection, event?: MouseEvent) {
+  const button = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  const wasLiked = collection.likedToday;
   await albumLifecycle.toggleLike(collection.albumId);
+  const now = collectionCards.value.find((card) => card.id === collection.id);
+  if (!wasLiked && now?.likedToday) {
+    sparkFrom(button, 'camellia');
+  }
 }
 
 onMounted(() => {
@@ -345,7 +354,7 @@ onMounted(() => {
       <div class="album-hero-row">
         <header class="album-hero">
           <h1>
-            收藏见面与出游的闪亮瞬间
+            <span class="album-hero__title-text">收藏见面与出游的闪亮瞬间</span>
             <HeartMark class="album-title-heart" />
           </h1>
           <span class="album-hero__copy">每一本相册，都是某段时光的入口。</span>
@@ -382,7 +391,7 @@ onMounted(() => {
             <article
               v-for="(collection, index) in collectionCards"
               :key="collection.id"
-              class="album-collection-card"
+              class="album-collection-card lamp-glow"
               :class="{ 'album-collection-card--private': collection.locked }"
               :ref="(element) => setAlbumCardRef(collection.id, element as HTMLElement | null)"
               :data-album-id="collection.id"
@@ -401,6 +410,7 @@ onMounted(() => {
               @focusout="clearActiveAlbumCard(collection.id)"
               @pointermove="handleAlbumCardPointerMove($event, collection)"
             >
+              <span class="lamp-glow__light" aria-hidden="true"></span>
               <header class="album-collection-card__header">
                 <div class="album-collection-author">
                   <span class="album-collection-author__avatar">{{ collection.avatarLabel }}</span>
@@ -464,7 +474,7 @@ onMounted(() => {
                   :aria-pressed="collection.likedToday ? 'true' : 'false'"
                   :aria-label="`喜欢${collection.title}`"
                   :disabled="isAlbumLikePending(collection.albumId)"
-                  @click.stop="handleLikeCollection(collection)"
+                  @click.stop="handleLikeCollection(collection, $event)"
                 >
                   <Heart :size="15" aria-hidden="true" />
                   {{ collection.likes }} 喜欢
@@ -799,7 +809,7 @@ onMounted(() => {
                     type="primary"
                     :loading="draftPublishing"
                     :disabled="(!draftAlbum && !editingAlbum) || draftPublishing"
-                    @click="publishDraftAlbum"
+                    @click="publishDraftAlbum($event)"
                   >
                     {{ editingAlbum ? (draftPublishing ? '保存中…' : '保存') : (draftPublishing ? '发布中...' : '发布相册') }}
                   </NButton>
