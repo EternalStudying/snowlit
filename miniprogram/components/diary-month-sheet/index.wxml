@@ -1,0 +1,33 @@
+<!-- The backdrop blocks page scrolling as a sibling of the panel, so the year list can still scroll. -->
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-sheet-mask {{visible ? 'snowlit-sheet-mask--visible' : ''}}"
+>
+  <view class="jump-backdrop" catchtouchmove="noop" bindtap="handleCancel"></view>
+  <view class="snowlit-sheet-panel" catchtap="noop">
+    <view class="snowlit-sheet-head" catchtouchmove="noop">
+      <view class="snowlit-sheet-title snowlit-kai">跳到月份</view>
+      <view class="snowlit-sheet-cancel" bindtap="handleCancel">取消</view>
+    </view>
+    <scroll-view class="jump-scroll" scroll-y scroll-into-view="{{activeYearAnchor}}">
+      <view class="jump-year" wx:for="{{years}}" wx:for-item="year" wx:key="year" id="year-{{year.year}}">
+        <view class="jump-year__label snowlit-serif">{{year.year}}</view>
+        <view class="jump-grid">
+          <view
+            class="jump-month {{month.disabled ? 'jump-month--disabled' : ''}} {{month.active ? 'jump-month--active' : ''}}"
+            wx:for="{{year.months}}"
+            wx:for-item="month"
+            wx:key="month"
+            data-month="{{month.month}}"
+            data-disabled="{{month.disabled}}"
+            bindtap="handleMonthTap"
+          >
+            <view class="jump-month__label snowlit-serif">{{month.label}}</view>
+            <view class="jump-month__count snowlit-serif">{{month.count ? month.count + ' 篇' : ''}}</view>
+            <view class="jump-month__lamp" wx:if="{{month.active}}"></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,98 @@
+@import "../snowlit-sheet.wxss";
+
+.jump-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.jump-scroll {
+  max-height: 60vh;
+  margin-top: 12rpx;
+}
+
+.jump-year {
+  padding: 18rpx 0 8rpx;
+}
+
+.jump-year + .jump-year {
+  border-top: 1rpx solid #dce2ea;
+}
+
+.jump-year__label {
+  color: #6b7385;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  line-height: 34rpx;
+}
+
+.jump-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.jump-month {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 104rpx;
+  border: 1rpx solid #dce2ea;
+  border-radius: 12rpx;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.jump-month--active {
+  border-color: #1d2433;
+}
+
+/* Months without a diary stay in the grid but can't be picked. */
+.jump-month--disabled {
+  border-color: transparent;
+  background: transparent;
+  opacity: 0.4;
+}
+
+.jump-month__label {
+  color: #1d2433;
+  font-size: 30rpx;
+  line-height: 36rpx;
+}
+
+.jump-month__count {
+  min-height: 28rpx;
+  margin-top: 6rpx;
+  color: #6b7385;
+  font-size: 20rpx;
+  line-height: 28rpx;
+}
+
+/* The month being read is lit, like the current tab. */
+.jump-month__lamp {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #e8a23a;
+  box-shadow: 0 0 10rpx rgba(232, 162, 58, 0.6);
+}
+
+/* Component styles are isolated from app.wxss; the bundled faces are global, so name them here. */
+.snowlit-kai {
+  font-family: "Snowlit Kai", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}
+
+.snowlit-serif {
+  font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum", "tnum";
+}

@@ -39,11 +39,11 @@ public final class HomeModule {
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final int[] DAY_MILESTONES = {100, 520, 1000, 1314, 2000};
     private static final String[] NOTE_SENTENCES = {
-            "今天适合把喜欢说得更认真一点。",
-            "记得给彼此留一点温柔的空白。",
-            "把今天的小事也收进我们的手账里。",
-            "再忙也要偷偷想对方一下。",
-            "今晚适合说一句晚安和想你。"
+            "心有所念，字字认真",
+            "彼此留白，温柔相待",
+            "今日小事，皆可入册",
+            "纵然忙碌，偷偷想你",
+            "晚风寄信，道声想你"
     };
     private static final String[] WEATHER_HINTS = {
             "适合一起听歌",

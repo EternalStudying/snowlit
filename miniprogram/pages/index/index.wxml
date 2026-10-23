@@ -4,7 +4,10 @@
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
     <view class="snowlit-page-title snowlit-kai">{{greetingTitle}}</view>
-    <view class="snowlit-page-subtitle">{{greetingSubtitle}}</view>
+    <view class="snowlit-page-subtitle">
+      <view class="snowlit-subtitle-rule"></view>
+      <text class="snowlit-subtitle-text snowlit-kai">{{greetingSubtitle}}</text>
+    </view>
   </view>
 
   <view class="hairline hero-line"></view>

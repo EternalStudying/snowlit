@@ -90,7 +90,7 @@ function mapHomeData(homeData) {
   const weatherStatus = pickWeatherStatus(homeData && homeData.personStatuses);
 
   return {
-    greetingSubtitle: firstText(dailyNote.sentence, '把今天轻轻收好'),
+    greetingSubtitle: firstText(dailyNote.sentence, '岁月温柔，慢慢收好'),
     couple: {
       togetherDays: isFiniteNumber(couple.togetherDays) ? Number(couple.togetherDays) : FALLBACK_COUPLE.togetherDays,
       boyfriendName: firstText(couple.boyfriendName, FALLBACK_COUPLE.boyfriendName),

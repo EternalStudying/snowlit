@@ -4,56 +4,13 @@
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
     <view class="snowlit-page-title snowlit-kai">日记</view>
-    <view class="snowlit-page-subtitle snowlit-kai">把心事慢慢写下来</view>
+    <view class="snowlit-page-subtitle">
+      <view class="snowlit-subtitle-rule"></view>
+      <text class="snowlit-subtitle-text snowlit-kai">墨痕半页，皆是心事</text>
+    </view>
   </view>
 
   <view class="hairline hero-line"></view>
-
-  <view class="month-section">
-    <view class="section-label snowlit-kai">月份</view>
-
-    <view class="month-overview">
-      <view>
-        <view class="month-title snowlit-serif">{{monthTitle}}</view>
-        <view class="month-caption">{{monthCaption}}</view>
-      </view>
-    </view>
-
-    <scroll-view
-      class="month-scroll"
-      scroll-x
-      enable-flex
-      scroll-with-animation
-      scroll-into-view="{{activeMonthAnchor}}"
-    >
-      <view
-        id="month-{{item.value}}"
-        class="month-tab snowlit-serif {{item.active ? 'month-tab--active' : ''}}"
-        wx:for="{{monthTabs}}"
-        wx:key="value"
-        data-value="{{item.value}}"
-        bindtap="handleMonthTap"
-      >
-        <text>{{item.label}}</text>
-        <view wx:if="{{item.active}}" class="month-tab-line"></view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <view class="hairline"></view>
-
-  <view class="stat-row">
-    <view
-      class="stat-item"
-      wx:for="{{stats}}"
-      wx:key="label"
-    >
-      <view class="stat-label">{{item.label}}</view>
-      <view class="stat-value snowlit-serif">{{item.value}}</view>
-    </view>
-  </view>
-
-  <view class="hairline"></view>
 
   <view class="filter-row">
     <view
@@ -71,16 +28,32 @@
   <view class="hairline"></view>
 
   <view class="entries-section">
-    <view class="section-label snowlit-kai">日记</view>
-
     <view class="entry-state" wx:if="{{loading}}">日记加载中...</view>
     <view class="entry-state" wx:elif="{{message}}">{{message}}</view>
-    <view class="entry-state" wx:elif="{{!entries.length}}">这个月份还没有日记</view>
+    <view class="entry-state" wx:elif="{{exhausted && !sections.length}}">还没有日记，写下第一篇吧</view>
 
-    <view class="entry-list" wx:else>
+    <view
+      class="month-block"
+      wx:for="{{sections}}"
+      wx:for-item="section"
+      wx:key="month"
+      id="{{section.anchorId}}"
+    >
+      <view class="month-head" data-month="{{section.month}}" bindtap="handleMonthHeadTap">
+        <view class="month-head__title snowlit-serif">
+          <text>{{section.yearText}}</text>
+          <text class="month-head__dot">·</text>
+          <text>{{section.monthText}}</text>
+          <view class="month-head__chevron"></view>
+        </view>
+        <view class="month-head__count snowlit-serif">{{section.countText}}</view>
+      </view>
+
+      <view class="entry-state entry-state--muted" wx:if="{{!section.entries.length}}">这个月没有符合的日记</view>
+
       <view
         class="entry-row"
-        wx:for="{{entries}}"
+        wx:for="{{section.entries}}"
         wx:key="id"
         data-id="{{item.id}}"
         bindtap="handleEntryTap"
@@ -99,13 +72,18 @@
             class="entry-thumb"
             src="{{item.image}}"
             mode="aspectFill"
+            lazy-load
           />
         </view>
       </view>
     </view>
+
+    <view class="entry-state" wx:if="{{loadingMore}}">日记加载中...</view>
+    <view class="entry-state entry-retry" wx:elif="{{failedMonth}}" bindtap="handleRetryTap">这个月份加载失败，轻点重试</view>
+    <view class="entry-state" wx:elif="{{exhausted && sections.length && !matching}}">没有符合的日记</view>
   </view>
 
-  <view class="snowlit-end-tip" wx:if="{{!loading && !message}}">没有更多了哦~</view>
+  <view class="snowlit-end-tip" wx:if="{{exhausted && sections.length && !loadingMore}}">没有更多了哦~</view>
 </view>
 
 <view class="diary-add" bindtap="handleCreateDiary">
@@ -114,3 +92,10 @@
 
 <snowlit-toast id="snowlit-toast" />
 <snowlit-dialog id="snowlit-dialog" />
+
+<diary-month-sheet
+  visible="{{jumpVisible}}"
+  years="{{jumpYears}}"
+  bind:select="handleJumpSelect"
+  bind:cancel="handleJumpCancel"
+/>

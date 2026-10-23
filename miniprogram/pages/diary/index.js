@@ -4,36 +4,44 @@ const { getDiaryMonth, getDiaryMonths } = require('../../services/diary');
 const { isLoggedIn, redirectToLogin } = require('../../utils/auth');
 const { setActiveTabBar } = require('../../utils/tabbar');
 const {
-  mapDiaryMonth,
-  mapDiaryMonths
+  BATCH_ENTRIES,
+  applyFilter,
+  buildJumpYears,
+  buildMonthIndex,
+  mapTimelineSection,
+  nextMonthToLoad
 } = require('./diary-presenter');
+
+// Month headings stick just under the custom navigation area (the top mask's height).
+const STICKY_TOP_RPX = 128;
 
 Page({
   data: {
     showTopMask: false,
     activeFilter: 'all',
     currentRole: '',
-    selectedMonth: '',
-    activeMonthAnchor: '',
-    monthTitle: '----.--',
-    monthCaption: '0 篇日记 · 0 位作者',
-    monthTabs: [],
-    stats: [
-      { label: '共享', value: '0' },
-      { label: '私密', value: '0' },
-      { label: '有照片', value: '0' }
-    ],
     filters: [
       { value: 'all', label: '全部' },
       { value: 'mine', label: '我的' },
-      { value: 'other', label: '他的' },
+      { value: 'other', label: 'TA的' },
       { value: 'private', label: '私密' }
     ],
-    entries: [],
-    rawEntries: [],
+    sections: [],
+    matching: 0,
     loading: false,
+    loadingMore: false,
+    failedMonth: '',
+    exhausted: false,
     message: '',
-    loaded: false
+    loaded: false,
+    jumpVisible: false,
+    jumpYears: []
+  },
+
+  onLoad() {
+    this.monthIndex = [];
+    this.monthsResponse = null;
+    this.loadToken = 0;
   },
 
   onShow() {
@@ -51,7 +59,6 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.setData({ loaded: false });
     this.loadDiaryPage().finally(() => {
       if (wx.stopPullDownRefresh) {
         wx.stopPullDownRefresh();
@@ -59,15 +66,28 @@ Page({
     });
   },
 
+  onReachBottom() {
+    return this.loadMore({});
+  },
+
+  // Starts the timeline again from the newest month. Also called by diary-edit and diary-detail after a change.
   loadDiaryPage() {
     if (!isLoggedIn()) {
       redirectToLogin({ redirect: routePath(ROUTES.DIARY) });
       return Promise.resolve();
     }
 
+    this.loadToken += 1;
+    this.pendingJump = '';
+    const token = this.loadToken;
     this.setData({
       loading: true,
-      message: ''
+      loadingMore: false,
+      failedMonth: '',
+      exhausted: false,
+      message: '',
+      sections: [],
+      matching: 0
     });
 
     return Promise.all([
@@ -75,27 +95,23 @@ Page({
       getDiaryMonths()
     ])
       .then(([user, monthsResponse]) => {
-        const monthData = mapDiaryMonths(monthsResponse, this.data.selectedMonth);
-        const currentRole = user && user.coupleRole ? user.coupleRole : this.data.currentRole;
-        this.setData({
-          currentRole,
-          selectedMonth: monthData.selectedMonth,
-          activeMonthAnchor: monthData.activeMonthAnchor,
-          monthTabs: monthData.monthTabs,
-          loaded: true
-        });
-        if (!monthData.selectedMonth) {
-          this.setData({
-            entries: [],
-            rawEntries: [],
-            loading: false,
-            message: '还没有日记'
-          });
-          return Promise.resolve();
+        if (token !== this.loadToken) {
+          return undefined;
         }
-        return this.loadDiaryMonth(monthData.selectedMonth, { keepLoading: true });
+        this.monthsResponse = monthsResponse;
+        this.monthIndex = buildMonthIndex(monthsResponse);
+        this.setData({
+          currentRole: user && user.coupleRole ? user.coupleRole : this.data.currentRole,
+          loaded: true,
+          loading: false,
+          exhausted: this.monthIndex.length === 0
+        });
+        return this.loadMore({});
       })
       .catch((error) => {
+        if (token !== this.loadToken) {
+          return;
+        }
         this.setData({
           loading: false,
           message: error && error.message ? error.message : '日记加载失败'
@@ -103,50 +119,58 @@ Page({
       });
   },
 
-  loadDiaryMonth(month, options) {
-    if (!month) {
+  // Loads months in order until the goal is met: { untilMonth } for a jump, otherwise a batch of matching entries.
+  loadMore(goal) {
+    if (this.data.loading || this.data.loadingMore || this.data.exhausted) {
       return Promise.resolve();
     }
-    if (!(options && options.keepLoading)) {
-      this.setData({
-        loading: true,
-        message: ''
-      });
-    }
+    const token = this.loadToken;
+    let matched = 0;
+    this.setData({ loadingMore: true, failedMonth: '' });
 
-    return getDiaryMonth(month)
-      .then((response) => {
-        const page = mapDiaryMonth(response, this.data.activeFilter, this.data.currentRole);
+    const step = () => {
+      const loadedMonths = this.data.sections.map((section) => section.month);
+      const month = nextMonthToLoad(this.monthIndex, loadedMonths, goal, matched);
+      if (!month) {
         this.setData({
-          selectedMonth: month,
-          activeMonthAnchor: month ? `month-${month}` : '',
-          monthTabs: this.data.monthTabs.map((item) => ({
-            ...item,
-            active: item.value === month
-          })),
-          monthTitle: page.monthTitle,
-          monthCaption: page.monthCaption,
-          stats: page.stats,
-          entries: page.entries,
-          rawEntries: page.rawItems,
-          loading: false,
-          message: ''
+          loadingMore: false,
+          exhausted: loadedMonths.length >= this.monthIndex.length
         });
-      })
-      .catch((error) => {
-        this.setData({
-          loading: false,
-          message: error && error.message ? error.message : '日记列表加载失败'
+        // A jump picked while this batch was loading continues from here.
+        if (this.pendingJump && !(goal && goal.untilMonth) && !loadedMonths.includes(this.pendingJump)) {
+          return this.loadMore({ untilMonth: this.pendingJump }).then(() => this.finishJump());
+        }
+        return Promise.resolve();
+      }
+      const total = (this.monthIndex.find((item) => item.month === month) || {}).count;
+      return getDiaryMonth(month)
+        .then((response) => {
+          if (token !== this.loadToken) {
+            return undefined;
+          }
+          const items = response && Array.isArray(response.items) ? response.items : [];
+          const section = mapTimelineSection(month, items, total, this.data.activeFilter, this.data.currentRole);
+          matched += section.entries.length;
+          this.setData({
+            [`sections[${this.data.sections.length}]`]: section,
+            matching: this.data.matching + section.entries.length
+          });
+          return step();
+        })
+        .catch(() => {
+          if (token !== this.loadToken) {
+            return;
+          }
+          this.setData({ loadingMore: false, failedMonth: month });
         });
-      });
+    };
+
+    return step();
   },
 
-  handleMonthTap(event) {
-    const month = event.currentTarget.dataset.value;
-    if (!month || month === this.data.selectedMonth) {
-      return;
-    }
-    this.loadDiaryMonth(month);
+  handleRetryTap() {
+    this.loadMore(this.pendingJump ? { untilMonth: this.pendingJump } : {})
+      .then(() => this.finishJump());
   },
 
   handleFilterTap(event) {
@@ -154,13 +178,54 @@ Page({
     if (!value || value === this.data.activeFilter) {
       return;
     }
-    const page = mapDiaryMonth({
-      month: this.data.selectedMonth,
-      items: this.data.rawEntries
-    }, value, this.data.currentRole);
+    const filtered = applyFilter(this.data.sections, value, this.data.currentRole);
     this.setData({
       activeFilter: value,
-      entries: page.entries
+      sections: filtered.sections,
+      matching: filtered.matching
+    });
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 });
+    if (filtered.matching < BATCH_ENTRIES) {
+      this.loadMore({ minEntries: BATCH_ENTRIES - filtered.matching });
+    }
+  },
+
+  handleMonthHeadTap(event) {
+    const month = event.currentTarget.dataset.month;
+    if (!this.monthsResponse) {
+      return;
+    }
+    this.setData({
+      jumpYears: buildJumpYears(this.monthsResponse, month),
+      jumpVisible: true
+    });
+  },
+
+  handleJumpCancel() {
+    this.setData({ jumpVisible: false });
+  },
+
+  handleJumpSelect(event) {
+    const month = event.detail && event.detail.month;
+    this.setData({ jumpVisible: false });
+    if (!month) {
+      return;
+    }
+    this.pendingJump = month;
+    this.loadMore({ untilMonth: month }).then(() => this.finishJump());
+  },
+
+  finishJump() {
+    const month = this.pendingJump;
+    if (!month || !this.data.sections.some((section) => section.month === month)) {
+      return;
+    }
+    this.pendingJump = '';
+    const windowWidth = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()).windowWidth;
+    wx.pageScrollTo({
+      selector: `#month-${month}`,
+      offsetTop: -Math.round((STICKY_TOP_RPX * windowWidth) / 750),
+      duration: 260
     });
   },
 

@@ -6,7 +6,7 @@ const { test } = require('node:test');
 function checkDateBehavior() {
   const assert = require('node:assert/strict');
   const { toDate, formatDate, formatDateTime, formatMonthDay } = require('./utils/date');
-  const { mapDiaryMonths, mapDiaryMonth, mapDiaryDetail } = require('./pages/diary/diary-presenter');
+  const { mapTimelineSection, mapDiaryDetail } = require('./pages/diary/diary-presenter');
   const { mapAlbumPage, mapAlbumDetail } = require('./pages/albums/album-presenter');
   const { mapStoryPage } = require('./pages/story/story-presenter');
 
@@ -17,10 +17,8 @@ function checkDateBehavior() {
     assert.equal(formatMonthDay(value), value.slice(5).replace('-', '.'));
     assert.equal(formatDateTime(value), `${value} 00:00`);
     assert.equal(formatDate(toDate(value)), value);
-    const months = mapDiaryMonths({}, '', { now: value });
-    assert.equal(months.selectedMonth, value.slice(0, 7));
-    assert.equal(months.activeMonthAnchor, `month-${value.slice(0, 7)}`);
-    assert.equal(months.monthTabs.filter((month) => month.active).length, 1);
+    const section = mapTimelineSection(value.slice(0, 7), [{ id: 1, entryDate: value }], 1);
+    assert.equal(section.entries[0].date, value.slice(5).replace('-', '.'));
   }
 
   // Invalid calendar dates must not silently roll into the next month.
@@ -35,8 +33,6 @@ function checkDateBehavior() {
     assert.equal(formatDateTime(value), '');
     assert.equal(formatMonthDay(value), '');
   }
-  const today = formatDate(new Date()).slice(0, 7);
-  assert.equal(mapDiaryMonths({}, '', { now: '2026-02-30' }).selectedMonth, today);
 
   const timestampCases = [
     {
@@ -63,7 +59,6 @@ function checkDateBehavior() {
     assert.equal(formatMonthDay(value), expected.slice(5, 10).replace('-', '.'));
     assert.equal(formatDateTime(new Date(value)), expected);
     assert.equal(formatDateTime(Date.parse(value)), expected);
-    assert.equal(mapDiaryMonths({}, '', { now: value }).selectedMonth, expected.slice(0, 7));
     const detail = mapDiaryDetail({ entryDate: '2026-01-01', updatedAt: value });
     assert.equal(detail.updatedText, expected.replace(/-/g, '.'));
     const story = mapStoryPage({ items: [{ id: 1, eventTime: value }] });
@@ -71,7 +66,7 @@ function checkDateBehavior() {
   }
   assert.equal(formatDateTime('2026-05-27T21:10:00'), '2026-05-27 21:10');
 
-  const diary = mapDiaryMonth({ month: '2026-01', items: [{ id: 1, entryDate: '2026-01-01' }] });
+  const diary = mapTimelineSection('2026-01', [{ id: 1, entryDate: '2026-01-01' }], 1);
   assert.equal(diary.entries[0].date, '01.01');
   assert.ok(mapDiaryDetail({ entryDate: '2024-02-29' }).subtitle.startsWith('02.29 ·'));
   assert.ok(mapAlbumPage({ items: [{ id: 1, eventDate: '2026-01-01' }] }).items[0].meta.startsWith('01.01 ·'));

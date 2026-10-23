@@ -7,7 +7,13 @@ const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const kaiCharacters = new Set([...read('assets/fonts/snowlit-kai.chars.txt').trim()]);
 // Bound headings allowed in the Kai face, with every value they can take (see build_fonts.py).
-const BOUND_KAI_HEADINGS = { '{{greetingTitle}}': ['上午好'] };
+const BACKEND_HOME = path.resolve(root, '../backend/src/main/java/xyz/snowlit/home/HomeModule.java');
+const NOTE_SENTENCES = [...fs.readFileSync(BACKEND_HOME, 'utf8')
+  .match(/NOTE_SENTENCES = \{([^}]*)\}/)[1].matchAll(/"([^"]*)"/g)].map((match) => match[1]);
+const BOUND_KAI_HEADINGS = {
+  '{{greetingTitle}}': ['上午好'],
+  '{{greetingSubtitle}}': [...NOTE_SENTENCES, '岁月温柔，慢慢收好']
+};
 
 function templates() {
   return ['pages', 'components'].flatMap((dir) => fs.readdirSync(path.join(root, dir))
@@ -37,6 +43,12 @@ test('the Home greeting only takes the values the Kai subset was built for', () 
   const assignments = [...read('pages/index/index.js').matchAll(/greetingTitle:\s*'([^']*)'/g)].map((match) => match[1]);
   assert.ok(assignments.length > 0);
   assignments.forEach((value) => assert.ok(BOUND_KAI_HEADINGS['{{greetingTitle}}'].includes(value), value));
+});
+
+test('the Home subtitle only takes the backend note sentences or the presenter fallback', () => {
+  assert.ok(NOTE_SENTENCES.length > 0);
+  const fallback = read('pages/index/home-presenter.js').match(/firstText\(dailyNote\.sentence,\s*'([^']*)'\)/)[1];
+  assert.ok(BOUND_KAI_HEADINGS['{{greetingSubtitle}}'].includes(fallback), fallback);
 });
 
 test('both bundled faces load from app.wxss and stay small', () => {

@@ -3,98 +3,97 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const {
+  BATCH_ENTRIES,
+  applyFilter,
+  buildJumpYears,
+  buildMonthIndex,
   mapDiaryDetail,
-  mapDiaryMonth,
-  mapDiaryMonths
+  mapTimelineSection,
+  nextMonthToLoad
 } = require('../pages/diary/diary-presenter');
 
-function runMonthsMappingTest() {
-  const result = mapDiaryMonths({
-    years: [
-      {
-        year: 2026,
-        months: [
-          { month: '2026-04', count: 1, hasEntries: true },
-          { month: '2026-05', count: 2, hasEntries: true },
-          { month: '2026-06', count: 0, hasEntries: false }
-        ]
-      },
-      {
-        year: 2025,
-        months: [
-          { month: '2025-12', count: 1, hasEntries: true }
-        ]
-      }
-    ]
-  }, '', { now: '2026-05-27' });
+const MONTHS_RESPONSE = {
+  years: [
+    {
+      year: 2026,
+      months: [
+        { month: '2026-01', count: 1, hasEntries: true },
+        { month: '2026-03', count: 2, hasEntries: true },
+        { month: '2026-10', count: 0, hasEntries: false },
+        { month: '2026-12', count: 0, hasEntries: false }
+      ]
+    },
+    {
+      year: 2025,
+      months: [
+        { month: '2025-12', count: 4, hasEntries: true }
+      ]
+    }
+  ]
+};
 
-  assert.equal(result.selectedMonth, '2026-05');
-  assert.equal(result.activeMonthAnchor, 'month-2026-05');
-  assert.equal(result.monthTabs.length, 12);
-  assert.deepEqual(result.monthTabs.slice(0, 6), [
-    { value: '2026-01', label: '01', active: false, count: 0, hasEntries: false },
-    { value: '2026-02', label: '02', active: false, count: 0, hasEntries: false },
-    { value: '2026-03', label: '03', active: false, count: 0, hasEntries: false },
-    { value: '2026-04', label: '04', active: false, count: 1, hasEntries: true },
-    { value: '2026-05', label: '05', active: true, count: 2, hasEntries: true },
-    { value: '2026-06', label: '06', active: false, count: 0, hasEntries: false }
+const ITEMS = [
+  {
+    id: 1,
+    role: 'girlfriend',
+    authorName: '伴侣 B',
+    title: '有图共享日记',
+    summary: '今天路过集市，买了一束花。',
+    imageUrls: ['https://snowlit.example.com/media/diary/flower.webp'],
+    entryDate: '2026-03-27',
+    moodKey: 'happy',
+    locationName: '集市',
+    weather: '晴',
+    visibility: 'shared'
+  },
+  {
+    id: 2,
+    role: 'boyfriend',
+    authorName: '伴侣 A',
+    title: '无天气私密日记',
+    summary: '',
+    imageUrls: [],
+    entryDate: '2026-03-26',
+    moodKey: 'calm',
+    locationName: '',
+    weather: '',
+    visibility: 'private'
+  }
+];
+
+function runMonthIndexTest() {
+  assert.deepEqual(buildMonthIndex(MONTHS_RESPONSE), [
+    { month: '2026-03', count: 2 },
+    { month: '2026-01', count: 1 },
+    { month: '2025-12', count: 4 }
   ]);
-  assert.deepEqual(result.monthTabs[11], {
-    value: '2026-12',
-    label: '12',
-    active: false,
-    count: 0,
-    hasEntries: false
-  });
-
-  const selected = mapDiaryMonths({ years: [] }, '2025-12', { now: '2026-05-27' });
-  assert.equal(selected.selectedMonth, '2025-12');
-  assert.equal(selected.monthTabs[11].active, true);
+  assert.deepEqual(buildMonthIndex({ years: [{ year: 2026, months: [{ month: '2026-10', count: 0 }] }] }), []);
+  assert.deepEqual(buildMonthIndex(null), []);
 }
 
-function runMonthMappingTest() {
-  const result = mapDiaryMonth({
-    month: '2026-05',
-    items: [
-      {
-        id: 1,
-        role: 'girlfriend',
-        authorName: '伴侣 B',
-        title: '有图共享日记',
-        summary: '今天路过集市，买了一束花。',
-        imageUrls: ['https://snowlit.example.com/media/diary/flower.webp'],
-        entryDate: '2026-05-27',
-        moodKey: 'happy',
-        locationName: '集市',
-        weather: '晴',
-        visibility: 'shared'
-      },
-      {
-        id: 2,
-        role: 'boyfriend',
-        authorName: '伴侣 A',
-        title: '无天气私密日记',
-        summary: '',
-        imageUrls: [],
-        entryDate: '2026-05-26',
-        moodKey: 'calm',
-        locationName: '',
-        weather: '',
-        visibility: 'private'
-      }
-    ]
-  }, 'all', 'girlfriend');
+function runJumpYearsTest() {
+  const years = buildJumpYears(MONTHS_RESPONSE, '2026-03');
+  assert.deepEqual(years.map((year) => year.year), ['2026', '2025']);
+  assert.equal(years[0].months.length, 12);
+  assert.deepEqual(years[0].months[2], { month: '2026-03', label: '03', count: 2, disabled: false, active: true });
+  // Empty and future months stay in the grid but can't be picked.
+  assert.equal(years[0].months[9].disabled, true);
+  assert.equal(years[0].months[11].disabled, true);
+  assert.equal(years[1].months[11].disabled, false);
+  assert.equal(years[1].months.filter((month) => month.active).length, 0);
+  // An account with no diaries comes back as this year with zeros: no years to show.
+  assert.deepEqual(buildJumpYears({ years: [{ year: 2026, months: [{ month: '2026-10', count: 0 }] }] }, ''), []);
+}
 
-  assert.equal(result.monthTitle, '2026.05');
-  assert.equal(result.monthCaption, '2 篇日记 · 2 位作者');
-  assert.deepEqual(result.stats, [
-    { label: '共享', value: '1' },
-    { label: '私密', value: '1' },
-    { label: '有照片', value: '1' }
-  ]);
-  assert.deepEqual(result.entries[0], {
+function runSectionTest() {
+  const section = mapTimelineSection('2026-03', ITEMS, 2, 'all', 'girlfriend');
+  assert.equal(section.anchorId, 'month-2026-03');
+  assert.equal(section.yearText, '2026');
+  assert.equal(section.monthText, '03');
+  assert.equal(section.countText, '2 篇');
+  assert.deepEqual(section.entries[0], {
     id: 1,
-    date: '05.27',
+    date: '03.27',
     visibility: '共享',
     title: '有图共享日记',
     summary: '今天路过集市，买了一束花。',
@@ -102,9 +101,40 @@ function runMonthMappingTest() {
     role: 'girlfriend',
     image: 'https://snowlit.example.com/media/diary/flower.webp'
   });
-  assert.equal(mapDiaryMonth({ month: '2026-05', items: result.rawItems }, 'mine', 'girlfriend').entries.length, 1);
-  assert.equal(mapDiaryMonth({ month: '2026-05', items: result.rawItems }, 'other', 'girlfriend').entries.length, 1);
-  assert.equal(mapDiaryMonth({ month: '2026-05', items: result.rawItems }, 'private', 'girlfriend').entries[0].id, 2);
+  assert.equal(section.entries[1].summary, '这篇日记没有摘要');
+
+  // The heading keeps the month's total under a filter, so it matches the jump sheet.
+  const mine = mapTimelineSection('2026-03', ITEMS, 2, 'mine', 'girlfriend');
+  assert.deepEqual(mine.entries.map((entry) => entry.id), [1]);
+  assert.equal(mine.countText, '2 篇');
+  assert.deepEqual(mapTimelineSection('2026-03', ITEMS, 2, 'other', 'girlfriend').entries.map((entry) => entry.id), [2]);
+  assert.deepEqual(mapTimelineSection('2026-03', ITEMS, 2, 'private', 'girlfriend').entries.map((entry) => entry.id), [2]);
+}
+
+function runApplyFilterTest() {
+  const sections = [
+    mapTimelineSection('2026-03', ITEMS, 2, 'all', 'girlfriend'),
+    mapTimelineSection('2026-01', [{ id: 3, role: 'girlfriend', entryDate: '2026-01-02', visibility: 'shared' }], 1, 'all', 'girlfriend')
+  ];
+  const filtered = applyFilter(sections, 'private', 'girlfriend');
+  assert.equal(filtered.matching, 1);
+  assert.deepEqual(filtered.sections.map((section) => section.entries.length), [1, 0]);
+  assert.equal(filtered.sections[1].countText, '1 篇');
+  assert.equal(applyFilter(filtered.sections, 'all', 'girlfriend').matching, 3);
+}
+
+function runNextMonthTest() {
+  const index = buildMonthIndex(MONTHS_RESPONSE);
+  assert.equal(BATCH_ENTRIES, 8);
+  assert.equal(nextMonthToLoad(index, [], {}, 0), '2026-03');
+  assert.equal(nextMonthToLoad(index, ['2026-03'], {}, 2), '2026-01');
+  assert.equal(nextMonthToLoad(index, ['2026-03'], {}, 8), '');
+  assert.equal(nextMonthToLoad(index, ['2026-03'], { minEntries: 2 }, 2), '');
+  assert.equal(nextMonthToLoad(index, ['2026-03', '2026-01', '2025-12'], {}, 0), '');
+  // A jump loads every month up to the target, in order, then stops.
+  assert.equal(nextMonthToLoad(index, ['2026-03'], { untilMonth: '2025-12' }, 50), '2026-01');
+  assert.equal(nextMonthToLoad(index, ['2026-03', '2026-01'], { untilMonth: '2025-12' }, 50), '2025-12');
+  assert.equal(nextMonthToLoad(index, ['2026-03', '2026-01', '2025-12'], { untilMonth: '2025-12' }, 0), '');
 }
 
 function runDetailMappingTest() {
@@ -176,28 +206,27 @@ function runDetailMappingTest() {
 function runDiaryTemplateTest() {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/diary/index.wxml'), 'utf8');
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/diary/index.wxss'), 'utf8');
+  const json = JSON.parse(fs.readFileSync(path.join(__dirname, '../pages/diary/index.json'), 'utf8'));
 
-  assert.equal(wxml.includes('class="month-action"'), false);
-  assert.equal(wxml.includes('切换月份'), false);
-  assert.equal(wxml.includes('{{monthTitle}}'), true);
-  assert.equal(wxml.includes('{{monthCaption}}'), true);
-  assert.equal(wxml.includes('<scroll-view'), true);
-  assert.equal(wxml.includes('scroll-x'), true);
-  assert.equal(wxml.includes('scroll-with-animation'), true);
-  assert.equal(wxml.includes('scroll-into-view="{{activeMonthAnchor}}"'), true);
-  assert.match(wxml, /id="month-\{\{item\.value\}\}"[\s\S]*class="month-tab snowlit-serif \{\{item\.active \? 'month-tab--active' : ''\}\}"[\s\S]*data-value="\{\{item\.value\}\}"[\s\S]*bindtap="handleMonthTap"/);
+  // The month header, month strip and stats row are gone; months are sections of one timeline.
+  ['{{monthTitle}}', '{{monthCaption}}', '<scroll-view', 'stat-row', 'handleMonthTap'].forEach((text) => {
+    assert.equal(wxml.includes(text), false, text);
+  });
+  assert.match(wxml, /wx:for="\{\{sections\}\}"[\s\S]*id="\{\{section\.anchorId\}\}"/);
+  assert.match(wxml, /class="month-head"[\s\S]*bindtap="handleMonthHeadTap"/);
+  assert.match(wxml, /wx:for="\{\{section\.entries\}\}"[\s\S]*bindtap="handleEntryTap"/);
+  assert.match(wxml, /bindtap="handleRetryTap"/);
+  assert.match(wxml, /<diary-month-sheet[\s\S]*bind:select="handleJumpSelect"/);
   assert.match(wxml, /class="diary-add"[\s\S]*bindtap="handleCreateDiary"/);
   assert.match(wxml, /assets\/icons\/story\/plus-white\.svg/);
-  assert.equal(wxss.includes('.month-action'), false);
-  assert.match(wxss, /\.month-scroll[\s\S]*width: 100%/);
-  assert.match(wxss, /\.month-tab[\s\S]*flex: 0 0 calc\(\(100vw - 88rpx\) \/ 4\)/);
+  assert.equal(json.usingComponents['diary-month-sheet'], '/components/diary-month-sheet/index');
+  assert.equal(json.onReachBottomDistance, 200);
+
+  assert.match(wxss, /\.month-head \{[^}]*position: sticky;[^}]*top: 128rpx;/);
+  // Sticky needs the page container's overflow visible (snowlit-tab-page hides x overflow).
+  assert.match(wxss, /\.diary-page \{[^}]*overflow: visible;/);
   assert.match(wxss, /\.diary-add[\s\S]*position: fixed/);
-  assert.match(wxss, /\.diary-add[\s\S]*right: 44rpx/);
   assert.match(wxss, /\.diary-add[\s\S]*bottom: calc\(142rpx \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(wxss, /\.diary-add[\s\S]*width: 68rpx/);
-  assert.match(wxss, /\.diary-add[\s\S]*height: 68rpx/);
-  assert.match(wxss, /\.diary-add__icon[\s\S]*width: 36rpx/);
-  assert.match(wxss, /\.diary-add__icon[\s\S]*height: 36rpx/);
 }
 
 function runDiaryDetailTemplateTest() {
@@ -244,8 +273,11 @@ function runDiaryDetailTemplateTest() {
   assert.equal(wxss.includes('.content-image-caption'), false);
 }
 
-runMonthsMappingTest();
-runMonthMappingTest();
+runMonthIndexTest();
+runJumpYearsTest();
+runSectionTest();
+runApplyFilterTest();
+runNextMonthTest();
 runDetailMappingTest();
 runDiaryTemplateTest();
 runDiaryDetailTemplateTest();

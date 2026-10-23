@@ -446,7 +446,7 @@ Page({
       if (!isCurrent() || this.disposed || result === null) return;
       if (this.autosave) this.autosave.stop();
       this.setData({ submitting: false });
-      this.refreshDiaryPages(this.data.form.date.slice(0, 7));
+      this.refreshDiaryPages();
       this.goBackAfterSave();
     }).catch((error) => {
       if (!isCurrent() || this.disposed) return;
@@ -466,14 +466,10 @@ Page({
     showInfo(title);
   },
 
-  refreshDiaryPages(month) {
+  refreshDiaryPages() {
     const pages = getCurrentPages();
     pages.forEach((page) => {
       if (page && page.route === ROUTES.DIARY && typeof page.loadDiaryPage === 'function') {
-        page.setData({
-          selectedMonth: month || page.data.selectedMonth,
-          loaded: false
-        });
         page.loadDiaryPage();
       }
       if (page && page.route === ROUTES.DIARY_DETAIL && typeof page.loadDiary === 'function' && this.data.diaryId) {

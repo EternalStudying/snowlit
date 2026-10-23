@@ -1,4 +1,4 @@
-const { formatDate, formatDateTime, formatMonthDay, toDate } = require('../../utils/date');
+const { formatDateTime, formatMonthDay } = require('../../utils/date');
 const { parseDiaryMarkdown } = require('../../utils/diary-markdown');
 
 const MOOD_LABELS = {
@@ -16,6 +16,8 @@ const MOOD_LABELS = {
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
 const MONTHS_IN_YEAR = 12;
+// Each load keeps going, month after month, until this many entries match the filter.
+const BATCH_ENTRIES = 8;
 
 function clean(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -38,21 +40,8 @@ function moodLabel(value) {
   return MOOD_LABELS[value] || clean(value) || '心情';
 }
 
-function monthLabel(month) {
-  const text = clean(month);
-  return text.length >= 7 ? text.slice(5, 7) : '--';
-}
-
-function monthTitle(month) {
-  return clean(month).replace('-', '.') || '----.--';
-}
-
 function padMonth(value) {
   return String(value).padStart(2, '0');
-}
-
-function currentMonthValue(now) {
-  return formatDate(toDate(now) || new Date()).slice(0, 7);
 }
 
 function normalizeMonth(value) {
@@ -60,60 +49,47 @@ function normalizeMonth(value) {
   return MONTH_PATTERN.test(text) ? text : '';
 }
 
-function collectMonthMeta(response) {
+function monthCounts(response) {
   const years = Array.isArray(response && response.years) ? response.years : [];
-  const metaByMonth = {};
+  const counts = {};
   years.forEach((year) => {
-    (year.months || []).forEach((month) => {
-      const value = normalizeMonth(month && month.month);
-      if (value) {
-        metaByMonth[value] = {
-          count: month.count || 0,
-          hasEntries: Boolean(month.hasEntries),
-          year: year.year || Number(value.slice(0, 4)) || 0
-        };
+    (year && Array.isArray(year.months) ? year.months : []).forEach((item) => {
+      const month = normalizeMonth(item && item.month);
+      if (month) {
+        counts[month] = Math.max(0, Number(item.count) || 0);
       }
     });
   });
-  return metaByMonth;
+  return counts;
 }
 
-function buildYearMonths(year, metaByMonth, selectedMonth) {
-  return Array.from({ length: MONTHS_IN_YEAR }, (_, index) => {
-    const value = `${String(year).padStart(4, '0')}-${padMonth(index + 1)}`;
-    const meta = metaByMonth[value] || {};
-    return {
-      value,
-      label: monthLabel(value),
-      active: value === selectedMonth,
-      count: meta.count || 0,
-      hasEntries: Boolean(meta.hasEntries)
-    };
-  });
+// The timeline's spine: every month with a visible diary, newest first.
+function buildMonthIndex(response) {
+  const counts = monthCounts(response);
+  return Object.keys(counts)
+    .filter((month) => counts[month] > 0)
+    .sort((a, b) => (a < b ? 1 : -1))
+    .map((month) => ({ month, count: counts[month] }));
 }
 
-function mapDiaryMonths(response, selectedMonth, options) {
-  const metaByMonth = collectMonthMeta(response);
-  const selectedCandidate = normalizeMonth(selectedMonth);
-  const nextSelectedMonth = selectedCandidate || currentMonthValue(options && options.now);
-  const selectedYear = Number(nextSelectedMonth.slice(0, 4));
-
-  return {
-    selectedMonth: nextSelectedMonth,
-    activeMonthAnchor: nextSelectedMonth ? `month-${nextSelectedMonth}` : '',
-    monthTabs: buildYearMonths(selectedYear, metaByMonth, nextSelectedMonth)
-  };
-}
-
-function authorCount(items) {
-  const authors = new Set();
-  items.forEach((item) => {
-    const key = clean(item.role) || clean(item.authorName);
-    if (key) {
-      authors.add(key);
-    }
-  });
-  return authors.size;
+function buildJumpYears(response, activeMonth) {
+  const counts = monthCounts(response);
+  // Only years with at least one diary; an empty account comes back as this year, all zeros.
+  const years = Array.from(new Set(buildMonthIndex(response).map((item) => item.month.slice(0, 4))));
+  return years.map((year) => ({
+    year,
+    months: Array.from({ length: MONTHS_IN_YEAR }, (_, index) => {
+      const month = `${year}-${padMonth(index + 1)}`;
+      const count = counts[month] || 0;
+      return {
+        month,
+        label: padMonth(index + 1),
+        count,
+        disabled: count === 0,
+        active: month === activeMonth
+      };
+    })
+  }));
 }
 
 function filterEntries(items, filter, currentRole) {
@@ -149,24 +125,49 @@ function mapEntry(item) {
   };
 }
 
-function mapDiaryMonth(response, filter, currentRole) {
-  const rawItems = Array.isArray(response && response.items) ? response.items : [];
-  const visibleItems = filterEntries(rawItems, filter || 'all', currentRole || '');
-  const sharedCount = rawItems.filter((item) => item.visibility !== 'private').length;
-  const privateCount = rawItems.filter((item) => item.visibility === 'private').length;
-  const imageCount = rawItems.filter((item) => Array.isArray(item.imageUrls) && item.imageUrls.length).length;
-
+// One month of the timeline. The heading count is the month's total, so it matches the jump sheet.
+function mapTimelineSection(month, items, total, filter, currentRole) {
+  const rawItems = Array.isArray(items) ? items : [];
+  const entries = filterEntries(rawItems, filter || 'all', currentRole || '').map(mapEntry);
   return {
-    monthTitle: monthTitle(response && response.month),
-    monthCaption: `${rawItems.length} 篇日记 · ${authorCount(rawItems)} 位作者`,
-    stats: [
-      { label: '共享', value: String(sharedCount) },
-      { label: '私密', value: String(privateCount) },
-      { label: '有照片', value: String(imageCount) }
-    ],
-    entries: visibleItems.map(mapEntry),
+    month,
+    anchorId: `month-${month}`,
+    yearText: month.slice(0, 4),
+    monthText: month.slice(5, 7),
+    total: total || rawItems.length,
+    countText: `${total || rawItems.length} 篇`,
+    entries,
     rawItems
   };
+}
+
+function applyFilter(sections, filter, currentRole) {
+  const next = sections.map((section) => mapTimelineSection(
+    section.month,
+    section.rawItems,
+    section.total,
+    filter,
+    currentRole
+  ));
+  return {
+    sections: next,
+    matching: next.reduce((sum, section) => sum + section.entries.length, 0)
+  };
+}
+
+// The next month to fetch, or '' when the goal is met or the index is exhausted.
+// goal is { untilMonth } (jump) or { minEntries } (scroll); progress counts matches since the load began.
+function nextMonthToLoad(index, loadedMonths, goal, matchedSinceStart) {
+  const loaded = new Set(loadedMonths);
+  const next = index.find((item) => !loaded.has(item.month));
+  if (!next) {
+    return '';
+  }
+  if (goal && goal.untilMonth) {
+    return loaded.has(goal.untilMonth) ? '' : next.month;
+  }
+  const minEntries = goal && goal.minEntries ? goal.minEntries : BATCH_ENTRIES;
+  return matchedSinceStart >= minEntries ? '' : next.month;
 }
 
 function coordinateText(latitude, longitude) {
@@ -222,7 +223,11 @@ function mapDiaryDetail(response, currentUser) {
 }
 
 module.exports = {
+  BATCH_ENTRIES,
+  applyFilter,
+  buildJumpYears,
+  buildMonthIndex,
   mapDiaryDetail,
-  mapDiaryMonth,
-  mapDiaryMonths
+  mapTimelineSection,
+  nextMonthToLoad
 };

@@ -1,5 +1,9 @@
 {
   "navigationStyle": "custom",
   "navigationBarTitleText": "日记",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 200,
+  "usingComponents": {
+    "diary-month-sheet": "/components/diary-month-sheet/index"
+  }
 }

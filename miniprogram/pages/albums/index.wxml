@@ -2,7 +2,10 @@
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
     <view class="snowlit-page-title snowlit-kai">相册</view>
-    <view class="snowlit-page-subtitle snowlit-kai">把照片慢慢收好</view>
+    <view class="snowlit-page-subtitle">
+      <view class="snowlit-subtitle-rule"></view>
+      <text class="snowlit-subtitle-text snowlit-kai">光阴入匣，一帧一念</text>
+    </view>
   </view>
 
   <view class="hairline hero-line"></view>

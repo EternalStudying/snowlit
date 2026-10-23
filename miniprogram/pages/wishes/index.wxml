@@ -4,7 +4,10 @@
   <view class="snowlit-page-heading">
     <view class="snowlit-page-brand">SNOWLIT</view>
     <view class="snowlit-page-title snowlit-kai">清单</view>
-    <view class="snowlit-page-subtitle snowlit-kai">把想去和想做慢慢实现</view>
+    <view class="snowlit-page-subtitle">
+      <view class="snowlit-subtitle-rule"></view>
+      <text class="snowlit-subtitle-text snowlit-kai">山海可期，与你同赴</text>
+    </view>
   </view>
 
   <view class="hairline hero-line"></view>

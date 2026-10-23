@@ -100,14 +100,8 @@ Page({
 
   refreshDiaryList() {
     const pages = getCurrentPages();
-    const diary = this.data.diary || {};
-    const month = diary.rawDate ? diary.rawDate.slice(0, 7) : '';
     pages.forEach((page) => {
       if (page && page.route === ROUTES.DIARY && typeof page.loadDiaryPage === 'function') {
-        page.setData({
-          selectedMonth: month || page.data.selectedMonth,
-          loaded: false
-        });
         page.loadDiaryPage();
       }
     });

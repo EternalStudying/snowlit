@@ -24,8 +24,17 @@ from fontTools.varLib import instancer
 ROOT = Path(__file__).resolve().parents[2] / 'miniprogram'
 FONTS = ROOT / 'assets' / 'fonts'
 
-# Bound headings that use the Kai face, with every value they can take.
-EXTRA_KAI_TEXT = ['上午好']
+# Bound headings that use the Kai face, with every value they can take. The Home subtitle takes
+# the backend's HomeModule.NOTE_SENTENCES or the presenter's fallback.
+EXTRA_KAI_TEXT = [
+    '上午好',
+    '心有所念，字字认真',
+    '彼此留白，温柔相待',
+    '今日小事，皆可入册',
+    '纵然忙碌，偷偷想你',
+    '晚风寄信，道声想你',
+    '岁月温柔，慢慢收好',
+]
 
 SERIF_TEXT = ''.join(chr(code) for code in range(0x20, 0x7f)) + '·°—–‘’“”…'
 
