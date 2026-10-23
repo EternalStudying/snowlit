@@ -61,6 +61,35 @@ The Web UI is drawn in code, not bitmaps. The direction, chosen by the owner, is
   - A page's root element must not overflow sideways while things fly in: Home clips with `.journal-route-content > .home { overflow-x: clip }`, because the shell sets `overflow: visible` on route content.
 - **Tests.** [tests/setup.ts](tests/setup.ts) imports the kit and calls `ScrollTrigger.disable()`. If ScrollTrigger stays on, its always-on requestAnimationFrame loop recurses under synchronous rAF stubs and eats fake-timer time; that was the cause of the earlier "flaky" topbar timeouts.
 
+## Evening World: shell and Home rebuilt (2026-10-22, `feature/warm-rebuild`)
+
+The owner asked for a from-scratch rebuild, one page at a time: warm and visually rich, with GSAP, Three.js and other open-source tools, and with every functional module kept. Home and the shell came first. The owner approved a standalone prototype before the real build.
+
+- **Direction: an evening at the snow cottage.**
+  - The pages continue the cover paintings' world instead of switching to flat UI.
+  - Colours are sampled from the paintings: dusk violet to peach sky, lantern amber, cedar wood, sakura, camellia, and warm walnut ink.
+  - Tokens are `--world-*` in [snow-shell.css](src/shell/snow-shell.css).
+  - Type is LXGW WenKai (`lxgw-wenkai-webfont`), self-hosted and split by character range, so a page downloads only the glyphs it shows.
+- **Shell** ([JournalRouteShell.vue](src/shell/JournalRouteShell.vue), [useEveningWorld](src/shell/world/useEveningWorld.ts)):
+  - The painted cover crossfades between the two paintings.
+  - The nav is a wooden plaque hanging on cords. It docks with `position: sticky`, and a lantern slides behind the current page.
+  - The old nav measured layout and wrote nine CSS variables onto the shell root every scroll frame, which was the cause of the choppiness. Nothing measures on scroll now.
+  - [ambientDrift](src/shell/world/ambientDrift.ts) is a Three.js layer of petals and light snow. `burstPetals(x, y)` scatters petals from a point. It is separate from the real-weather layer in `modules/weather`, which stays as is.
+- **Evening opt-in.** Only Home is an evening page. The shell's `data-world` is `evening` there and `paper` elsewhere, because pages not yet rebuilt have dark text on a light ground. Rebuilt pages opt in.
+- **Top bar.** The top bar is fixed and transparent over the cover, keeping all its functions. It is click-through except for its own controls.
+  - The shell must not use `isolation`. The docked plaque (z 46) has to stack above the bar (z 45).
+  - The sky sits at z 0, and the page content is lifted to z 1.
+- **Home** ([HomeView](src/modules/home/HomeView.vue), [useHomeEvening](src/modules/home/internal/useHomeEvening.ts)):
+  - A lantern string lights up as the day count climbs. Lantern positions are computed from the cord's curve, not measured.
+  - Two lit windows show each person's city weather outside, with a lamp, curtains, a mug and a plant inside, and shoji screens that slide open. A knotted red thread joins them.
+  - The daily note is a letter with a torn edge, a stamp, a postmark, a sprig and a seal.
+  - Diary, message and photos are laid on a table.
+  - The next wish is an ema plaque that swings, then opens Wishes.
+- **Rules.**
+  - Static end states live in CSS: screens open, lanterns lit. Motion animates from-to, so reduced motion and test instant mode show the finished page.
+  - The global `figure` rule (paper background, border, hidden overflow) must be reset on decorative figures.
+- **Tests.** [topbar-weather-summary](tests/topbar-weather-summary.test.ts) fakes only timeouts, intervals and Date. Faking animation frames made GSAP's always-on ticker replay about 21k frames during its 20-minute jump, which ran past the 5-second limit under parallel load. That was the real cause of the long-standing "flaky" top-bar failures.
+
 ## Shared and Visual Boundaries
 
 - [SessionRequest](src/http/sessionRequest.ts) handles tokens, JSON/FormData/204, errors, and session expiry. Private-album business failures must not accidentally clear the login session.

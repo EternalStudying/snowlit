@@ -2,6 +2,8 @@
 
 ## Current Task
 
+2026-10-22 evening-world rebuild: shell and Home merged into local main from `feature/warm-rebuild` under owner authorization (not pushed or deployed). Next: rebuild the remaining pages one at a time (Messages, Diary, Album, Wishes, Story, About, Login), each opting into the evening world. See findings.md (Evening World).
+
 2026-10-22 motion redesign: complete; `feature/motion-redesign` was fast-forwarded into local main (not pushed or deployed). GSAP motion kit plus per-module choreography; see findings.md (Motion System) and progress.md.
 
 2026-10-22 code-first visual redesign: complete; `feature/code-first-ui` was fast-forwarded into local main (not pushed or deployed). The new tokens, shared paper pieces and image rules are in findings.md under Visual System. The verification record is in progress.md.

@@ -1,0 +1,334 @@
+/* The evening world: colours sampled from the cover paintings. */
+:root {
+  --world-font: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', serif;
+  --world-ui: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --world-paper: #fbf2e3;
+  --world-ink: #3b2c25;
+  --world-ink-soft: #6e5a4d;
+  --world-cedar: #7a5338;
+  --world-cedar-dark: #4f3424;
+  --world-lantern: #f6b45c;
+  --world-lantern-deep: #e0873a;
+  --world-sakura: #ec9fae;
+  --world-camellia: #c23b4f;
+  --world-onsen: #4f9fa3;
+  --world-on-sky: #fff3e2;
+  --world-on-sky-soft: rgba(255, 243, 226, 0.74);
+  --world-page: min(1120px, calc(100% - 40px));
+  --world-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.snow-shell {
+  /* No isolation here: the docked plaque has to stack above the fixed top bar, which lives outside. */
+  position: relative;
+  min-height: 100vh;
+  font-family: var(--world-font);
+}
+
+/* ---------- Sky (evening pages only) ---------- */
+
+.snow-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Everything on the page stacks above the sky; the plaque (46) and drifting petals (40) go higher still. */
+.snow-cover,
+.snow-shell__page,
+.snow-shell > .site-record-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.snow-sky__wash {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+/* The painting's own sky: violet overhead, peach and gold at the horizon. */
+.snow-sky__wash--dusk {
+  background:
+    radial-gradient(90% 55% at 50% 108%, #f3c48e 0%, rgba(243, 196, 142, 0) 70%),
+    radial-gradient(60% 40% at 12% 30%, rgba(236, 159, 174, 0.28) 0%, transparent 70%),
+    linear-gradient(180deg, #5f5573 0%, #86708a 38%, #c3958e 72%, #e7b48a 100%);
+}
+
+.snow-sky__wash--late {
+  opacity: 0;
+  background:
+    radial-gradient(80% 50% at 50% 105%, rgba(240, 170, 110, 0.75) 0%, transparent 70%),
+    linear-gradient(180deg, #463e5a 0%, #6a5670 45%, #a77a7a 80%, #d29a78 100%);
+}
+
+.snow-sky__wash--night {
+  opacity: 0;
+  background:
+    radial-gradient(70% 50% at 20% 100%, rgba(246, 180, 92, 0.35) 0%, transparent 70%),
+    radial-gradient(60% 40% at 85% 90%, rgba(236, 159, 174, 0.22) 0%, transparent 70%),
+    linear-gradient(180deg, #2b2638 0%, #3b3145 55%, #57423f 100%);
+}
+
+/* Paper grain over the evening, so the gradients read as watercolour rather than screen. */
+.snow-sky::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .33 0 0 0 0 .25 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.snow-drift {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- Cover ---------- */
+
+.snow-cover__frame {
+  position: relative;
+  height: min(100svh, 980px);
+  overflow: hidden;
+  border-radius: 0 0 48px 48px;
+  box-shadow: 0 30px 60px rgba(74, 52, 40, 0.25);
+  will-change: transform;
+}
+
+.snow-cover--short .snow-cover__frame {
+  height: min(62svh, 620px);
+}
+
+.snow-cover__painting {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.snow-cover__painting.is-active {
+  opacity: 1;
+}
+
+.snow-cover__frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(59, 44, 37, 0.38) 0%, transparent 18%, transparent 62%, rgba(59, 44, 37, 0.45) 100%);
+}
+
+.snow-cover__couple {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 6vw, 96px);
+  translate: -50% 0;
+}
+
+.snow-cover--short .snow-cover__couple {
+  bottom: 18%;
+  scale: 0.82;
+}
+
+.snow-cover__person {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.snow-cover__person img {
+  width: clamp(72px, 9vw, 112px);
+  aspect-ratio: 1;
+  border: 4px solid var(--world-paper);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 10px 24px rgba(59, 44, 37, 0.35);
+}
+
+.snow-cover__person figcaption {
+  white-space: nowrap;
+  padding: 2px 14px;
+  border-radius: 999px;
+  color: var(--world-ink);
+  background: rgba(251, 242, 227, 0.92);
+  font-size: 16px;
+}
+
+.snow-cover__heart {
+  display: grid;
+  width: clamp(46px, 5vw, 64px);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.snow-cover__heart svg {
+  overflow: visible;
+  fill: var(--world-camellia);
+  stroke: var(--world-paper);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 6px 12px rgba(120, 20, 40, 0.35));
+}
+
+.snow-cover__heart .snow-cover__heart-shine {
+  fill: none;
+  stroke-opacity: 0.55;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+/* ---------- Navigation: a wooden plaque hanging on two cords ---------- */
+
+.snow-plaque {
+  /* Sticky, not measured: the browser docks it on the compositor, so it never stutters. */
+  position: sticky;
+  top: 12px;
+  z-index: 46;
+  width: max-content;
+  margin: -34px auto 0;
+}
+
+.snow-plaque__cord {
+  position: absolute;
+  bottom: 100%;
+  width: 2px;
+  height: 64px;
+  background: linear-gradient(var(--world-cedar-dark), #a77b55);
+  transform-origin: bottom;
+}
+
+.snow-plaque__cord--l {
+  left: 22%;
+}
+
+.snow-plaque__cord--r {
+  right: 22%;
+}
+
+.snow-plaque__board {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  padding: 7px;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #9a6a45, var(--world-cedar) 60%, #6a462f);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 190, 0.45),
+    inset 0 -2px 0 rgba(40, 24, 15, 0.35),
+    0 14px 30px rgba(59, 36, 22, 0.28);
+  will-change: transform;
+}
+
+.snow-plaque__link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 11px;
+  color: #f8e6cd;
+  font: 17px/1 var(--world-font);
+  text-decoration: none;
+  transition: color 240ms var(--world-ease);
+}
+
+.snow-plaque__link svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.snow-plaque__link:hover {
+  color: #fff6e6;
+}
+
+.snow-plaque__link.is-active {
+  color: var(--world-ink);
+}
+
+.snow-plaque__link:focus-visible {
+  outline: 2px solid var(--world-lantern);
+  outline-offset: 2px;
+}
+
+/* The current page is the one with the lantern lit behind it. */
+.snow-plaque__lantern {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 0;
+  width: 10px;
+  border-radius: 11px;
+  background: radial-gradient(120% 140% at 50% 30%, #ffe3a8, var(--world-lantern) 55%, var(--world-lantern-deep));
+  box-shadow: 0 0 24px rgba(246, 180, 92, 0.75), inset 0 -3px 0 rgba(160, 80, 20, 0.25);
+  visibility: hidden;
+  will-change: transform;
+}
+
+.snow-plaque__lantern i {
+  position: absolute;
+  inset: -40% -20%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 210, 130, 0.45), transparent);
+  pointer-events: none;
+}
+
+.snow-shell__page {
+  position: relative;
+  min-height: 60vh;
+}
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 640px) {
+  .snow-plaque__link {
+    padding: 10px 11px;
+  }
+
+  .snow-plaque__label {
+    display: none;
+  }
+
+  .snow-cover__frame {
+    height: 78svh;
+    border-radius: 0 0 28px 28px;
+  }
+
+  .snow-cover--short .snow-cover__frame {
+    height: 46svh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snow-drift {
+    display: none;
+  }
+}

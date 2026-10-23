@@ -1,5 +1,17 @@
 # Web Progress Baseline
 
+## Evening world: shell and Home rebuilt (2026-10-22, merged into local main from `feature/warm-rebuild`)
+
+- **Checks.**
+  - Vitest: 72 files / 442 tests passed, clean 3 of 3 full runs. The scrapped hero and nav-fusion tests were replaced by shell tests for the cover, the evening opt-in, petals, nav order and the current page, dock scrolling, and route scroll preservation; the Story top-bar tests were kept.
+  - `npm run typecheck` and `npm run build` passed.
+- **Browser.** Built-in browser against the throwaway stack (backend 15182, worktree Vite 15184), signed in as demo_a.
+  - Home was checked section by section at 1440 and 375.
+  - Diary was checked inside the new frame.
+  - The plaque was confirmed clickable above the top bar.
+  - No sideways overflow on Home or Diary at 1440/1280/1024/820/375, at three scroll depths each.
+- **Not checked.** Reduced motion in a real browser (gated in code and CSS). Real devices and frame rate on a low-end phone. The other pages, which have not been rebuilt yet.
+
 ## Motion redesign (2026-10-22, branch `feature/motion-redesign`, not merged)
 
 The GSAP motion system is described in findings.md under Motion System. It was built in one commit per module: the kit, Home, Album, Diary, Wishes, Messages, Login and About, plus an overflow fix. Story's existing map choreography was left as it was.
@@ -79,3 +91,7 @@ Commits: Story choreography out of StoryView into useStoryMotion, with useMotion
 ## Not Verified
 
 Real maps (AMap) and Story save with a location, real geolocation and weather providers, mobile widths beyond the checks above, logout and switching members in the browser (covered by unit tests only), album publish, and the mini program.
+
+## Consolidation into main (2026-10-22)
+
+The owner requested all current code on main. Merged feature/warm-rebuild (standalone prototype plus evening-world shell/Home) with current backend/native work; there were no conflicts. Fresh merged-tree checks: npx --no-install vitest run, 71 files/442 passed; npm run typecheck and npm run build passed. This checkout initially lacked the locked lxgw-wenkai-webfont package; installed that one dependency offline from local npm cache, preserving package-lock.json, then rebuilt successfully. No Web implementation/assertions changed for integration. Previous browser checks remain historical; no new browser/device/production acceptance or push.

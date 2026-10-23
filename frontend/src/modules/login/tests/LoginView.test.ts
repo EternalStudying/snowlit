@@ -267,7 +267,7 @@ describe('App auth flow', () => {
     await flushPromises();
 
     expect(localStorage.getItem('snowlit_token')).toBe('jwt-token');
-    expect(wrapper.find('.journal-hero-carousel').exists()).toBe(true);
+    expect(wrapper.find('.snow-cover').exists()).toBe(true);
     expect(wrapper.find('form.login-form').exists()).toBe(false);
   });
 

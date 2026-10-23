@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 describe('首页最新相册预览', () => {
-  it('只渲染首页接口返回的一张最新照片，并让照片区和底部文字保持稳定布局', async () => {
+  it('只渲染首页接口返回的一张最新照片，叠在两张空白相纸上，并写明相册名和照片总数', async () => {
     resetHomeLifecycleForTests();
     vi.stubGlobal('fetch', mockHomeFetch());
     const router = createRouter({ history: createMemoryHistory(), routes });
@@ -55,9 +55,10 @@ describe('首页最新相册预览', () => {
     const wrapper = mount(HomeView, { global: { plugins: [router] } });
     await flushPromises();
 
-    const albumCard = wrapper.get('.recent-paper-item--album');
-    expect(albumCard.findAll('.album-preview-strip img')).toHaveLength(1);
-    expect(albumCard.find('.album-preview-footer h3').text()).toBe('春日草坪');
-    expect(albumCard.find('.album-preview-footer small').text()).toContain('共 3 张照片');
+    const albumCard = wrapper.get('.home-photos');
+    expect(albumCard.attributes('href')).toBe('/album');
+    expect(albumCard.findAll('img')).toHaveLength(1);
+    expect(albumCard.find('.home-photos__caption strong').text()).toBe('春日草坪');
+    expect(albumCard.find('.home-photos__caption small').text()).toContain('共 3 张照片');
   });
 });

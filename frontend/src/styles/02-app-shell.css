@@ -1,20 +1,53 @@
+/* The top bar floats over the cover: light text on the painting, a soft evening glass once the page
+   passes it. When the nav plaque docks into its centre, the brand steps aside. */
 .app-topbar {
   --topbar-edge-gap: clamp(12px, 2vw, 28px);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 45;
   display: grid;
   align-items: center;
-  min-height: 58px;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(var(--ink-rgb), 0.14);
-  background:
-    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.94), rgba(var(--sheet-rgb), 0.82)),
-    rgba(var(--sheet-rgb), 0.82);
-  backdrop-filter: blur(10px) saturate(1.05);
-  box-shadow: 0 4px 14px rgba(var(--ink-rgb), 0.07);
-  transition: box-shadow 220ms cubic-bezier(0.645, 0.045, 0.355, 1);
-  animation: app-topbar-enter 420ms ease both;
+  min-height: 64px;
+  padding: 10px 0;
+  color: var(--world-on-sky);
+  pointer-events: none; /* only its own buttons take clicks; the plaque docks through its middle */
+  transition: background-color 400ms ease, box-shadow 400ms ease, color 400ms ease;
+}
+
+.app-topbar :is(a, button, [role='button'], .topbar-tooltip-trigger, .app-topbar__weather-summary) {
+  pointer-events: auto;
+}
+
+body.is-plaque-docked .app-topbar .app-topbar__brand {
+  pointer-events: none;
+}
+
+.app-topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(43, 36, 56, 0.62), rgba(43, 36, 56, 0.18) 70%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+  mask-image: linear-gradient(180deg, #000 60%, transparent);
+  transition: opacity 400ms ease;
+}
+
+body.is-plaque-docked .app-topbar::before {
+  opacity: 1;
+}
+
+/* On pages that keep the paper ground, the docked bar is warm paper instead of evening glass. */
+body.is-plaque-docked:has(.snow-shell[data-world='paper']) .app-topbar::before {
+  background: linear-gradient(180deg, rgba(251, 242, 227, 0.94), rgba(251, 242, 227, 0.7) 70%, transparent);
+}
+
+body.is-plaque-docked:has(.snow-shell[data-world='paper']) .app-topbar {
+  color: var(--world-ink);
 }
 
 .app-topbar__inner {
@@ -62,24 +95,16 @@
   display: grid;
   place-items: center;
   min-height: 28px;
-  padding: 7px 11px;
-  border: 1px solid rgba(var(--camellia-rgb), 0.34);
-  border-radius: 8px;
-  color: var(--camellia-deep);
-  background:
-    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.98), rgba(var(--sheet-rgb), 0.96)),
-    rgba(var(--sheet-rgb), 0.96);
-  box-shadow:
-    0 12px 26px rgba(var(--camellia-rgb), 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.48);
-  font-size: 0.74rem;
-  font-weight: 800;
+  padding: 7px 12px;
+  border-radius: 10px;
+  color: #fff3e2;
+  background: linear-gradient(180deg, #8a5d3e, #6a462f);
+  box-shadow: 0 10px 22px rgba(59, 36, 22, 0.3), inset 0 1px 0 rgba(255, 228, 190, 0.35);
+  font: 0.82rem/1.15 var(--world-font);
   letter-spacing: 0;
-  line-height: 1.15;
   text-align: center;
   text-wrap: balance;
   white-space: normal;
-  backdrop-filter: blur(8px) saturate(1.05);
 }
 
 .topbar-tooltip__label {
@@ -90,41 +115,33 @@
   position: absolute;
   width: 9px;
   height: 9px;
-  border-right: 1px solid rgba(var(--camellia-rgb), 0.34);
-  border-bottom: 1px solid rgba(var(--camellia-rgb), 0.34);
-  background: rgba(var(--sheet-rgb), 0.96);
+  background: #6a462f;
   transform: rotate(45deg);
 }
 
 .topbar-tooltip__arrow[data-side="top"] {
-  bottom: -5px;
+  bottom: -4px;
 }
 
 .topbar-tooltip__arrow[data-side="bottom"] {
-  top: -5px;
+  top: -4px;
+  background: #8a5d3e;
   transform: rotate(225deg);
 }
 
 .topbar-tooltip__arrow[data-side="left"] {
-  right: -5px;
+  right: -4px;
   transform: rotate(-45deg);
 }
 
 .topbar-tooltip__arrow[data-side="right"] {
-  left: -5px;
+  left: -4px;
   transform: rotate(135deg);
 }
 
+/* Always within reach now; the old bar hid these until its nav docked. */
 .app-topbar__dock-motion {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(calc(-50% - 4px)) scale(0.96);
-  transition:
-    opacity 180ms ease,
-    visibility 180ms ease,
-    transform 220ms cubic-bezier(0.645, 0.045, 0.355, 1);
-  will-change: opacity, transform;
+  transform: translateY(-50%);
 }
 
 .app-topbar__story-entry,
@@ -134,164 +151,105 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  min-height: 34px;
+  width: 38px;
+  min-height: 38px;
   padding: 0;
-  border: 1px solid rgba(var(--ink-rgb), 0.18);
+  border: 1px solid rgba(255, 243, 226, 0.4);
   border-radius: 999px;
-  color: var(--ink-soft);
-  background:
-    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.9), rgba(var(--sheet-rgb), 0.72)),
-    rgba(var(--sheet-rgb), 0.88);
-  box-shadow: 0 8px 16px rgba(var(--ink-rgb), 0.08);
+  color: inherit;
+  background: rgba(59, 44, 37, 0.22);
+  backdrop-filter: blur(6px);
   font: inherit;
   line-height: 1;
   letter-spacing: 0;
   cursor: pointer;
-  transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
-    transform 160ms ease;
+  transition: background-color 240ms ease, border-color 240ms ease, transform 240ms ease;
+}
+
+body.is-plaque-docked:has(.snow-shell[data-world='paper']) :is(.app-topbar__story-entry, .app-topbar__about-entry, .app-topbar__feedback-entry) {
+  border-color: rgba(59, 44, 37, 0.2);
+  background: rgba(255, 250, 240, 0.7);
 }
 
 .app-topbar__entry-icon {
   display: inline-grid;
-  place-items: center;
   width: 18px;
   height: 18px;
-  color: currentColor;
 }
 
 .app-topbar__entry-icon svg {
-  display: block;
   width: 100%;
   height: 100%;
 }
 
 .app-topbar__entry-icon svg * {
   fill: none;
-  stroke: currentColor;
 }
 
 .app-topbar__story-entry:hover,
 .app-topbar__story-entry:focus-visible,
 .app-topbar__feedback-entry:hover,
 .app-topbar__feedback-entry:focus-visible {
-  border-color: rgba(var(--camellia-rgb), 0.34);
-  color: var(--deep-coral);
-  background:
-    linear-gradient(180deg, rgba(var(--sheet-rgb), 0.94), rgba(var(--sheet-rgb), 0.76)),
-    rgba(var(--sheet-rgb), 0.94);
+  border-color: var(--world-lantern);
+  background: rgba(246, 180, 92, 0.3);
   transform: translateY(-1px);
 }
 
 .app-topbar__about-entry,
 .app-topbar__about-entry:disabled {
-  color: rgba(var(--ink-rgb), 0.48);
-  background: rgba(var(--ink-rgb), 0.06);
-  box-shadow: none;
   cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .app-topbar__brand {
-  display: inline-grid;
-  place-items: center;
-  min-height: 44px;
-  max-width: calc(100vw - var(--topbar-edge-gap) * 2);
-  padding: 0 clamp(10px, 2vw, 24px);
-  border: 0;
-  color: var(--ink-soft);
-  background: transparent;
-  box-shadow: none;
-  font-family: "Lobster", "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive;
-  font-size: 1.78rem;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 0.95;
-  text-align: center;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  color: inherit;
   text-decoration: none;
-  transform: translateY(0) scale(1);
-  transition:
-    opacity 180ms ease,
-    transform 220ms cubic-bezier(0.645, 0.045, 0.355, 1),
-    filter 220ms ease;
-  will-change: opacity, transform;
+  transition: opacity 300ms ease, transform 300ms ease;
 }
 
 .app-topbar__brand-text {
-  display: block;
-  max-width: 100%;
-  color: var(--ink);
-  letter-spacing: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow:
-    0 1px 0 rgba(var(--sheet-rgb), 0.95),
-    0 5px 12px rgba(var(--ink-rgb), 0.12);
+  font: 1.7rem/1 var(--world-font);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 14px rgba(59, 44, 37, 0.45);
+}
+
+body.is-plaque-docked .app-topbar__brand {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
 }
 
 .app-topbar__weather-summary {
   position: absolute;
-  right: 0;
   top: 50%;
   display: grid;
-  gap: 3px;
-  max-width: clamp(168px, 20vw, 270px);
-  padding-left: 14px;
-  border-left: 1px solid rgba(var(--ink-rgb), 0.18);
-  color: rgba(var(--ink-rgb), 0.82);
-  font-size: 0.76rem;
-  line-height: 1.14;
-  text-align: right;
-  letter-spacing: 0;
+  justify-items: end;
+  max-width: 240px;
+  font: 0.8rem/1.35 var(--world-font);
+  text-shadow: 0 1px 8px rgba(59, 44, 37, 0.45);
+  transform: translateY(-50%);
 }
 
 .app-topbar__weather-primary,
 .app-topbar__weather-secondary {
-  display: block;
   overflow: hidden;
+  max-width: 100%;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.app-topbar__weather-primary {
-  color: rgba(var(--ink-rgb), 0.9);
-  font-weight: 800;
-}
-
 .app-topbar__weather-secondary {
-  color: rgba(var(--ink-rgb), 0.72);
-  font-size: 0.69rem;
+  opacity: 0.76;
 }
 
-body:has(.journal-nav[data-nav-fusion="docked"]) .app-topbar__dock-motion {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(-50%) scale(1);
-}
-
-body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__dock-motion {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(calc(-50% - 4px)) scale(0.96);
-}
-
-body:has(.journal-nav[data-nav-fusion="docked"]) .app-topbar__brand {
-  opacity: 0;
-  pointer-events: none;
-  filter: blur(2px);
-  transform: translateY(-4px) scale(0.98);
-}
-
-body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
-  opacity: 1;
-  pointer-events: auto;
-  filter: none;
-  transform: translateY(0) scale(1);
+.app-topbar .app-topbar__weather-entry {
+  color: inherit;
+  font-family: var(--world-font);
+  transform: translateY(-50%);
 }
 
 .story-route-transition {
@@ -329,12 +287,8 @@ body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
   display: none;
 }
 
-@media (max-width: 1320px) {
-  .app-topbar__weather-summary {
-    max-width: 190px;
-    font-size: 0.72rem;
-  }
 
+@media (max-width: 1320px) {
   .app-topbar__weather-secondary {
     display: none;
   }
@@ -358,29 +312,31 @@ body:has(.journal-nav[data-nav-restoring="true"]) .app-topbar__brand {
   .app-topbar__story-entry,
   .app-topbar__about-entry,
   .app-topbar__feedback-entry {
-    min-height: 32px;
-    width: 32px;
+    min-height: 34px;
+    width: 34px;
   }
 
   .app-topbar__entry-icon {
     width: 16px;
     height: 16px;
   }
+
+  /* On phones the docked plaque takes the whole top edge, so the bar's own buttons step aside. */
+  body.is-plaque-docked .app-topbar {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .app-topbar,
+  .app-topbar::before,
   .app-topbar__brand,
-  .app-topbar__dock-motion,
-  .app-topbar__weather-summary,
-  .app-topbar__story-actions,
-  .topbar-tooltip__content,
   .app-topbar__story-entry,
   .app-topbar__about-entry,
   .app-topbar__feedback-entry {
     transition: none;
   }
-
 }
 
 .page-loader {

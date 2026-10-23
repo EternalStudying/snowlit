@@ -1,267 +1,255 @@
 <script setup lang="ts">
 import './home.css';
 import { computed, ref } from 'vue';
-import { Images, MessageCircleHeart, NotebookPen } from 'lucide-vue-next';
-import PageLoader from '../../components/PageLoader.vue';
-import PostmarkStamp from '../../components/paper/PostmarkStamp.vue';
+import { useRouter } from 'vue-router';
 import partnerAAvatar from '../../assets/couple-avatars/partner-a.webp';
 import partnerBAvatar from '../../assets/couple-avatars/partner-b.webp';
-import { vTilt } from '../../directives/pointer';
-import HomeOdometer from './components/HomeOdometer.vue';
+import { burstPetals } from '../../shell/world/ambientDrift';
+import HomeLetter from './components/HomeLetter.vue';
+import HomeWindow from './components/HomeWindow.vue';
 import { useHomeLifecycle } from './internal/useHomeLifecycle';
-import { useHomeStory } from './internal/useHomeStory';
+import { useHomeEvening } from './internal/useHomeEvening';
+
+/*
+ * Home is one evening at the snow cottage, read top to bottom:
+ * a string of lanterns lights up as the days together count up; two lit windows, one for each of you,
+ * joined by a red thread; today's letter; the latest diary, message and photos laid on the table; and the
+ * next wish hanging as an ema plaque.
+ */
 
 const { overview: home } = useHomeLifecycle().state;
 const root = ref<HTMLElement | null>(null);
-useHomeStory(root, home);
+const evening = useHomeEvening(root, home);
+const router = useRouter();
+
+const LANTERN_COUNT = 11;
+
+// Lanterns hang along the cord "M0 18 Q300 96 600 40 T1200 24" (a 1200×120 drawing stretched to the width).
+// Points come from the curve itself, so they sit on the cord without measuring the page.
+function cordPoint(fraction: number) {
+  const second = fraction >= 0.5;
+  const t = second ? fraction * 2 - 1 : fraction * 2;
+  const [x0, y0, cx, cy, x1, y1] = second ? [600, 40, 900, -16, 1200, 24] : [0, 18, 300, 96, 600, 40];
+  const u = 1 - t;
+  return { x: u * u * x0 + 2 * u * t * cx + t * t * x1, y: u * u * y0 + 2 * u * t * cy + t * t * y1 };
+}
+const lanternStyles = Array.from({ length: LANTERN_COUNT }, (_, index) => {
+  const point = cordPoint((index + 0.5) / LANTERN_COUNT);
+  return { left: `${(point.x / 1200) * 100}%`, top: `${point.y + 14}px` };
+});
 
 const togetherDays = computed(() => home.value?.couple.togetherDays ?? 0);
+const startedOn = computed(() => formatDate(home.value?.couple.startedOn));
 const anniversary = computed(() => ({
   name: home.value?.couple.nextAnniversary.name || '下一纪念日',
   days: home.value?.couple.nextAnniversary.daysUntil ?? 0,
-  date: home.value?.couple.nextAnniversary.date ?? ''
+  date: formatDate(home.value?.couple.nextAnniversary.date)
 }));
 const dailyNote = computed(() => ({
+  date: home.value?.dailyNote.date || '',
   sentence: home.value?.dailyNote.sentence || '今天也适合认真喜欢你。',
   weatherHint: home.value?.dailyNote.weatherHint || '天气待更新',
   activityHint: home.value?.dailyNote.activityHint || '一起留住今天'
 }));
-const latestDiary = computed(() => home.value?.latest.diary ?? null);
-const latestMessage = computed(() => home.value?.latest.message ?? null);
-const latestPhoto = computed(() => home.value?.latest.photo ?? null);
-const latestAlbumPreviewPhotos = computed(() => (latestPhoto.value ? [latestPhoto.value] : []));
-const nextWish = computed(() => home.value?.latest.wish ?? null);
 const messageCount = computed(() => home.value?.stats.messageCount ?? 0);
 const photoCount = computed(() => home.value?.stats.photoCount ?? 0);
 const distanceLabel = computed(() => home.value?.distance.label || '距离正在更新');
+
+const latestDiary = computed(() => home.value?.latest.diary ?? null);
+const latestMessage = computed(() => home.value?.latest.message ?? null);
+const latestPhoto = computed(() => home.value?.latest.photo ?? null);
+const nextWish = computed(() => home.value?.latest.wish ?? null);
 const nextWishNote = computed(() => nextWish.value?.note || nextWish.value?.place || '');
 const latestMessageAvatar = computed(() =>
-  latestMessage.value && latestMessage.value.authorName === home.value?.couple.boyfriendName
-    ? partnerAAvatar
-    : partnerBAvatar
+  latestMessage.value && latestMessage.value.authorName === home.value?.couple.boyfriendName ? partnerAAvatar : partnerBAvatar
 );
 
-const coupleStatusCards = computed(() => {
-  const statuses =
-    home.value?.personStatuses.length
-      ? home.value.personStatuses
-      : [
-          {
-            role: 'boyfriend',
-            name: home.value?.couple.boyfriendName ?? '伴侣 A',
-            city: '', district: '', province: '', country: '',
-            weather: '',
-            temperature: null,
-            mood: '',
-            note: '',
-            lastOnlineAt: null
-          },
-          {
-            role: 'girlfriend',
-            name: home.value?.couple.girlfriendName ?? '伴侣 B',
-            city: '', district: '', province: '', country: '',
-            weather: '',
-            temperature: null,
-            mood: '',
-            note: '',
-            lastOnlineAt: null
-          }
-        ];
-
-  return statuses.map((person) => ({
-    name: person.name || (person.role === 'girlfriend' ? '伴侣 B' : '伴侣 A'),
-    avatar: person.role === 'girlfriend' ? partnerBAvatar : partnerAAvatar,
-    city: [person.city, person.district, person.province, person.country]
-      .find((value) => value && !/^(unknown|未知)$/i.test(value)) || '位置待更新',
-    weather: formatStatusWeather(person.weather, person.temperature),
-    mood: person.mood || '状态待更新',
-    note: person.note || '等一下就同步近况',
-    gender: person.role === 'girlfriend' ? '♀' : '♂'
-  }));
+const windows = computed(() => {
+  const statuses = home.value?.personStatuses.length
+    ? home.value.personStatuses
+    : [
+        { role: 'boyfriend', name: home.value?.couple.boyfriendName ?? '', city: '', weather: '', temperature: null, mood: '', note: '' },
+        { role: 'girlfriend', name: home.value?.couple.girlfriendName ?? '', city: '', weather: '', temperature: null, mood: '', note: '' }
+      ];
+  return statuses.map((person) => {
+    const isB = person.role === 'girlfriend';
+    const places = [person.city, 'district' in person ? person.district : '', 'province' in person ? person.province : '', 'country' in person ? person.country : ''];
+    return {
+      key: person.role,
+      name: person.name || (isB ? '伴侣 B' : '伴侣 A'),
+      avatar: isB ? partnerBAvatar : partnerAAvatar,
+      city: places.find((value) => value && !/^(unknown|未知)$/i.test(value)) || '位置待更新',
+      weather: formatWeather(person.weather, person.temperature),
+      mood: person.mood || '状态待更新',
+      note: person.note || '等一下就同步近况',
+      tone: (isB ? 'sakura' : 'pine') as 'pine' | 'sakura'
+    };
+  });
 });
 
-// The stops the thread passes on its way from the first meeting to the next anniversary.
-const threadStops = computed(() => [
-  { key: 'met', value: formatDate(home.value?.couple.startedOn), label: '第一次相遇' },
-  { key: 'messages', value: `${messageCount.value} 条`, label: '留下的留言' },
-  { key: 'photos', value: `${photoCount.value} 张`, label: '共同的照片' },
-  { key: 'next', value: `${anniversary.value.days} 天后`, label: anniversary.value.name }
-]);
-
-function formatStatusWeather(weather: string, temperature: number | null) {
-  const temperatureText = temperature === null ? '' : `${Math.round(temperature)}°C`;
-  return [weather, temperatureText].filter(Boolean).join(' ') || '天气待更新';
+function formatWeather(weather: string, temperature: number | null) {
+  const degrees = temperature === null ? '' : `${Math.round(temperature)}°C`;
+  return [weather, degrees].filter(Boolean).join(' ') || '天气待更新';
 }
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) {
     return '今天';
   }
   return value.split('T')[0].replaceAll('-', '.');
 }
 
-function formatMessageTime(value?: string) {
+function formatTime(value?: string) {
   if (!value) {
     return '刚刚';
   }
-  const time = value.split('T')[1]?.slice(0, 5);
-  return time || formatDate(value);
+  return value.split('T')[1]?.slice(0, 5) || formatDate(value);
+}
+
+/** Diary content is Markdown; the table only shows its words. */
+function plainExcerpt(markdown: string) {
+  return markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~-]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// The plaque swings and scatters petals first; the wish list opens once it has had its moment.
+async function openWishes(event: MouseEvent) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.button ?? 0) !== 0) {
+    return;
+  }
+  event.preventDefault();
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  burstPetals(rect.left + rect.width / 2, rect.top + rect.height * 0.6);
+  await evening.swingEma();
+  await router.push('/wishes');
 }
 </script>
 
 <template>
   <main ref="root" class="home">
     <template v-if="home">
-      <section class="home-days" aria-label="我们在一起的日子">
-        <div class="home-days__stage">
-          <PostmarkStamp class="home-days__postmark" />
-          <p class="home-days__lead">在一起的第</p>
-          <h1 class="home-days__numeral">
-            <HomeOdometer :value="togetherDays" :delay="0.3" />
-            <span class="home-days__unit">天</span>
-          </h1>
-          <p class="home-days__quote">
-            <span class="home-days__quote-line">朝暮与年岁并往，</span>
-            <span class="home-days__quote-line">与你行至天光。</span>
-          </p>
-          <p class="home-days__anniversary ui-text">
-            <span>下一纪念日</span>
-            <strong>{{ anniversary.name }}</strong>
-            <span>{{ formatDate(anniversary.date) }}</span>
-          </p>
-
-          <div class="home-thread">
-            <svg class="home-thread__svg" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true">
-              <path class="home-thread__ghost" d="M10 70 C 160 20, 260 110, 380 64 S 620 18, 740 66 S 920 104, 990 52" />
-              <path class="home-thread__path" d="M10 70 C 160 20, 260 110, 380 64 S 620 18, 740 66 S 920 104, 990 52" />
-            </svg>
-            <ol class="home-thread__stops" aria-label="一路走来">
-              <li v-for="stop in threadStops" :key="stop.key" class="home-stop" :data-stop="stop.key">
-                <span class="home-stop__dot" aria-hidden="true"></span>
-                <strong class="home-stop__value ui-text">{{ stop.value }}</strong>
-                <span class="home-stop__label">{{ stop.label }}</span>
-              </li>
-            </ol>
-          </div>
+      <!-- Days: the lanterns light up one by one as the count climbs to today. -->
+      <section class="home-days" aria-labelledby="home-days-title">
+        <svg class="home-days__string" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+          <path class="home-days__cord" d="M0 18 Q300 96 600 40 T1200 24" />
+        </svg>
+        <ol class="home-days__lanterns" aria-hidden="true">
+          <li
+            v-for="index in LANTERN_COUNT"
+            :key="index"
+            class="home-lantern"
+            :class="{ 'home-lantern--sakura': index % 3 === 2 }"
+            :data-lantern="index - 1"
+            :style="lanternStyles[index - 1]"
+          >
+            <span class="home-lantern__glow"></span>
+            <span class="home-lantern__body"></span>
+            <span class="home-lantern__tassel"></span>
+          </li>
+        </ol>
+        <p class="home-days__lead">今天是我们在一起的</p>
+        <h1 id="home-days-title" class="home-days__count">
+          <span class="home-days__number" :data-target="togetherDays">{{ togetherDays }}</span>
+          <span class="home-days__unit">天</span>
+        </h1>
+        <p class="home-days__quote">
+          <span>朝暮与年岁并往，</span><span>与你行至天光。</span>
+        </p>
+        <p class="home-days__since">从 {{ startedOn }} 开始，已经留下 {{ messageCount }} 条留言、{{ photoCount }} 张照片。</p>
+        <div class="home-days__tag">
+          <span class="home-days__tag-hole" aria-hidden="true"></span>
+          <strong>{{ anniversary.days }} 天后</strong>
+          <span>{{ anniversary.name }} · {{ anniversary.date }}</span>
         </div>
       </section>
 
+      <!-- Today: two lit windows, one for each of you, joined by a red thread. -->
       <section class="home-today" aria-labelledby="home-today-title">
-        <h2 id="home-today-title" class="home-section-title">今天</h2>
-        <div class="home-today__grid">
-          <article class="daily-note-card paper-sheet paper-sheet--ruled">
-            <span class="washi washi--camellia daily-note-card__tape" aria-hidden="true"></span>
-            <p class="daily-note-card__label">今日小纸条</p>
-            <p class="daily-note-card__sentence">{{ dailyNote.sentence }}</p>
-            <p class="daily-note-card__meta">
-              <span class="paper-chip">{{ dailyNote.weatherHint }}</span>
-              <span class="paper-chip">{{ dailyNote.activityHint }}</span>
-            </p>
-          </article>
-
-          <div class="home-today__people">
-            <article v-for="person in coupleStatusCards" :key="person.name" class="status-person-card paper-sheet">
-              <img class="status-person-card__avatar" :src="person.avatar" :alt="`${person.name} 的头像`" loading="lazy" decoding="async" />
-              <div class="status-person-card__body">
-                <h3>
-                  {{ person.name }}
-                  <span aria-hidden="true">{{ person.gender }}</span>
-                </h3>
-                <p class="status-person-card__chips">
-                  <span class="paper-chip">{{ person.city }}</span>
-                  <span class="paper-chip">{{ person.weather }}</span>
-                  <span class="paper-chip status-person-card__mood">{{ person.mood }}</span>
-                </p>
-                <p class="status-person-card__note">{{ person.note }}</p>
-              </div>
-            </article>
-            <p class="distance-ribbon">
-              <span class="distance-ribbon__text">{{ distanceLabel }}</span>
-              <span class="distance-ribbon__tail">一起看着同一片云</span>
-            </p>
+        <h2 id="home-today-title" class="home-title">今天，我们在各自的窗边</h2>
+        <div class="home-today__windows">
+          <HomeWindow v-bind="windows[0]" />
+          <div class="home-thread" :aria-label="distanceLabel">
+            <svg viewBox="0 0 220 150" aria-hidden="true">
+              <path class="home-thread__line" d="M2 56 C 40 20, 80 96, 110 64 S 178 22, 218 56" />
+              <g class="home-thread__knot" transform="translate(110 64)">
+                <path d="M0 0c-10-12-22-6-16 2 4 5 12 2 16-2zM0 0c10-12 22-6 16 2-4 5-12 2-16-2z" />
+                <circle r="3.6" />
+                <path class="home-thread__tails" d="M-1 2c-4 10-10 16-14 22M1 2c4 10 8 18 14 22" />
+              </g>
+            </svg>
+            <p class="home-thread__tag">{{ distanceLabel }}</p>
           </div>
+          <HomeWindow v-if="windows[1]" v-bind="windows[1]" />
         </div>
+
+        <HomeLetter v-bind="dailyNote" />
       </section>
 
+      <!-- Recent: the last diary page, the last message and the newest photos, laid on the table. -->
       <section class="home-recent" aria-labelledby="home-recent-title">
-        <h2 id="home-recent-title" class="home-section-title">最近发生的小事</h2>
-        <div class="recent-fan">
-          <article class="recent-paper-item recent-paper-item--memory" data-fan="0">
-            <RouterLink v-tilt class="recent-paper-card lamp-glow paper-sheet paper-sheet--ruled" to="/diary">
-              <span class="lamp-glow__light" aria-hidden="true"></span>
-              <span class="recent-paper-card__label"><NotebookPen :size="15" aria-hidden="true" />最新日记</span>
-              <div class="recent-paper-card__copy">
-                <h3>{{ latestDiary?.title ?? '一件很小但发光的事' }}</h3>
-                <p>{{ latestDiary?.content ?? '把最近的小事慢慢收好。' }}</p>
-                <p class="recent-paper-card__meta ui-text">
-                  <span>{{ formatDate(latestDiary?.entryDate) }}</span>
-                  <span v-if="latestDiary?.tag" class="paper-chip">{{ latestDiary.tag }}</span>
-                </p>
-              </div>
-            </RouterLink>
-          </article>
+        <h2 id="home-recent-title" class="home-title">最近发生的小事</h2>
+        <div class="home-recent__table">
+          <RouterLink class="home-notebook" to="/diary">
+            <span class="home-notebook__ribbon" aria-hidden="true"></span>
+            <template v-if="latestDiary">
+              <span class="home-notebook__kind">最新日记 · {{ formatDate(latestDiary.entryDate) }}</span>
+              <strong class="home-notebook__title">{{ latestDiary.title }}</strong>
+              <span class="home-notebook__body">{{ plainExcerpt(latestDiary.content) }}</span>
+              <span v-if="latestDiary.tag" class="home-notebook__mood">{{ latestDiary.tag }}</span>
+            </template>
+            <template v-else>
+              <span class="home-notebook__kind">日记</span>
+              <strong class="home-notebook__title">还没有日记</strong>
+              <span class="home-notebook__body">写下今天的第一页吧。</span>
+            </template>
+          </RouterLink>
 
-          <article class="recent-paper-item recent-paper-item--message" data-fan="1">
-            <RouterLink v-tilt class="recent-paper-card recent-paper-card--message lamp-glow paper-sheet" to="/messages">
-              <span class="lamp-glow__light" aria-hidden="true"></span>
-              <span class="recent-paper-card__label"><MessageCircleHeart :size="15" aria-hidden="true" />最新留言</span>
-              <div class="recent-message-author">
-                <img
-                  class="recent-message-author__avatar"
-                  :src="latestMessageAvatar"
-                  :alt="`${latestMessage?.authorName ?? home.couple.girlfriendName} 的头像`"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div>
-                  <h3>{{ latestMessage?.authorName ?? home.couple.girlfriendName }}</h3>
-                  <small class="ui-text">{{ formatDate(latestMessage?.createdAt) }} {{ formatMessageTime(latestMessage?.createdAt) }}</small>
-                </div>
-              </div>
-              <p>{{ latestMessage?.content ?? '还没有留言，去写下第一张小纸条吧。' }}</p>
-            </RouterLink>
-          </article>
+          <RouterLink class="home-omikuji" to="/messages">
+            <span class="home-omikuji__kind">最新留言</span>
+            <template v-if="latestMessage">
+              <span class="home-omikuji__body">{{ latestMessage.content }}</span>
+              <span class="home-omikuji__who">
+                <img :src="latestMessageAvatar" alt="" />
+                {{ latestMessage.authorName }} · {{ formatTime(latestMessage.createdAt) }}
+              </span>
+            </template>
+            <span v-else class="home-omikuji__body">还没有留言，先写一句吧。</span>
+          </RouterLink>
 
-          <article class="recent-paper-item recent-paper-item--album" data-fan="2">
-            <RouterLink v-tilt class="recent-paper-card recent-paper-card--album lamp-glow paper-sheet" to="/album">
-              <span class="lamp-glow__light" aria-hidden="true"></span>
-              <span class="recent-paper-card__label"><Images :size="15" aria-hidden="true" />最新相册</span>
-              <div class="album-preview-strip">
-                <img
-                  v-for="photo in latestAlbumPreviewPhotos"
-                  :key="photo.id"
-                  :src="photo.previewUrl"
-                  :alt="photo.caption"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="album-preview-footer">
-                <h3>{{ latestPhoto?.caption ?? '最近一张照片' }}</h3>
-                <small class="ui-text">共 {{ photoCount }} 张照片</small>
-              </div>
-            </RouterLink>
-          </article>
+          <RouterLink class="home-photos" to="/album" :aria-label="latestPhoto ? `最新相册：${latestPhoto.caption}，共 ${photoCount} 张照片` : '去相册上传第一张照片'">
+            <span class="home-photos__stack" aria-hidden="true">
+              <span class="home-photo home-photo--back"></span>
+              <span class="home-photo home-photo--back"></span>
+              <span class="home-photo home-photo--front">
+                <img v-if="latestPhoto" :src="latestPhoto.previewUrl" :alt="latestPhoto.caption" loading="lazy" />
+                <span v-else class="home-photo__empty">还没有照片</span>
+              </span>
+            </span>
+            <span class="home-photos__caption">
+              <strong>{{ latestPhoto?.caption || '相册' }}</strong>
+              <small>共 {{ photoCount }} 张照片</small>
+            </span>
+          </RouterLink>
         </div>
       </section>
 
+      <!-- Next: the wish hangs as an ema plaque; touching it gives it a push before it opens the list. -->
       <section class="home-next" aria-labelledby="home-next-title">
-        <h2 id="home-next-title" class="home-section-title">下一件想一起完成的事</h2>
-        <RouterLink v-tilt="3" class="next-plan-strip lamp-glow" to="/wishes">
-          <span class="lamp-glow__light" aria-hidden="true"></span>
-          <svg class="next-plan-strip__check" viewBox="0 0 48 48" aria-hidden="true">
-            <rect class="next-plan-strip__box" x="4" y="4" width="40" height="40" rx="7" />
-            <path class="next-plan-strip__tick" d="M13 25 L21 33 L36 15" />
-          </svg>
-          <span class="next-plan-strip__copy">
-            <strong>{{ nextWish?.title ?? '一起去看海' }}</strong>
+        <h2 id="home-next-title" class="home-title">下一件想一起完成的事</h2>
+        <a class="home-ema" href="/wishes" @click="openWishes">
+          <span class="home-ema__cord" aria-hidden="true"></span>
+          <span class="home-ema__board">
+            <strong>{{ nextWish?.title || '写下第一件想一起做的事' }}</strong>
             <span v-if="nextWishNote">{{ nextWishNote }}</span>
+            <em>去清单看看</em>
           </span>
-          <span class="next-plan-strip__go ui-text">去清单看看</span>
-        </RouterLink>
+        </a>
+        <p class="home-next__close">把每一个普通的晚上，都点成一盏灯。</p>
       </section>
     </template>
-
-    <PageLoader :loading="!home" />
   </main>
 </template>

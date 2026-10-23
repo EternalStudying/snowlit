@@ -100,6 +100,10 @@ function stubDesktopTooltipMedia(enabled: boolean) {
   }));
 }
 
+// The weather schedule runs on timeouts and intervals; animation frames stay real so that an always-on frame loop
+// (GSAP's ticker) does not replay tens of thousands of faked frames while the test jumps 20 minutes ahead.
+const SCHEDULE_TIMERS = { toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] } as const;
+
 describe('顶栏导航融合后的天气摘要', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
@@ -191,7 +195,7 @@ describe('顶栏导航融合后的天气摘要', () => {
 
   it('首次请求失败显示未知，前台 20 分钟更新可替换为真实天气', async () => {
     vi.resetModules();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: [...SCHEDULE_TIMERS.toFake] });
 
     try {
       mockNavigatorGeolocation((success) => {
@@ -245,7 +249,7 @@ describe('顶栏导航融合后的天气摘要', () => {
   });
 
   it('桌面端顶栏按钮使用 Teleport tooltip，focus 打开并按 300ms closeDelay 关闭', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: [...SCHEDULE_TIMERS.toFake] });
     stubDesktopTooltipMedia(true);
 
     try {

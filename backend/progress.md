@@ -147,3 +147,7 @@ Checks: `mvn -o test` 258 tests passing. Packaged-jar smoke run against throwawa
 
 - Deploying ends all existing sessions (old JWT tokens are not recognised); members sign in again.
 - `JWT_SECRET` and `minio.*-prefix` settings are no longer read. Existing databases must use `SQL_INIT_MODE=never`; no schema change was made.
+
+## Consolidation into main (2026-10-22)
+
+All current backend/native working changes and the evening-world Web branch were included under owner authorization. Fresh mvn -o test: 341 passed, zero failures/errors/skips, with host execution. The sandbox attempt could not initialize Mockito's Byte Buddy JVM attachment; no assertion or test configuration was changed. No retained service, database, production deployment or push was involved. Evidence: codex-work/merge-all-main-20261022/.
