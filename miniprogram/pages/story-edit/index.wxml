@@ -76,18 +76,20 @@
   <view class="edit-section edit-section--details">
     <view class="detail-card">
       <view class="detail-row">
-        <view class="detail-label">时间</view>
+        <view class="detail-label">开始</view>
         <view class="detail-value">
           <view class="detail-pick" hover-class="snowlit-pressed" data-field="eventDate" bindtap="openStoryDateSheet">{{fmt.date(form.eventDate)}}</view>
           <view class="detail-pick snowlit-serif" hover-class="snowlit-pressed" data-field="eventTime" bindtap="openStoryTimeSheet">{{form.eventTime}}</view>
         </view>
       </view>
       <view class="detail-row detail-row--end" wx:if="{{form.endDate || form.endTime}}">
-        <view class="detail-label detail-label--muted">结束</view>
+        <view class="detail-label detail-label--muted detail-label--end">
+          <text>结束</text>
+          <view class="detail-clear" hover-class="snowlit-pressed" catchtap="clearEndTime">清空</view>
+        </view>
         <view class="detail-value">
           <view class="detail-pick" hover-class="snowlit-pressed" data-field="endDate" bindtap="openStoryDateSheet">{{form.endDate ? fmt.date(form.endDate) : '选日期'}}</view>
           <view class="detail-pick snowlit-serif" hover-class="snowlit-pressed" data-field="endTime" bindtap="openStoryTimeSheet">{{form.endTime || '--:--'}}</view>
-          <view class="detail-clear" hover-class="snowlit-pressed" catchtap="clearEndTime">×</view>
         </view>
       </view>
       <view class="detail-link detail-link--indent" hover-class="snowlit-pressed" wx:else bindtap="addEndTime">+ 结束时间</view>
@@ -97,13 +99,13 @@
       <view class="detail-row detail-row--place" hover-class="snowlit-pressed" bindtap="handleOpenPlaceSheet">
         <view class="detail-label">地点</view>
         <view class="detail-place">
-          <view class="detail-place__name {{form.locationName ? '' : 'detail-place__name--empty'}}">{{form.locationName || (form.longitude && form.latitude ? '已选位置，给它起个名字' : '搜索或在地图上选')}}</view>
+          <view class="detail-place__name {{form.locationName ? '' : 'detail-place__name--empty'}}">{{form.locationName || (form.longitude && form.latitude ? '已选位置，给它起个名字' : '搜索')}}</view>
           <view class="detail-place__sub" wx:if="{{form.address}}">{{form.address}}</view>
           <view class="detail-place__sub snowlit-serif" wx:if="{{form.longitude && form.latitude}}">{{fmt.point(form.latitude, form.longitude)}}</view>
         </view>
         <image class="detail-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
       </view>
-      <view class="detail-link detail-link--indent" hover-class="snowlit-pressed" bindtap="toggleManualPlace">{{manualPlace ? '收起' : '手动填写名称和坐标'}}</view>
+      <view class="detail-link detail-link--indent" hover-class="snowlit-pressed" bindtap="toggleManualPlace">{{manualPlace ? '收起' : '手动填写'}}</view>
 
       <view class="manual-place" wx:if="{{manualPlace}}">
         <input
@@ -149,7 +151,6 @@
   </view>
 
   <view class="edit-message" wx:if="{{message}}">{{message}}</view>
-  <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
   <view class="bottom-placeholder"></view>
 
   <view class="action-footer">

@@ -15,7 +15,7 @@
       <input
         class="place-search__input"
         value="{{query}}"
-        placeholder="搜索地名，国内外都可以"
+        placeholder="搜索地名"
         confirm-type="search"
         maxlength="50"
         focus="{{visible}}"

@@ -78,6 +78,7 @@
 .category-chips {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 14rpx;
   margin-top: 22rpx;
 }
@@ -223,6 +224,13 @@
   color: #6b7385;
 }
 
+.detail-label--end {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .detail-value {
   display: flex;
   flex: 1;
@@ -242,11 +250,11 @@
 }
 
 .detail-clear {
-  width: 44rpx;
-  height: 44rpx;
+  flex: none;
+  height: 56rpx;
   color: #6b7385;
-  font-size: 32rpx;
-  line-height: 42rpx;
+  font-size: 24rpx;
+  line-height: 56rpx;
   text-align: center;
 }
 
@@ -355,7 +363,7 @@
   grid-template-columns: 160rpx 1fr;
   column-gap: 24rpx;
   align-items: center;
-  padding: 20rpx 44rpx calc(20rpx + env(safe-area-inset-bottom));
+  padding: 20rpx 20rpx calc(20rpx + env(safe-area-inset-bottom)) 68rpx;
   background: rgba(243, 246, 250, 0.96);
   border-top: 1rpx solid #dce2ea;
 }

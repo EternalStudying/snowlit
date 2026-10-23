@@ -155,7 +155,6 @@ function runScrollablePageEndTipTest() {
     'diary-edit',
     'story',
     'story-detail',
-    'story-edit',
     'albums',
     'album-detail',
     'album-edit',
@@ -176,6 +175,8 @@ function runScrollablePageEndTipTest() {
     assert.equal(wxml.includes('snowlit-end-tip'), true, `${page} should render end tip`);
     assert.equal(wxml.includes('没有更多了哦~'), true, `${page} should render unified end text`);
   });
+  assert.equal(readWxml('story-edit').includes('snowlit-end-tip'), false, 'moment editor should not render scroll end tip');
+  assert.equal(readWxml('story-edit').includes('没有更多了哦~'), false, 'moment editor should not render end-of-list text');
   assert.equal(readWxml('login').includes('snowlit-end-tip'), false, 'login should not render scroll end tip');
   assert.equal(readWxml('wishes').includes('没有更多了</view>'), false, 'wishes should not keep old end text');
 }
