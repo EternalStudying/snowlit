@@ -1,5 +1,9 @@
 # Snowlit Progress and Verification Baseline
 
+## Production Album-management Rollout (2026-10-22)
+
+Deployed the owner-authorized current main backend and Web. The reproduced cause was an old production detail response missing canManage; after rollout the same manager/API/presenter check passes with true. Backend 335 tests, Web 461 tests, typecheck and builds passed; 129 HTTPS assets match and all 19 existing table schemas/data are unchanged. Production environment and unrelated service PIDs were preserved; no migration. Native source remains dev, and no native package or Git change was published. Prior private-album unlocks require re-entry once. No production album mutation or physical-device acceptance was performed. See ignored codex-work/album-edit-deploy-20261022/report.md and area progress files.
+
 ## Main-only Git Checkpoint (2026-10-21)
 
 The owner explicitly requested all changes on main and only one remaining local branch. Reviewed eighteen modified tracked files and the untracked drafts source specification; the latest all-changes instruction authorizes including that specification. main and codex/geoapify-configurable-endpoint share the same starting commit, and no additional worktree is registered. Added-line credential-pattern checks found no candidates; local credentials, developer-tool private settings and codex-work remain ignored. The mini-program active profile remains dev. Existing backend 310-test and native 184-test passing results cover the current application changes; no application edit was added for this Git checkpoint. Final commit/branch receipts are reported from Git after the checkpoint. No remote push, deployment or production mutation is part of this request.
@@ -123,3 +127,7 @@ These results belong to the previous implementation baseline, not a fresh test r
 ## Next Handoff
 
 Start a new plan from the next user request. Record the exact checks performed and their limits; do not promote historical tests or a listening port into current end-to-end verification.
+
+## 2026-10-22 production mobile action follow-up
+
+Owner confirms album detail reaches the final end tip after refresh, with neither management action visible. Fresh manager production API and jar identity checks passed, but do not establish the phone package behavior. Relevant native checks passed 19/19. Generated an isolated main-893b586 prod preview QR (823863-byte package) with a read-only D1 permission label; awaiting a phone screenshot. Native source remains dev; production release/data and unrelated work were preserved. No application fix claimed. Evidence: codex-work/album-delete-entry-20261022/.

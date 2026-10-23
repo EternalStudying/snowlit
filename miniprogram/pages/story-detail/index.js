@@ -86,7 +86,7 @@ Page({
     const pages = getCurrentPages();
     pages.forEach((page) => {
       if (page && page.route === ROUTES.STORY && typeof page.loadMoments === 'function') {
-        page.loadMoments({ refreshYears: true });
+        page.loadMoments();
       }
     });
   },

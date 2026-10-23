@@ -21,6 +21,7 @@ function loadPage(pagePath) {
     removeStorageSync: (key) => storage.delete(key),
     showToast() {},
     nextTick: (callback) => callback(),
+    pageScrollTo() {},
     createMapContext: () => ({ includePoints() {}, getScale() {}, getCenterLocation() {} }),
     request: (options) => requests.push(options)
   };
@@ -53,6 +54,10 @@ function respond(request, data) {
   request.success({ statusCode: 200, data });
 }
 
+function storyTitles(page) {
+  return page.data.sections.flatMap((section) => section.moments.map((item) => item.title));
+}
+
 function moment(id, title) {
   return { id, title, eventTime: '2026-05-25T18:20:00', category: 'daily' };
 }
@@ -69,7 +74,7 @@ test('a slow response for an older Story filter does not replace the newer filte
   await flush();
 
   assert.equal(page.data.activeFilter, 'travel');
-  assert.deepEqual(page.data.moments.map((item) => item.title), ['travel only']);
+  assert.deepEqual(storyTitles(page), ['travel only']);
   assert.equal(page.data.loading, false);
 });
 
@@ -83,7 +88,7 @@ test('an older Story request that fails late does not wipe the newer list', asyn
   requests[0].fail({ errMsg: 'request:fail timeout' });
   await flush();
 
-  assert.deepEqual(page.data.moments.map((item) => item.title), ['travel only']);
+  assert.deepEqual(storyTitles(page), ['travel only']);
   assert.equal(page.data.message, '');
 });
 

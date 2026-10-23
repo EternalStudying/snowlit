@@ -4,7 +4,7 @@ Component({
       type: Boolean,
       value: false
     },
-    // From diary-presenter buildJumpYears: [{ year, months: [{ month, label, count, disabled, active }] }].
+    // From utils/month-jump buildJumpYears: [{ year, months: [{ month, label, count, disabled, active }] }].
     years: {
       type: Array,
       value: []

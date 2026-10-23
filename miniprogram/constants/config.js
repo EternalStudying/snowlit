@@ -23,7 +23,10 @@ const config = {
   mediaBaseUrl: activeEnvironment.mediaBaseUrl,
   fontFace: activeEnvironment.fontFace,
   requestTimeout: 15000,
-  uploadTimeout: 30000
+  uploadTimeout: 30000,
+  // Tencent LBS key bound to this mini program for a personalized map style (layer-style 1).
+  // Public by design; leave empty to use the standard map style.
+  mapSubkey: ''
 };
 
 module.exports = {

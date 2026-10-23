@@ -1,0 +1,28 @@
+// Display helpers for the edit page; the form keeps its raw YYYY-MM-DD / HH:mm / decimal values.
+var THIS_YEAR = getDate().getFullYear();
+
+function date(value) {
+  if (!value) {
+    return '';
+  }
+  var parts = value.split('-');
+  if (parts.length !== 3) {
+    return value;
+  }
+  var text = parseInt(parts[1], 10) + '月' + parseInt(parts[2], 10) + '日';
+  return parseInt(parts[0], 10) === THIS_YEAR ? text : parts[0] + '年' + text;
+}
+
+function point(latitude, longitude) {
+  var lat = parseFloat(latitude);
+  var lng = parseFloat(longitude);
+  if (isNaN(lat) || isNaN(lng)) {
+    return '';
+  }
+  return lat.toFixed(4) + ', ' + lng.toFixed(4);
+}
+
+module.exports = {
+  date: date,
+  point: point
+};

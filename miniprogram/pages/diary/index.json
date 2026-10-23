@@ -4,6 +4,6 @@
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 200,
   "usingComponents": {
-    "diary-month-sheet": "/components/diary-month-sheet/index"
+    "snowlit-month-sheet": "/components/snowlit-month-sheet/index"
   }
 }

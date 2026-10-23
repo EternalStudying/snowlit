@@ -37,4 +37,18 @@ public final class StoryVos {
             LocalDateTime updatedAt
     ) {
     }
+
+    public record StoryPlaceVo(
+            String name,
+            String address,
+            double latitude,
+            double longitude,
+            String countryCode
+    ) {
+    }
+
+    public record StoryPlaceListVo(
+            List<StoryPlaceVo> items
+    ) {
+    }
 }

@@ -4,239 +4,110 @@ const path = require('node:path');
 
 const {
   buildStoryQuery,
-  clusterStoryMarkers,
-  createStoryMapSnapPoints,
-  mapStoryLayoutByDrag,
-  mapStoryLayoutByIndex,
-  mapStoryLayoutByScroll,
+  findStoryMoment,
+  mapClusterMarker,
   mapStoryDetail,
-  mapStoryPage,
-  STORY_CLUSTER_EXPANDED_SCALE
+  mapStoryPage
 } = require('../pages/story/story-presenter');
 
-function runStoryPageMappingTest() {
-  const result = mapStoryPage({
-    items: [
-      {
-        id: 1,
-        title: '雨后的散步',
-        content: '湖边的风慢下来，云也很轻。\n灯一盏一盏亮起来。',
-        eventTime: '2026-05-25T18:20:00',
-        endTime: '2026-05-25T19:10:00',
-        locationName: '示例公园',
-        address: '示例城市示例街区',
-        longitude: 18.7967,
-        latitude: 12.0701,
-        category: 'travel',
-        createdByUserId: 1,
-        images: ['https://snowlit.example.com/media/story/lake.webp'],
-        updatedAt: '2026-05-25T20:18:00'
-      },
-      {
-        id: 2,
-        title: '春天的小花',
-        content: '',
-        eventTime: '2025-04-12T10:05:00',
-        locationName: '家附近',
-        longitude: -0.165,
-        latitude: 51.5064,
-        category: 'daily',
-        createdByUserId: 2,
-        images: []
-      }
-    ],
-    years: [2026, 2025, 2024],
-    canManage: true
-  }, 2, 'all');
+const ITEMS = [
+  {
+    id: 1,
+    title: '雨后的散步',
+    content: '湖边的风慢下来，云也很轻。\n灯一盏一盏亮起来。',
+    eventTime: '2026-05-25T18:20:00',
+    locationName: '示例公园',
+    longitude: 18.7967,
+    latitude: 12.0701,
+    category: 'travel',
+    images: ['https://snowlit.example.com/media/story/lake.webp']
+  },
+  {
+    id: 2,
+    title: '春天的小花',
+    content: '',
+    eventTime: '2025-04-12T10:05:00',
+    locationName: '',
+    address: '示例街区',
+    category: 'daily',
+    images: []
+  },
+  {
+    id: 3,
+    title: '同月更早',
+    eventTime: '2026-05-02T09:00:00',
+    longitude: 18.8,
+    latitude: 12.1,
+    category: 'date'
+  },
+  {
+    id: 4,
+    title: ''
+  }
+];
+
+function runTimelineTest() {
+  const result = mapStoryPage({ items: ITEMS, canManage: true });
 
   assert.equal(result.canManage, true);
-  assert.equal(result.selectedMomentId, 2);
   assert.equal(result.hasMoments, true);
-  assert.deepEqual(result.years, [
-    { label: '全部', value: 'all', active: true },
-    { label: '2026', value: 2026, active: false },
-    { label: '2025', value: 2025, active: false }
+  // Newest first, grouped by month; a drop with no date goes last.
+  assert.deepEqual(result.sections.map((section) => [section.month, section.countText, section.moments.map((m) => m.id)]), [
+    ['2026-05', '2 个', [1, 3]],
+    ['2025-04', '1 个', [2]],
+    ['undated', '1 个', [4]]
   ]);
-  assert.deepEqual(result.moments[0], {
+  assert.deepEqual(
+    result.sections.map((section) => [section.anchorId, section.yearText, section.monthText, section.dated]),
+    [
+      ['month-2026-05', '2026', '05', true],
+      ['month-2025-04', '2025', '04', true],
+      ['month-undated', '', '未注明日期', false]
+    ]
+  );
+  assert.deepEqual(result.sections[0].moments[0], {
     id: 1,
-    selected: false,
+    month: '2026-05',
     date: '05.25',
     title: '雨后的散步',
     locationName: '示例公园',
-    category: 'travel',
     categoryLabel: '旅行',
     time: '18:20',
     summary: '湖边的风慢下来，云也很轻。',
-    image: 'https://snowlit.example.com/media/story/lake.webp'
+    image: 'https://snowlit.example.com/media/story/lake.webp',
+    placed: true
   });
-  assert.equal(result.moments[1].selected, true);
-  assert.equal(result.moments[1].image, '../../assets/story/moment-evening.png');
-  assert.deepEqual(result.markers, [
-    {
-      id: 1,
-      momentId: 1,
-      locationLabel: '示例公园',
-      title: '示例公园',
-      latitude: 12.0701,
-      longitude: 18.7967,
-      iconPath: '/assets/icons/story/map-pin-filled.png',
-      width: 22,
-      height: 22,
-      active: false,
-      callout: {
-        content: '示例公园',
-        color: '#555e70',
-        fontSize: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#dce2ea',
-        bgColor: '#ffffff',
-        padding: 8,
-        display: 'ALWAYS',
-        textAlign: 'center'
-      }
-    },
-    {
-      id: 2,
-      momentId: 2,
-      locationLabel: '家附近',
-      title: '家附近',
-      latitude: 51.5064,
-      longitude: -0.165,
-      iconPath: '/assets/icons/story/map-pin-filled.png',
-      width: 22,
-      height: 22,
-      active: true,
-      callout: {
-        content: '家附近',
-        color: '#1d2433',
-        fontSize: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#1d2433',
-        bgColor: '#ffffff',
-        padding: 8,
-        display: 'ALWAYS',
-        textAlign: 'center'
-      }
-    }
-  ]);
-  assert.deepEqual(result.mapCenter, {
-    latitude: 51.5064,
-    longitude: -0.165
-  });
+  // No stand-in photos or placeholder places: missing ones stay empty.
+  const spring = result.sections[1].moments[0];
+  assert.equal(spring.image, '');
+  assert.equal(spring.locationName, '示例街区');
+  assert.equal(result.sections[2].moments[0].title, '未命名点滴');
+  assert.equal(result.sections[2].moments[0].locationName, '');
+  // Only dated drops feed the month jump sheet.
+  assert.deepEqual(result.months, ['2026-05', '2026-05', '2025-04']);
+  assert.equal(findStoryMoment(result.sections, '3').title, '同月更早');
+  assert.equal(findStoryMoment(result.sections, 99), null);
+}
+
+function runMarkersTest() {
+  const result = mapStoryPage({ items: ITEMS });
+
+  // Drops with coordinates become markers the native map clusters itself.
+  assert.deepEqual(result.markers.map((marker) => [marker.id, marker.momentId, marker.joinCluster]), [[1, 1, true], [3, 3, true]]);
+  assert.deepEqual(result.markers[0].anchor, { x: 0.5, y: 1 });
+  assert.equal(result.unplacedCount, 2);
   assert.deepEqual(result.mapIncludePoints, [
     { latitude: 12.0701, longitude: 18.7967 },
-    { latitude: 51.5064, longitude: -0.165 }
+    { latitude: 12.1, longitude: 18.8 }
   ]);
-  assert.equal(Object.prototype.hasOwnProperty.call(result.markers[0], 'label'), false);
-}
 
-function runStoryPageSkipsInvalidMapCoordinatesTest() {
-  const result = mapStoryPage({
-    items: [
-      {
-        id: 8,
-        title: '没有坐标的点滴',
-        eventTime: '2026-05-25T18:20:00',
-        locationName: '未知地点',
-        longitude: '',
-        latitude: null,
-        category: 'daily'
-      }
-    ]
-  }, '', 'all');
-
-  assert.equal(result.hasMoments, true);
-  assert.deepEqual(result.markers, []);
-  assert.deepEqual(result.mapIncludePoints, []);
-  assert.deepEqual(result.mapCenter, {
-    latitude: 0,
-    longitude: 0
-  });
-}
-
-function runStoryPageClustersNearbyMarkersTest() {
-  const result = mapStoryPage({
-    items: [
-      {
-        id: 11,
-        title: '湖边',
-        eventTime: '2026-05-25T18:20:00',
-        locationName: '伦敦海德公园湖边',
-        longitude: -0.1751,
-        latitude: 51.5051,
-        category: 'travel'
-      },
-      {
-        id: 12,
-        title: '咖啡',
-        eventTime: '2026-05-25T19:20:00',
-        locationName: '海德公园湖畔咖啡',
-        longitude: -0.1742,
-        latitude: 51.5055,
-        category: 'daily'
-      },
-      {
-        id: 13,
-        title: '远一点',
-        eventTime: '2026-05-26T10:20:00',
-        locationName: '伦敦北部',
-        longitude: -0.1402,
-        latitude: 51.541,
-        category: 'daily'
-      }
-    ]
-  }, '', 'all');
-
-  assert.equal(Array.isArray(result.rawMarkers), true);
-  assert.equal(result.rawMarkers.length, 3);
-  assert.equal(result.markers.length, 2);
-  assert.equal(result.mapScale, 10);
-  assert.deepEqual(result.markers[0], {
-    id: 1000000000,
-    cluster: true,
-    clusterCount: 2,
-    clusterMomentIds: [11, 12],
-    clusterIncludePoints: [
-      { latitude: 51.5051, longitude: -0.1751 },
-      { latitude: 51.5055, longitude: -0.1742 }
-    ],
-    locationLabel: '2个点滴',
-    title: '2个点滴',
-    latitude: 51.5053,
-    longitude: -0.17465,
-    iconPath: '/assets/icons/story/map-cluster.png',
-    width: 30,
-    height: 30,
-    active: true,
-    callout: {
-      content: '2个点滴',
-      color: '#1d2433',
-      fontSize: 12,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#1d2433',
-      bgColor: '#ffffff',
-      padding: 8,
-      display: 'ALWAYS',
-      textAlign: 'center'
-    }
-  });
-  assert.equal(result.markers[1].momentId, 13);
-  assert.deepEqual(
-    clusterStoryMarkers(result.rawMarkers, result.selectedMomentId, result.mapScale).map((item) => item.clusterCount || 1),
-    [2, 1]
-  );
-  assert.deepEqual(
-    clusterStoryMarkers(result.rawMarkers, result.selectedMomentId, STORY_CLUSTER_EXPANDED_SCALE).map((item) => item.momentId),
-    [11, 12, 13]
-  );
-  assert.deepEqual(result.mapIncludePoints, [
-    { latitude: 51.5051, longitude: -0.1751 },
-    { latitude: 51.5055, longitude: -0.1742 },
-    { latitude: 51.541, longitude: -0.1402 }
-  ]);
+  const cluster = mapClusterMarker({ clusterId: 7, center: { latitude: 1, longitude: 2 }, markerIds: [1, 3] });
+  assert.equal(cluster.clusterId, 7);
+  assert.equal(cluster.latitude, 1);
+  assert.equal(cluster.longitude, 2);
+  assert.equal(cluster.label.content, '2');
+  assert.equal(cluster.label.bgColor, '#1d2433');
+  assert.equal(cluster.label.anchorX, -cluster.label.width / 2);
 }
 
 function runStoryDetailMappingTest() {
@@ -285,196 +156,34 @@ function runStoryDetailMappingTest() {
 }
 
 function runBuildStoryQueryTest() {
-  assert.deepEqual(buildStoryQuery('all', 'all'), {});
-  assert.deepEqual(buildStoryQuery('travel', 'all'), { category: 'travel' });
-  assert.deepEqual(buildStoryQuery('all', 2026), { year: 2026 });
-  assert.deepEqual(buildStoryQuery('daily', 2025), { category: 'daily', year: 2025 });
+  assert.deepEqual(buildStoryQuery('all'), {});
+  assert.deepEqual(buildStoryQuery('travel'), { category: 'travel' });
+  assert.deepEqual(buildStoryQuery('unknown'), {});
 }
 
-function runStoryMapSnapLayoutTest() {
-  const snapPoints = createStoryMapSnapPoints(1334);
-
-  assert.equal(snapPoints.length, 5);
-  assert.deepEqual(snapPoints.map((item) => item.key), [
-    'fullMap',
-    'largeMap',
-    'balanced',
-    'largeList',
-    'fullList'
-  ]);
-  assert.deepEqual(snapPoints.map((item) => item.mapHeightRpx), [1098, 824, 549, 275, 0]);
-
-  assert.deepEqual(mapStoryLayoutByIndex(1334, 0), {
-    mapTopOffsetRpx: 160,
-    mapHeightRpx: 1098,
-    sheetHeightRpx: 0,
-    mapSnapIndex: 0,
-    mapSnapKey: 'fullMap',
-    sheetPanOffsetRpx: 0,
-    sheetScrollEnabled: false
-  });
-  assert.deepEqual(mapStoryLayoutByIndex(1334, 4), {
-    mapTopOffsetRpx: 160,
-    mapHeightRpx: 0,
-    sheetHeightRpx: 1098,
-    mapSnapIndex: 4,
-    mapSnapKey: 'fullList',
-    sheetPanOffsetRpx: 760,
-    sheetScrollEnabled: true
-  });
-  assert.deepEqual(mapStoryLayoutByScroll(1334, 380), {
-    mapTopOffsetRpx: 160,
-    mapHeightRpx: 549,
-    sheetHeightRpx: 549,
-    mapSnapIndex: 2,
-    mapSnapKey: 'balanced',
-    sheetPanOffsetRpx: 380,
-    sheetScrollEnabled: false
-  });
-  assert.deepEqual(mapStoryLayoutByDrag(1334, 0, -190), {
-    mapTopOffsetRpx: 160,
-    mapHeightRpx: 824,
-    sheetHeightRpx: 274,
-    mapSnapIndex: 1,
-    mapSnapKey: 'largeMap',
-    sheetPanOffsetRpx: 190,
-    sheetScrollEnabled: false
-  });
-  assert.deepEqual(mapStoryLayoutByDrag(1334, 0, -760), {
-    mapTopOffsetRpx: 160,
-    mapHeightRpx: 0,
-    sheetHeightRpx: 1098,
-    mapSnapIndex: 4,
-    mapSnapKey: 'fullList',
-    sheetPanOffsetRpx: 760,
-    sheetScrollEnabled: true
-  });
-}
-
-function runStoryFilterTemplateTest() {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxml'), 'utf8');
-
-  assert.equal(wxml.includes('class="year-row"'), false);
-  assert.equal(wxml.includes('class="year-dropdown"'), true);
-  assert.equal(wxml.includes('wx:if="{{yearDropdownOpen}}"'), true);
-  assert.equal(wxml.includes('bindtap="handleYearTap"'), true);
-}
-
-function runStoryAddButtonStyleTest() {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxss'), 'utf8');
-  const storyAddRule = wxss.match(/\.story-add\s*\{[\s\S]*?\n\}/);
-
-  assert.ok(storyAddRule, 'story add button style should exist');
-  assert.match(storyAddRule[0], /position:\s*fixed;/);
-  assert.match(storyAddRule[0], /bottom:\s*calc\(44rpx \+ env\(safe-area-inset-bottom\)\);/);
-  assert.doesNotMatch(storyAddRule[0], /top:\s*796rpx;/);
-}
-
-function runStoryFilterStyleTest() {
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxss'), 'utf8');
-  const filterAreaRule = wxss.match(/\.filter-area\s*\{[\s\S]*?\n\}/);
-  const categoryRowRule = wxss.match(/\.category-row\s*\{[\s\S]*?\n\}/);
-  const yearChipRule = wxss.match(/\.year-chip\s*\{[\s\S]*?\n\}/);
-
-  assert.ok(filterAreaRule, 'filter area style should exist');
-  assert.ok(categoryRowRule, 'category row style should exist');
-  assert.ok(yearChipRule, 'year chip style should exist');
-  assert.match(filterAreaRule[0], /background:\s*#ebeff5;/);
-  assert.match(categoryRowRule[0], /background:\s*#ebeff5;/);
-  assert.match(yearChipRule[0], /display:\s*flex;/);
-  assert.match(yearChipRule[0], /align-items:\s*center;/);
-  assert.match(yearChipRule[0], /justify-content:\s*center;/);
-  assert.match(yearChipRule[0], /line-height:\s*1;/);
-}
-
-function runStoryMapChromeTemplateTest() {
+function runStoryTemplateTest() {
   const wxml = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxml'), 'utf8');
   const wxss = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxss'), 'utf8');
-
-  assert.equal(wxml.includes('class="page-head'), false);
-  assert.equal(wxml.includes('snowlit-subpage-heading'), false);
-  assert.equal(wxml.includes('snowlit-subpage-brand'), false);
-  assert.equal(wxml.includes('snowlit-subpage-title'), false);
-  assert.equal(wxml.includes('snowlit-subpage-subtitle'), false);
-  assert.equal(wxml.includes('map-tool'), false);
-  assert.equal(wxml.includes('handleLocateTap'), false);
-  assert.equal(wxml.includes('handleListTap'), false);
-  assert.equal(wxml.includes('current-location.svg'), false);
-  assert.equal(wxml.includes('assets/icons/story/list.svg'), false);
-  assert.equal(wxss.includes('.page-head'), false);
-  assert.equal(wxss.includes('.map-tool'), false);
-  assert.equal(wxss.includes('.story-brand'), false);
-  assert.equal(wxss.includes('.story-title'), false);
-  assert.equal(wxss.includes('.story-subtitle'), false);
-}
-
-function runStoryNativeMapTemplateTest() {
-  const wxml = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxml'), 'utf8');
-  const wxss = fs.readFileSync(path.join(__dirname, '../pages/story/index.wxss'), 'utf8');
-  const js = fs.readFileSync(path.join(__dirname, '../pages/story/index.js'), 'utf8');
-  const presenterJs = fs.readFileSync(path.join(__dirname, '../pages/story/story-presenter.js'), 'utf8');
   const json = JSON.parse(fs.readFileSync(path.join(__dirname, '../pages/story/index.json'), 'utf8'));
-  const markerPng = fs.readFileSync(path.join(__dirname, '../assets/icons/story/map-pin-filled.png'));
-  const clusterPng = fs.readFileSync(path.join(__dirname, '../assets/icons/story/map-cluster.png'));
-  const mapStageRule = wxss.match(/\.map-stage\s*\{[\s\S]*?\n\}/);
+  const js = fs.readFileSync(path.join(__dirname, '../pages/story/index.js'), 'utf8');
 
-  assert.match(wxml, /<map[\s\S]*id="storyMap"[\s\S]*markers="\{\{markers\}\}"/);
-  assert.match(wxml, /<map[\s\S]*wx:if="\{\{mapHeightRpx > 0\}\}"/);
-  assert.equal(wxml.indexOf('class="top-action"') < wxml.indexOf('<map'), true);
-  assert.match(wxml, /latitude="\{\{mapCenter\.latitude\}\}"/);
-  assert.match(wxml, /longitude="\{\{mapCenter\.longitude\}\}"/);
-  assert.match(wxml, /scale="\{\{mapScale\}\}"/);
-  assert.equal(wxml.includes('include-points="{{mapIncludePoints}}"'), false);
-  assert.match(wxml, /bindregionchange="handleMapRegionChange"/);
-  assert.match(wxml, /bindmarkertap="handleMarkerTap"/);
-  assert.match(wxml, /<view[\s\S]*class="map-stage"[\s\S]*style="margin-top: \{\{mapTopOffsetRpx\}\}rpx; height: \{\{mapHeightRpx\}\}rpx;"/);
-  assert.match(wxml, /<view[^>]*class="filter-area"[^>]*bindtouchstart="handleMomentSheetTouchStart"[^>]*bindtouchmove="handleMomentSheetTouchMove"[^>]*bindtouchend="handleMomentSheetTouchEnd"/);
-  assert.match(wxml, /<view[\s\S]*class="moment-sheet-frame"[\s\S]*style="height: \{\{sheetHeightRpx\}\}rpx;"/);
-  assert.match(wxml, /bindtouchstart="handleMomentSheetTouchStart"/);
-  assert.match(wxml, /bindtouchmove="handleMomentSheetTouchMove"/);
-  assert.match(wxml, /bindtouchend="handleMomentSheetTouchEnd"/);
-  assert.match(wxml, /<scroll-view[\s\S]*class="moment-sheet"[\s\S]*scroll-y="\{\{sheetScrollEnabled\}\}"/);
-  assert.match(wxml, /scroll-top="\{\{sheetScrollTop\}\}"/);
-  assert.match(wxml, /bindscroll="handleMomentSheetScroll"/);
-  assert.equal(wxml.includes('bindrefresherrefresh'), false);
-  assert.equal(wxml.includes('refresher-enabled'), false);
-  assert.equal(wxml.includes('refresher-triggered'), false);
-  assert.match(wxml, /style="height: 100%;"/);
-  assert.equal(wxml.includes('style="left: {{item.left}}%; top: {{item.top}}%;"'), false);
-  assert.equal(wxml.includes('wx:for="{{markers}}"'), false);
-  assert.equal(wxml.includes('class="map-texture"'), false);
-  assert.equal(json.disableScroll, true);
-  assert.equal(json.enablePullDownRefresh, false);
-  assert.ok(mapStageRule, 'map stage style should exist');
-  assert.doesNotMatch(mapStageRule[0], /transition:\s*height\b/);
-  assert.equal(wxss.includes('.native-map'), true);
-  assert.match(wxss, /\.story-map-page[\s\S]*height:\s*100vh;/);
-  assert.match(wxss, /\.story-map-page[\s\S]*overflow:\s*hidden;/);
-  assert.equal(wxss.includes('.map-marker'), false);
-  assert.equal(js.includes('event.detail.markerId'), true);
-  assert.equal(presenterJs.includes("const MAP_PIN_ICON = '/assets/icons/story/map-pin-filled.png';"), true);
-  assert.equal(presenterJs.includes("const MAP_PIN_ICON = '../../assets/icons/story/map-pin-filled.svg';"), false);
-  assert.equal(presenterJs.includes("const MAP_CLUSTER_ICON = '/assets/icons/story/map-cluster.png';"), true);
-  assert.equal(js.includes('expandStoryCluster'), true);
-  assert.equal(js.includes('mapScale: STORY_CLUSTER_EXPANDED_SCALE'), true);
-  assert.equal(js.includes('handleMapRegionChange'), true);
-  assert.equal(js.includes('clusterStoryMarkers(this.data.rawMarkers'), true);
-  assert.equal(markerPng.toString('ascii', 1, 4), 'PNG');
-  assert.equal(markerPng.readUInt32BE(16), 72);
-  assert.equal(markerPng.readUInt32BE(20), 72);
-  assert.equal(clusterPng.toString('ascii', 1, 4), 'PNG');
-  assert.equal(clusterPng.readUInt32BE(16), 72);
-  assert.equal(clusterPng.readUInt32BE(20), 72);
-  assert.equal(js.includes("wx.createMapContext('storyMap', this)"), true);
-  assert.equal(js.includes('includePoints'), true);
-  assert.equal(js.includes('this.fitMapToMarkers();'), false);
-  assert.equal(js.includes('createStoryMapSnapPoints'), true);
-  assert.equal(js.includes('mapStoryLayoutByDrag'), true);
-  assert.equal(js.includes('mapStoryLayoutByScroll'), true);
-  assert.equal(js.includes('handleMomentSheetScroll'), true);
-  assert.equal(js.includes('handleMomentSheetTouchMove'), true);
-  assert.equal(js.includes('onPullDownRefresh'), false);
-  assert.equal(js.includes('handleMomentSheetRefresh'), false);
+  // List first, with the same heading as the tab pages and a switch to the map.
+  assert.match(wxml, /class="snowlit-page-title snowlit-kai">点滴</);
+  assert.match(wxml, /data-view="list"[\s\S]*data-view="map"/);
+  assert.match(wxml, /wx:for="\{\{sections\}\}"[\s\S]*class="month-head"[\s\S]*bindtap="handleMonthHeadTap"/);
+  assert.match(wxml, /<snowlit-month-sheet[\s\S]*bind:select="handleJumpSelect"/);
+  assert.match(wxss, /\.month-head \{[^}]*position: sticky;[^}]*top: 150rpx;/);
+  assert.equal(json.usingComponents['snowlit-month-sheet'], '/components/snowlit-month-sheet/index');
+  assert.equal(json.disableScroll, undefined);
+
+  // The map is only in the map view, never resized by gestures, and clustering is native.
+  assert.match(wxml, /<view class="map-stage" wx:else>[\s\S]*<map[\s\S]*id="storyMap"/);
+  assert.equal(/bindregionchange|bindtouchmove|markers="/.test(wxml), false);
+  assert.match(js, /initMarkerCluster/);
+  assert.match(js, /markerClusterCreate/);
+  assert.match(wxml, /class="map-card[^"]*"[\s\S]*bindtap="goDetail"/);
+  assert.match(wxml, /class="map-note"[\s\S]*bindtap="showList"/);
+  assert.match(wxml, /wx:if="\{\{canManage && view === 'list'\}\}" bindtap="goCreate"/);
 }
 
 function runStoryDetailActionsTest() {
@@ -497,17 +206,11 @@ function runStoryDetailActionsTest() {
   assert.equal(js.includes('deleteMoment()'), true);
 }
 
-runStoryPageMappingTest();
-runStoryPageSkipsInvalidMapCoordinatesTest();
-runStoryPageClustersNearbyMarkersTest();
+runTimelineTest();
+runMarkersTest();
 runStoryDetailMappingTest();
 runBuildStoryQueryTest();
-runStoryMapSnapLayoutTest();
-runStoryFilterTemplateTest();
-runStoryAddButtonStyleTest();
-runStoryFilterStyleTest();
-runStoryMapChromeTemplateTest();
-runStoryNativeMapTemplateTest();
+runStoryTemplateTest();
 runStoryDetailActionsTest();
 
 console.log('story-presenter tests passed');

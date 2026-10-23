@@ -1,125 +1,166 @@
-<view class="story-map-page">
-  <view class="top-action">
-    <view class="back-button" bindtap="goBack">
-      <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+<view class="top-scroll-mask" wx:if="{{showTopMask && view === 'list'}}"></view>
+
+<view class="top-action">
+  <view class="back-button" hover-class="snowlit-pressed" bindtap="goBack">
+    <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
+  </view>
+</view>
+
+<view class="story-page {{view === 'map' ? 'story-page--map' : ''}}">
+  <view class="snowlit-page-heading story-heading">
+    <view class="snowlit-page-brand">SNOWLIT</view>
+    <view class="snowlit-page-title snowlit-kai">点滴</view>
+    <view class="snowlit-page-subtitle">
+      <view class="snowlit-subtitle-rule"></view>
+      <text class="snowlit-subtitle-text snowlit-kai">一路走来，处处是你</text>
+    </view>
+
+    <view class="view-switch">
+      <view
+        class="view-switch__item {{view === 'list' ? 'view-switch__item--active' : ''}}"
+        data-view="list"
+        bindtap="handleViewTap"
+      >列表</view>
+      <view
+        class="view-switch__item {{view === 'map' ? 'view-switch__item--active' : ''}}"
+        data-view="map"
+        bindtap="handleViewTap"
+      >地图</view>
     </view>
   </view>
 
-  <view class="map-stage" style="margin-top: {{mapTopOffsetRpx}}rpx; height: {{mapHeightRpx}}rpx;">
+  <view class="hairline hero-line"></view>
+
+  <view class="filter-row">
+    <view
+      class="filter-item {{item.active ? 'filter-item--active' : ''}}"
+      wx:for="{{filters}}"
+      wx:key="value"
+      data-value="{{item.value}}"
+      bindtap="handleFilterTap"
+    >
+      <text>{{item.label}}</text>
+      <view wx:if="{{item.active}}" class="filter-line snowlit-grow"></view>
+    </view>
+  </view>
+
+  <view class="hairline"></view>
+
+  <view class="story-state" wx:if="{{loading && !hasMoments}}">正在加载点滴</view>
+  <view class="story-state" wx:elif="{{message}}">
+    <view>{{message}}</view>
+    <view class="state-action" hover-class="snowlit-pressed" bindtap="retryLoad">重试</view>
+  </view>
+  <view class="story-state" wx:elif="{{!hasMoments}}">{{activeFilter === 'all' ? '还没有点滴，记下第一个吧' : '这个分类还没有点滴'}}</view>
+
+  <block wx:elif="{{view === 'list'}}">
+    <view class="month-block snowlit-reveal" wx:for="{{sections}}" wx:for-item="section" wx:key="month" id="{{section.anchorId}}">
+      <view
+        class="month-head"
+        hover-class="{{section.dated ? 'snowlit-pressed' : 'none'}}"
+        data-month="{{section.month}}"
+        data-dated="{{section.dated}}"
+        bindtap="handleMonthHeadTap"
+      >
+        <view class="month-head__title snowlit-serif" wx:if="{{section.dated}}">
+          <text>{{section.yearText}}</text>
+          <text class="month-head__dot">·</text>
+          <text>{{section.monthText}}</text>
+          <view class="month-head__chevron"></view>
+        </view>
+        <view class="month-head__title" wx:else>{{section.monthText}}</view>
+        <view class="month-head__count snowlit-serif">{{section.countText}}</view>
+      </view>
+
+      <view
+        class="moment-row snowlit-reveal"
+        hover-class="snowlit-pressed"
+        style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
+        wx:for="{{section.moments}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goDetail"
+      >
+        <view class="moment-date snowlit-serif">{{item.date}}</view>
+        <view class="moment-main">
+          <view class="moment-title">{{item.title}}</view>
+          <view class="moment-meta">
+            <view class="category-tag">{{item.categoryLabel}}</view>
+            <block wx:if="{{item.locationName}}">
+              <text class="meta-dot">·</text>
+              <image class="meta-pin" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
+              <text class="meta-place">{{item.locationName}}</text>
+            </block>
+          </view>
+          <view wx:if="{{item.summary}}" class="moment-summary">{{item.summary}}</view>
+        </view>
+        <image wx:if="{{item.image}}" class="moment-thumb" src="{{item.image}}" mode="aspectFill" lazy-load />
+      </view>
+    </view>
+
+    <view class="snowlit-end-tip">没有更多了哦~</view>
+  </block>
+
+  <view class="map-stage" wx:else>
     <map
-      wx:if="{{mapHeightRpx > 0}}"
       id="storyMap"
       class="native-map"
-      style="height: {{mapHeightRpx}}rpx;"
       latitude="{{mapCenter.latitude}}"
       longitude="{{mapCenter.longitude}}"
       scale="{{mapScale}}"
-      markers="{{markers}}"
-      bindmarkertap="handleMarkerTap"
-      bindregionchange="handleMapRegionChange"
-      bindtouchstart="handleMapTouchStart"
-      bindtouchmove="handleMapTouchMove"
-      bindtouchend="handleMapTouchEnd"
-      bindtouchcancel="handleMapTouchEnd"
+      subkey="{{mapSubkey}}"
       show-location="{{false}}"
-      enable-scroll="{{true}}"
-      enable-zoom="{{true}}"
+      enable-poi="{{false}}"
+      enable-building="{{false}}"
       enable-rotate="{{false}}"
       enable-overlooking="{{false}}"
+      bindmarkertap="handleMarkerTap"
+      bindtap="handleMapTap"
     />
-  </view>
 
-  <view
-    class="filter-area"
-    bindtouchstart="handleMomentSheetTouchStart"
-    bindtouchmove="handleMomentSheetTouchMove"
-    bindtouchend="handleMomentSheetTouchEnd"
-    bindtouchcancel="handleMomentSheetTouchEnd"
-  >
-    <view class="category-row">
-      <view
-        class="category-item {{item.active ? 'category-item--active' : ''}}"
-        wx:for="{{filters}}"
-        wx:key="value"
-        data-value="{{item.value}}"
-        bindtap="handleFilterTap"
-      >
-        <text>{{item.label}}</text>
-        <view wx:if="{{item.active}}" class="category-line"></view>
-      </view>
-    </view>
+    <view
+      class="map-note"
+      hover-class="snowlit-pressed"
+      wx:if="{{unplacedCount}}"
+      bindtap="showList"
+    >{{unplacedCount}} 个点滴没有地点 · 在列表中查看</view>
 
-    <view class="year-dropdown" wx:if="{{yearDropdownOpen}}">
-      <view class="year-dropdown__inner">
-        <view
-          class="year-chip {{item.active ? 'year-chip--active' : ''}}"
-          wx:for="{{years}}"
-          wx:key="value"
-          data-value="{{item.value}}"
-          bindtap="handleYearTap"
-        >
-          {{item.label}}
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view class="story-add" wx:if="{{canManage}}" bindtap="goCreate">
-    <image class="story-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
-  </view>
-
-  <view
-    class="moment-sheet-frame"
-    style="height: {{sheetHeightRpx}}rpx;"
-    bindtouchstart="handleMomentSheetTouchStart"
-    bindtouchmove="handleMomentSheetTouchMove"
-    bindtouchend="handleMomentSheetTouchEnd"
-    bindtouchcancel="handleMomentSheetTouchEnd"
-  >
-    <scroll-view
-      class="moment-sheet"
-      scroll-y="{{sheetScrollEnabled}}"
-      scroll-top="{{sheetScrollTop}}"
-      style="height: 100%;"
-      bindscroll="handleMomentSheetScroll"
-      enhanced="{{true}}"
-      show-scrollbar="{{false}}"
+    <view
+      class="map-card snowlit-reveal"
+      hover-class="snowlit-pressed"
+      wx:if="{{selectedMoment}}"
+      data-id="{{selectedMoment.id}}"
+      bindtap="goDetail"
     >
-      <view class="story-state" wx:if="{{loading}}">正在加载点滴</view>
-      <view class="story-state story-state--error" wx:elif="{{message}}">
-        <view>{{message}}</view>
-        <view class="state-action" bindtap="retryLoad">重试</view>
-      </view>
-      <view class="story-state" wx:elif="{{!hasMoments}}">还没有点滴</view>
-      <block wx:else>
-        <view
-          class="moment-row {{item.selected ? 'moment-row--selected' : ''}}"
-          wx:for="{{moments}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="goDetail"
-        >
-          <view class="moment-date">{{item.date}}</view>
-          <view class="moment-main">
-            <view class="moment-title">{{item.title}}</view>
-            <view class="moment-meta">
-              <image class="meta-pin" src="../../assets/icons/home/map-pin.svg" mode="aspectFit" />
-              <text>{{item.locationName}}</text>
-              <text class="meta-dot">·</text>
-              <view class="category-tag">{{item.categoryLabel}}</view>
-              <text class="meta-dot">·</text>
-              <text>{{item.time}}</text>
-            </view>
-            <view wx:if="{{item.summary}}" class="moment-summary">{{item.summary}}</view>
-          </view>
-          <image class="moment-thumb" src="{{item.image}}" mode="aspectFill" />
+      <image wx:if="{{selectedMoment.image}}" class="map-card__photo" src="{{selectedMoment.image}}" mode="aspectFill" />
+      <view class="map-card__main">
+        <view class="map-card__title">{{selectedMoment.title}}</view>
+        <view class="map-card__meta">
+          <text class="snowlit-serif">{{selectedMoment.date}}</text>
+          <text class="meta-dot">·</text>
+          <text>{{selectedMoment.categoryLabel}}</text>
+          <block wx:if="{{selectedMoment.locationName}}">
+            <text class="meta-dot">·</text>
+            <text class="meta-place">{{selectedMoment.locationName}}</text>
+          </block>
         </view>
-      </block>
-
-      <view class="snowlit-end-tip" wx:if="{{!loading && !message}}">没有更多了哦~</view>
-    </scroll-view>
+        <view wx:if="{{selectedMoment.summary}}" class="map-card__summary">{{selectedMoment.summary}}</view>
+      </view>
+      <image class="map-card__chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+    </view>
   </view>
 </view>
+
+<view class="story-add" hover-class="snowlit-pressed-round" wx:if="{{canManage && view === 'list'}}" bindtap="goCreate">
+  <image class="story-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
+</view>
+
+<snowlit-month-sheet
+  visible="{{jumpVisible}}"
+  years="{{jumpYears}}"
+  bind:select="handleJumpSelect"
+  bind:cancel="handleJumpCancel"
+/>
 
 <snowlit-toast id="snowlit-toast" />
 <snowlit-dialog id="snowlit-dialog" />

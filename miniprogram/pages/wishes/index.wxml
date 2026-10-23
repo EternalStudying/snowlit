@@ -12,7 +12,7 @@
 
   <view class="hairline hero-line"></view>
 
-  <view class="wish-add" wx:if="{{canManage}}" bindtap="goCreate">
+  <view class="wish-add" hover-class="snowlit-pressed-round" wx:if="{{canManage}}" bindtap="goCreate">
     <image class="wish-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
   </view>
 
@@ -27,7 +27,9 @@
       <view class="section-message" wx:if="{{!pageState.wantGo.loading && pageState.wantGo.message}}">{{pageState.wantGo.message}}</view>
       <block wx:if="{{wantGoWishes.length}}">
         <view
-          class="wish-row {{item.stateClass}}"
+          class="wish-row {{item.stateClass}} snowlit-reveal"
+          hover-class="snowlit-pressed"
+          style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
           wx:for="{{wantGoWishes}}"
           wx:key="id"
           data-id="{{item.id}}"
@@ -35,6 +37,7 @@
         >
           <view
             class="wish-check {{item.checkClass}}"
+            hover-stop-propagation
             data-id="{{item.id}}"
             data-section="wantGo"
             catchtap="completeWish"
@@ -48,7 +51,7 @@
           <image class="row-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
       </block>
-      <view class="load-more" wx:if="{{wantGoWishes.length && pageState.wantGo.hasMore && !pageState.wantGo.loading}}" bindtap="loadMoreWantGo">加载更多</view>
+      <view class="load-more" hover-class="snowlit-pressed" wx:if="{{wantGoWishes.length && pageState.wantGo.hasMore && !pageState.wantGo.loading}}" bindtap="loadMoreWantGo">加载更多</view>
       <view class="load-more" wx:if="{{wantGoWishes.length && pageState.wantGo.loading}}">加载中...</view>
     </view>
   </view>
@@ -64,7 +67,9 @@
       <view class="section-message" wx:if="{{!pageState.wantDo.loading && pageState.wantDo.message}}">{{pageState.wantDo.message}}</view>
       <block wx:if="{{wantDoWishes.length}}">
         <view
-          class="wish-row {{item.stateClass}}"
+          class="wish-row {{item.stateClass}} snowlit-reveal"
+          hover-class="snowlit-pressed"
+          style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
           wx:for="{{wantDoWishes}}"
           wx:key="id"
           data-id="{{item.id}}"
@@ -72,6 +77,7 @@
         >
           <view
             class="wish-check {{item.checkClass}}"
+            hover-stop-propagation
             data-id="{{item.id}}"
             data-section="wantDo"
             catchtap="completeWish"
@@ -85,7 +91,7 @@
           <image class="row-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
       </block>
-      <view class="load-more" wx:if="{{wantDoWishes.length && pageState.wantDo.hasMore && !pageState.wantDo.loading}}" bindtap="loadMoreWantDo">加载更多</view>
+      <view class="load-more" hover-class="snowlit-pressed" wx:if="{{wantDoWishes.length && pageState.wantDo.hasMore && !pageState.wantDo.loading}}" bindtap="loadMoreWantDo">加载更多</view>
       <view class="load-more" wx:if="{{wantDoWishes.length && pageState.wantDo.loading}}">加载中...</view>
     </view>
   </view>
@@ -101,7 +107,9 @@
       <view class="section-message" wx:if="{{!pageState.completed.loading && pageState.completed.message}}">{{pageState.completed.message}}</view>
       <block wx:if="{{completedWishes.length}}">
         <view
-          class="done-row {{item.stateClass}}"
+          class="done-row {{item.stateClass}} snowlit-reveal"
+          hover-class="snowlit-pressed"
+          style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
           wx:for="{{completedWishes}}"
           wx:key="id"
           data-id="{{item.id}}"
@@ -120,7 +128,7 @@
           <image class="done-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
         </view>
       </block>
-      <view class="load-more" wx:if="{{completedWishes.length && pageState.completed.hasMore && !pageState.completed.loading}}" bindtap="loadMoreCompleted">加载更多</view>
+      <view class="load-more" hover-class="snowlit-pressed" wx:if="{{completedWishes.length && pageState.completed.hasMore && !pageState.completed.loading}}" bindtap="loadMoreCompleted">加载更多</view>
       <view class="load-more" wx:if="{{completedWishes.length && pageState.completed.loading}}">加载中...</view>
     </view>
 

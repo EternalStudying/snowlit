@@ -17,27 +17,10 @@ const CATEGORY_LABELS = {
   surprise: '惊喜'
 };
 
-const FALLBACK_IMAGES = [
-  '../../assets/story/moment-cafe.png',
-  '../../assets/story/moment-evening.png',
-  '../../assets/home/album-spring.png'
-];
-
 const MAP_PIN_ICON = '/assets/icons/story/map-pin-filled.png';
-const MAP_CLUSTER_ICON = '/assets/icons/story/map-cluster.png';
-const STORY_MARKER_SIZE = 22;
-const STORY_CLUSTER_MARKER_SIZE = 30;
-const STORY_CLUSTER_BASE_DISTANCE_METERS = 500;
-const STORY_CLUSTER_MARKER_ID_BASE = 1000000000;
-const DEFAULT_STORY_MAP_SCALE = 10;
+const STORY_MARKER_SIZE = 26;
+const STORY_CLUSTER_SIZE = 40;
 const EMPTY_STORY_MAP_SCALE = 3;
-const STORY_CLUSTER_EXPANDED_SCALE = 16;
-const STORY_MAP_TOP_OFFSET_RPX = 160;
-const STORY_FILTER_HEIGHT_RPX = 76;
-const STORY_MIN_SHEET_HEIGHT_RPX = 0;
-const STORY_MIN_MAP_HEIGHT_RPX = 0;
-const STORY_COLLAPSE_SCROLL_RPX = 760;
-const STORY_SNAP_KEYS = ['fullMap', 'largeMap', 'balanced', 'largeList', 'fullList'];
 const DEFAULT_STORY_MAP_CENTER = {
   // This is an empty map viewport, never a saved person or moment location.
   latitude: 0,
@@ -81,127 +64,6 @@ function isSameMomentId(left, right) {
   return Boolean(leftKey) && leftKey === momentKey(right);
 }
 
-function roundCoordinate(value) {
-  return Math.round(Number(value) * 1000000) / 1000000;
-}
-
-function degreesToRadians(value) {
-  return (Number(value) * Math.PI) / 180;
-}
-
-function distanceBetweenMarkers(left, right) {
-  if (!left || !right) {
-    return Number.POSITIVE_INFINITY;
-  }
-  const earthRadiusMeters = 6371000;
-  const leftLatitude = degreesToRadians(left.latitude);
-  const rightLatitude = degreesToRadians(right.latitude);
-  const deltaLatitude = degreesToRadians(right.latitude - left.latitude);
-  const deltaLongitude = degreesToRadians(right.longitude - left.longitude);
-  const a = Math.sin(deltaLatitude / 2) ** 2
-    + Math.cos(leftLatitude) * Math.cos(rightLatitude) * (Math.sin(deltaLongitude / 2) ** 2);
-  return 2 * earthRadiusMeters * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function normalizeViewportHeightRpx(value) {
-  const height = Number(value);
-  return Number.isFinite(height) && height > 0 ? height : 1334;
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function normalizeSheetPanOffset(value) {
-  return clamp(Number(value) || 0, 0, STORY_COLLAPSE_SCROLL_RPX);
-}
-
-function normalizeStoryMapScale(value) {
-  const scale = Number(value);
-  return Number.isFinite(scale) ? clamp(scale, 3, 20) : DEFAULT_STORY_MAP_SCALE;
-}
-
-function clusterDistanceForMapScale(scale) {
-  return Math.max(
-    0.5,
-    STORY_CLUSTER_BASE_DISTANCE_METERS * (2 ** (DEFAULT_STORY_MAP_SCALE - normalizeStoryMapScale(scale)))
-  );
-}
-
-function createStoryMapSnapPoints(viewportHeightRpx) {
-  const viewportHeight = normalizeViewportHeightRpx(viewportHeightRpx);
-  const maxMapHeight = Math.max(
-    520,
-    Math.round(viewportHeight - STORY_MAP_TOP_OFFSET_RPX - STORY_FILTER_HEIGHT_RPX - STORY_MIN_SHEET_HEIGHT_RPX)
-  );
-  const minMapHeight = STORY_MIN_MAP_HEIGHT_RPX;
-  const total = STORY_SNAP_KEYS.length - 1;
-
-  return STORY_SNAP_KEYS.map((key, index) => {
-    const progress = total === 0 ? 0 : index / total;
-    return {
-      key,
-      index,
-      scrollTop: Math.round(STORY_COLLAPSE_SCROLL_RPX * progress),
-      mapHeightRpx: Math.round(maxMapHeight - ((maxMapHeight - minMapHeight) * progress))
-    };
-  });
-}
-
-function nearestStoryMapSnapIndex(points, mapHeightRpx) {
-  const source = Array.isArray(points) && points.length ? points : createStoryMapSnapPoints();
-  const target = Number(mapHeightRpx);
-  return source.reduce((best, point, index) => {
-    const distance = Math.abs(point.mapHeightRpx - target);
-    return distance < best.distance ? { index, distance } : best;
-  }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
-}
-
-function createStoryMapLayout(viewportHeightRpx, mapHeightRpx, snapIndex, sheetPanOffsetRpx) {
-  const viewportHeight = normalizeViewportHeightRpx(viewportHeightRpx);
-  const sheetHeight = Math.max(
-    STORY_MIN_SHEET_HEIGHT_RPX,
-    Math.round(viewportHeight - STORY_MAP_TOP_OFFSET_RPX - STORY_FILTER_HEIGHT_RPX - mapHeightRpx)
-  );
-  const points = createStoryMapSnapPoints(viewportHeight);
-  const index = clamp(Number.isInteger(snapIndex) ? snapIndex : 0, 0, points.length - 1);
-  const panOffset = normalizeSheetPanOffset(sheetPanOffsetRpx);
-
-  return {
-    mapTopOffsetRpx: STORY_MAP_TOP_OFFSET_RPX,
-    mapHeightRpx,
-    sheetHeightRpx: sheetHeight,
-    mapSnapIndex: index,
-    mapSnapKey: points[index].key,
-    sheetPanOffsetRpx: panOffset,
-    sheetScrollEnabled: panOffset >= STORY_COLLAPSE_SCROLL_RPX
-  };
-}
-
-function mapStoryLayoutByIndex(viewportHeightRpx, snapIndex) {
-  const points = createStoryMapSnapPoints(viewportHeightRpx);
-  const index = clamp(Number.isInteger(snapIndex) ? snapIndex : 0, 0, points.length - 1);
-  return createStoryMapLayout(viewportHeightRpx, points[index].mapHeightRpx, index, points[index].scrollTop);
-}
-
-function mapStoryLayoutByScroll(viewportHeightRpx, scrollTop) {
-  const points = createStoryMapSnapPoints(viewportHeightRpx);
-  const maxMapHeight = points[0].mapHeightRpx;
-  const minMapHeight = points[points.length - 1].mapHeightRpx;
-  const normalizedScrollTop = normalizeSheetPanOffset(scrollTop);
-  const progress = normalizedScrollTop / STORY_COLLAPSE_SCROLL_RPX;
-  const mapHeight = Math.round(maxMapHeight - ((maxMapHeight - minMapHeight) * progress));
-  const snapIndex = nearestStoryMapSnapIndex(points, mapHeight);
-  return createStoryMapLayout(viewportHeightRpx, mapHeight, snapIndex, normalizedScrollTop);
-}
-
-function mapStoryLayoutByDrag(viewportHeightRpx, currentOffsetRpx, deltaYRpx) {
-  const nextOffset = normalizeSheetPanOffset(
-    normalizeSheetPanOffset(currentOffsetRpx) - (Number(deltaYRpx) || 0)
-  );
-  return mapStoryLayoutByScroll(viewportHeightRpx, nextOffset);
-}
-
 function timeText(value) {
   const date = toDate(value);
   if (!date) {
@@ -234,11 +96,6 @@ function categoryLabel(category) {
   return CATEGORY_LABELS[category] || '点滴';
 }
 
-function normalizeYear(value) {
-  const year = Number(value);
-  return Number.isInteger(year) && year >= 1970 && year <= 2100 ? year : null;
-}
-
 function mapStoryFilters(activeFilter) {
   const active = FILTERS.some((filter) => filter.value === activeFilter) ? activeFilter : 'all';
   return FILTERS.map((filter) => ({
@@ -247,217 +104,141 @@ function mapStoryFilters(activeFilter) {
   }));
 }
 
-function extractYears(responseYears, items) {
-  const years = Array.isArray(responseYears) && responseYears.length
-    ? responseYears
-    : (items || []).map((item) => {
-      const date = toDate(item && item.eventTime);
-      return date ? date.getFullYear() : null;
-    });
-  return Array.from(new Set(years.map(normalizeYear).filter(Boolean))).sort((a, b) => b - a);
+function momentDate(item) {
+  return toDate(item && item.eventTime) || toDate(item && item.createdAt);
 }
 
-function mapStoryYears(years, activeYear) {
-  const current = normalizeYear(activeYear);
-  return [
-    { label: '全部', value: 'all', active: !current },
-    ...extractYears(years, []).map((year) => ({
-      label: String(year),
-      value: year,
-      active: year === current
-    }))
-  ];
+function hasCoordinates(item) {
+  return Boolean(item) && isFiniteCoordinate(item.latitude) && isFiniteCoordinate(item.longitude);
 }
 
-function mapStoryMoment(item, index, selectedMomentId) {
+// A drop as the list and the map card show it. Only real photos: no stand-in images.
+function mapStoryMoment(item, index) {
   const moment = item || {};
   const images = normalizeImages(moment.images);
   const contentLines = splitContent(moment.content);
-  const id = moment.id || `moment-${index}`;
-
+  const date = momentDate(moment);
   return {
-    id,
-    selected: id === selectedMomentId,
-    date: formatMonthDay(moment.eventTime || moment.createdAt) || '--.--',
+    id: moment.id || `moment-${index}`,
+    month: date ? formatDate(date).slice(0, 7) : '',
+    date: date ? formatMonthDay(formatDate(date)) : '--.--',
     title: firstText(moment.title, '未命名点滴'),
-    locationName: firstText(moment.locationName, moment.address, '地点待补充'),
-    category: moment.category || '',
+    locationName: firstText(moment.locationName, moment.address),
     categoryLabel: categoryLabel(moment.category),
     time: timeText(moment.eventTime),
     summary: contentLines[0] === '还没有记录文字。' ? '' : contentLines[0],
-    image: images[0] || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]
+    image: images[0] || '',
+    placed: hasCoordinates(moment)
   };
 }
 
-function mapMarkerCallout(label, active) {
-  return {
-    content: label,
-    color: active ? '#1d2433' : '#555e70',
-    fontSize: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: active ? '#1d2433' : '#dce2ea',
-    bgColor: '#ffffff',
-    padding: 8,
-    display: 'ALWAYS',
-    textAlign: 'center'
-  };
-}
+// Newest first, grouped by month. Drops without any date go last, under "未注明日期".
+function mapStoryTimeline(items) {
+  const moments = (Array.isArray(items) ? items : [])
+    .map((item, index) => ({ item, index, time: momentDate(item) }))
+    .sort((a, b) => {
+      if (!a.time || !b.time) {
+        return a.time ? -1 : (b.time ? 1 : a.index - b.index);
+      }
+      return b.time.getTime() - a.time.getTime() || a.index - b.index;
+    })
+    .map(({ item, index }) => mapStoryMoment(item, index));
 
-function mapClusterCallout(count) {
-  return {
-    content: `${count}个点滴`,
-    color: '#1d2433',
-    fontSize: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#1d2433',
-    bgColor: '#ffffff',
-    padding: 8,
-    display: 'ALWAYS',
-    textAlign: 'center'
-  };
-}
-
-function normalizeMarkerId(item, index) {
-  const id = Number(item && item.id);
-  return Number.isInteger(id) ? id : index + 1;
-}
-
-function markStoryMarkers(markers, selectedMomentId) {
-  return (Array.isArray(markers) ? markers : []).map((marker) => {
-    const active = marker && marker.cluster
-      ? (marker.clusterMomentIds || []).some((id) => isSameMomentId(id, selectedMomentId))
-      : isSameMomentId(marker && marker.momentId, selectedMomentId);
-    const locationLabel = firstText(marker && marker.locationLabel, marker && marker.title, '点滴');
-    return {
-      ...marker,
-      locationLabel,
-      title: locationLabel,
-      width: marker && marker.cluster ? STORY_CLUSTER_MARKER_SIZE : STORY_MARKER_SIZE,
-      height: marker && marker.cluster ? STORY_CLUSTER_MARKER_SIZE : STORY_MARKER_SIZE,
-      active,
-      callout: marker && marker.cluster
-        ? mapClusterCallout(marker.clusterCount || 0)
-        : mapMarkerCallout(locationLabel, active)
-    };
-  });
-}
-
-function mapRawMarkers(items, selectedMomentId) {
-  const source = (items || []).filter((item) => (
-    item && isFiniteCoordinate(item.longitude) && isFiniteCoordinate(item.latitude)
-  ));
-  if (!source.length) {
-    return [];
-  }
-
-  return markStoryMarkers(source.map((item, index) => {
-    const label = firstText(item.locationName, item.address, '点滴');
-    return {
-      id: normalizeMarkerId(item, index),
-      momentId: item.id || `moment-${index}`,
-      locationLabel: label,
-      title: label,
-      latitude: Number(item.latitude),
-      longitude: Number(item.longitude),
-      iconPath: MAP_PIN_ICON
-    };
-  }), selectedMomentId);
-}
-
-function createClusterMarker(group, clusterIndex) {
-  const latitude = roundCoordinate(
-    group.reduce((total, marker) => total + Number(marker.latitude), 0) / group.length
-  );
-  const longitude = roundCoordinate(
-    group.reduce((total, marker) => total + Number(marker.longitude), 0) / group.length
-  );
-  const label = `${group.length}个点滴`;
-
-  return {
-    id: STORY_CLUSTER_MARKER_ID_BASE + clusterIndex,
-    cluster: true,
-    clusterCount: group.length,
-    clusterMomentIds: group.map((marker) => marker.momentId),
-    clusterIncludePoints: mapIncludePoints(group),
-    locationLabel: label,
-    title: label,
-    latitude,
-    longitude,
-    iconPath: MAP_CLUSTER_ICON
-  };
-}
-
-function clusterStoryMarkers(markers, selectedMomentId, mapScale) {
-  const source = Array.isArray(markers) ? markers : [];
-  const threshold = clusterDistanceForMapScale(mapScale);
-  const visited = new Set();
-  const result = [];
-
-  source.forEach((marker, index) => {
-    if (visited.has(index)) {
-      return;
+  const sections = [];
+  moments.forEach((moment) => {
+    const key = moment.month || 'undated';
+    let section = sections[sections.length - 1];
+    if (!section || section.month !== key) {
+      section = {
+        month: key,
+        anchorId: `month-${key}`,
+        yearText: moment.month ? moment.month.slice(0, 4) : '',
+        monthText: moment.month ? moment.month.slice(5, 7) : '未注明日期',
+        dated: Boolean(moment.month),
+        moments: []
+      };
+      sections.push(section);
     }
-    const group = [marker];
-    visited.add(index);
-
-    source.forEach((candidate, candidateIndex) => {
-      if (visited.has(candidateIndex)) {
-        return;
-      }
-      if (group.some((groupMarker) => distanceBetweenMarkers(groupMarker, candidate) <= threshold)) {
-        group.push(candidate);
-        visited.add(candidateIndex);
-      }
-    });
-
-    result.push(group.length > 1 ? createClusterMarker(group, result.length) : marker);
+    section.moments.push(moment);
   });
-
-  return markStoryMarkers(result, selectedMomentId);
+  sections.forEach((section) => {
+    section.countText = `${section.moments.length} 个`;
+  });
+  return sections;
 }
 
-function mapIncludePoints(markers) {
-  return (Array.isArray(markers) ? markers : []).map((marker) => ({
-    latitude: marker.latitude,
-    longitude: marker.longitude
-  }));
+// Markers for MapContext.addMarkers. joinCluster hands clustering to the native map.
+function mapStoryMarkers(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => hasCoordinates(item))
+    .map(({ item, index }) => {
+      const id = Number(item.id);
+      return {
+        id: Number.isInteger(id) && id > 0 ? id : index + 1,
+        momentId: item.id || `moment-${index}`,
+        latitude: Number(item.latitude),
+        longitude: Number(item.longitude),
+        iconPath: MAP_PIN_ICON,
+        width: STORY_MARKER_SIZE,
+        height: STORY_MARKER_SIZE,
+        anchor: { x: 0.5, y: 1 },
+        joinCluster: true
+      };
+    });
 }
 
-function mapCenter(markers) {
-  const source = Array.isArray(markers) ? markers : [];
-  const selected = source.find((marker) => marker && marker.active) || source[0];
-  if (!selected) {
-    return DEFAULT_STORY_MAP_CENTER;
-  }
+// The bubble the native map draws for a cluster: an ink circle with the count, in Snowlit's palette.
+function mapClusterMarker(cluster) {
+  const count = Array.isArray(cluster && cluster.markerIds) ? cluster.markerIds.length : 0;
+  const half = STORY_CLUSTER_SIZE / 2;
   return {
-    latitude: selected.latitude,
-    longitude: selected.longitude
+    ...cluster.center,
+    clusterId: cluster.clusterId,
+    iconPath: MAP_PIN_ICON,
+    width: 1,
+    height: 1,
+    joinCluster: true,
+    label: {
+      content: String(count),
+      color: '#ffffff',
+      fontSize: 14,
+      width: STORY_CLUSTER_SIZE,
+      height: STORY_CLUSTER_SIZE,
+      borderRadius: half,
+      bgColor: '#1d2433',
+      textAlign: 'center',
+      anchorX: -half,
+      anchorY: -half
+    }
   };
 }
 
-function mapStoryPage(response, selectedMomentId, activeYear) {
+function mapStoryPage(response) {
   const items = Array.isArray(response && response.items) ? response.items : [];
-  const ids = items.map((item, index) => (item && item.id) || `moment-${index}`);
-  const selected = ids.includes(selectedMomentId) ? selectedMomentId : (ids[0] || '');
-  const itemYears = extractYears(null, items);
-  const years = itemYears.length ? itemYears : extractYears(response && response.years, []);
-  const rawMarkers = mapRawMarkers(items, selected);
-  const markers = clusterStoryMarkers(rawMarkers, selected, DEFAULT_STORY_MAP_SCALE);
-
+  const markers = mapStoryMarkers(items);
+  const sections = mapStoryTimeline(items);
   return {
-    moments: items.map((item, index) => mapStoryMoment(item, index, selected)),
+    sections,
+    months: sections.filter((section) => section.dated).flatMap((section) => section.moments.map(() => section.month)),
     markers,
-    rawMarkers,
-    mapCenter: mapCenter(markers),
-    mapIncludePoints: mapIncludePoints(rawMarkers),
-    mapScale: rawMarkers.length ? DEFAULT_STORY_MAP_SCALE : EMPTY_STORY_MAP_SCALE,
-    years: mapStoryYears(years, activeYear),
+    mapCenter: markers.length ? { latitude: markers[0].latitude, longitude: markers[0].longitude } : DEFAULT_STORY_MAP_CENTER,
+    mapScale: markers.length ? 10 : EMPTY_STORY_MAP_SCALE,
+    mapIncludePoints: markers.map((marker) => ({ latitude: marker.latitude, longitude: marker.longitude })),
+    unplacedCount: items.length - markers.length,
     canManage: Boolean(response && response.canManage),
-    selectedMomentId: selected,
     hasMoments: items.length > 0
   };
+}
+
+function findStoryMoment(sections, momentId) {
+  for (const section of Array.isArray(sections) ? sections : []) {
+    const moment = section.moments.find((item) => isSameMomentId(item.id, momentId));
+    if (moment) {
+      return moment;
+    }
+  }
+  return null;
 }
 
 function formatCoordinate(longitude, latitude) {
@@ -502,33 +283,20 @@ function mapStoryDetail(response, currentUser) {
   };
 }
 
-function buildStoryQuery(activeFilter, activeYear) {
-  const query = {};
+function buildStoryQuery(activeFilter) {
   const filter = FILTERS.some((item) => item.value === activeFilter) ? activeFilter : 'all';
-  const year = normalizeYear(activeYear);
-  if (filter !== 'all') {
-    query.category = filter;
-  }
-  if (year) {
-    query.year = year;
-  }
-  return query;
+  return filter === 'all' ? {} : { category: filter };
 }
 
 module.exports = {
   buildStoryQuery,
-  clusterStoryMarkers,
-  createStoryMapSnapPoints,
   DEFAULT_STORY_MAP_CENTER,
-  DEFAULT_STORY_MAP_SCALE,
   EMPTY_STORY_MAP_SCALE,
-  mapStoryLayoutByDrag,
-  mapStoryLayoutByIndex,
-  mapStoryLayoutByScroll,
-  markStoryMarkers,
+  findStoryMoment,
+  mapClusterMarker,
   mapStoryDetail,
   mapStoryFilters,
+  mapStoryMarkers,
   mapStoryPage,
-  mapStoryYears,
-  STORY_CLUSTER_EXPANDED_SCALE
+  mapStoryTimeline
 };

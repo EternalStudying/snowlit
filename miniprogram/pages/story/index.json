@@ -1,5 +1,8 @@
 {
   "navigationStyle": "custom",
-  "enablePullDownRefresh": false,
-  "disableScroll": true
+  "navigationBarTitleText": "点滴",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "snowlit-month-sheet": "/components/snowlit-month-sheet/index"
+  }
 }

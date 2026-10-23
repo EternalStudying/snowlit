@@ -2,7 +2,11 @@
 
 ## Current Task
 
-Album editing, deletion and photo ordering (2026-10-21): implemented on feature/album-edit from clean main. The source specification docs/specs/2026-10-21-album-edit-delete.md stays intentionally untracked. Backend, disposable-service smoke, Web, mini-program and documentation steps are complete. Never push or deploy as part of this task.
+2026-10-22 authorized production deployment: complete. Deployed matching backend/Web artifacts from main 6122588 after reproducing the missing manager canManage field on the old server package. The same authenticated read now returns canManage=true and the actual native presenter enables edit actions. Backend 335 tests, Web 461 tests, typecheck and builds passed. All 129 HTTPS static assets match; all 19 existing table structures/data, production environment and unrelated service PIDs are unchanged. SQL_INIT_MODE remains never; no migration. Rollback material is retained. Native source stays dev; no native upload, Git commit or push. Evidence: codex-work/album-edit-deploy-20261022/report.md.
+
+## Previous Implementation
+
+Album editing, deletion and photo ordering (2026-10-21): implemented on feature/album-edit from clean main, subsequently merged into main. The owner later authorized committing docs/specs/2026-10-21-album-edit-delete.md and pushing all commits. Backend, disposable-service smoke, Web, mini-program and documentation steps are complete. Production rollout is the separately authorized operation above.
 
 ## Verification
 
@@ -19,6 +23,10 @@ Album editing, deletion and photo ordering (2026-10-21): implemented on feature/
 
 AlbumPublisher lacked the length checks/error codes assumed by spec 6.3. The owner chose shared creation/edit validation with ALBUM_TITLE_TOO_LONG, ALBUM_DESCRIPTION_TOO_LONG and ALBUM_LOCATION_TOO_LONG. The requested npm run typecheck was absent; it now wraps existing vue-tsc -b with no added package. Browser QA uses direct browser/computer control as requested.
 
-Only sortablejs and @types/sortablejs were added. The sole schema.sql change is the drafts.kind comment; no migration is required. Future backend deployment invalidates pre-stamp private access tokens once, so members unlock again. No retained MySQL/Redis/MinIO or production was accessed. The mini-program dev profile remains unchanged.
+Only sortablejs and @types/sortablejs were added. The sole schema.sql change is the drafts.kind comment; no migration is required. The production rollout invalidates pre-stamp private access tokens once, so members unlock again. Initial implementation used throwaway services; production access belongs to the separately authorized rollout above. The mini-program dev profile remains unchanged.
 
 Maintain durable domain/API context in GLOSSARY.md, backend/frontend findings and mini-program specifications; keep temporary execution details under codex-work/.
+
+## Active Production UI Follow-up (2026-10-22)
+
+The owner reports that mobile release album detail still shows only the final end tip after pull-to-refresh and a full scroll. A fresh authenticated production manager probe returns canManage=true; the matching jar remains deployed. The exact phone release package/response is not yet captured, so the missing controls are unresolved and are not attributed to database permissions. Generated an isolated main-893b586 prod preview QR with a visible read-only permission label; phone comparison is pending; the source dev profile, unrelated edits, production data and published release stay intact. Relevant native checks: 19 passed, 0 failed. Evidence: codex-work/album-delete-entry-20261022/.

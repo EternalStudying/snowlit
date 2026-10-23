@@ -216,10 +216,10 @@ function runDiaryTemplateTest() {
   assert.match(wxml, /class="month-head"[\s\S]*bindtap="handleMonthHeadTap"/);
   assert.match(wxml, /wx:for="\{\{section\.entries\}\}"[\s\S]*bindtap="handleEntryTap"/);
   assert.match(wxml, /bindtap="handleRetryTap"/);
-  assert.match(wxml, /<diary-month-sheet[\s\S]*bind:select="handleJumpSelect"/);
+  assert.match(wxml, /<snowlit-month-sheet[\s\S]*bind:select="handleJumpSelect"/);
   assert.match(wxml, /class="diary-add"[\s\S]*bindtap="handleCreateDiary"/);
   assert.match(wxml, /assets\/icons\/story\/plus-white\.svg/);
-  assert.equal(json.usingComponents['diary-month-sheet'], '/components/diary-month-sheet/index');
+  assert.equal(json.usingComponents['snowlit-month-sheet'], '/components/snowlit-month-sheet/index');
   assert.equal(json.onReachBottomDistance, 200);
 
   assert.match(wxss, /\.month-head \{[^}]*position: sticky;[^}]*top: 128rpx;/);

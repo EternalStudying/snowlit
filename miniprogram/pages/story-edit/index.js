@@ -1,10 +1,11 @@
 const { ROUTES, routePath } = require('../../constants/routes');
-const { getMomentDetail, updateMoment, uploadMomentImage } = require('../../services/story');
+const { getMomentDetail, searchPlaces, updateMoment, uploadMomentImage } = require('../../services/story');
 const { uploadDraftImage, removeDraftImage, publishDraft } = require('../../services/draft');
 const { createDraftAutosave, loadDraft } = require('../../utils/draft-autosave');
 const { beginRequest } = require('../../utils/request-guard');
 const { resolveMediaUrl } = require('../../utils/media');
 const { showInfo, showSuccess } = require('../../utils/notify');
+const { authorizePrivacy } = require('../../utils/privacy');
 const { collectUploadedUrls } = require('../../utils/image-list');
 const { pickImages } = require('../../utils/image-picker');
 const { patchItem, uploadQueue } = require('../../utils/upload-queue');
@@ -14,12 +15,20 @@ const {
   appendSelectedImages,
   buildStoryPayload,
   createInitialStoryForm,
+  mapPickedLocation,
+  mapPlaceResults,
   mapStoryEditForm,
   mapStoryEditCategories
 } = require('./story-edit-presenter');
 
 Page({
   data: {
+    manualPlace: false,
+    placeSheetVisible: false,
+    placeResults: [],
+    placeSearching: false,
+    placeSearched: false,
+    placeMessage: '',
     momentId: '',
     draftLocked: false,
     draftStatus: '',
@@ -121,6 +130,104 @@ Page({
     wx.navigateTo({ url: routePath(ROUTES.STORY) });
   },
 
+  handleOpenPlaceSheet() {
+    if (this.data.draftLocked || this.data.submitting) return;
+    this.setData({ placeSheetVisible: true, placeResults: [], placeSearched: false, placeSearching: false, placeMessage: '' });
+  },
+
+  handlePlaceCancel() {
+    this.setData({ placeSheetVisible: false });
+  },
+
+  // Searches through the backend, which covers places in China and abroad.
+  handlePlaceSearch(event) {
+    const query = event && event.detail ? String(event.detail.query || '').trim() : '';
+    if (!query) return Promise.resolve();
+    const isCurrent = beginRequest(this, 'places');
+    this.setData({ placeSearching: true, placeMessage: '' });
+    return searchPlaces(query)
+      .then((response) => {
+        if (!isCurrent()) return;
+        this.setData({ placeResults: mapPlaceResults(response), placeSearched: true, placeSearching: false });
+      })
+      .catch((error) => {
+        if (!isCurrent()) return;
+        this.setData({
+          placeResults: [],
+          placeSearched: true,
+          placeSearching: false,
+          placeMessage: (error && error.message) || '地点搜索失败，可以在地图上选点'
+        });
+      });
+  },
+
+  handlePlaceSelect(event) {
+    const place = event && event.detail ? event.detail.place : null;
+    const patch = mapPickedLocation(this.data.form, place);
+    this.setData({ placeSheetVisible: false });
+    if (!patch || this.data.draftLocked || this.data.submitting) return;
+    this.applyPlace(patch);
+  },
+
+  // A place without a name (a dropped pin abroad, say) opens manual entry, since publishing needs a name.
+  applyPlace(patch) {
+    this.setData({
+      'form.locationName': patch.locationName,
+      'form.address': patch.address,
+      'form.longitude': patch.longitude,
+      'form.latitude': patch.latitude,
+      manualPlace: this.data.manualPlace || !patch.locationName,
+      message: ''
+    });
+    this.changed();
+  },
+
+  toggleManualPlace() {
+    this.setData({ manualPlace: !this.data.manualPlace });
+  },
+
+  handlePlaceMap() {
+    this.setData({ placeSheetVisible: false });
+    this.handleChooseLocation();
+  },
+
+  // WeChat's own location picker: drop a pin anywhere, and the coordinates (and name, if any) fill in.
+  handleChooseLocation() {
+    if (this.data.draftLocked || this.data.submitting || this.choosingLocation) return;
+    this.choosingLocation = true;
+    const done = () => { this.choosingLocation = false; };
+    authorizePrivacy({
+      title: '选择地点',
+      message: '在地图上选择这条点滴的地点。所选地点的名称、地址和经纬度会随点滴保存，公开点滴会显示它们。'
+    }).then((agreed) => {
+      if (!agreed) {
+        done();
+        showInfo('同意隐私指引后才能选择地点');
+        return;
+      }
+      const form = this.data.form;
+      const hasPoint = Number.isFinite(Number(form.latitude)) && Number.isFinite(Number(form.longitude))
+        && form.latitude !== '' && form.longitude !== '';
+      wx.chooseLocation({
+        ...(hasPoint ? { latitude: Number(form.latitude), longitude: Number(form.longitude) } : {}),
+        success: (picked) => {
+          done();
+          const patch = mapPickedLocation(this.data.form, picked);
+          if (!patch || this.disposed || this.data.draftLocked || this.data.submitting) return;
+          this.applyPlace(patch);
+        },
+        fail: (error) => {
+          done();
+          const reason = (error && error.errMsg) || '';
+          if (reason.indexOf('cancel') < 0) showInfo('暂时无法打开地图，可以手动填写经纬度');
+        }
+      });
+    }, () => {
+      done();
+      showInfo('暂时无法打开地图，可以手动填写经纬度');
+    });
+  },
+
   handleInput(event) {
     if (this.data.draftLocked || this.data.submitting) return;
     const field = event.currentTarget.dataset.field;
@@ -211,6 +318,17 @@ Page({
       activePickerField: '',
       activePickerValue: '',
       activePickerTitle: '',
+      message: ''
+    });
+    this.changed();
+  },
+
+  // An end time starts as the start time, so it is complete and only needs adjusting.
+  addEndTime() {
+    if (this.data.draftLocked || this.data.submitting) return;
+    this.setData({
+      'form.endDate': this.data.form.eventDate,
+      'form.endTime': this.data.form.eventTime,
       message: ''
     });
     this.changed();
@@ -390,7 +508,7 @@ Page({
     const pages = getCurrentPages();
     pages.forEach((page) => {
       if (page && page.route === ROUTES.STORY && typeof page.loadMoments === 'function') {
-        page.loadMoments({ refreshYears: true });
+        page.loadMoments();
       }
       if (page && page.route === ROUTES.STORY_DETAIL && typeof page.loadMoment === 'function' && this.data.momentId) {
         page.loadMoment();

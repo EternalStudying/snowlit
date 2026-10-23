@@ -1,133 +1,50 @@
+<wxs src="./format.wxs" module="fmt" />
+
 <view class="story-edit-page">
   <view class="draft-loading" wx:if="{{draftLocked}}">{{message || '正在读取草稿…'}}</view>
   <view class="story-edit-top">
-    <view class="back-button" bindtap="goBack">
+    <view class="back-button" hover-class="snowlit-pressed" bindtap="goBack">
       <image class="back-icon" src="../../assets/icons/story/chevron-left.svg" mode="aspectFit" />
     </view>
   </view>
 
+  <!-- What it was: a name and a kind. -->
   <view class="edit-section edit-section--basic">
-    <view class="section-label snowlit-kai">基本信息</view>
-    <view class="edit-row">
-      <view class="row-label">标题</view>
-      <view class="row-right">
-        <input
-          disabled="{{draftLocked || submitting}}"
-          class="row-input"
-          value="{{form.title}}"
-          placeholder="输入标题"
-          maxlength="30"
-          data-field="title"
-          bindinput="handleInput"
-        />
-      </view>
+    <view class="edit-kicker">
+      <text class="edit-kicker__title snowlit-kai" wx:if="{{isEditing}}">编辑点滴</text>
+      <text class="edit-kicker__title snowlit-kai" wx:else>新的点滴</text>
+      <text class="draft-status" wx:if="{{draftStatus}}">{{draftStatus}}</text>
     </view>
-    <view class="edit-row category-row">
-      <view class="row-label">分类</view>
-      <view class="category-list">
-        <view
-          wx:for="{{categories}}"
-          wx:key="value"
-          class="category-item {{item.active ? 'category-item--active' : ''}}"
-          data-value="{{item.value}}"
-          bindtap="handleCategoryTap"
-        >
-          {{item.label}}
-        </view>
-      </view>
+    <input
+      disabled="{{draftLocked || submitting}}"
+      class="title-input"
+      value="{{form.title}}"
+      placeholder="给这一刻起个名字"
+      placeholder-class="title-input__placeholder"
+      maxlength="30"
+      data-field="title"
+      bindinput="handleInput"
+    />
+    <view class="category-chips">
+      <view
+        wx:for="{{categories}}"
+        wx:key="value"
+        class="category-chip {{item.active ? 'category-chip--active' : ''}}"
+        hover-class="snowlit-pressed"
+        data-value="{{item.value}}"
+        bindtap="handleCategoryTap"
+      >{{item.label}}</view>
     </view>
   </view>
 
-  <view class="edit-section">
-    <view class="section-label snowlit-kai">时间</view>
-    <view class="edit-row">
-      <view class="row-label">开始时间</view>
-      <view class="row-right picker-group">
-        <view class="picker-value" data-field="eventDate" bindtap="openStoryDateSheet">{{form.eventDate}}</view>
-        <view class="picker-value picker-value--time" data-field="eventTime" bindtap="openStoryTimeSheet">{{form.eventTime}}</view>
-      </view>
-    </view>
-    <view class="edit-row edit-row--end-time">
-      <view class="end-time-label">
-        <view class="row-label">结束时间</view>
-        <view class="clear-time" catchtap="clearEndTime">清空</view>
-      </view>
-      <view class="row-right picker-group picker-group--end">
-        <view class="picker-value" data-field="endDate" bindtap="openStoryDateSheet">{{form.endDate || '不填写'}}</view>
-        <view class="picker-value picker-value--time" data-field="endTime" bindtap="openStoryTimeSheet">{{form.endTime || '--:--'}}</view>
-      </view>
-    </view>
-  </view>
-
-  <view class="edit-section edit-section--location">
-    <view class="section-label snowlit-kai">地点</view>
-    <view class="edit-row">
-      <view class="row-label">地点名称</view>
-      <view class="row-right">
-        <input
-          disabled="{{draftLocked || submitting}}"
-          class="row-input"
-          value="{{form.locationName}}"
-          placeholder="输入地点"
-          maxlength="30"
-          data-field="locationName"
-          bindinput="handleInput"
-        />
-      </view>
-    </view>
-    <view class="edit-row">
-      <view class="row-label">详细地址</view>
-      <view class="row-right">
-        <input
-          disabled="{{draftLocked || submitting}}"
-          class="row-input row-input--address"
-          value="{{form.address}}"
-          placeholder="输入地址"
-          maxlength="80"
-          data-field="address"
-          bindinput="handleInput"
-        />
-      </view>
-    </view>
-    <view class="edit-row">
-      <view class="row-label">经纬度</view>
-      <view class="row-right coordinate-group">
-        <input
-          disabled="{{draftLocked || submitting}}"
-          class="coordinate-input"
-          value="{{form.longitude}}"
-          placeholder="经度"
-          data-field="longitude"
-          bindinput="handleInput"
-        />
-        <view class="coordinate-separator">,</view>
-        <input
-          disabled="{{draftLocked || submitting}}"
-          class="coordinate-input"
-          value="{{form.latitude}}"
-          placeholder="纬度"
-          data-field="latitude"
-          bindinput="handleInput"
-        />
-      </view>
-    </view>
-    <view class="map-preview">
-      <image class="map-image" src="../../assets/story/map-preview.png" mode="aspectFill" />
-      <image class="map-pin" src="../../assets/icons/story/map-pin-filled.svg" mode="aspectFit" />
-      <view class="map-pick">
-        <image class="map-pick-icon" src="../../assets/icons/story/current-location.svg" mode="aspectFit" />
-        <text>手动填写坐标</text>
-      </view>
-    </view>
-  </view>
-
+  <!-- The writing comes first; no label needed. -->
   <view class="edit-section edit-section--words">
-    <view class="section-label snowlit-kai">正文</view>
     <textarea
-          disabled="{{draftLocked || submitting}}"
+      disabled="{{draftLocked || submitting}}"
       class="words-textarea"
       value="{{form.content}}"
-      placeholder="写下这一天的细节"
+      placeholder="写下这一天的细节…"
+      placeholder-class="words-textarea__placeholder"
       maxlength="1000"
       auto-height
       data-field="content"
@@ -136,12 +53,8 @@
   </view>
 
   <view class="edit-section edit-section--photos">
-    <view class="photos-head">
-      <view class="section-label section-label--photos snowlit-kai">照片</view>
-      <view class="photos-limit">最多 3 张</view>
-    </view>
     <view class="photo-list">
-      <view wx:for="{{images}}" wx:key="id" class="photo-wrap">
+      <view wx:for="{{images}}" wx:key="id" class="photo-wrap snowlit-reveal">
         <image
           class="photo-item"
           src="{{item.path}}"
@@ -149,23 +62,98 @@
           data-index="{{index}}"
           bindtap="previewPhoto"
         />
-        <view class="photo-remove" data-index="{{index}}" catchtap="removeImage">x</view>
+        <view class="photo-remove" data-index="{{index}}" catchtap="removeImage">×</view>
         <view class="photo-status" wx:if="{{item.message}}">{{item.message}}</view>
       </view>
-      <view class="photo-add" wx:if="{{canAddImage}}" bindtap="chooseImages">
+      <view class="photo-add" hover-class="snowlit-pressed" wx:if="{{canAddImage}}" bindtap="chooseImages">
         <view class="photo-add-plus">+</view>
-        <view class="photo-add-text">添加</view>
+        <view class="photo-add-text">照片 <text class="snowlit-serif">{{images.length}}/3</text></view>
       </view>
     </view>
   </view>
 
-  <view class="draft-status" wx:if="{{draftStatus}}">{{draftStatus}}</view>
+  <!-- When and where, together in one card. -->
+  <view class="edit-section edit-section--details">
+    <view class="detail-card">
+      <view class="detail-row">
+        <view class="detail-label">时间</view>
+        <view class="detail-value">
+          <view class="detail-pick" hover-class="snowlit-pressed" data-field="eventDate" bindtap="openStoryDateSheet">{{fmt.date(form.eventDate)}}</view>
+          <view class="detail-pick snowlit-serif" hover-class="snowlit-pressed" data-field="eventTime" bindtap="openStoryTimeSheet">{{form.eventTime}}</view>
+        </view>
+      </view>
+      <view class="detail-row detail-row--end" wx:if="{{form.endDate || form.endTime}}">
+        <view class="detail-label detail-label--muted">结束</view>
+        <view class="detail-value">
+          <view class="detail-pick" hover-class="snowlit-pressed" data-field="endDate" bindtap="openStoryDateSheet">{{form.endDate ? fmt.date(form.endDate) : '选日期'}}</view>
+          <view class="detail-pick snowlit-serif" hover-class="snowlit-pressed" data-field="endTime" bindtap="openStoryTimeSheet">{{form.endTime || '--:--'}}</view>
+          <view class="detail-clear" hover-class="snowlit-pressed" catchtap="clearEndTime">×</view>
+        </view>
+      </view>
+      <view class="detail-link detail-link--indent" hover-class="snowlit-pressed" wx:else bindtap="addEndTime">+ 结束时间</view>
+
+      <view class="detail-divider"></view>
+
+      <view class="detail-row detail-row--place" hover-class="snowlit-pressed" bindtap="handleOpenPlaceSheet">
+        <view class="detail-label">地点</view>
+        <view class="detail-place">
+          <view class="detail-place__name {{form.locationName ? '' : 'detail-place__name--empty'}}">{{form.locationName || (form.longitude && form.latitude ? '已选位置，给它起个名字' : '搜索或在地图上选')}}</view>
+          <view class="detail-place__sub" wx:if="{{form.address}}">{{form.address}}</view>
+          <view class="detail-place__sub snowlit-serif" wx:if="{{form.longitude && form.latitude}}">{{fmt.point(form.latitude, form.longitude)}}</view>
+        </view>
+        <image class="detail-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
+      </view>
+      <view class="detail-link detail-link--indent" hover-class="snowlit-pressed" bindtap="toggleManualPlace">{{manualPlace ? '收起' : '手动填写名称和坐标'}}</view>
+
+      <view class="manual-place" wx:if="{{manualPlace}}">
+        <input
+          disabled="{{draftLocked || submitting}}"
+          class="manual-input"
+          value="{{form.locationName}}"
+          placeholder="地点名称"
+          maxlength="30"
+          data-field="locationName"
+          bindinput="handleInput"
+        />
+        <input
+          disabled="{{draftLocked || submitting}}"
+          class="manual-input"
+          value="{{form.address}}"
+          placeholder="详细地址（可不填）"
+          maxlength="80"
+          data-field="address"
+          bindinput="handleInput"
+        />
+        <view class="manual-coordinates">
+          <input
+            disabled="{{draftLocked || submitting}}"
+            class="manual-input"
+            type="digit"
+            value="{{form.latitude}}"
+            placeholder="纬度"
+            data-field="latitude"
+            bindinput="handleInput"
+          />
+          <input
+            disabled="{{draftLocked || submitting}}"
+            class="manual-input"
+            type="digit"
+            value="{{form.longitude}}"
+            placeholder="经度"
+            data-field="longitude"
+            bindinput="handleInput"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+
   <view class="edit-message" wx:if="{{message}}">{{message}}</view>
   <view class="snowlit-end-tip snowlit-end-tip--compact">没有更多了哦~</view>
   <view class="bottom-placeholder"></view>
 
   <view class="action-footer">
-    <view class="cancel-button" bindtap="goBack">取消</view>
+    <view class="cancel-button" hover-class="snowlit-pressed" bindtap="goBack">取消</view>
     <button class="publish-button" loading="{{submitting}}" disabled="{{submitting || loadingMoment || draftLocked || removingImage}}" bindtap="submitMoment">{{isEditing ? '保存修改' : '发布点滴'}}</button>
   </view>
 </view>
@@ -173,6 +161,18 @@
 <snowlit-toast id="snowlit-toast" />
 <snowlit-dialog id="snowlit-dialog" />
 <snowlit-privacy id="snowlit-privacy" />
+
+<place-search-sheet
+  visible="{{placeSheetVisible}}"
+  results="{{placeResults}}"
+  searching="{{placeSearching}}"
+  searched="{{placeSearched}}"
+  message="{{placeMessage}}"
+  bind:search="handlePlaceSearch"
+  bind:select="handlePlaceSelect"
+  bind:map="handlePlaceMap"
+  bind:cancel="handlePlaceCancel"
+/>
 <snowlit-date-sheet
   visible="{{dateSheetVisible}}"
   title="{{activePickerTitle}}"

@@ -21,7 +21,7 @@
       bindtap="handleFilterTap"
     >
       <text>{{item.label}}</text>
-      <view wx:if="{{activeFilter === item.value}}" class="filter-line"></view>
+      <view wx:if="{{activeFilter === item.value}}" class="filter-line snowlit-grow"></view>
     </view>
   </view>
 
@@ -33,13 +33,13 @@
     <view class="entry-state" wx:elif="{{exhausted && !sections.length}}">还没有日记，写下第一篇吧</view>
 
     <view
-      class="month-block"
+      class="month-block snowlit-reveal"
       wx:for="{{sections}}"
       wx:for-item="section"
       wx:key="month"
       id="{{section.anchorId}}"
     >
-      <view class="month-head" data-month="{{section.month}}" bindtap="handleMonthHeadTap">
+      <view class="month-head" hover-class="snowlit-pressed" data-month="{{section.month}}" bindtap="handleMonthHeadTap">
         <view class="month-head__title snowlit-serif">
           <text>{{section.yearText}}</text>
           <text class="month-head__dot">·</text>
@@ -52,7 +52,9 @@
       <view class="entry-state entry-state--muted" wx:if="{{!section.entries.length}}">这个月没有符合的日记</view>
 
       <view
-        class="entry-row"
+        class="entry-row snowlit-reveal"
+        hover-class="snowlit-pressed"
+        style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
         wx:for="{{section.entries}}"
         wx:key="id"
         data-id="{{item.id}}"
@@ -79,21 +81,21 @@
     </view>
 
     <view class="entry-state" wx:if="{{loadingMore}}">日记加载中...</view>
-    <view class="entry-state entry-retry" wx:elif="{{failedMonth}}" bindtap="handleRetryTap">这个月份加载失败，轻点重试</view>
+    <view class="entry-state entry-retry" hover-class="snowlit-pressed" wx:elif="{{failedMonth}}" bindtap="handleRetryTap">这个月份加载失败，轻点重试</view>
     <view class="entry-state" wx:elif="{{exhausted && sections.length && !matching}}">没有符合的日记</view>
   </view>
 
   <view class="snowlit-end-tip" wx:if="{{exhausted && sections.length && !loadingMore}}">没有更多了哦~</view>
 </view>
 
-<view class="diary-add" bindtap="handleCreateDiary">
+<view class="diary-add" hover-class="snowlit-pressed-round" bindtap="handleCreateDiary">
   <image class="diary-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
 </view>
 
 <snowlit-toast id="snowlit-toast" />
 <snowlit-dialog id="snowlit-dialog" />
 
-<diary-month-sheet
+<snowlit-month-sheet
   visible="{{jumpVisible}}"
   years="{{jumpYears}}"
   bind:select="handleJumpSelect"

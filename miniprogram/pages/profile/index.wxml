@@ -2,7 +2,7 @@
   <view class="profile-message" wx:if="{{loading}}">账号信息加载中...</view>
   <view class="profile-message" wx:elif="{{message}}">{{message}}</view>
 
-  <view class="user-panel" bindtap="handleProfileTap">
+  <view class="user-panel" hover-class="snowlit-pressed" bindtap="handleProfileTap">
     <view class="avatar-placeholder">{{user.initial}}</view>
     <view class="user-main">
       <view class="user-name">{{user.displayName}}</view>
@@ -42,7 +42,7 @@
     <view class="section-heading notice-label snowlit-kai">公告</view>
     <view class="notice-version">{{notice.version}}</view>
   </view>
-  <view class="notice-card" bindtap="handleNoticeTap">
+  <view class="notice-card" hover-class="snowlit-pressed" bindtap="handleNoticeTap">
     <view class="notice-title-row">
       <view class="notice-title">{{notice.title}}</view>
       <image class="notice-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
@@ -55,7 +55,9 @@
   <view class="section-heading actions-heading snowlit-kai">更多</view>
   <view class="list-card action-card">
     <view
-      class="info-row action-row"
+      class="info-row action-row snowlit-reveal"
+      hover-class="snowlit-pressed"
+      style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
       wx:for="{{actionRows}}"
       wx:key="key"
       data-key="{{item.key}}"

@@ -1,0 +1,54 @@
+<!-- The backdrop blocks page scrolling as a sibling of the panel, so the result list can still scroll. -->
+<view
+  wx:if="{{mounted}}"
+  class="snowlit-sheet-mask {{visible ? 'snowlit-sheet-mask--visible' : ''}}"
+>
+  <view class="place-backdrop" catchtouchmove="noop" bindtap="handleCancel"></view>
+  <view class="snowlit-sheet-panel" catchtap="noop">
+    <view class="snowlit-sheet-head" catchtouchmove="noop">
+      <view class="snowlit-sheet-title snowlit-kai">选择地点</view>
+      <view class="snowlit-sheet-cancel" bindtap="handleCancel">取消</view>
+    </view>
+
+    <view class="place-search">
+      <image class="place-search__icon" src="/assets/icons/home/map-pin.svg" mode="aspectFit" />
+      <input
+        class="place-search__input"
+        value="{{query}}"
+        placeholder="搜索地名，国内外都可以"
+        confirm-type="search"
+        maxlength="50"
+        focus="{{visible}}"
+        bindinput="handleInput"
+        bindconfirm="handleSearch"
+      />
+      <view
+        class="place-search__button {{query && !searching ? '' : 'place-search__button--idle'}}"
+        hover-class="place-pressed"
+        bindtap="handleSearch"
+      >搜索</view>
+    </view>
+
+    <scroll-view class="place-results" scroll-y>
+      <view class="place-state" wx:if="{{searching}}">正在搜索...</view>
+      <view class="place-state" wx:elif="{{message}}">{{message}}</view>
+      <view class="place-state" wx:elif="{{searched && !results.length}}">没有找到这个地点，换个说法或在地图上选点</view>
+      <view
+        class="place-row"
+        hover-class="place-pressed"
+        wx:for="{{results}}"
+        wx:key="key"
+        data-index="{{index}}"
+        bindtap="handleResultTap"
+      >
+        <view class="place-row__name">{{item.name}}</view>
+        <view class="place-row__address" wx:if="{{item.address}}">{{item.address}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="place-map" hover-class="place-pressed" bindtap="handleMapTap">
+      <image class="place-map__icon" src="/assets/icons/story/current-location.svg" mode="aspectFit" />
+      <text>在地图上选点</text>
+    </view>
+  </view>
+</view>

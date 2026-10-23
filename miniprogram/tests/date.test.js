@@ -62,7 +62,7 @@ function checkDateBehavior() {
     const detail = mapDiaryDetail({ entryDate: '2026-01-01', updatedAt: value });
     assert.equal(detail.updatedText, expected.replace(/-/g, '.'));
     const story = mapStoryPage({ items: [{ id: 1, eventTime: value }] });
-    assert.equal(story.years[1].value, Number(expected.slice(0, 4)));
+    assert.equal(story.sections[0].month, expected.slice(0, 7));
   }
   assert.equal(formatDateTime('2026-05-27T21:10:00'), '2026-05-27 21:10');
 
@@ -73,7 +73,7 @@ function checkDateBehavior() {
   const album = mapAlbumDetail({ album: { eventDate: '2024-02-29' }, photos: [{ takenAt: '2026-03-01' }] });
   assert.equal(album.eventDate, '2024.02.29');
   assert.equal(album.photos[0].meta, '03.01');
-  assert.equal(mapStoryPage({ items: [{ id: 1, eventTime: '2026-01-01' }] }).years[1].value, 2026);
+  assert.equal(mapStoryPage({ items: [{ id: 1, eventTime: '2026-01-01' }] }).sections[0].month, '2026-01');
 }
 
 for (const timezone of ['America/Los_Angeles', 'Asia/Singapore', 'UTC']) {

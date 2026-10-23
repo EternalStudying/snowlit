@@ -10,7 +10,7 @@
 
   <view class="hairline hero-line"></view>
 
-  <view class="album-add" wx:if="{{canManage}}" bindtap="goCreate">
+  <view class="album-add" hover-class="snowlit-pressed-round" wx:if="{{canManage}}" bindtap="goCreate">
     <image class="album-add__icon" src="../../assets/icons/story/plus-white.svg" mode="aspectFit" />
   </view>
 
@@ -20,13 +20,16 @@
       <view class="section-state snowlit-serif">{{totalText}}</view>
     </view>
 
-    <view class="album-state" wx:if="{{loading}}">相册加载中...</view>
+    <!-- Coming back to the tab refreshes in place: keep the cards mounted so they don't flash or replay. -->
+    <view class="album-state" wx:if="{{loading && !albums.length}}">相册加载中...</view>
     <view class="album-state" wx:elif="{{message}}">{{message}}</view>
     <view class="album-state" wx:elif="{{!albums.length}}">还没有已发布相册</view>
 
     <view class="album-list" wx:else>
       <view
-        class="album-row"
+        class="album-row snowlit-reveal"
+        hover-class="snowlit-pressed"
+        style="animation-delay: {{index < 8 ? index * 45 : 0}}ms"
         wx:for="{{albums}}"
         wx:key="id"
         data-id="{{item.id}}"
@@ -72,7 +75,7 @@
         <image class="album-chevron" src="../../assets/icons/home/chevron-right.svg" mode="aspectFit" />
       </view>
 
-      <view class="album-load-more" wx:if="{{hasMore}}" bindtap="loadMoreAlbums">
+      <view class="album-load-more" hover-class="snowlit-pressed" wx:if="{{hasMore}}" bindtap="loadMoreAlbums">
         {{loadingMore ? '加载中...' : '加载更多'}}
       </view>
     </view>

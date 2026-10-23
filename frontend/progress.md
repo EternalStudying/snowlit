@@ -25,6 +25,9 @@ The owner chose "snow and lamplight", kept the hero paintings, ships the light t
 - **Browser:** checked in the built-in browser against the throwaway stack (`codex-work/album-edit-check/stack.sh`, backend 15182) with a Vite server for the worktree on 15184. Pages: Home, Album (page, create dialog, edit dialog with photos, gallery), Diary (timeline, editor, mood picker), Wishes (boards, create dialog with live preview), Story (filter panel, timeline, detail, editor), Messages, About and logged-out Login.
 - **Overflow:** a scripted horizontal-overflow check found none on any page at 1440, 1280, 1024, 820 and 375.
 - **Not checked:** dark mode (not shipped), real AMap, upload/publish writes, real devices, production.
+## Production Album-management Rollout (2026-10-22)
+
+Under explicit authorization, deployed the main 6122588 production build with its matching backend. Fresh npx --no-install vitest run: 72 files / 461 tests; npm run typecheck and npm run build passed. All 129 HTTPS static files match the immutable build; release target is /var/www/snowlit/releases/album-edit-full-20261022T102413Z. Older releases remain available for rollback. Production manager detail now returns canManage=true; existing configuration/data and other services are unchanged. No new browser/device UI or real production album edit/delete was exercised. Detailed deployment evidence is under ignored codex-work/album-edit-deploy-20261022/.
 
 ## Published album management (2026-10-21)
 

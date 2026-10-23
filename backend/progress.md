@@ -1,5 +1,15 @@
 # Backend Progress Baseline
 
+## Production Album-management Rollout (2026-10-22)
+
+The owner authorized current main backend/Web deployment after the 1.2.1 experience package lacked editing. Actual production jar had no AlbumEditor; a real manager's successful detail response omitted canManage and failed the entry assertion. Deployed the tested main 6122588 package; the identical check now passes with canManage=true, and the actual native presenter enables its actions. Extra verification sessions were revoked. Maven: 335 passed; packaging passed and the staged/live jar SHA-256 matches the immutable local artifact. No stale packaged classes were found.
+
+Backups remain under /opt/snowlit/backend/backups/album-edit-full-20261022T102413Z. Only snowlit-backend.service restarted; environment bytes, prod profile, SQL_INIT_MODE=never, all 19 table schemas/data and other service PIDs were preserved. No SQL migration, retained album/media mutation, native upload, local-backend restart or Git action. Two SSH commands exited 255; connectivity probes passed and the final full verification succeeded after adding keepalive/reconnect. Evidence, hashes, failure output and limitations: ignored codex-work/album-edit-deploy-20261022/report.md.
+
+## Production Mini-program Notice v1.2.1 (2026-10-22)
+
+The owner approved the preview title v1.2.1 and three items describing album editing, deletion and photo ordering. Production contained no matching version. Added one enabled miniprogram notice (id 17, version 1.2.1) with a guarded insert and restricted pre-insert snapshot/rollback material. Existing notice rows and mute-state digest matched their baselines. A real temporary WeChat session verified the exact mini notice and unchanged Web notice through HTTPS (both 200), then was immediately revoked (204). Simulator auth storage and bindings were not changed. No schema, application deployment, service restart, Git commit/push or mini-program upload. This operation verifies the announcement data/API only; album feature rollout and device behavior were not rechecked. Detailed receipts remain in ignored codex-work/mini-notice-20261022-v121/.
+
 ## Published album management (2026-10-21)
 
 Implemented AlbumEditor, internal edit drafts, atomic save/delete with after-commit cleanup, stamped private tokens and creation order. Maven: 334 tests passed; real throwaway MySQL/Redis/MinIO smoke: 16/16, with all owned resources removed. Only the drafts.kind comment changed in schema.sql. No retained-service access, deployment or push. Old private tokens invalidate once on eventual deployment.

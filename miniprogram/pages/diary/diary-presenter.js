@@ -1,5 +1,6 @@
 const { formatDateTime, formatMonthDay } = require('../../utils/date');
 const { parseDiaryMarkdown } = require('../../utils/diary-markdown');
+const { buildJumpYears, buildMonthIndex } = require('../../utils/month-jump');
 
 const MOOD_LABELS = {
   happy: '开心',
@@ -14,8 +15,6 @@ const MOOD_LABELS = {
   touched: '感动'
 };
 
-const MONTH_PATTERN = /^\d{4}-\d{2}$/;
-const MONTHS_IN_YEAR = 12;
 // Each load keeps going, month after month, until this many entries match the filter.
 const BATCH_ENTRIES = 8;
 
@@ -38,58 +37,6 @@ function visibilityLabel(value) {
 
 function moodLabel(value) {
   return MOOD_LABELS[value] || clean(value) || '心情';
-}
-
-function padMonth(value) {
-  return String(value).padStart(2, '0');
-}
-
-function normalizeMonth(value) {
-  const text = clean(value);
-  return MONTH_PATTERN.test(text) ? text : '';
-}
-
-function monthCounts(response) {
-  const years = Array.isArray(response && response.years) ? response.years : [];
-  const counts = {};
-  years.forEach((year) => {
-    (year && Array.isArray(year.months) ? year.months : []).forEach((item) => {
-      const month = normalizeMonth(item && item.month);
-      if (month) {
-        counts[month] = Math.max(0, Number(item.count) || 0);
-      }
-    });
-  });
-  return counts;
-}
-
-// The timeline's spine: every month with a visible diary, newest first.
-function buildMonthIndex(response) {
-  const counts = monthCounts(response);
-  return Object.keys(counts)
-    .filter((month) => counts[month] > 0)
-    .sort((a, b) => (a < b ? 1 : -1))
-    .map((month) => ({ month, count: counts[month] }));
-}
-
-function buildJumpYears(response, activeMonth) {
-  const counts = monthCounts(response);
-  // Only years with at least one diary; an empty account comes back as this year, all zeros.
-  const years = Array.from(new Set(buildMonthIndex(response).map((item) => item.month.slice(0, 4))));
-  return years.map((year) => ({
-    year,
-    months: Array.from({ length: MONTHS_IN_YEAR }, (_, index) => {
-      const month = `${year}-${padMonth(index + 1)}`;
-      const count = counts[month] || 0;
-      return {
-        month,
-        label: padMonth(index + 1),
-        count,
-        disabled: count === 0,
-        active: month === activeMonth
-      };
-    })
-  }));
 }
 
 function filterEntries(items, filter, currentRole) {

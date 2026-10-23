@@ -2,6 +2,10 @@
 
 ## Current Task
 
+2026-10-22 production album-management rollout: complete. Deployed the current main backend and matching Web after the owner reported no edit entry in the experience package. The old manager detail omitted canManage; the new detail returns true. Fresh Maven: 335 passed; package verified. All 19 production table schemas/data and environment are unchanged, SQL_INIT_MODE=never, and only the Snowlit backend restarted. Private album tokens issued before stamping require another unlock. See progress.md and ignored deployment evidence.
+
+2026-10-22 production mini-program notice v1.2.1: complete. The owner approved the exact three items covering album editing, deletion and photo ordering. Inserted one enabled miniprogram notice (id 17, version 1.2.1) and verified authenticated HTTPS responses. Existing notices and mute state were preserved. No application deployment, schema change or restart.
+
 2026-10-21 album editing/deletion: complete. Implemented AlbumEditor, internal edit drafts, atomic save/delete with after-commit cleanup, stamped private tokens and creation order. Maven: 334 tests passed; real throwaway MySQL/Redis/MinIO smoke: 16/16, with all owned resources removed. Only the drafts.kind comment changed in schema.sql. No retained-service access, deployment or push. Old private tokens invalidate once on eventual deployment.
 
 2026-10-21 production mini-program acceptance: complete. Synchronized the verified authorized WeChat secret to production and corrected provider error classification. Full offline suite: 310 passed. The packaged repair is deployed and the owned local backend restarted with SQL_INIT_MODE=never. Real simulator login/weather and three upload flows passed; test resources were cleaned. See backend/progress.md.

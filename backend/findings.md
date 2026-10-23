@@ -74,7 +74,7 @@ Save locks the album before its edit draft, validates everything before writes, 
 
 `PUT /api/drafts/album/images/order` moves listed ids first while retaining unlisted images in relative order and ignoring unknown ids. Album publish accepts imageOrder and applies it under the same draft transaction.
 
-Private tokens carry the first 16 SHA-256 hex characters of the current salted password hash. Changing or clearing the hash clears album_locks and invalidates earlier tokens. **Rollout:** deploying this backend invalidates pre-stamp tokens once; members must re-enter private album passwords. Public albums do not check tokens. This feature has not been deployed.
+Private tokens carry the first 16 SHA-256 hex characters of the current salted password hash. Changing or clearing the hash clears album_locks and invalidates earlier tokens. **Rollout:** this backend and its matching Web were deployed on 2026-10-22 under explicit authorization. Pre-stamp tokens invalidate once; members must re-enter private album passwords. Public albums do not check tokens. Production detail now includes canManage=true for the verified manager. No schema migration or configuration change was needed; SQL_INIT_MODE remains never.
 
 ## Images and Object Storage
 

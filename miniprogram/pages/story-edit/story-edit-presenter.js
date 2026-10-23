@@ -68,6 +68,38 @@ function parseCoordinate(value, min, max) {
   return Number.isFinite(number) && number >= min && number <= max ? number : null;
 }
 
+// What wx.chooseLocation returns, as a form patch. Its coordinates are GCJ-02, like every stored moment.
+// A picked place fills the name and address; a blank one (a dropped pin) keeps what was typed.
+function mapPickedLocation(form, picked) {
+  const source = form || {};
+  const result = picked || {};
+  const longitude = parseCoordinate(result.longitude, -180, 180);
+  const latitude = parseCoordinate(result.latitude, -90, 90);
+  if (longitude === null || latitude === null) {
+    return null;
+  }
+  return {
+    locationName: clean(result.name).slice(0, 30) || clean(source.locationName),
+    address: clean(result.address).slice(0, 80) || clean(source.address),
+    longitude: longitude.toFixed(6),
+    latitude: latitude.toFixed(6)
+  };
+}
+
+// Search results as the place sheet lists them; ones without a usable point are dropped.
+function mapPlaceResults(response) {
+  const items = Array.isArray(response && response.items) ? response.items : [];
+  return items
+    .filter((item) => item && parseCoordinate(item.latitude, -90, 90) !== null && parseCoordinate(item.longitude, -180, 180) !== null)
+    .map((item, index) => ({
+      key: `${index}-${item.latitude}-${item.longitude}`,
+      name: clean(item.name) || '未命名地点',
+      address: clean(item.address),
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude)
+    }));
+}
+
 function normalizeImageUrls(imageUrls) {
   if (!Array.isArray(imageUrls)) {
     return [];
@@ -126,7 +158,7 @@ function buildStoryPayload(form, imageUrls) {
     return { valid: false, message: '请输入地点名称' };
   }
   if (longitude === null || latitude === null) {
-    return { valid: false, message: '请输入经纬度' };
+    return { valid: false, message: '请在地图上选择地点' };
   }
   if (!isValidCategory(category)) {
     return { valid: false, message: '请选择正确分类' };
@@ -224,6 +256,8 @@ module.exports = {
   appendSelectedImages,
   buildStoryPayload,
   createInitialStoryForm,
+  mapPickedLocation,
+  mapPlaceResults,
   mapStoryEditForm,
   mapStoryEditCategories
 };

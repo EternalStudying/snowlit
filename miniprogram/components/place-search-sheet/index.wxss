@@ -1,0 +1,112 @@
+@import "../snowlit-sheet.wxss";
+
+.place-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.place-search {
+  display: flex;
+  align-items: center;
+  height: 84rpx;
+  margin-top: 18rpx;
+  padding: 0 10rpx 0 24rpx;
+  border: 1rpx solid #dce2ea;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.place-search__icon {
+  flex: none;
+  width: 26rpx;
+  height: 26rpx;
+  margin-right: 14rpx;
+  opacity: 0.58;
+}
+
+.place-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 84rpx;
+  color: #1d2433;
+  font-size: 28rpx;
+}
+
+.place-search__button {
+  flex: none;
+  height: 64rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: #1d2433;
+  color: #ffffff;
+  font-size: 26rpx;
+  line-height: 64rpx;
+}
+
+.place-search__button--idle {
+  opacity: 0.4;
+}
+
+.place-results {
+  height: 46vh;
+  margin-top: 12rpx;
+}
+
+.place-state {
+  padding: 48rpx 0;
+  color: #6b7385;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.place-row {
+  padding: 22rpx 6rpx;
+  border-bottom: 1rpx solid #dce2ea;
+}
+
+.place-row__name {
+  color: #1d2433;
+  font-size: 29rpx;
+  font-weight: 500;
+  line-height: 40rpx;
+}
+
+.place-row__address {
+  margin-top: 6rpx;
+  color: #6b7385;
+  font-size: 23rpx;
+  line-height: 32rpx;
+}
+
+.place-map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 84rpx;
+  margin-top: 16rpx;
+  border: 1rpx solid #1d2433;
+  border-radius: 999rpx;
+  color: #1d2433;
+  font-size: 27rpx;
+}
+
+.place-map__icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 12rpx;
+}
+
+.place-pressed {
+  opacity: 0.6;
+}
+
+/* Component styles are isolated from app.wxss; the bundled face is global, so name it here. */
+.snowlit-kai {
+  font-family: "Snowlit Kai", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}

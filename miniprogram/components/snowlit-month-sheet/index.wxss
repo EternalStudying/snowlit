@@ -47,6 +47,10 @@
   background: rgba(255, 255, 255, 0.72);
 }
 
+.jump-month--pressed {
+  opacity: 0.6;
+}
+
 .jump-month--active {
   border-color: #1d2433;
 }

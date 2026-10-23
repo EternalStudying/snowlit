@@ -20,6 +20,7 @@
             wx:key="month"
             data-month="{{month.month}}"
             data-disabled="{{month.disabled}}"
+            hover-class="{{month.disabled ? 'none' : 'jump-month--pressed'}}"
             bindtap="handleMonthTap"
           >
             <view class="jump-month__label snowlit-serif">{{month.label}}</view>

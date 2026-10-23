@@ -53,8 +53,18 @@ function uploadMomentImage(filePath, onProgress) {
   });
 }
 
+// Worldwide place search for a moment's location; results are already in the stored map datum.
+function searchPlaces(query) {
+  return request({
+    url: `/api/story/places${buildQuery({ q: query })}`,
+    method: 'GET',
+    errorMessage: '地点搜索失败'
+  });
+}
+
 module.exports = {
   deleteMoment,
+  searchPlaces,
   getMoments,
   getMomentDetail,
   createMoment,

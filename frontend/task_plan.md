@@ -6,6 +6,8 @@
 
 2026-10-22 code-first visual redesign: complete; `feature/code-first-ui` was fast-forwarded into local main (not pushed or deployed). The new tokens, shared paper pieces and image rules are in findings.md under Visual System. The verification record is in progress.md.
 
+2026-10-22 production album-management rollout: complete. Deployed the current main Web build with its matching backend under explicit authorization. Fresh Vitest: 72 files / 461 tests; typecheck/build passed. All 129 HTTPS static assets match the local immutable build. Existing production configuration/data and unrelated services are unchanged. Actual production album write/delete and physical-device flows were not rerun; authenticated manager detail now supplies canManage=true.
+
 2026-10-21 album editing/deletion: complete. Implemented manager edit/delete, shared creation/edit SortableJS photo grid, immediate edit uploads, confirmed discard/delete and final order publication. Vitest: 72 files / 460 passed; typecheck/build passed. Direct CUA/Edge drag/save/delete and desktop/390px checks used isolated synthetic APIs. No production acceptance or deployment.
 
 2026-10-21 production deployment: complete under explicit owner authorization. Full current Web and matching backend are active, preserving the previous release. All 129 HTTPS static files match the local build; the online login form renders with no captured browser errors. No production sign-in or write flow was executed. Fresh Vitest: 70 files / 451 tests passed; production build (including vue-tsc) passed. No UI source changes.

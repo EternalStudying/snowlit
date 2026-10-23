@@ -117,6 +117,7 @@ button::after {
 }
 
 page .snowlit-subtitle-text {
+  display: block;
   min-width: 0;
   letter-spacing: 6rpx;
 }
@@ -257,4 +258,89 @@ page .snowlit-serif {
   font-family: "Snowlit Serif", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Source Han Sans SC", "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: lining-nums tabular-nums;
   font-feature-settings: "lnum", "tnum";
+}
+
+/*
+ * Motion: three small, purposeful effects, all transform/opacity so the render thread runs them
+ * without setData. Press feedback (hover-class, no JS); the subtitle stroke drawing in once per page;
+ * content that arrives after loading fading up instead of popping in. Lists cascade with an inline
+ * animation-delay (index * 45ms, first 8 rows only) so long lists never wait. Keep 160-520ms.
+ */
+.snowlit-pressed {
+  opacity: 0.6;
+}
+
+.snowlit-pressed-round {
+  transform: scale(0.92);
+}
+
+/* A page's heading arrives in reading order: title, subtitle, then the stroke is drawn. */
+.snowlit-page-title {
+  animation: snowlit-reveal 360ms ease-out backwards;
+}
+
+.snowlit-subtitle-text {
+  animation: snowlit-reveal 360ms ease-out 90ms backwards;
+}
+
+.snowlit-subtitle-rule {
+  transform-origin: left center;
+  animation: snowlit-stroke-in 520ms cubic-bezier(0.2, 0.7, 0.2, 1) 180ms backwards;
+}
+
+.snowlit-reveal {
+  animation: snowlit-reveal 280ms ease-out backwards;
+}
+
+@keyframes snowlit-stroke-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes snowlit-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A focal number settles in with a small lift. */
+.snowlit-lift {
+  animation: snowlit-lift 520ms cubic-bezier(0.2, 0.8, 0.2, 1.1) 140ms backwards;
+}
+
+/* An active-tab underline grows from its left edge. */
+.snowlit-grow {
+  transform-origin: left center;
+  animation: snowlit-stroke-in 220ms ease-out backwards;
+}
+
+@keyframes snowlit-lift {
+  from {
+    opacity: 0;
+    transform: translateY(18rpx) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snowlit-page-title,
+  .snowlit-subtitle-text,
+  .snowlit-subtitle-rule,
+  .snowlit-lift,
+  .snowlit-grow,
+  .snowlit-reveal {
+    animation: none;
+  }
 }
